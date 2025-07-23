@@ -123,6 +123,7 @@ const Index = () => {
           
           <Button 
             variant="outline" 
+            onClick={() => navigate('/support')}
             className="h-14 flex-col gap-1"
           >
             <Phone className="h-5 w-5" />
