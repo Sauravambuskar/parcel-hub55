@@ -55,7 +55,7 @@ const Login = () => {
         title: "Welcome to Setu!",
         description: "Login successful",
       });
-      navigate('/onboarding');
+      navigate('/home');
     }, 1000);
   };
 
