@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Package, Clock, Star, ArrowLeft } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Package, Clock, Star, ArrowLeft, Truck, IndianRupee } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Booking = () => {
@@ -12,38 +14,80 @@ const Booking = () => {
   const [formData, setFormData] = useState({
     pickupAddress: "",
     deliveryAddress: "",
-    packageType: "",
-    weight: "",
-    phone: ""
+    deliveryType: "",
+    weightRange: "",
+    phone: "",
+    selectedSlot: ""
   });
 
-  // Mock courier data for Pune
-  const couriers = [
-    {
-      id: 1,
-      name: "QuickDelivery Pune",
-      rating: 4.5,
-      price: 45,
-      estimatedTime: "2-4 hours",
-      description: "Local Pune specialist"
-    },
-    {
-      id: 2,
-      name: "SpeedyLogistics",
-      rating: 4.2,
-      price: 52,
-      estimatedTime: "1-3 hours",
-      description: "Express delivery service"
-    },
-    {
-      id: 3,
-      name: "EcoTransport",
-      rating: 4.7,
-      price: 38,
-      estimatedTime: "3-5 hours",
-      description: "Eco-friendly delivery"
-    }
-  ];
+  // Calculate convenience fee based on weight and delivery type
+  const calculateConvenienceFee = () => {
+    if (!formData.weightRange || !formData.deliveryType) return 0;
+    const baseIntercity = 10;
+    const baseInterstate = 25;
+    const weightMultipliers = {
+      "0-1": 1,
+      "1-5": 1.5,
+      "5-10": 2,
+      "10+": 2.5
+    };
+    const base = formData.deliveryType === "intercity" ? baseIntercity : baseInterstate;
+    const multiplier = weightMultipliers[formData.weightRange as keyof typeof weightMultipliers] || 1;
+    return Math.round(base * multiplier);
+  };
+
+  // Generate dynamic courier pricing based on form data
+  const getCouriers = () => {
+    if (!formData.deliveryType || !formData.weightRange) return [];
+    
+    const basePrices = {
+      intercity: { min: 80, max: 150 },
+      interstate: { min: 200, max: 500 }
+    };
+    
+    const weightMultipliers = {
+      "0-1": 1,
+      "1-5": 1.3,
+      "5-10": 1.6,
+      "10+": 2
+    };
+    
+    const base = basePrices[formData.deliveryType as keyof typeof basePrices];
+    const multiplier = weightMultipliers[formData.weightRange as keyof typeof weightMultipliers];
+    
+    return [
+      {
+        id: 1,
+        name: "FastTrack Express",
+        rating: 4.5,
+        price: Math.round(base.min * multiplier),
+        estimatedTime: formData.deliveryType === "intercity" ? "4-8 hours" : "1-2 days",
+        description: "Reliable & fast delivery",
+        slots: ["9:00 AM - 11:00 AM", "2:00 PM - 4:00 PM", "5:00 PM - 7:00 PM"]
+      },
+      {
+        id: 2,
+        name: "SpeedyLogistics",
+        rating: 4.2,
+        price: Math.round((base.min + base.max) / 2 * multiplier),
+        estimatedTime: formData.deliveryType === "intercity" ? "6-10 hours" : "2-3 days",
+        description: "Budget-friendly option",
+        slots: ["10:00 AM - 12:00 PM", "3:00 PM - 5:00 PM"]
+      },
+      {
+        id: 3,
+        name: "PremiumCourier",
+        rating: 4.7,
+        price: Math.round(base.max * multiplier),
+        estimatedTime: formData.deliveryType === "intercity" ? "2-4 hours" : "6-12 hours",
+        description: "Premium same-day delivery",
+        slots: ["11:00 AM - 1:00 PM", "4:00 PM - 6:00 PM", "6:00 PM - 8:00 PM"]
+      }
+    ];
+  };
+
+  const couriers = getCouriers();
+  const convenienceFee = calculateConvenienceFee();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -54,7 +98,7 @@ const Booking = () => {
     navigate('/tracking', { state: { bookingId: `BK${Date.now()}`, courierId } });
   };
 
-  const isFormValid = formData.pickupAddress && formData.deliveryAddress && formData.phone;
+  const isFormValid = formData.pickupAddress && formData.deliveryAddress && formData.phone && formData.deliveryType && formData.weightRange;
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -105,29 +149,37 @@ const Booking = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="package">Package Type</Label>
-                <Input
-                  id="package"
-                  placeholder="Documents, Food, etc."
-                  value={formData.packageType}
-                  onChange={(e) => handleInputChange('packageType', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  placeholder="1.5"
-                  type="number"
-                  value={formData.weight}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+            <div>
+              <Label>Delivery Type</Label>
+              <RadioGroup 
+                value={formData.deliveryType} 
+                onValueChange={(value) => handleInputChange('deliveryType', value)}
+                className="flex gap-6 mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="intercity" id="intercity" />
+                  <Label htmlFor="intercity" className="cursor-pointer">Intercity</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="interstate" id="interstate" />
+                  <Label htmlFor="interstate" className="cursor-pointer">Interstate</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <Label htmlFor="weight">Package Weight</Label>
+              <Select value={formData.weightRange} onValueChange={(value) => handleInputChange('weightRange', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select weight range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0-1">0-1 kg</SelectItem>
+                  <SelectItem value="1-5">1-5 kg</SelectItem>
+                  <SelectItem value="5-10">5-10 kg</SelectItem>
+                  <SelectItem value="10+">10+ kg</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -164,21 +216,50 @@ const Booking = () => {
                       {courier.rating}
                     </Badge>
                   </div>
+
+                  {/* Pricing breakdown */}
+                  <div className="mb-3 p-3 bg-muted/30 rounded-lg">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Delivery charge</span>
+                      <span>₹{courier.price}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Convenience fee</span>
+                      <span>₹{convenienceFee}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-primary border-t pt-1">
+                      <span>Total</span>
+                      <span>₹{courier.price + convenienceFee}</span>
+                    </div>
+                  </div>
+
+                  {/* Pickup slots */}
+                  <div className="mb-3">
+                    <Label className="text-sm font-medium">Select pickup slot</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {courier.slots.map((slot) => (
+                        <Button
+                          key={slot}
+                          variant={formData.selectedSlot === slot ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleInputChange('selectedSlot', slot)}
+                          className="text-xs h-8"
+                        >
+                          {slot}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                   
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">₹{courier.price}</p>
-                        <p className="text-xs text-muted-foreground">Total</p>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {courier.estimatedTime}
-                      </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {courier.estimatedTime}
                     </div>
                     
                     <Button 
                       onClick={() => handleBooking(courier.id)}
+                      disabled={!formData.selectedSlot}
                       className="bg-primary hover:bg-primary/90"
                     >
                       Book Now
