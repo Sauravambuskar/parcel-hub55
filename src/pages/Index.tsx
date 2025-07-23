@@ -9,7 +9,7 @@ const Index = () => {
   
   // Navigate to login to show app from beginning
   useEffect(() => {
-    navigate('/login');
+    navigate('/');
   }, [navigate]);
 
   return (
