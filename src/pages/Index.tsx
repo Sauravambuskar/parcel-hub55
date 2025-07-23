@@ -2,9 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, MapPin, Clock, Star, Phone, History, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  
+  // Navigate to login to show app from beginning
+  useEffect(() => {
+    navigate('/login');
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5">
