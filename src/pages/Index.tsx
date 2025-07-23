@@ -14,7 +14,7 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              PuneExpress
+              Setu
             </h1>
           </div>
           <Button variant="ghost" size="icon">
@@ -75,7 +75,7 @@ const Index = () => {
         {/* Features */}
         <Card>
           <CardHeader>
-            <CardTitle>Why Choose PuneExpress?</CardTitle>
+            <CardTitle>Why Choose Setu?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
