@@ -11,28 +11,50 @@ import Tracking from "./pages/Tracking";
 import History from "./pages/History";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
+import { PartnerProvider } from "./contexts/PartnerContext";
+import PartnerLogin from "./pages/partner/PartnerLogin";
+import PartnerLayout from "./components/partner/PartnerLayout";
+import PartnerDashboard from "./pages/partner/PartnerDashboard";
+import OrderManagement from "./pages/partner/OrderManagement";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/home" element={<Index />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/tracking" element={<Tracking />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/support" element={<Support />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <PartnerProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Customer Routes */}
+            <Route path="/" element={<Login />} />
+            <Route path="/home" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/booking" element={<Booking />} />
+            <Route path="/tracking" element={<Tracking />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/support" element={<Support />} />
+            
+            {/* Partner Routes */}
+            <Route path="/partner/login" element={<PartnerLogin />} />
+            <Route path="/partner" element={<PartnerLayout />}>
+              <Route path="dashboard" element={<PartnerDashboard />} />
+              <Route path="orders" element={<OrderManagement />} />
+              <Route path="active" element={<div>Active Deliveries (Coming Soon)</div>} />
+              <Route path="fleet" element={<div>Fleet Management (Coming Soon)</div>} />
+              <Route path="earnings" element={<div>Earnings Dashboard (Coming Soon)</div>} />
+              <Route path="analytics" element={<div>Analytics (Coming Soon)</div>} />
+              <Route path="support" element={<div>Partner Support (Coming Soon)</div>} />
+              <Route path="settings" element={<div>Partner Settings (Coming Soon)</div>} />
+            </Route>
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </PartnerProvider>
   </QueryClientProvider>
 );
 

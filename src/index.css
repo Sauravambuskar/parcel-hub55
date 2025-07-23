@@ -72,6 +72,14 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Partner Interface Colors */
+    --partner-primary: 210 100% 50%;
+    --partner-primary-glow: 200 100% 60%;
+    --partner-secondary: 195 100% 45%;
+    --partner-accent: 185 85% 40%;
+    --partner-muted: 210 40% 98%;
+    --partner-gradient: linear-gradient(135deg, hsl(var(--partner-primary)), hsl(var(--partner-primary-glow)));
   }
 
   .dark {
@@ -117,6 +125,14 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Partner Interface Colors - Dark Mode */
+    --partner-primary: 210 100% 60%;
+    --partner-primary-glow: 200 100% 70%;
+    --partner-secondary: 195 100% 55%;
+    --partner-accent: 185 85% 50%;
+    --partner-muted: 210 40% 5%;
+    --partner-gradient: linear-gradient(135deg, hsl(var(--partner-primary)), hsl(var(--partner-primary-glow)));
   }
 }
 
