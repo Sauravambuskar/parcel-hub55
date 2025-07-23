@@ -60,7 +60,7 @@ const Login = () => {
   };
 
   const handleGuestMode = () => {
-    navigate('/');
+    navigate('/home');
   };
 
   return (
