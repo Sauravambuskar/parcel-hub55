@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, MapPin, Clock, Star, Phone, History, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Logo from "@/components/Logo";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -11,12 +12,7 @@ const Index = () => {
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="flex items-center justify-between max-w-md mx-auto">
-          <div className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Setu
-            </h1>
-          </div>
+          <Logo size="sm" />
           <Button variant="ghost" size="icon">
             <User className="h-5 w-5" />
           </Button>
@@ -27,9 +23,7 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center py-8">
           <div className="mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-glow rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Package className="h-10 w-10 text-white" />
-            </div>
+            <Logo size="lg" showText={false} className="justify-center mb-4" />
             <h2 className="text-3xl font-bold mb-2">Fast Delivery Across Pune</h2>
             <p className="text-muted-foreground">
               Connect with multiple courier partners for the best rates and fastest delivery
