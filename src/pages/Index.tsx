@@ -45,46 +45,19 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center">
-            <CardContent className="p-4">
-              <Clock className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">2-4h</p>
-              <p className="text-xs text-muted-foreground">Avg Delivery</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center">
-            <CardContent className="p-4">
-              <Star className="h-6 w-6 text-warning mx-auto mb-2" />
-              <p className="text-2xl font-bold">4.6</p>
-              <p className="text-xs text-muted-foreground">Avg Rating</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center">
-            <CardContent className="p-4">
-              <Package className="h-6 w-6 text-success mx-auto mb-2" />
-              <p className="text-2xl font-bold">5+</p>
-              <p className="text-xs text-muted-foreground">Partners</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Features */}
         <Card>
           <CardHeader>
-            <CardTitle>Why Choose Setu?</CardTitle>
+            <CardTitle>S.E.T.U. — Seamless Experience Through Unification</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-primary" />
+                <Package className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-medium">Pune-Focused</p>
-                <p className="text-sm text-muted-foreground">Local expertise, faster deliveries</p>
+                <p className="font-medium">Seamless</p>
+                <p className="text-sm text-muted-foreground">Effortless booking with one-click delivery solutions</p>
               </div>
             </div>
             
@@ -93,18 +66,18 @@ const Index = () => {
                 <Star className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="font-medium">Best Rates</p>
-                <p className="text-sm text-muted-foreground">Compare prices from multiple partners</p>
+                <p className="font-medium">Experience</p>
+                <p className="text-sm text-muted-foreground">User-focused design that puts your needs first</p>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-warning/10 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 text-warning" />
+                <MapPin className="h-5 w-5 text-warning" />
               </div>
               <div>
-                <p className="font-medium">Real-time Tracking</p>
-                <p className="text-sm text-muted-foreground">Know exactly where your package is</p>
+                <p className="font-medium">Through Unification</p>
+                <p className="text-sm text-muted-foreground">Connecting multiple courier partners for best rates</p>
               </div>
             </div>
           </CardContent>
