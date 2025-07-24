@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Truck, Star } from "lucide-react";
+import { Package, Users, Truck, Star, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 
@@ -60,6 +60,28 @@ const Index = () => {
                 variant="outline"
               >
                 Partner Login
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Admin Login */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-destructive/20">
+            <CardHeader className="text-center pb-3">
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Shield className="h-8 w-8 text-destructive" />
+              </div>
+              <CardTitle>I'm an Admin</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center pt-0">
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage platform and monitor operations
+              </p>
+              <Button 
+                onClick={() => navigate('/admin/login')}
+                className="w-full bg-gradient-to-r from-destructive to-destructive/80 text-white"
+                variant="outline"
+              >
+                Admin Login
               </Button>
             </CardContent>
           </Card>
