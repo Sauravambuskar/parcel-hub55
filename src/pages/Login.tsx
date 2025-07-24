@@ -55,12 +55,12 @@ const Login = () => {
         title: "Welcome to Setu!",
         description: "Login successful",
       });
-      navigate('/home');
+      navigate('/booking');
     }, 1000);
   };
 
   const handleGuestMode = () => {
-    navigate('/home');
+    navigate('/booking');
   };
 
   return (
