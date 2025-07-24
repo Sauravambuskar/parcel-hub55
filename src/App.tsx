@@ -16,6 +16,15 @@ import PartnerLogin from "./pages/partner/PartnerLogin";
 import PartnerLayout from "./components/partner/PartnerLayout";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import OrderManagement from "./pages/partner/OrderManagement";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import OrderMonitoring from "./pages/admin/OrderMonitoring";
+import RevenueManagement from "./pages/admin/RevenueManagement";
+import SupportManagement from "./pages/admin/SupportManagement";
+import Analytics from "./pages/admin/Analytics";
+import SystemSettings from "./pages/admin/SystemSettings";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +55,18 @@ const App = () => (
               <Route path="analytics" element={<div>Analytics (Coming Soon)</div>} />
               <Route path="support" element={<div>Partner Support (Coming Soon)</div>} />
               <Route path="settings" element={<div>Partner Settings (Coming Soon)</div>} />
+            </Route>
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="orders" element={<OrderMonitoring />} />
+              <Route path="revenue" element={<RevenueManagement />} />
+              <Route path="support" element={<SupportManagement />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="settings" element={<SystemSettings />} />
             </Route>
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
