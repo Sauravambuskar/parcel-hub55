@@ -98,6 +98,24 @@ const Index = () => {
           </Button>
         </div>
 
+        {/* Partner Access */}
+        <Card className="border-partner-primary/20 bg-partner-primary/5">
+          <CardContent className="pt-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                Are you a delivery partner?
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/partner/login')}
+                className="border-partner-primary text-partner-primary hover:bg-partner-primary hover:text-white"
+              >
+                Partner Login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Service Areas */}
         <Card>
           <CardHeader>
