@@ -14,7 +14,7 @@ import PaymentModal from "@/components/PaymentModal";
 const Booking = () => {
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [deliveryType, setDeliveryType] = useState('');
+  const [urgency, setUrgency] = useState('');
   const [packageWeight, setPackageWeight] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -23,25 +23,44 @@ const Booking = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const navigate = useNavigate();
 
-  // Calculate convenience fee based on weight and delivery type
+  // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
-    if (!packageWeight || !deliveryType) return 0;
+    if (!packageWeight || !urgency) return 0;
     
-    const baseIntercity = 15;
-    const baseInterstate = 30;
+    const baseSuperUrgent = 50;
+    const baseUrgent = 25;
+    const baseNoRush = 10;
     const weightMultipliers = {
       "light": 1,
       "medium": 1.5,
       "heavy": 2
     };
     
-    const base = deliveryType === "intercity" ? baseIntercity : baseInterstate;
+    let base = baseNoRush;
+    if (urgency === "super-urgent") base = baseSuperUrgent;
+    else if (urgency === "urgent") base = baseUrgent;
+    
     const multiplier = weightMultipliers[packageWeight as keyof typeof weightMultipliers] || 1;
     return Math.round(base * multiplier);
   };
 
   const getCouriers = () => {
-    const basePrice = deliveryType === 'interstate' ? 120 : 80;
+    let basePrice = 100;
+    let urgencyMultiplier = 1;
+    let deliveryTime = '1-2 days';
+    
+    // Adjust pricing and delivery time based on urgency
+    if (urgency === 'super-urgent') {
+      urgencyMultiplier = 2;
+      deliveryTime = '2-4 hours';
+    } else if (urgency === 'urgent') {
+      urgencyMultiplier = 1.5;
+      deliveryTime = '6-12 hours';
+    } else if (urgency === 'no-rush') {
+      urgencyMultiplier = 0.8;
+      deliveryTime = '2-5 days';
+    }
+    
     const weightMultiplier = packageWeight === 'heavy' ? 1.5 : packageWeight === 'medium' ? 1.2 : 1;
     const convenienceFee = calculateConvenienceFee();
     
@@ -50,8 +69,8 @@ const Booking = () => {
         id: 1,
         name: "BlueDart Express",
         rating: 4.6,
-        deliveryTime: deliveryType === 'interstate' ? '2-3 days' : '4-6 hours',
-        basePrice: Math.round(basePrice * weightMultiplier),
+        deliveryTime,
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
         image: "/placeholder.svg",
@@ -61,8 +80,8 @@ const Booking = () => {
         id: 2,
         name: "DTDC Courier",
         rating: 4.3,
-        deliveryTime: deliveryType === 'interstate' ? '3-4 days' : '6-8 hours',
-        basePrice: Math.round((basePrice * weightMultiplier) * 0.9),
+        deliveryTime,
+        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.9),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
         image: "/placeholder.svg",
@@ -72,8 +91,8 @@ const Booking = () => {
         id: 3,
         name: "Delhivery Express",
         rating: 4.4,
-        deliveryTime: deliveryType === 'interstate' ? '2-3 days' : '4-6 hours',
-        basePrice: Math.round((basePrice * weightMultiplier) * 0.95),
+        deliveryTime,
+        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.95),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
         image: "/placeholder.svg",
@@ -83,8 +102,8 @@ const Booking = () => {
         id: 4,
         name: "SpeedPost",
         rating: 4.2,
-        deliveryTime: deliveryType === 'interstate' ? '3-5 days' : '6-10 hours',
-        basePrice: Math.round((basePrice * weightMultiplier) * 0.8),
+        deliveryTime,
+        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.8),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
         image: "/placeholder.svg",
@@ -94,8 +113,8 @@ const Booking = () => {
         id: 5,
         name: "Ecom Express",
         rating: 4.5,
-        deliveryTime: deliveryType === 'interstate' ? '2-4 days' : '5-7 hours',
-        basePrice: Math.round((basePrice * weightMultiplier) * 1.1),
+        deliveryTime,
+        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 1.1),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
         image: "/placeholder.svg",
@@ -112,8 +131,8 @@ const Booking = () => {
       case 'deliveryAddress':
         setDeliveryAddress(value);
         break;
-      case 'deliveryType':
-        setDeliveryType(value);
+      case 'urgency':
+        setUrgency(value);
         break;
       case 'packageWeight':
         setPackageWeight(value);
@@ -151,7 +170,7 @@ const Booking = () => {
     });
   };
 
-  const isFormValid = pickupAddress && deliveryAddress && deliveryType && packageWeight && phoneNumber;
+  const isFormValid = pickupAddress && deliveryAddress && urgency && packageWeight && phoneNumber;
   const selectedCourierData = selectedCourier ? getCouriers().find(c => c.id === selectedCourier) : null;
 
   return (
@@ -192,16 +211,17 @@ const Booking = () => {
               placeholder="Enter delivery address"
             />
 
-            {/* Delivery Type */}
+            {/* Delivery Urgency */}
             <div className="space-y-2">
-              <Label>Delivery Type</Label>
-              <Select value={deliveryType} onValueChange={(value) => handleInputChange('deliveryType', value)}>
+              <Label>Delivery Urgency</Label>
+              <Select value={urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select delivery type" />
+                  <SelectValue placeholder="Select delivery urgency" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="intercity">Intercity (Within same state)</SelectItem>
-                  <SelectItem value="interstate">Interstate (Across states)</SelectItem>
+                  <SelectItem value="super-urgent">Super Urgent (2-4 hours)</SelectItem>
+                  <SelectItem value="urgent">Urgent (6-12 hours)</SelectItem>
+                  <SelectItem value="no-rush">No Rush (2-5 days)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
