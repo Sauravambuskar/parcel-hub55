@@ -19,7 +19,6 @@ const Booking = () => {
   const [packageWeight, setPackageWeight] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [pickupPincode, setPickupPincode] = useState('');
   const [deliveryPincode, setDeliveryPincode] = useState('');
   const [goodsType, setGoodsType] = useState('');
   const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
@@ -148,9 +147,6 @@ const Booking = () => {
       case 'phoneNumber':
         setPhoneNumber(value);
         break;
-      case 'pickupPincode':
-        setPickupPincode(value);
-        break;
       case 'deliveryPincode':
         setDeliveryPincode(value);
         break;
@@ -219,10 +215,8 @@ const Booking = () => {
       case 2:
         return (
           <BookingStep2
-            pickupAddress={pickupAddress}
             deliveryAddress={deliveryAddress}
             phoneNumber={phoneNumber}
-            pickupPincode={pickupPincode}
             deliveryPincode={deliveryPincode}
             goodsType={goodsType}
             packageWeight={packageWeight}
