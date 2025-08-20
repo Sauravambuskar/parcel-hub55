@@ -31,7 +31,7 @@ const BookingStep2 = ({
   onNext, 
   onBack 
 }: BookingStep2Props) => {
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && shipmentValue;
+  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
 
   return (
     <div className="space-y-6">
@@ -145,7 +145,7 @@ const BookingStep2 = ({
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Ruler className="h-4 w-4" />
-              Dimensions (CM) - Optional
+              Dimensions (CM)
             </Label>
             <div className="grid grid-cols-3 gap-2">
               <Input
