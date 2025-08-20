@@ -7,8 +7,7 @@ import { MapPin, Phone, Package, Scale, Ruler, IndianRupee } from "lucide-react"
 import LocationPicker from "@/components/LocationPicker";
 
 interface BookingStep2Props {
-  deliveryAddress: string;
-  phoneNumber: string;
+  pickupPincode: string;
   deliveryPincode: string;
   goodsType: string;
   packageWeight: string;
@@ -21,8 +20,7 @@ interface BookingStep2Props {
 }
 
 const BookingStep2 = ({ 
-  deliveryAddress, 
-  phoneNumber,
+  pickupPincode,
   deliveryPincode,
   goodsType,
   packageWeight,
@@ -33,31 +31,33 @@ const BookingStep2 = ({
   onNext, 
   onBack 
 }: BookingStep2Props) => {
-  const isValid = deliveryAddress && phoneNumber && deliveryPincode && goodsType && packageWeight && shipmentValue;
+  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && shipmentValue;
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">Delivery Details & Package Information</h2>
-        <p className="text-muted-foreground">Enter delivery information and package details</p>
+        <h2 className="text-2xl font-semibold">Pincode & Package Information</h2>
+        <p className="text-muted-foreground">Enter pickup and delivery pincodes, and package details</p>
       </div>
 
-      {/* Delivery Address Information */}
+      {/* Pincode Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Delivery Information
+            Pincode Information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <LocationPicker
-                label="Delivery Address"
-                value={deliveryAddress}
-                onChange={(value) => onInputChange('deliveryAddress', value)}
-                placeholder="Enter delivery address"
+              <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+              <Input
+                id="pickup-pincode"
+                value={pickupPincode}
+                onChange={(e) => onInputChange('pickupPincode', e.target.value)}
+                placeholder="e.g., 110001"
+                maxLength={6}
               />
             </div>
             <div className="space-y-2">
@@ -68,20 +68,6 @@ const BookingStep2 = ({
                 onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
                 placeholder="e.g., 400001"
                 maxLength={6}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Contact Phone Number</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="phone"
-                value={phoneNumber}
-                onChange={(e) => onInputChange('phoneNumber', e.target.value)}
-                placeholder="+91 9876543210"
-                className="pl-10"
               />
             </div>
           </div>
