@@ -1,0 +1,113 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Zap, Coffee } from "lucide-react";
+
+interface BookingStep4Props {
+  urgency: string;
+  onInputChange: (field: string, value: string) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+const urgencyOptions = [
+  {
+    value: "super-urgent",
+    title: "Super Urgent",
+    subtitle: "2-4 hours delivery",
+    description: "Lightning fast delivery for critical packages",
+    icon: Zap,
+    multiplier: "2x pricing",
+    color: "bg-destructive/10 text-destructive border-destructive/20"
+  },
+  {
+    value: "urgent", 
+    title: "Urgent",
+    subtitle: "6-12 hours delivery",
+    description: "Same day delivery for important items",
+    icon: Clock,
+    multiplier: "1.5x pricing",
+    color: "bg-warning/10 text-warning border-warning/20"
+  },
+  {
+    value: "no-rush",
+    title: "No Rush",
+    subtitle: "2-5 days delivery", 
+    description: "Economy delivery at best rates",
+    icon: Coffee,
+    multiplier: "Standard pricing",
+    color: "bg-success/10 text-success border-success/20"
+  }
+];
+
+const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Props) => {
+  const isValid = urgency;
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold">Choose Delivery Speed</h2>
+        <p className="text-muted-foreground">Select how quickly you need your package delivered</p>
+      </div>
+
+      <div className="grid gap-4">
+        {urgencyOptions.map((option) => {
+          const Icon = option.icon;
+          const isSelected = urgency === option.value;
+          
+          return (
+            <Card 
+              key={option.value}
+              className={`border-2 cursor-pointer transition-all hover:shadow-md ${
+                isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
+              onClick={() => onInputChange('urgency', option.value)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    isSelected ? 'bg-primary text-primary-foreground' : option.color
+                  }`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-semibold">{option.title}</h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {option.subtitle}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {option.multiplier}
+                    </Badge>
+                  </div>
+                  {isSelected && (
+                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-primary-foreground rounded-full" />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-12">
+          Back
+        </Button>
+        <Button 
+          onClick={onNext} 
+          disabled={!isValid}
+          className="flex-1 h-12"
+        >
+          Continue
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default BookingStep4;

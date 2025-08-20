@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Package, Phone } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import LocationPicker from "@/components/LocationPicker";
-import CourierCard from "@/components/CourierCard";
 import PaymentModal from "@/components/PaymentModal";
+import BookingProgress from "@/components/booking/BookingProgress";
+import BookingStep1 from "@/components/booking/BookingStep1";
+import BookingStep2 from "@/components/booking/BookingStep2";
+import BookingStep3 from "@/components/booking/BookingStep3";
+import BookingStep4 from "@/components/booking/BookingStep4";
+import BookingStep5 from "@/components/booking/BookingStep5";
+import BookingStep6 from "@/components/booking/BookingStep6";
 
 const Booking = () => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [urgency, setUrgency] = useState('');
@@ -22,6 +23,8 @@ const Booking = () => {
   const [selectedSlot, setSelectedSlot] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const navigate = useNavigate();
+  
+  const totalSteps = 6;
 
   // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
@@ -152,6 +155,18 @@ const Booking = () => {
     setSelectedSlot(slot);
   };
 
+  const handleNextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleProceedToPayment = () => {
     setShowPaymentModal(true);
   };
@@ -170,183 +185,83 @@ const Booking = () => {
     });
   };
 
-  const isFormValid = pickupAddress && deliveryAddress && urgency && packageWeight && phoneNumber;
   const selectedCourierData = selectedCourier ? getCouriers().find(c => c.id === selectedCourier) : null;
+  const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return <BookingStep1 onNext={handleNextStep} />;
+      case 2:
+        return (
+          <BookingStep2
+            pickupAddress={pickupAddress}
+            deliveryAddress={deliveryAddress}
+            phoneNumber={phoneNumber}
+            onInputChange={handleInputChange}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 3:
+        return (
+          <BookingStep3
+            packageWeight={packageWeight}
+            packageDescription={packageDescription}
+            onInputChange={handleInputChange}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 4:
+        return (
+          <BookingStep4
+            urgency={urgency}
+            onInputChange={handleInputChange}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 5:
+        return (
+          <BookingStep5
+            couriers={getCouriers()}
+            selectedCourier={selectedCourier}
+            onCourierSelect={handleCourierSelect}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 6:
+        return (
+          <BookingStep6
+            selectedSlot={selectedSlot}
+            onSlotSelect={handleSlotSelect}
+            onProceedToPayment={handleProceedToPayment}
+            onBack={handlePrevStep}
+            totalAmount={totalAmount}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
-        <div className="flex items-center gap-3 max-w-md mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-3 max-w-2xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate(-1) : handlePrevStep()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Book Delivery</h1>
         </div>
       </header>
 
-      <div className="p-4 space-y-6 max-w-md mx-auto">
-        {/* Delivery Details Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              Delivery Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Pickup Address */}
-            <LocationPicker
-              label="Pickup Address"
-              value={pickupAddress}
-              onChange={(value) => handleInputChange('pickupAddress', value)}
-              placeholder="Enter pickup address"
-            />
-
-            {/* Delivery Address */}
-            <LocationPicker
-              label="Delivery Address"
-              value={deliveryAddress}
-              onChange={(value) => handleInputChange('deliveryAddress', value)}
-              placeholder="Enter delivery address"
-            />
-
-            {/* Delivery Urgency */}
-            <div className="space-y-2">
-              <Label>Delivery Urgency</Label>
-              <Select value={urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select delivery urgency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super-urgent">Super Urgent (2-4 hours)</SelectItem>
-                  <SelectItem value="urgent">Urgent (6-12 hours)</SelectItem>
-                  <SelectItem value="no-rush">No Rush (2-5 days)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Package Weight */}
-            <div className="space-y-2">
-              <Label>Package Weight</Label>
-              <Select value={packageWeight} onValueChange={(value) => handleInputChange('packageWeight', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select package weight" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light (0-2 kg)</SelectItem>
-                  <SelectItem value="medium">Medium (2-10 kg)</SelectItem>
-                  <SelectItem value="heavy">Heavy (10+ kg)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Package Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Package Description (Optional)</Label>
-              <div className="relative">
-                <Package className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="description"
-                  value={packageDescription}
-                  onChange={(e) => setPackageDescription(e.target.value)}
-                  placeholder="e.g., Documents, Electronics, Clothing"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  value={phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  placeholder="+91 9876543210"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Available Couriers */}
-        {isFormValid && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Available Courier Partners</h2>
-            <div className="space-y-3">
-              {getCouriers().map((courier) => (
-                <CourierCard
-                  key={courier.id}
-                  courier={courier}
-                  isSelected={selectedCourier === courier.id}
-                  onSelect={() => handleCourierSelect(courier.id)}
-                />
-              ))}
-            </div>
-
-            {/* Pickup Slot Selection */}
-            {selectedCourier && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Select Pickup Slot</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['10:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'].map((slot) => (
-                        <Button
-                          key={slot}
-                          variant={selectedSlot === slot ? "default" : "outline"}
-                          onClick={() => handleSlotSelect(slot)}
-                          className="h-12"
-                        >
-                          {slot}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Proceed to Payment */}
-            {selectedCourier && selectedSlot && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">Total Amount:</span>
-                      <span className="text-2xl font-bold">
-                        ₹{selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0}
-                      </span>
-                    </div>
-                    <Button 
-                      onClick={handleProceedToPayment}
-                      className="w-full h-12"
-                    >
-                      Proceed to Payment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Placeholder when form not valid */}
-        {!isFormValid && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Ready to Send Your Package?</h3>
-              <p className="text-muted-foreground">
-                Fill in the delivery details above to see available courier partners and pricing
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      <div className="p-4 max-w-2xl mx-auto">
+        <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
+        {renderCurrentStep()}
       </div>
 
       {/* Payment Modal */}
