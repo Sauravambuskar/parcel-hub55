@@ -19,6 +19,11 @@ const Booking = () => {
   const [packageWeight, setPackageWeight] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [pickupPincode, setPickupPincode] = useState('');
+  const [deliveryPincode, setDeliveryPincode] = useState('');
+  const [goodsType, setGoodsType] = useState('');
+  const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
+  const [shipmentValue, setShipmentValue] = useState('');
   const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
   const [selectedSlot, setSelectedSlot] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -143,7 +148,26 @@ const Booking = () => {
       case 'phoneNumber':
         setPhoneNumber(value);
         break;
+      case 'pickupPincode':
+        setPickupPincode(value);
+        break;
+      case 'deliveryPincode':
+        setDeliveryPincode(value);
+        break;
+      case 'goodsType':
+        setGoodsType(value);
+        break;
+      case 'shipmentValue':
+        setShipmentValue(value);
+        break;
     }
+  };
+
+  const handleDimensionChange = (dimension: string, value: string) => {
+    setDimensions(prev => ({
+      ...prev,
+      [dimension]: value
+    }));
   };
 
   const handleCourierSelect = (courierId: number) => {
@@ -198,7 +222,14 @@ const Booking = () => {
             pickupAddress={pickupAddress}
             deliveryAddress={deliveryAddress}
             phoneNumber={phoneNumber}
+            pickupPincode={pickupPincode}
+            deliveryPincode={deliveryPincode}
+            goodsType={goodsType}
+            packageWeight={packageWeight}
+            dimensions={dimensions}
+            shipmentValue={shipmentValue}
             onInputChange={handleInputChange}
+            onDimensionChange={handleDimensionChange}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
