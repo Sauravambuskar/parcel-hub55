@@ -3,12 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, Truck, Star, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
-
 const Index = () => {
   const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo and Welcome */}
         <div className="text-center">
@@ -33,10 +30,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Book deliveries and track your packages
               </p>
-              <Button 
-                onClick={() => navigate('/login')}
-                className="w-full bg-gradient-to-r from-primary to-primary-glow"
-              >
+              <Button onClick={() => navigate('/login')} className="w-full bg-gradient-to-r from-primary to-primary-glow">
                 Customer Login
               </Button>
             </CardContent>
@@ -54,11 +48,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Manage orders and grow your business
               </p>
-              <Button 
-                onClick={() => navigate('/partner/login')}
-                className="w-full bg-gradient-to-r from-partner-primary to-partner-secondary text-white"
-                variant="outline"
-              >
+              <Button onClick={() => navigate('/partner/login')} className="w-full bg-gradient-to-r from-partner-primary to-partner-secondary text-white" variant="outline">
                 Partner Login
               </Button>
             </CardContent>
@@ -76,11 +66,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Manage platform and monitor operations
               </p>
-              <Button 
-                onClick={() => navigate('/admin/login')}
-                className="w-full bg-gradient-to-r from-destructive to-destructive/80 text-white"
-                variant="outline"
-              >
+              <Button onClick={() => navigate('/admin/login')} className="w-full bg-gradient-to-r from-destructive to-destructive/80 text-white" variant="outline">
                 Admin Login
               </Button>
             </CardContent>
@@ -89,21 +75,9 @@ const Index = () => {
 
         {/* Features */}
         <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-5 w-5 text-warning" />
-                <span className="font-medium">S.E.T.U.</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Seamless Experience Through Unification
-              </p>
-            </div>
-          </CardContent>
+          
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
