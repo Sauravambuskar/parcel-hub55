@@ -10,7 +10,7 @@ const Index = () => {
         {/* Logo and Welcome */}
         <div className="text-center">
           <Logo size="lg" className="justify-center mb-6" />
-          <h1 className="text-3xl font-bold mb-2">Welcome to Setu</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome to viaSetu</h1>
           <p className="text-muted-foreground mb-8">
             Choose your login type to continue
           </p>

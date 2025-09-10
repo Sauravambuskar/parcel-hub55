@@ -46,7 +46,7 @@ const Logo = ({ className, size = "md", showText = true }: LogoProps) => {
           "font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent",
           sizeClasses[size].text
         )}>
-          Setu
+          viaSetu
         </h1>
       )}
     </div>
