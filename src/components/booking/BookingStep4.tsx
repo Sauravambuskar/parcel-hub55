@@ -73,9 +73,6 @@ const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Pr
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg font-semibold">{option.title}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {option.subtitle}
-                      </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
                     <Badge variant="outline" className="text-xs">
