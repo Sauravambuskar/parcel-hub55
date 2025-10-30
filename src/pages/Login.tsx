@@ -13,6 +13,7 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [prayogSession, setPrayogSession] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -60,16 +61,21 @@ const Login = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: `+91${phoneNumber}`,
+      const { data, error } = await supabase.functions.invoke('prayog-send-otp', {
+        body: { 
+          phone: `+91${phoneNumber}`,
+          name: 'User'
+        }
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
+      setPrayogSession(data.session);
       setStep('otp');
       toast({
         title: "OTP Sent",
-        description: `Verification code sent to +91 ${phoneNumber}`,
+        description: data.message || `Verification code sent to +91 ${phoneNumber}`,
       });
     } catch (error: any) {
       toast({
@@ -94,19 +100,43 @@ const Login = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: `+91${phoneNumber}`,
-        token: otp,
-        type: 'sms',
+      // Verify with Prayog API
+      const { data, error } = await supabase.functions.invoke('prayog-verify-otp', {
+        body: { 
+          phone: `+91${phoneNumber}`,
+          session: prayogSession,
+          otp: otp
+        }
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      toast({
-        title: "Welcome to viaSetu!",
-        description: "Login successful",
+      // Store Prayog auth data
+      localStorage.setItem('prayog_auth', JSON.stringify({
+        phone: `+91${phoneNumber}`,
+        ...data
+      }));
+
+      // Also create/login with Supabase for app features
+      const { error: supabaseError } = await supabase.auth.signInWithOtp({
+        phone: `+91${phoneNumber}`,
       });
-      // Navigation will be handled by onAuthStateChange
+
+      if (!supabaseError) {
+        toast({
+          title: "Welcome to Setu!",
+          description: "Login successful",
+        });
+        navigate("/");
+      } else {
+        // If Supabase auth fails, still proceed with Prayog auth
+        toast({
+          title: "Welcome to Setu!",
+          description: "Login successful with Prayog",
+        });
+        navigate("/");
+      }
     } catch (error: any) {
       toast({
         title: "Verification Failed",
