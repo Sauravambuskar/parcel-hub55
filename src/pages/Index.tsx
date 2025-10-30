@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Shield } from "lucide-react";
+import { Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 const Index = () => {
@@ -12,7 +12,7 @@ const Index = () => {
           <Logo size="lg" className="justify-center mb-6" />
           <h1 className="text-3xl font-bold mb-2">Welcome to viaSetu</h1>
           <p className="text-muted-foreground mb-8">
-            Choose your login type to continue
+            Fast, reliable courier service at your fingertips
           </p>
         </div>
 
@@ -36,23 +36,6 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Admin Login */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-destructive/20">
-            <CardHeader className="text-center pb-3">
-              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Shield className="h-8 w-8 text-destructive" />
-              </div>
-              <CardTitle>I'm an Admin</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center pt-0">
-              <p className="text-sm text-muted-foreground mb-4">
-                Manage platform and monitor operations
-              </p>
-              <Button onClick={() => navigate('/admin/login')} className="w-full bg-gradient-to-r from-destructive to-destructive/80 text-white" variant="outline">
-                Admin Login
-              </Button>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Features */}
