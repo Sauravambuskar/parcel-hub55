@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Package, ArrowLeft, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -14,6 +15,38 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session && event === 'SIGNED_IN') {
+        // Ensure profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            user_id: session.user.id,
+            phone: session.user.phone,
+          });
+        }
+        
+        navigate("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSendOTP = async () => {
     if (phoneNumber.length !== 10) {
@@ -26,15 +59,27 @@ const Login = () => {
     }
     
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: `+91${phoneNumber}`,
+      });
+
+      if (error) throw error;
+
       setStep('otp');
       toast({
         title: "OTP Sent",
         description: `Verification code sent to +91 ${phoneNumber}`,
       });
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send OTP",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleVerifyOTP = async () => {
@@ -48,15 +93,28 @@ const Login = () => {
     }
     
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: `+91${phoneNumber}`,
+        token: otp,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
       toast({
-        title: "Welcome to Setu!",
+        title: "Welcome to viaSetu!",
         description: "Login successful",
       });
-      navigate('/booking');
-    }, 1000);
+      // Navigation will be handled by onAuthStateChange
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid OTP. Please try again.",
+        variant: "destructive"
+      });
+      setLoading(false);
+    }
   };
 
   const handleGuestMode = () => {

@@ -59,7 +59,7 @@ const Booking = () => {
         description: "Please sign in to book a courier",
         variant: "destructive",
       });
-      navigate('/auth');
+      navigate('/login');
       return;
     }
     setUserId(session.user.id);

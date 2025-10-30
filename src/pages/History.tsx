@@ -44,7 +44,7 @@ const History = () => {
           description: "Please sign in to view your bookings",
           variant: "destructive",
         });
-        navigate('/auth');
+        navigate('/login');
         return;
       }
 
