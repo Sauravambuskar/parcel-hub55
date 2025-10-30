@@ -38,10 +38,16 @@ const Index = () => {
 
         </div>
 
-        {/* Features */}
-        <Card className="border-dashed">
-          
-        </Card>
+        {/* Admin Access Link */}
+        <div className="text-center">
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/admin/login')}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Admin Access
+          </Button>
+        </div>
       </div>
     </div>;
 };
