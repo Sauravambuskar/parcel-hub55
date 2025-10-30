@@ -73,7 +73,7 @@ const Index = () => {
                     <h2 className="text-2xl font-bold">
                       {profile?.full_name || 'Welcome'}
                     </h2>
-                    <p className="text-muted-foreground">{user.email}</p>
+                    <p className="text-muted-foreground">{user.phone || profile?.phone}</p>
                   </div>
                 </div>
                 <Button variant="outline" onClick={handleLogout}>
@@ -161,7 +161,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Book deliveries and track your packages
               </p>
-              <Button onClick={() => navigate('/auth')} className="w-full bg-gradient-to-r from-primary to-primary-glow">
+              <Button onClick={() => navigate('/login')} className="w-full bg-gradient-to-r from-primary to-primary-glow">
                 Get Started
               </Button>
             </CardContent>
