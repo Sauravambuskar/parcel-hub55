@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Truck, Star, Shield } from "lucide-react";
+import { Package, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 const Index = () => {
@@ -32,24 +32,6 @@ const Index = () => {
               </p>
               <Button onClick={() => navigate('/login')} className="w-full bg-gradient-to-r from-primary to-primary-glow">
                 Customer Login
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Partner Login */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-partner-primary/20">
-            <CardHeader className="text-center pb-3">
-              <div className="w-16 h-16 bg-partner-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Truck className="h-8 w-8 text-partner-primary" />
-              </div>
-              <CardTitle>I'm a Delivery Partner</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center pt-0">
-              <p className="text-sm text-muted-foreground mb-4">
-                Manage orders and grow your business
-              </p>
-              <Button onClick={() => navigate('/partner/login')} className="w-full bg-gradient-to-r from-partner-primary to-partner-secondary text-white" variant="outline">
-                Partner Login
               </Button>
             </CardContent>
           </Card>
