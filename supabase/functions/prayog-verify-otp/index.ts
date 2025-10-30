@@ -31,6 +31,8 @@ serve(async (req) => {
     }
 
     console.log('Verifying OTP for:', phone);
+    console.log('Session token (first 50 chars):', session.substring(0, 50));
+    console.log('OTP length:', otp.length);
 
     const response = await fetch('https://sandbox-apis.prayog.io/auth/verify-mfa', {
       method: 'POST',
