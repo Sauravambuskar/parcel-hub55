@@ -389,7 +389,7 @@ const Booking = () => {
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate(-1) : handlePrevStep()}>
+          <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate('/') : handlePrevStep()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Book Delivery</h1>
