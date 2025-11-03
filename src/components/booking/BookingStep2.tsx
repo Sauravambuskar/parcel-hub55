@@ -8,6 +8,7 @@ import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PRAYOG_CONFIG } from "@/config/prayog";
 
 interface BookingStep2Props {
   pickupPincode: string;
@@ -47,15 +48,16 @@ const BookingStep2 = ({
         setIsServiceable(null);
 
         try {
-          const response = await fetch('https://tksfdvnogzsweteetjjw.supabase.co/functions/v1/check-serviceability', {
+          const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrc2Zkdm5vZ3pzd2V0ZWV0amp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2OTgwMDIsImV4cCI6MjA3MTI3NDAwMn0.OfnOhzWQIpLUS4dHzkfiTGPtYoN8rloUqQfTc_iWcxs`,
+              'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
             },
             body: JSON.stringify({
               source_postal_code: pickupPincode,
-              destination_postal_code: deliveryPincode
+              destination_postal_code: deliveryPincode,
+              parcel_category: 'ecomm'
             })
           });
 
