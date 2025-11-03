@@ -5,6 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Phone, Package, Scale, Ruler, IndianRupee } from "lucide-react";
 import LocationPicker from "@/components/LocationPicker";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 interface BookingStep2Props {
   pickupPincode: string;
@@ -31,7 +34,75 @@ const BookingStep2 = ({
   onNext, 
   onBack 
 }: BookingStep2Props) => {
+  const { toast } = useToast();
+  const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
+  const [serviceabilityChecked, setServiceabilityChecked] = useState(false);
+  
   const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
+
+  useEffect(() => {
+    setServiceabilityChecked(false);
+  }, [pickupPincode, deliveryPincode]);
+
+  const checkServiceability = async () => {
+    if (!pickupPincode || !deliveryPincode) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both pickup and delivery pincodes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (pickupPincode.length !== 6 || deliveryPincode.length !== 6) {
+      toast({
+        title: "Invalid Pincode",
+        description: "Pincodes must be 6 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCheckingServiceability(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-serviceability', {
+        body: {
+          source_postal_code: pickupPincode,
+          destination_postal_code: deliveryPincode
+        }
+      });
+
+      if (error) throw error;
+
+      setServiceabilityChecked(true);
+      toast({
+        title: "Serviceability Confirmed",
+        description: "Delivery is available for this route",
+      });
+    } catch (error: any) {
+      console.error('Serviceability check error:', error);
+      toast({
+        title: "Serviceability Check Failed",
+        description: error.message || "Unable to verify serviceability. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingServiceability(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (!serviceabilityChecked) {
+      toast({
+        title: "Serviceability Check Required",
+        description: "Please check serviceability before continuing",
+        variant: "destructive",
+      });
+      return;
+    }
+    onNext();
+  };
 
   return (
     <div className="space-y-6">
@@ -49,27 +120,37 @@ const BookingStep2 = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
-              <Input
-                id="pickup-pincode"
-                value={pickupPincode}
-                onChange={(e) => onInputChange('pickupPincode', e.target.value)}
-                placeholder="e.g., 110001"
-                maxLength={6}
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+                <Input
+                  id="pickup-pincode"
+                  value={pickupPincode}
+                  onChange={(e) => onInputChange('pickupPincode', e.target.value)}
+                  placeholder="e.g., 110001"
+                  maxLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
+                <Input
+                  id="delivery-pincode"
+                  value={deliveryPincode}
+                  onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
+                  placeholder="e.g., 400001"
+                  maxLength={6}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
-              <Input
-                id="delivery-pincode"
-                value={deliveryPincode}
-                onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
-                placeholder="e.g., 400001"
-                maxLength={6}
-              />
-            </div>
+            <Button
+              onClick={checkServiceability}
+              disabled={!pickupPincode || !deliveryPincode || pickupPincode.length !== 6 || deliveryPincode.length !== 6 || isCheckingServiceability}
+              className="w-full"
+              variant={serviceabilityChecked ? "outline" : "default"}
+            >
+              {isCheckingServiceability ? "Checking..." : serviceabilityChecked ? "✓ Serviceability Confirmed" : "Check Serviceability"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -196,8 +277,8 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={onNext} 
-          disabled={!isValid}
+          onClick={handleNext} 
+          disabled={!isValid || !serviceabilityChecked}
           className="flex-1 h-12"
         >
           Continue

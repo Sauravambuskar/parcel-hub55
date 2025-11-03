@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.prayog-verify-otp]
 verify_jwt = false
+
+[functions.check-serviceability]
+verify_jwt = false
