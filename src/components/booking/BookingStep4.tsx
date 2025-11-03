@@ -26,7 +26,7 @@ const urgencyOptions = [
     subtitle: "No Rush Delivery", 
     description: "Economy delivery at best rates",
     icon: Coffee,
-    timeframe: "2-5 days",
+    timeframe: "Within 24 to 48 hours",
     color: "bg-success/10 text-success border-success/20"
   }
 ];
