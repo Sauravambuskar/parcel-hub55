@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 interface BookingStep6Props {
   selectedDate: Date | undefined;
   onDateSelect: (date: Date | undefined) => void;
-  onProceedToPayment: () => void;
+  onNext: () => void;
   onBack: () => void;
   totalAmount: number;
 }
@@ -17,7 +17,7 @@ interface BookingStep6Props {
 const BookingStep6 = ({
   selectedDate,
   onDateSelect,
-  onProceedToPayment,
+  onNext,
   onBack,
   totalAmount,
 }: BookingStep6Props) => {
@@ -110,11 +110,11 @@ const BookingStep6 = ({
           Back
         </Button>
         <Button 
-          onClick={onProceedToPayment}
+          onClick={onNext}
           disabled={!selectedDate}
           className="flex-1 h-12"
         >
-          Proceed to Payment
+          Continue
         </Button>
       </div>
     </div>

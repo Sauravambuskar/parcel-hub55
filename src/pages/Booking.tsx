@@ -11,7 +11,6 @@ import BookingStep2 from "@/components/booking/BookingStep2";
 import AddressStep from "@/components/booking/AddressStep";
 import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
-import PackagingInsuranceStep from "@/components/booking/PackagingInsuranceStep";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import BookingStep6 from "@/components/booking/BookingStep6";
 
@@ -39,13 +38,11 @@ const Booking = () => {
   const [receiverData, setReceiverData] = useState({
     name: '', phone: '', address: '', city: '', state: '', pincode: ''
   });
-  const [packagingRequired, setPackagingRequired] = useState(false);
-  const [insuranceRequired, setInsuranceRequired] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const totalSteps = 8;
+  const totalSteps = 7;
 
   useEffect(() => {
     checkAuth();
@@ -259,8 +256,6 @@ const Booking = () => {
         height: dimensions.height,
         shipment_value: parseFloat(shipmentValue) || 0,
         urgency,
-        packaging_required: packagingRequired,
-        insurance_required: insuranceRequired,
         courier_name: selectedCourierData?.name || '',
         courier_price: selectedCourierData?.basePrice || 0,
         delivery_time: selectedCourierData?.deliveryTime || '',
@@ -289,12 +284,9 @@ const Booking = () => {
     }
   };
 
-  const packagingFee = packagingRequired ? 50 : 0;
-  const insuranceFee = insuranceRequired && shipmentValue ? parseFloat(shipmentValue) * 0.02 : 0;
-  
   const selectedCourierData = selectedCourier ? getCouriers().find(c => c.id === selectedCourier) : null;
   const totalAmount = selectedCourierData 
-    ? selectedCourierData.basePrice + selectedCourierData.convenienceFee + packagingFee + insuranceFee 
+    ? selectedCourierData.basePrice + selectedCourierData.convenienceFee
     : 0;
 
   const renderCurrentStep = () => {
@@ -318,17 +310,6 @@ const Booking = () => {
         );
       case 3:
         return (
-          <AddressStep
-            senderData={senderData}
-            receiverData={receiverData}
-            onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
-            onReceiverChange={(field, value) => setReceiverData(prev => ({ ...prev, [field]: value }))}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
-      case 4:
-        return (
           <BookingStep3
             packageWeight={packageWeight}
             packageDescription={packageDescription}
@@ -337,7 +318,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 5:
+      case 4:
         return (
           <BookingStep4
             urgency={urgency}
@@ -346,19 +327,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 6:
-        return (
-          <PackagingInsuranceStep
-            packagingRequired={packagingRequired}
-            insuranceRequired={insuranceRequired}
-            onPackagingChange={setPackagingRequired}
-            onInsuranceChange={setInsuranceRequired}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-            shipmentValue={shipmentValue}
-          />
-        );
-      case 7:
+      case 5:
         return (
           <BookingStep5
             couriers={getCouriers()}
@@ -368,14 +337,25 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 8:
+      case 6:
         return (
           <BookingStep6
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
-            onProceedToPayment={handleProceedToPayment}
+            onNext={handleNextStep}
             onBack={handlePrevStep}
             totalAmount={totalAmount}
+          />
+        );
+      case 7:
+        return (
+          <AddressStep
+            senderData={senderData}
+            receiverData={receiverData}
+            onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
+            onReceiverChange={(field, value) => setReceiverData(prev => ({ ...prev, [field]: value }))}
+            onNext={handleProceedToPayment}
+            onBack={handlePrevStep}
           />
         );
       default:
