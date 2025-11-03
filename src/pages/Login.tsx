@@ -118,25 +118,11 @@ const Login = () => {
         ...data
       }));
 
-      // Also create/login with Supabase for app features
-      const { error: supabaseError } = await supabase.auth.signInWithOtp({
-        phone: `+91${phoneNumber}`,
+      toast({
+        title: "Welcome to Setu!",
+        description: "Login successful",
       });
-
-      if (!supabaseError) {
-        toast({
-          title: "Welcome to Setu!",
-          description: "Login successful",
-        });
-        navigate("/");
-      } else {
-        // If Supabase auth fails, still proceed with Prayog auth
-        toast({
-          title: "Welcome to Setu!",
-          description: "Login successful with Prayog",
-        });
-        navigate("/");
-      }
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "Verification Failed",

@@ -15,21 +15,18 @@ const Index = () => {
 
   useEffect(() => {
     checkUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user);
-        fetchProfile(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const checkUser = async () => {
+    // Check for Prayog auth
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (prayogAuth) {
+      const authData = JSON.parse(prayogAuth);
+      setUser({ phone: authData.phone });
+      return;
+    }
+
+    // Fallback to Supabase auth
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       setUser(session.user);
@@ -50,11 +47,21 @@ const Index = () => {
   };
 
   const handleLogout = async () => {
+    // Clear Prayog auth
+    localStorage.removeItem('prayog_auth');
+    
+    // Also sign out from Supabase if logged in
     await supabase.auth.signOut();
+    
+    setUser(null);
+    setProfile(null);
+    
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
     });
+    
+    navigate('/login');
   };
 
   if (user) {
