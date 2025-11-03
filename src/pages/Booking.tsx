@@ -1,17 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
 import BookingStep2 from "@/components/booking/BookingStep2";
-import AddressStep from "@/components/booking/AddressStep";
 import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
-import PackagingInsuranceStep from "@/components/booking/PackagingInsuranceStep";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import BookingStep6 from "@/components/booking/BookingStep6";
 
@@ -31,39 +27,9 @@ const Booking = () => {
   const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
   const [selectedSlot, setSelectedSlot] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  
-  const [senderData, setSenderData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
-  });
-  const [receiverData, setReceiverData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
-  });
-  const [packagingRequired, setPackagingRequired] = useState(false);
-  const [insuranceRequired, setInsuranceRequired] = useState(false);
-  
   const navigate = useNavigate();
-  const { toast } = useToast();
   
-  const totalSteps = 8;
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to book a courier",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-    setUserId(session.user.id);
-  };
+  const totalSteps = 6;
 
   // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
@@ -229,71 +195,22 @@ const Booking = () => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (paymentMethod: string) => {
-    if (!userId) return;
-    
+  const handlePaymentSuccess = (paymentMethod: string) => {
     const selectedCourierData = getCouriers().find(c => c.id === selectedCourier);
-    const trackingId = `STU${Date.now().toString().slice(-6)}`;
-    
-    try {
-      const { error } = await supabase.from('bookings').insert({
-        user_id: userId,
-        sender_name: senderData.name,
-        sender_phone: senderData.phone,
-        sender_address: senderData.address,
-        sender_city: senderData.city,
-        sender_state: senderData.state,
-        sender_pincode: senderData.pincode,
-        receiver_name: receiverData.name,
-        receiver_phone: receiverData.phone,
-        receiver_address: receiverData.address,
-        receiver_city: receiverData.city,
-        receiver_state: receiverData.state,
-        receiver_pincode: receiverData.pincode,
-        goods_type: goodsType,
-        package_weight: packageWeight,
-        length: dimensions.length,
-        width: dimensions.width,
-        height: dimensions.height,
-        shipment_value: parseFloat(shipmentValue) || 0,
-        urgency,
-        packaging_required: packagingRequired,
-        insurance_required: insuranceRequired,
-        courier_name: selectedCourierData?.name || '',
-        courier_price: selectedCourierData?.basePrice || 0,
-        delivery_time: selectedCourierData?.deliveryTime || '',
-        tracking_id: trackingId,
-        status: 'pending'
-      });
-
-      if (error) throw error;
-
-      navigate('/tracking', { 
-        state: { 
-          orderId: trackingId,
-          courier: selectedCourierData?.name,
-          pickupAddress: `${senderData.address}, ${senderData.city}`,
-          deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
-          paymentMethod,
-          pickupSlot: selectedSlot
-        } 
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to save booking. Please try again.",
-        variant: "destructive",
-      });
-    }
+    navigate('/tracking', { 
+      state: { 
+        orderId: `STU${Date.now().toString().slice(-6)}`,
+        courier: selectedCourierData?.name,
+        pickupAddress,
+        deliveryAddress,
+        paymentMethod,
+        pickupSlot: selectedSlot
+      } 
+    });
   };
 
-  const packagingFee = packagingRequired ? 50 : 0;
-  const insuranceFee = insuranceRequired && shipmentValue ? parseFloat(shipmentValue) * 0.02 : 0;
-  
   const selectedCourierData = selectedCourier ? getCouriers().find(c => c.id === selectedCourier) : null;
-  const totalAmount = selectedCourierData 
-    ? selectedCourierData.basePrice + selectedCourierData.convenienceFee + packagingFee + insuranceFee 
-    : 0;
+  const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -316,17 +233,6 @@ const Booking = () => {
         );
       case 3:
         return (
-          <AddressStep
-            senderData={senderData}
-            receiverData={receiverData}
-            onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
-            onReceiverChange={(field, value) => setReceiverData(prev => ({ ...prev, [field]: value }))}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
-      case 4:
-        return (
           <BookingStep3
             packageWeight={packageWeight}
             packageDescription={packageDescription}
@@ -335,7 +241,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 5:
+      case 4:
         return (
           <BookingStep4
             urgency={urgency}
@@ -344,19 +250,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 6:
-        return (
-          <PackagingInsuranceStep
-            packagingRequired={packagingRequired}
-            insuranceRequired={insuranceRequired}
-            onPackagingChange={setPackagingRequired}
-            onInsuranceChange={setInsuranceRequired}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-            shipmentValue={shipmentValue}
-          />
-        );
-      case 7:
+      case 5:
         return (
           <BookingStep5
             couriers={getCouriers()}
@@ -366,7 +260,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 8:
+      case 6:
         return (
           <BookingStep6
             selectedSlot={selectedSlot}

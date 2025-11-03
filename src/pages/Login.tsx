@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,48 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Package, ArrowLeft, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [prayogSession, setPrayogSession] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && event === 'SIGNED_IN') {
-        // Ensure profile exists
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            user_id: session.user.id,
-            phone: session.user.phone,
-          });
-        }
-        
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
 
   const handleSendOTP = async () => {
     if (phoneNumber.length !== 10) {
@@ -60,32 +26,15 @@ const Login = () => {
     }
     
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('prayog-send-otp', {
-        body: { 
-          phone: `+91${phoneNumber}`,
-          name: 'User'
-        }
-      });
-
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      setPrayogSession(data.session);
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
       setStep('otp');
       toast({
         title: "OTP Sent",
-        description: data.message || `Verification code sent to +91 ${phoneNumber}`,
+        description: `Verification code sent to +91 ${phoneNumber}`,
       });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send OTP",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   const handleVerifyOTP = async () => {
@@ -99,52 +48,15 @@ const Login = () => {
     }
     
     setLoading(true);
-    try {
-      // Verify with Prayog API
-      const { data, error } = await supabase.functions.invoke('prayog-verify-otp', {
-        body: { 
-          phone: `+91${phoneNumber}`,
-          session: prayogSession,
-          otp: otp
-        }
-      });
-
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      // Store Prayog auth data
-      localStorage.setItem('prayog_auth', JSON.stringify({
-        phone: `+91${phoneNumber}`,
-        ...data
-      }));
-
-      // Also create/login with Supabase for app features
-      const { error: supabaseError } = await supabase.auth.signInWithOtp({
-        phone: `+91${phoneNumber}`,
-      });
-
-      if (!supabaseError) {
-        toast({
-          title: "Welcome to Setu!",
-          description: "Login successful",
-        });
-        navigate("/");
-      } else {
-        // If Supabase auth fails, still proceed with Prayog auth
-        toast({
-          title: "Welcome to Setu!",
-          description: "Login successful with Prayog",
-        });
-        navigate("/");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Verification Failed",
-        description: error.message || "Invalid OTP. Please try again.",
-        variant: "destructive"
-      });
+    // Simulate API call
+    setTimeout(() => {
       setLoading(false);
-    }
+      toast({
+        title: "Welcome to Setu!",
+        description: "Login successful",
+      });
+      navigate('/booking');
+    }, 1000);
   };
 
   const handleGuestMode = () => {
