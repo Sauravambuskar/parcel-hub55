@@ -36,9 +36,10 @@ const History = () => {
 
   const fetchBookings = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check for Prayog authentication
+      const prayogAuth = localStorage.getItem('prayog_auth');
       
-      if (!session) {
+      if (!prayogAuth) {
         toast({
           title: "Authentication required",
           description: "Please sign in to view your bookings",
@@ -48,10 +49,12 @@ const History = () => {
         return;
       }
 
+      const authData = JSON.parse(prayogAuth);
+      
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', authData.user_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

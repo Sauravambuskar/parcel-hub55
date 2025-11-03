@@ -52,8 +52,9 @@ const Booking = () => {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Check for Prayog authentication
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (!prayogAuth) {
       toast({
         title: "Authentication required",
         description: "Please sign in to book a courier",
@@ -62,7 +63,9 @@ const Booking = () => {
       navigate('/login');
       return;
     }
-    setUserId(session.user.id);
+    
+    const authData = JSON.parse(prayogAuth);
+    setUserId(authData.user_id);
   };
 
   // Calculate convenience fee based on weight and urgency
