@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Phone, Package, Scale, Ruler, IndianRupee } from "lucide-react";
+import { MapPin, Phone, Package, Scale, Ruler, IndianRupee, CheckCircle, AlertCircle } from "lucide-react";
 import LocationPicker from "@/components/LocationPicker";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BookingStep2Props {
   pickupPincode: string;
@@ -36,73 +36,51 @@ const BookingStep2 = ({
 }: BookingStep2Props) => {
   const { toast } = useToast();
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
-  const [serviceabilityChecked, setServiceabilityChecked] = useState(false);
+  const [isServiceable, setIsServiceable] = useState<boolean | null>(null);
   
   const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
 
   useEffect(() => {
-    setServiceabilityChecked(false);
-  }, [pickupPincode, deliveryPincode]);
+    const checkServiceability = async () => {
+      if (pickupPincode.length === 6 && deliveryPincode.length === 6) {
+        setIsCheckingServiceability(true);
+        setIsServiceable(null);
 
-  const checkServiceability = async () => {
-    if (!pickupPincode || !deliveryPincode) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter both pickup and delivery pincodes",
-        variant: "destructive",
-      });
-      return;
-    }
+        try {
+          const response = await fetch('https://tksfdvnogzsweteetjjw.supabase.co/functions/v1/check-serviceability', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrc2Zkdm5vZ3pzd2V0ZWV0amp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2OTgwMDIsImV4cCI6MjA3MTI3NDAwMn0.OfnOhzWQIpLUS4dHzkfiTGPtYoN8rloUqQfTc_iWcxs`,
+            },
+            body: JSON.stringify({
+              source_postal_code: pickupPincode,
+              destination_postal_code: deliveryPincode
+            })
+          });
 
-    if (pickupPincode.length !== 6 || deliveryPincode.length !== 6) {
-      toast({
-        title: "Invalid Pincode",
-        description: "Pincodes must be 6 digits",
-        variant: "destructive",
-      });
-      return;
-    }
+          const data = await response.json();
 
-    setIsCheckingServiceability(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('check-serviceability', {
-        body: {
-          source_postal_code: pickupPincode,
-          destination_postal_code: deliveryPincode
+          if (data.success === false || data.metadata?.serviceable_count === 0) {
+            setIsServiceable(false);
+          } else if (data.success === true && data.metadata?.serviceable_count > 0) {
+            setIsServiceable(true);
+          } else {
+            setIsServiceable(false);
+          }
+        } catch (error: any) {
+          console.error('Serviceability check error:', error);
+          setIsServiceable(false);
+        } finally {
+          setIsCheckingServiceability(false);
         }
-      });
+      } else {
+        setIsServiceable(null);
+      }
+    };
 
-      if (error) throw error;
-
-      setServiceabilityChecked(true);
-      toast({
-        title: "Serviceability Confirmed",
-        description: "Delivery is available for this route",
-      });
-    } catch (error: any) {
-      console.error('Serviceability check error:', error);
-      toast({
-        title: "Serviceability Check Failed",
-        description: error.message || "Unable to verify serviceability. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCheckingServiceability(false);
-    }
-  };
-
-  const handleNext = () => {
-    if (!serviceabilityChecked) {
-      toast({
-        title: "Serviceability Check Required",
-        description: "Please check serviceability before continuing",
-        variant: "destructive",
-      });
-      return;
-    }
-    onNext();
-  };
+    checkServiceability();
+  }, [pickupPincode, deliveryPincode]);
 
   return (
     <div className="space-y-6">
@@ -143,14 +121,33 @@ const BookingStep2 = ({
                 />
               </div>
             </div>
-            <Button
-              onClick={checkServiceability}
-              disabled={!pickupPincode || !deliveryPincode || pickupPincode.length !== 6 || deliveryPincode.length !== 6 || isCheckingServiceability}
-              className="w-full"
-              variant={serviceabilityChecked ? "outline" : "default"}
-            >
-              {isCheckingServiceability ? "Checking..." : serviceabilityChecked ? "✓ Serviceability Confirmed" : "Check Serviceability"}
-            </Button>
+            
+            {isCheckingServiceability && (
+              <Alert>
+                <AlertDescription className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  Checking serviceability...
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {isServiceable === true && (
+              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-600 dark:text-green-400">
+                  Delivery is available for this route
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {isServiceable === false && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Delivery is not available for this route. Please try different pincodes.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -277,8 +274,8 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={handleNext} 
-          disabled={!isValid || !serviceabilityChecked}
+          onClick={onNext} 
+          disabled={!isValid || isServiceable !== true}
           className="flex-1 h-12"
         >
           Continue
