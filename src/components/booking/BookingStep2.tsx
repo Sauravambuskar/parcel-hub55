@@ -37,73 +37,86 @@ const BookingStep2 = ({
 }: BookingStep2Props) => {
   const { toast } = useToast();
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
-  const [isServiceable, setIsServiceable] = useState<boolean | null>(null);
   
   const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
 
-  useEffect(() => {
-    const checkServiceability = async () => {
-      if (pickupPincode.length === 6 && deliveryPincode.length === 6) {
-        setIsCheckingServiceability(true);
-        setIsServiceable(null);
+  const handleContinue = async () => {
+    if (!isValid) return;
+    
+    if (pickupPincode.length !== 6 || deliveryPincode.length !== 6) {
+      toast({
+        title: "Invalid Pincode",
+        description: "Please enter valid 6-digit pincodes",
+        variant: "destructive"
+      });
+      return;
+    }
 
-        try {
-          // Map package weight to actual kg value
-          const weightMap: Record<string, number> = {
-            'light': 2,
-            'medium': 10,
-            'heavy': 20
-          };
-          
-          const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
-            },
-            body: JSON.stringify({
-              source_postal_code: pickupPincode,
-              destination_postal_code: deliveryPincode,
-              parcel_category: 'ecomm',
-              packages: [
-                {
-                  weight: {
-                    value: packageWeight ? weightMap[packageWeight] || 10 : 10,
-                    unit: 'kg'
-                  },
-                  dimensions: {
-                    length: parseFloat(dimensions.length) || 10,
-                    width: parseFloat(dimensions.width) || 10,
-                    height: parseFloat(dimensions.height) || 10,
-                    unit: 'cm'
-                  }
-                }
-              ]
-            })
-          });
+    setIsCheckingServiceability(true);
 
-          const data = await response.json();
+    try {
+      // Parse weight input - could be from select or direct input
+      let weightValue = 10; // default
+      if (packageWeight === 'light') weightValue = 2;
+      else if (packageWeight === 'medium') weightValue = 10;
+      else if (packageWeight === 'heavy') weightValue = 20;
+      else if (!isNaN(parseFloat(packageWeight))) weightValue = parseFloat(packageWeight);
 
-          if (data.success === false || data.metadata?.serviceable_count === 0) {
-            setIsServiceable(false);
-          } else if (data.success === true && data.metadata?.serviceable_count > 0) {
-            setIsServiceable(true);
-          } else {
-            setIsServiceable(false);
-          }
-        } catch (error: any) {
-          console.error('Serviceability check error:', error);
-          setIsServiceable(false);
-        } finally {
-          setIsCheckingServiceability(false);
-        }
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
+        },
+        body: JSON.stringify({
+          source_postal_code: pickupPincode,
+          destination_postal_code: deliveryPincode,
+          parcel_category: 'ecomm',
+          packages: [
+            {
+              weight: {
+                value: weightValue,
+                unit: 'kg'
+              },
+              dimensions: {
+                length: parseFloat(dimensions.length) || 10,
+                width: parseFloat(dimensions.width) || 10,
+                height: parseFloat(dimensions.height) || 10,
+                unit: 'cm'
+              }
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success === false || data.metadata?.serviceable_count === 0) {
+        toast({
+          title: "Service Unavailable",
+          description: "Delivery is not available for this route. Please try different pincodes.",
+          variant: "destructive"
+        });
+      } else if (data.success === true && data.metadata?.serviceable_count > 0) {
+        onNext();
       } else {
-        setIsServiceable(null);
+        toast({
+          title: "Service Unavailable",
+          description: "Unable to check serviceability. Please try again.",
+          variant: "destructive"
+        });
       }
-    };
-
-    checkServiceability();
-  }, [pickupPincode, deliveryPincode]);
+    } catch (error: any) {
+      console.error('Serviceability check error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check serviceability. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCheckingServiceability(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -144,33 +157,6 @@ const BookingStep2 = ({
                 />
               </div>
             </div>
-            
-            {isCheckingServiceability && (
-              <Alert>
-                <AlertDescription className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  Checking serviceability...
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {isServiceable === true && (
-              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-600 dark:text-green-400">
-                  Delivery is available for this route
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {isServiceable === false && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Delivery is not available for this route. Please try different pincodes.
-                </AlertDescription>
-              </Alert>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -297,11 +283,11 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={onNext} 
-          disabled={!isValid || isServiceable !== true}
+          onClick={handleContinue} 
+          disabled={!isValid || isCheckingServiceability}
           className="flex-1 h-12"
         >
-          Continue
+          {isCheckingServiceability ? "Checking..." : "Continue"}
         </Button>
       </div>
     </div>
