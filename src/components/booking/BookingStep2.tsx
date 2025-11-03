@@ -48,6 +48,13 @@ const BookingStep2 = ({
         setIsServiceable(null);
 
         try {
+          // Map package weight to actual kg value
+          const weightMap: Record<string, number> = {
+            'light': 2,
+            'medium': 10,
+            'heavy': 20
+          };
+          
           const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
             method: 'POST',
             headers: {
@@ -57,7 +64,21 @@ const BookingStep2 = ({
             body: JSON.stringify({
               source_postal_code: pickupPincode,
               destination_postal_code: deliveryPincode,
-              parcel_category: 'ecomm'
+              parcel_category: 'ecomm',
+              packages: [
+                {
+                  weight: {
+                    value: packageWeight ? weightMap[packageWeight] || 10 : 10,
+                    unit: 'kg'
+                  },
+                  dimensions: {
+                    length: parseFloat(dimensions.length) || 10,
+                    width: parseFloat(dimensions.width) || 10,
+                    height: parseFloat(dimensions.height) || 10,
+                    unit: 'cm'
+                  }
+                }
+              ]
             })
           });
 
