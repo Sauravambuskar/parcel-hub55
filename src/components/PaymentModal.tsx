@@ -23,7 +23,7 @@ interface PaymentModalProps {
     courierName: string;
     basePrice: number;
     convenienceFee: number;
-    pickupSlot: string;
+    pickupDate?: string;
   };
   onPaymentSuccess: (paymentMethod: string) => void;
 }
@@ -104,10 +104,19 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess }: Payme
                 <span>Courier Partner</span>
                 <span className="font-medium">{orderDetails.courierName}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Pickup Slot</span>
-                <span className="font-medium">{orderDetails.pickupSlot}</span>
-              </div>
+              {orderDetails.pickupDate && (
+                <div className="flex justify-between text-sm">
+                  <span>Pickup Date</span>
+                  <span className="font-medium">
+                    {new Date(orderDetails.pickupDate).toLocaleDateString('en-IN', { 
+                      weekday: 'short', 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+              )}
               <Separator />
               <div className="flex justify-between text-sm">
                 <span>Base Delivery Charge</span>

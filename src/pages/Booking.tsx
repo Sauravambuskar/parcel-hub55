@@ -29,7 +29,7 @@ const Booking = () => {
   const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
   const [shipmentValue, setShipmentValue] = useState('');
   const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   
@@ -209,11 +209,10 @@ const Booking = () => {
 
   const handleCourierSelect = (courierId: number) => {
     setSelectedCourier(courierId);
-    setSelectedSlot(''); // Reset slot when changing courier
   };
 
-  const handleSlotSelect = (slot: string) => {
-    setSelectedSlot(slot);
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
   };
 
   const handleNextStep = () => {
@@ -278,7 +277,7 @@ const Booking = () => {
           pickupAddress: `${senderData.address}, ${senderData.city}`,
           deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
           paymentMethod,
-          pickupSlot: selectedSlot
+          pickupDate: selectedDate?.toISOString()
         } 
       });
     } catch (error: any) {
@@ -372,8 +371,8 @@ const Booking = () => {
       case 8:
         return (
           <BookingStep6
-            selectedSlot={selectedSlot}
-            onSlotSelect={handleSlotSelect}
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
             onProceedToPayment={handleProceedToPayment}
             onBack={handlePrevStep}
             totalAmount={totalAmount}
@@ -411,7 +410,7 @@ const Booking = () => {
             courierName: selectedCourierData.name,
             basePrice: selectedCourierData.basePrice,
             convenienceFee: selectedCourierData.convenienceFee,
-            pickupSlot: selectedSlot
+            pickupDate: selectedDate?.toISOString()
           }}
           onPaymentSuccess={handlePaymentSuccess}
         />
