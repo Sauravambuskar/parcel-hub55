@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 
@@ -22,36 +21,21 @@ const Index = () => {
     const prayogAuth = localStorage.getItem('prayog_auth');
     if (prayogAuth) {
       const authData = JSON.parse(prayogAuth);
-      setUser({ phone: authData.phone });
-      return;
-    }
-
-    // Fallback to Supabase auth
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      setUser(session.user);
-      fetchProfile(session.user.id);
+      setUser({ 
+        phone: authData.phone,
+        user_id: authData.user_id 
+      });
     }
   };
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (data) {
-      setProfile(data);
-    }
+    // Profile fetching can be implemented later if needed
+    // For now, we're using Prayog auth only
   };
 
   const handleLogout = async () => {
     // Clear Prayog auth
     localStorage.removeItem('prayog_auth');
-    
-    // Also sign out from Supabase if logged in
-    await supabase.auth.signOut();
     
     setUser(null);
     setProfile(null);

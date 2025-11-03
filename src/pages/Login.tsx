@@ -18,35 +18,11 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && event === 'SIGNED_IN') {
-        // Ensure profile exists
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            user_id: session.user.id,
-            phone: session.user.phone,
-          });
-        }
-        
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Check if user is already logged in with Prayog
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (prayogAuth) {
+      navigate("/");
+    }
   }, [navigate]);
 
   const handleSendOTP = async () => {
@@ -112,10 +88,17 @@ const Login = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      // Store Prayog auth data
+      // Store Prayog auth data with tokens
       localStorage.setItem('prayog_auth', JSON.stringify({
         phone: `+91${phoneNumber}`,
-        ...data
+        id_token: data.id_token,
+        refresh_token: data.refresh_token,
+        expires_in: data.expires_in,
+        token_type: data.token_type,
+        platform_role: data.platform_role,
+        user_id: data.user_id,
+        user_email: data.user_email,
+        authenticated_at: new Date().toISOString()
       }));
 
       toast({
@@ -129,6 +112,7 @@ const Login = () => {
         description: error.message || "Invalid OTP. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setLoading(false);
     }
   };
