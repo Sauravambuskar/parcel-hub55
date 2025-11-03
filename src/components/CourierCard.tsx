@@ -82,19 +82,6 @@ const CourierCard = ({ courier, isSelected, onSelect }: CourierCardProps) => {
             </Badge>
           ))}
         </div>
-
-        {isSelected && (
-          <div className="mt-3 pt-3 border-t">
-            <div className="text-sm text-muted-foreground mb-2">Available pickup slots today:</div>
-            <div className="flex gap-2 flex-wrap">
-              {['10:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'].map((slot) => (
-                <Badge key={slot} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-                  {slot}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

@@ -13,29 +13,20 @@ interface BookingStep4Props {
 const urgencyOptions = [
   {
     value: "super-urgent",
-    title: "Super Urgent",
-    subtitle: "2-4 hours delivery",
+    title: "Express",
+    subtitle: "Super Urgent Delivery",
     description: "Lightning fast delivery for critical packages",
     icon: Zap,
-    multiplier: "2x pricing",
+    timeframe: "2-4 hours",
     color: "bg-destructive/10 text-destructive border-destructive/20"
   },
   {
-    value: "urgent", 
-    title: "Urgent",
-    subtitle: "6-12 hours delivery",
-    description: "Same day delivery for important items",
-    icon: Clock,
-    multiplier: "1.5x pricing",
-    color: "bg-warning/10 text-warning border-warning/20"
-  },
-  {
     value: "no-rush",
-    title: "No Rush",
-    subtitle: "2-5 days delivery", 
+    title: "Standard",
+    subtitle: "No Rush Delivery", 
     description: "Economy delivery at best rates",
     icon: Coffee,
-    multiplier: "Standard pricing",
+    timeframe: "2-5 days",
     color: "bg-success/10 text-success border-success/20"
   }
 ];
@@ -76,7 +67,7 @@ const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Pr
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
                     <Badge variant="outline" className="text-xs">
-                      {option.multiplier}
+                      Delivery: {option.timeframe}
                     </Badge>
                   </div>
                   {isSelected && (
