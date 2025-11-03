@@ -57,7 +57,7 @@ const BookingStep2 = ({
             body: JSON.stringify({
               source_postal_code: pickupPincode,
               destination_postal_code: deliveryPincode,
-              parcel_category: 'courier'
+              parcel_category: 'ecomm'
             })
           });
 
