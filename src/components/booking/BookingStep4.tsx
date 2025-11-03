@@ -17,7 +17,7 @@ const urgencyOptions = [
     subtitle: "Super Urgent Delivery",
     description: "Lightning fast delivery for critical packages",
     icon: Zap,
-    timeframe: "2-4 hours",
+    timeframe: "Within 24 to 48 hours",
     color: "bg-destructive/10 text-destructive border-destructive/20"
   },
   {
@@ -26,7 +26,7 @@ const urgencyOptions = [
     subtitle: "No Rush Delivery", 
     description: "Economy delivery at best rates",
     icon: Coffee,
-    timeframe: "Within 24 to 48 hours",
+    timeframe: "2 to 4 working days",
     color: "bg-success/10 text-success border-success/20"
   }
 ];
