@@ -32,6 +32,7 @@ const Booking = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [calculatedPricing, setCalculatedPricing] = useState<any>(null);
+  const [serviceabilityData, setServiceabilityData] = useState<any>(null);
   
   const [senderData, setSenderData] = useState({
     name: '', phone: '', address: '', city: '', state: '', pincode: ''
@@ -88,11 +89,56 @@ const Booking = () => {
   };
 
   const getCouriers = () => {
+    // If we have real serviceability data, use it
+    if (serviceabilityData?.partners) {
+      const couriers: any[] = [];
+      let courierId = 1;
+
+      serviceabilityData.partners.forEach((partner: any) => {
+        if (partner.capabilities?.is_serviceable && partner.services) {
+          partner.services.forEach((service: any) => {
+            const basePrice = Math.round(service.base || 0);
+            const totalPrice = Math.round(service.total || 0);
+            const convenienceFee = totalPrice - basePrice;
+
+            couriers.push({
+              id: courierId++,
+              name: `${service.partnerName || partner.partner_code} - ${service.companyServiceName}`,
+              rating: partner.rating || 4.5,
+              deliveryTime: `${service.EDT || 2}-${(service.EDT || 2) + 1} days`,
+              basePrice,
+              convenienceFee: Math.max(convenienceFee, 0),
+              vehicleType: service.serviceMode === 'AIR' ? 'Air' : 'Surface',
+              image: "/placeholder.svg",
+              features: [
+                service.serviceMode === 'AIR' ? 'Air delivery' : 'Surface delivery',
+                partner.capabilities?.cod_available ? 'COD available' : 'Prepaid only',
+                partner.capabilities?.insurance_available ? 'Insurance available' : 'Basic coverage',
+                `Zone: ${service.zoneName || 'Standard'}`
+              ],
+              prayogData: {
+                partnerId: partner.partner_id,
+                partnerCode: partner.partner_code,
+                serviceId: service.partnerServiceId,
+                serviceName: service.partnerServiceName
+              }
+            });
+          });
+        }
+      });
+
+      return couriers.length > 0 ? couriers : getMockCouriers();
+    }
+
+    // Fallback to mock data if no real data available
+    return getMockCouriers();
+  };
+
+  const getMockCouriers = () => {
     let basePrice = 100;
     let urgencyMultiplier = 1;
     let deliveryTime = '1-2 days';
     
-    // Adjust pricing and delivery time based on urgency
     if (urgency === 'super-urgent') {
       urgencyMultiplier = 2;
       deliveryTime = '2-4 hours';
@@ -307,6 +353,7 @@ const Booking = () => {
             onInputChange={handleInputChange}
             onDimensionChange={handleDimensionChange}
             onPricingCalculated={setCalculatedPricing}
+            onServiceabilityData={setServiceabilityData}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />

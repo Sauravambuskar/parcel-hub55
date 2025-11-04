@@ -31,6 +31,7 @@ interface BookingStep2Props {
   onInputChange: (field: string, value: string) => void;
   onDimensionChange: (dimension: string, value: string) => void;
   onPricingCalculated?: (pricing: PricingData) => void;
+  onServiceabilityData?: (data: any) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -46,6 +47,7 @@ const BookingStep2 = ({
   onInputChange,
   onDimensionChange,
   onPricingCalculated,
+  onServiceabilityData,
   onNext, 
   onBack 
 }: BookingStep2Props) => {
@@ -115,6 +117,11 @@ const BookingStep2 = ({
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
         // Extract pricing from serviceability response
         extractPricingFromResponse(data);
+        
+        // Pass full serviceability data to parent
+        if (onServiceabilityData) {
+          onServiceabilityData(data);
+        }
         
         toast({
           title: "Service Available",
