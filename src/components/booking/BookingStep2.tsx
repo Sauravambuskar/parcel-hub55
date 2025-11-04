@@ -113,8 +113,17 @@ const BookingStep2 = ({
           variant: "destructive"
         });
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
-        // Serviceability confirmed, now calculate price
-        await calculatePrice(weightValue);
+        // Extract pricing from serviceability response
+        extractPricingFromResponse(data);
+        
+        toast({
+          title: "Service Available",
+          description: "Route is serviceable. Pricing calculated!",
+        });
+        
+        setTimeout(() => {
+          onNext();
+        }, 1500);
       } else {
         toast({
           title: "Service Unavailable",
@@ -134,54 +143,51 @@ const BookingStep2 = ({
     }
   };
 
-  const calculatePrice = async (weight: number) => {
+  const extractPricingFromResponse = (serviceabilityData: any) => {
     try {
-      console.log('Calculating price with:', { weight, pickupPincode, deliveryPincode, urgency });
-      
-      const { data, error } = await supabase.functions.invoke('calculate-price', {
-        body: {
-          weight,
-          source_postal_code: pickupPincode,
-          destination_postal_code: deliveryPincode,
-          urgency: urgency || 'standard'
-        }
-      });
+      // Extract pricing from the first serviceable partner
+      const serviceablePartner = serviceabilityData.partners?.find(
+        (p: any) => p.capabilities?.is_serviceable
+      );
 
-      if (error) {
-        console.error('Price calculation error:', error);
-        toast({
-          title: "Pricing Unavailable",
-          description: "Could not calculate exact pricing. Proceeding with estimates.",
-        });
-        onNext();
-        return;
-      }
+      if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
+        // Get the most appropriate service based on urgency
+        const urgencyMap: Record<string, string> = {
+          'express': 'STANDARD',
+          'super-urgent': 'STANDARD',
+          'standard': 'ECONOMY'
+        };
+        
+        const preferredService = urgencyMap[urgency?.toLowerCase()] || 'ECONOMY';
+        
+        // Find matching service or use first available
+        const service = serviceablePartner.services.find(
+          (s: any) => s.companyServiceName === preferredService
+        ) || serviceablePartner.services[0];
 
-      if (data?.success && data?.data) {
-        setPricingData(data.data);
+        const basePrice = Math.round(service.base || 0);
+        const taxAmount = Math.round(service.tax || 0);
+        const totalPrice = Math.round(service.total || 0);
+        const convenienceFee = totalPrice - basePrice;
+
+        const pricing: PricingData = {
+          basePrice,
+          convenienceFee: Math.max(convenienceFee, 0),
+          totalPrice,
+          serviceType: service.companyServiceName || 'STANDARD',
+          weightRange: `${service.appliedWeight || 0}kg`,
+          locationType: service.zoneName || 'ZONE 4'
+        };
+
+        setPricingData(pricing);
         if (onPricingCalculated) {
-          onPricingCalculated(data.data);
+          onPricingCalculated(pricing);
         }
-        
-        toast({
-          title: "Price Calculated",
-          description: `Estimated price: ₹${data.data.totalPrice}`,
-        });
-        
-        // Auto-proceed to next step after showing price
-        setTimeout(() => {
-          onNext();
-        }, 1500);
-      } else {
-        onNext();
+
+        console.log('Extracted pricing:', pricing);
       }
-    } catch (error: any) {
-      console.error('Price calculation error:', error);
-      toast({
-        title: "Pricing Unavailable",
-        description: "Could not calculate exact pricing. Proceeding with estimates.",
-      });
-      onNext();
+    } catch (error) {
+      console.error('Error extracting pricing:', error);
     }
   };
 
