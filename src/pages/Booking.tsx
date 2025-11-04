@@ -279,10 +279,61 @@ const Booking = () => {
     if (!userId) return;
     
     const selectedCourierData = getCouriers().find(c => c.id === selectedCourier);
-    const trackingId = `STU${Date.now().toString().slice(-6)}`;
     
     try {
-      const { error } = await supabase.from('bookings').insert({
+      // Find the selected service from serviceability data
+      let selectedService = null;
+      if (serviceabilityData?.partners) {
+        for (const partner of serviceabilityData.partners) {
+          if (partner.services) {
+            const service = partner.services.find((s: any) => {
+              const serviceName = `${partner.company_name} - ${s.company_service_name}`;
+              return serviceName === selectedCourierData?.name;
+            });
+            if (service) {
+              selectedService = {
+                ...service,
+                companyName: partner.company_name,
+                companyId: partner.company_id,
+                vendorCode: partner.vendor_code
+              };
+              break;
+            }
+          }
+        }
+      }
+
+      // Create booking via Prayog API
+      const { data: prayogBooking, error: prayogError } = await supabase.functions.invoke(
+        'prayog-create-booking',
+        {
+          body: {
+            sender: senderData,
+            receiver: receiverData,
+            goodsType,
+            packageWeight,
+            dimensions,
+            shipmentValue,
+            urgency,
+            paymentMethod,
+            expectedDeliveryDate: selectedDate?.toISOString(),
+            selectedService,
+            note: packageDescription
+          }
+        }
+      );
+
+      if (prayogError) {
+        console.error('Prayog booking error:', prayogError);
+        throw new Error('Failed to create booking with courier partner');
+      }
+
+      if (!prayogBooking?.success) {
+        throw new Error(prayogBooking?.error || 'Failed to create booking');
+      }
+
+      // Save booking to our database
+      const { error: dbError } = await supabase.from('bookings').insert({
         user_id: userId,
         sender_name: senderData.name,
         sender_phone: senderData.phone,
@@ -306,15 +357,21 @@ const Booking = () => {
         courier_name: selectedCourierData?.name || '',
         courier_price: selectedCourierData?.basePrice || 0,
         delivery_time: selectedCourierData?.deliveryTime || '',
-        tracking_id: trackingId,
-        status: 'pending'
+        tracking_id: prayogBooking.awbNumber || prayogBooking.trackingId,
+        status: 'confirmed'
       });
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Booking Confirmed!",
+        description: `Your shipment has been booked. AWB: ${prayogBooking.awbNumber || prayogBooking.trackingId}`,
+      });
 
       navigate('/tracking', { 
         state: { 
-          orderId: trackingId,
+          orderId: prayogBooking.trackingId,
+          awbNumber: prayogBooking.awbNumber,
           courier: selectedCourierData?.name,
           pickupAddress: `${senderData.address}, ${senderData.city}`,
           deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
@@ -323,9 +380,10 @@ const Booking = () => {
         } 
       });
     } catch (error: any) {
+      console.error('Booking error:', error);
       toast({
-        title: "Error",
-        description: "Failed to save booking. Please try again.",
+        title: "Booking Failed",
+        description: error.message || "Failed to create booking. Please try again.",
         variant: "destructive",
       });
     }

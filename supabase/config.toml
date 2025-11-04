@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.calculate-price]
 verify_jwt = false
+
+[functions.prayog-create-booking]
+verify_jwt = false
