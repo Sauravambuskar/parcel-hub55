@@ -31,6 +31,7 @@ const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [calculatedPricing, setCalculatedPricing] = useState<any>(null);
   
   const [senderData, setSenderData] = useState({
     name: '', phone: '', address: '', city: '', state: '', pincode: ''
@@ -302,8 +303,10 @@ const Booking = () => {
             packageWeight={packageWeight}
             dimensions={dimensions}
             shipmentValue={shipmentValue}
+            urgency={urgency}
             onInputChange={handleInputChange}
             onDimensionChange={handleDimensionChange}
+            onPricingCalculated={setCalculatedPricing}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />

@@ -9,6 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PRAYOG_CONFIG } from "@/config/prayog";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PricingData {
+  basePrice: number;
+  convenienceFee: number;
+  totalPrice: number;
+  serviceType: string;
+  weightRange: string;
+  locationType: string;
+}
 
 interface BookingStep2Props {
   pickupPincode: string;
@@ -17,8 +27,10 @@ interface BookingStep2Props {
   packageWeight: string;
   dimensions: { length: string; width: string; height: string };
   shipmentValue: string;
+  urgency: string;
   onInputChange: (field: string, value: string) => void;
   onDimensionChange: (dimension: string, value: string) => void;
+  onPricingCalculated?: (pricing: PricingData) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -30,13 +42,16 @@ const BookingStep2 = ({
   packageWeight,
   dimensions,
   shipmentValue,
+  urgency,
   onInputChange,
   onDimensionChange,
+  onPricingCalculated,
   onNext, 
   onBack 
 }: BookingStep2Props) => {
   const { toast } = useToast();
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
+  const [pricingData, setPricingData] = useState<PricingData | null>(null);
   
   const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
 
@@ -98,7 +113,8 @@ const BookingStep2 = ({
           variant: "destructive"
         });
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
-        onNext();
+        // Serviceability confirmed, now calculate price
+        await calculatePrice(weightValue);
       } else {
         toast({
           title: "Service Unavailable",
@@ -115,6 +131,57 @@ const BookingStep2 = ({
       });
     } finally {
       setIsCheckingServiceability(false);
+    }
+  };
+
+  const calculatePrice = async (weight: number) => {
+    try {
+      console.log('Calculating price with:', { weight, pickupPincode, deliveryPincode, urgency });
+      
+      const { data, error } = await supabase.functions.invoke('calculate-price', {
+        body: {
+          weight,
+          source_postal_code: pickupPincode,
+          destination_postal_code: deliveryPincode,
+          urgency: urgency || 'standard'
+        }
+      });
+
+      if (error) {
+        console.error('Price calculation error:', error);
+        toast({
+          title: "Pricing Unavailable",
+          description: "Could not calculate exact pricing. Proceeding with estimates.",
+        });
+        onNext();
+        return;
+      }
+
+      if (data?.success && data?.data) {
+        setPricingData(data.data);
+        if (onPricingCalculated) {
+          onPricingCalculated(data.data);
+        }
+        
+        toast({
+          title: "Price Calculated",
+          description: `Estimated price: ₹${data.data.totalPrice}`,
+        });
+        
+        // Auto-proceed to next step after showing price
+        setTimeout(() => {
+          onNext();
+        }, 1500);
+      } else {
+        onNext();
+      }
+    } catch (error: any) {
+      console.error('Price calculation error:', error);
+      toast({
+        title: "Pricing Unavailable",
+        description: "Could not calculate exact pricing. Proceeding with estimates.",
+      });
+      onNext();
     }
   };
 
@@ -277,6 +344,37 @@ const BookingStep2 = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Pricing Display */}
+      {pricingData && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CheckCircle className="h-5 w-5 text-success" />
+              Estimated Pricing
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Base Price</span>
+              <span className="font-semibold">₹{pricingData.basePrice}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Convenience Fee</span>
+              <span className="font-semibold">₹{pricingData.convenienceFee}</span>
+            </div>
+            <div className="border-t pt-2 flex justify-between items-center">
+              <span className="font-semibold">Total Estimated Cost</span>
+              <span className="text-xl font-bold text-primary">₹{pricingData.totalPrice}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              <p>Service Type: {pricingData.serviceType}</p>
+              <p>Weight Range: {pricingData.weightRange}</p>
+              <p>Location Type: {pricingData.locationType}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex gap-3">
         <Button variant="outline" onClick={onBack} className="flex-1 h-12">
