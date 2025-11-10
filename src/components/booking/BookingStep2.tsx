@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Phone, Package, Scale, Ruler, IndianRupee, CheckCircle, AlertCircle } from "lucide-react";
+import { MapPin, CheckCircle } from "lucide-react";
 import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -55,7 +55,7 @@ const BookingStep2 = ({
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && shipmentValue;
+  const isValid = pickupPincode && deliveryPincode;
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -72,13 +72,7 @@ const BookingStep2 = ({
     setIsCheckingServiceability(true);
 
     try {
-      // Parse weight input - could be from select or direct input
-      let weightValue = 10; // default
-      if (packageWeight === 'light') weightValue = 2;
-      else if (packageWeight === 'medium') weightValue = 10;
-      else if (packageWeight === 'heavy') weightValue = 20;
-      else if (!isNaN(parseFloat(packageWeight))) weightValue = parseFloat(packageWeight);
-
+      // Use default values for initial serviceability check
       const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
         method: 'POST',
         headers: {
@@ -92,13 +86,13 @@ const BookingStep2 = ({
           packages: [
             {
               weight: {
-                value: weightValue,
+                value: 2,
                 unit: 'kg'
               },
               dimensions: {
-                length: parseFloat(dimensions.length) || 10,
-                width: parseFloat(dimensions.width) || 10,
-                height: parseFloat(dimensions.height) || 10,
+                length: 10,
+                width: 10,
+                height: 10,
                 unit: 'cm'
               }
             }
@@ -166,18 +160,12 @@ const BookingStep2 = ({
         const basePrice = totalPrice; // Prayog API returns total price only
         const convenienceFee = 0;
 
-        // Calculate applied weight from package weight
-        let appliedWeight = 10; // default
-        if (packageWeight === 'light') appliedWeight = 2;
-        else if (packageWeight === 'medium') appliedWeight = 10;
-        else if (packageWeight === 'heavy') appliedWeight = 20;
-
         const pricing: PricingData = {
           basePrice,
           convenienceFee,
           totalPrice,
           serviceType: service.service_name.toUpperCase(),
-          weightRange: `${appliedWeight}kg`,
+          weightRange: 'Based on package details',
           locationType: serviceablePartner.capabilities?.city_name || 'Standard'
         };
 
@@ -196,8 +184,8 @@ const BookingStep2 = ({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">Pincode & Package Information</h2>
-        <p className="text-muted-foreground">Enter pickup and delivery pincodes, and package details</p>
+        <h2 className="text-2xl font-semibold">Pincode Information</h2>
+        <p className="text-muted-foreground">Enter pickup and delivery pincodes</p>
       </div>
 
       {/* Pincode Information */}
@@ -236,122 +224,6 @@ const BookingStep2 = ({
         </CardContent>
       </Card>
 
-      {/* Package Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            Package Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Type of Goods</Label>
-            <Select value={goodsType} onValueChange={(value) => onInputChange('goodsType', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type of goods" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="documents">Documents</SelectItem>
-                <SelectItem value="electronics">Electronics</SelectItem>
-                <SelectItem value="clothing">Clothing & Textiles</SelectItem>
-                <SelectItem value="books">Books & Stationery</SelectItem>
-                <SelectItem value="food">Food Items</SelectItem>
-                <SelectItem value="fragile">Fragile Items</SelectItem>
-                <SelectItem value="medicine">Medicine & Healthcare</SelectItem>
-                <SelectItem value="automotive">Automotive Parts</SelectItem>
-                <SelectItem value="jewelry">Jewelry & Valuables</SelectItem>
-                <SelectItem value="others">Others</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Package Weight</Label>
-            <Select value={packageWeight} onValueChange={(value) => onInputChange('packageWeight', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select package weight" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Light (0-2 kg)</div>
-                      <div className="text-xs text-muted-foreground">Documents, small items</div>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Medium (2-10 kg)</div>
-                      <div className="text-xs text-muted-foreground">Books, electronics, clothing</div>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="heavy">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Heavy (10+ kg)</div>
-                      <div className="text-xs text-muted-foreground">Large items, multiple packages</div>
-                    </div>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Ruler className="h-4 w-4" />
-              Dimensions (CM)
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Input
-                value={dimensions.length}
-                onChange={(e) => onDimensionChange('length', e.target.value)}
-                placeholder="Length"
-                type="number"
-              />
-              <Input
-                value={dimensions.width}
-                onChange={(e) => onDimensionChange('width', e.target.value)}
-                placeholder="Width"
-                type="number"
-              />
-              <Input
-                value={dimensions.height}
-                onChange={(e) => onDimensionChange('height', e.target.value)}
-                placeholder="Height"
-                type="number"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Helps in accurate pricing and packaging
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="shipment-value" className="flex items-center gap-2">
-              <IndianRupee className="h-4 w-4" />
-              Shipment Value (Approx)
-            </Label>
-            <Input
-              id="shipment-value"
-              value={shipmentValue}
-              onChange={(e) => onInputChange('shipmentValue', e.target.value)}
-              placeholder="e.g., 5000"
-              type="number"
-            />
-            <p className="text-xs text-muted-foreground">
-              Required for insurance and customs purposes
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Pricing Display */}
       {pricingData && (

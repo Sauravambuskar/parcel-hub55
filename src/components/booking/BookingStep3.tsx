@@ -20,7 +20,7 @@ const BookingStep3 = ({
   onNext, 
   onBack 
 }: BookingStep3Props) => {
-  const isValid = packageWeight;
+  const isValid = packageWeight && packageDescription;
 
   return (
     <div className="space-y-6">
@@ -76,7 +76,7 @@ const BookingStep3 = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Package Contents (Optional)</Label>
+            <Label htmlFor="description">Package Contents *</Label>
             <div className="relative">
               <Package className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -85,10 +85,11 @@ const BookingStep3 = ({
                 onChange={(e) => onInputChange('packageDescription', e.target.value)}
                 placeholder="e.g., Documents, Electronics, Clothing"
                 className="pl-10"
+                required
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Help couriers handle your package appropriately
+              Describe the contents of your package
             </p>
           </div>
         </CardContent>
