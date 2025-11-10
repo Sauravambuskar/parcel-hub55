@@ -41,88 +41,114 @@ serve(async (req) => {
     // Extract selected service details from serviceabilityData
     const selectedService = bookingData.selectedService;
     
+    // Calculate volumetric weight (L x W x H / 5000)
+    const length = parseFloat(bookingData.dimensions?.length) || 10;
+    const width = parseFloat(bookingData.dimensions?.width) || 10;
+    const height = parseFloat(bookingData.dimensions?.height) || 10;
+    const volumetricWeight = (length * width * height) / 5000;
+    const physicalWeight = parseFloat(bookingData.packageWeight) || 1;
+    
+    // Get base amount from selected service
+    const baseAmount = selectedService?.rate?.price?.amount || 0;
+    
     // Prepare Prayog API payload
     const prayogPayload = {
       referenceId: orderId,
-      bookingType: "Shipment",
-      parcelCategory: "COURIER",
       orderDate: new Date().toISOString(),
-      expectedDeliveryDate: bookingData.expectedDeliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
       orderType: "FORWARD",
-      autoManifest: false,
-      returnable: false,
-      deliveryMode: selectedService?.serviceMode || "SURFACE",
-      deliveryPromise: selectedService?.companyServiceName || "STANDARD",
       orderStatus: "READY_FOR_DISPATCH",
-      carrierName: selectedService?.companyName || "",
-      carrierId: selectedService?.companyId?.toString() || "",
-      subCarrierName: selectedService?.serviceName || "",
-      subCarrierID: selectedService?.serviceId?.toString() || "",
-      vendorCode: selectedService?.vendorCode || "",
+      parcelCategory: "ECOMM",
+      vendorCode: "AWSA",
+      autoManifest: true,
+      eWaybills: [],
+      deliveryPromise: selectedService?.service_name || "standard",
+      metadata: { source: "WEB_APP" },
+      documents: [],
       addresses: [
         {
           type: "PICKUP",
+          zip: bookingData.sender.pincode,
           name: bookingData.sender.name,
           phone: bookingData.sender.phone,
-          email: bookingData.sender.email || "",
           street: bookingData.sender.address,
+          landmark: null,
           city: bookingData.sender.city,
           state: bookingData.sender.state,
           country: "India",
-          countryCode: "IN",
-          zip: bookingData.sender.pincode,
-          addressName: "Pickup Location"
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.sender.address
         },
         {
           type: "DELIVERY",
+          zip: bookingData.receiver.pincode,
           name: bookingData.receiver.name,
           phone: bookingData.receiver.phone,
-          email: bookingData.receiver.email || "",
           street: bookingData.receiver.address,
+          landmark: null,
           city: bookingData.receiver.city,
           state: bookingData.receiver.state,
           country: "India",
-          countryCode: "IN",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.receiver.address
+        },
+        {
+          type: "BILLING",
           zip: bookingData.receiver.pincode,
-          addressName: "Delivery Location"
+          name: bookingData.receiver.name,
+          phone: bookingData.receiver.phone,
+          street: bookingData.receiver.address,
+          landmark: null,
+          city: bookingData.receiver.city,
+          state: bookingData.receiver.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.receiver.address
+        },
+        {
+          type: "RETURN",
+          zip: bookingData.sender.pincode,
+          name: bookingData.sender.name,
+          phone: bookingData.sender.phone,
+          street: bookingData.sender.address,
+          landmark: null,
+          city: bookingData.sender.city,
+          state: bookingData.sender.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.sender.address
         }
       ],
       shipments: [
         {
-          isParent: true,
-          isChild: false,
-          shipmentStatus: "PENDING",
-          physicalWeight: parseFloat(bookingData.packageWeight) || 1,
-          volumetricWeight: bookingData.dimensions?.length && bookingData.dimensions?.width && bookingData.dimensions?.height
-            ? (parseFloat(bookingData.dimensions.length) * parseFloat(bookingData.dimensions.width) * parseFloat(bookingData.dimensions.height)) / 5000
-            : parseFloat(bookingData.packageWeight) || 1,
-          dimensions: {
-            length: parseFloat(bookingData.dimensions?.length) || 10,
-            width: parseFloat(bookingData.dimensions?.width) || 10,
-            height: parseFloat(bookingData.dimensions?.height) || 10,
-            unit: "cm"
+          dimensions: { 
+            length: length, 
+            width: width, 
+            height: height 
           },
+          shipmentStatus: "CONFIRMED",
+          awbNumber: "",
+          physicalWeight: physicalWeight,
+          volumetricWeight: volumetricWeight,
           note: bookingData.note || "",
           items: [
             {
               name: bookingData.goodsType || "Package",
-              quantity: 1,
-              weight: parseFloat(bookingData.packageWeight) || 1,
-              unitPrice: parseFloat(bookingData.shipmentValue) || 0,
-              description: bookingData.goodsType || "Package"
+              description: bookingData.packageDescription || "Package"
             }
           ]
         }
       ],
-      payments: {
-        finalAmount: selectedService?.base || 0,
-        type: "Prepaid",
-        status: "PAID",
-        currency: "INR",
-        paymentMethod: bookingData.paymentMethod || "Online",
-        transactionId: `TXN${Date.now()}`,
+      payment: {
+        finalAmount: baseAmount,
+        type: "PREPAID",
         breakdown: {
-          subtotal: selectedService?.base || 0
+          otherCharges: [
+            { name: "Base Rate", chargedAmount: baseAmount }
+          ]
         }
       }
     };
