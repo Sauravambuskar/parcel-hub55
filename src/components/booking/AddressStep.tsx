@@ -117,6 +117,8 @@ const AddressStep = ({
                 value={senderData.pincode}
                 onChange={(e) => onSenderChange("pincode", e.target.value)}
                 placeholder="110001"
+                disabled
+                className="bg-muted"
               />
             </div>
           </div>
@@ -185,6 +187,8 @@ const AddressStep = ({
                 value={receiverData.pincode}
                 onChange={(e) => onReceiverChange("pincode", e.target.value)}
                 placeholder="110001"
+                disabled
+                className="bg-muted"
               />
             </div>
           </div>

@@ -51,6 +51,16 @@ const Booking = () => {
     checkAuth();
   }, []);
 
+  // Auto-populate pincodes from serviceability check
+  useEffect(() => {
+    if (pickupPincode && !senderData.pincode) {
+      setSenderData(prev => ({ ...prev, pincode: pickupPincode }));
+    }
+    if (deliveryPincode && !receiverData.pincode) {
+      setReceiverData(prev => ({ ...prev, pincode: deliveryPincode }));
+    }
+  }, [pickupPincode, deliveryPincode]);
+
   const checkAuth = async () => {
     // Check for Prayog authentication
     const prayogAuth = localStorage.getItem('prayog_auth');
