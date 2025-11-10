@@ -154,36 +154,31 @@ const BookingStep2 = ({
     try {
       // Extract pricing from the first serviceable partner
       const serviceablePartner = serviceabilityData.partners?.find(
-        (p: any) => p.capabilities?.is_serviceable
+        (p: any) => p.is_serviceable
       );
 
       if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
-        // Get the most appropriate service based on urgency
-        const urgencyMap: Record<string, string> = {
-          'express': 'STANDARD',
-          'super-urgent': 'STANDARD',
-          'standard': 'ECONOMY'
-        };
-        
-        const preferredService = urgencyMap[urgency?.toLowerCase()] || 'ECONOMY';
-        
-        // Find matching service or use first available
-        const service = serviceablePartner.services.find(
-          (s: any) => s.companyServiceName === preferredService
-        ) || serviceablePartner.services[0];
+        // Use the first available service (Prayog API returns best match)
+        const service = serviceablePartner.services[0];
 
-        const basePrice = Math.round(service.base || 0);
-        const taxAmount = Math.round(service.tax || 0);
-        const totalPrice = Math.round(service.total || 0);
-        const convenienceFee = totalPrice - basePrice;
+        // Extract price from rate object
+        const totalPrice = Math.round(service.rate?.price?.amount || 0);
+        const basePrice = totalPrice; // Prayog API returns total price only
+        const convenienceFee = 0;
+
+        // Calculate applied weight from package weight
+        let appliedWeight = 10; // default
+        if (packageWeight === 'light') appliedWeight = 2;
+        else if (packageWeight === 'medium') appliedWeight = 10;
+        else if (packageWeight === 'heavy') appliedWeight = 20;
 
         const pricing: PricingData = {
           basePrice,
-          convenienceFee: Math.max(convenienceFee, 0),
+          convenienceFee,
           totalPrice,
-          serviceType: service.companyServiceName || 'STANDARD',
-          weightRange: `${service.appliedWeight || 0}kg`,
-          locationType: service.zoneName || 'ZONE 4'
+          serviceType: service.service_name.toUpperCase(),
+          weightRange: `${appliedWeight}kg`,
+          locationType: serviceablePartner.capabilities?.city_name || 'Standard'
         };
 
         setPricingData(pricing);
@@ -191,7 +186,7 @@ const BookingStep2 = ({
           onPricingCalculated(pricing);
         }
 
-        console.log('Extracted pricing:', pricing);
+        console.log('Extracted pricing from Prayog API:', pricing);
       }
     } catch (error) {
       console.error('Error extracting pricing:', error);

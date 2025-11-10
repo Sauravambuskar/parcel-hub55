@@ -95,32 +95,47 @@ const Booking = () => {
       let courierId = 1;
 
       serviceabilityData.partners.forEach((partner: any) => {
-        if (partner.capabilities?.is_serviceable && partner.services) {
+        // Check if partner is serviceable
+        if (partner.is_serviceable && partner.services) {
           partner.services.forEach((service: any) => {
-            const basePrice = Math.round(service.base || 0);
-            const totalPrice = Math.round(service.total || 0);
-            const convenienceFee = totalPrice - basePrice;
+            // Extract price from rate object
+            const totalPrice = Math.round(service.rate?.price?.amount || 0);
+            // For Prayog API, the amount is the total price (no separate base/fee breakdown)
+            const basePrice = totalPrice;
+            const convenienceFee = 0;
+
+            // Format partner name properly
+            const partnerName = partner.partner_code
+              .split('_')
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+
+            const serviceName = service.service_name
+              .split('_')
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
 
             couriers.push({
               id: courierId++,
-              name: `${service.partnerName || partner.partner_code} - ${service.companyServiceName}`,
-              rating: partner.rating || 4.5,
-              deliveryTime: `${service.EDT || 2}-${(service.EDT || 2) + 1} days`,
+              name: `${partnerName} - ${serviceName}`,
+              rating: partner.rating || 4.0,
+              deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
               basePrice,
-              convenienceFee: Math.max(convenienceFee, 0),
-              vehicleType: service.serviceMode === 'AIR' ? 'Air' : 'Surface',
+              convenienceFee,
+              vehicleType: service.delivery_modes?.express ? 'Express' : 'Standard',
               image: "/placeholder.svg",
               features: [
-                service.serviceMode === 'AIR' ? 'Air delivery' : 'Surface delivery',
-                partner.capabilities?.cod_available ? 'COD available' : 'Prepaid only',
-                partner.capabilities?.insurance_available ? 'Insurance available' : 'Basic coverage',
-                `Zone: ${service.zoneName || 'Standard'}`
+                service.delivery_modes?.express ? 'Express delivery' : 'Standard delivery',
+                service.is_cod ? 'COD available' : 'Prepaid only',
+                service.insurance ? 'Insurance available' : 'Basic coverage',
+                `Price: ₹${totalPrice}`
               ],
               prayogData: {
                 partnerId: partner.partner_id,
                 partnerCode: partner.partner_code,
-                serviceId: service.partnerServiceId,
-                serviceName: service.partnerServiceName
+                serviceCode: service.service_code,
+                serviceName: service.service_name,
+                rateId: service.rate?.rate_id
               }
             });
           });
@@ -283,19 +298,17 @@ const Booking = () => {
     try {
       // Find the selected service from serviceability data
       let selectedService = null;
-      if (serviceabilityData?.partners) {
+      if (serviceabilityData?.partners && selectedCourierData?.prayogData) {
         for (const partner of serviceabilityData.partners) {
-          if (partner.services) {
-            const service = partner.services.find((s: any) => {
-              const serviceName = `${partner.company_name} - ${s.company_service_name}`;
-              return serviceName === selectedCourierData?.name;
-            });
+          if (partner.partner_id === selectedCourierData.prayogData.partnerId) {
+            const service = partner.services?.find((s: any) => 
+              s.service_code === selectedCourierData.prayogData.serviceCode
+            );
             if (service) {
               selectedService = {
                 ...service,
-                companyName: partner.company_name,
-                companyId: partner.company_id,
-                vendorCode: partner.vendor_code
+                partner_id: partner.partner_id,
+                partner_code: partner.partner_code
               };
               break;
             }
