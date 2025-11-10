@@ -32,6 +32,7 @@ interface BookingStep2Props {
   onDimensionChange: (dimension: string, value: string) => void;
   onPricingCalculated?: (pricing: PricingData) => void;
   onServiceabilityData?: (data: any) => void;
+  onLocationData?: (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -48,6 +49,7 @@ const BookingStep2 = ({
   onDimensionChange,
   onPricingCalculated,
   onServiceabilityData,
+  onLocationData,
   onNext, 
   onBack 
 }: BookingStep2Props) => {
@@ -73,7 +75,40 @@ const BookingStep2 = ({
     setIsCheckingServiceability(true);
 
     try {
-      // Use default values for initial serviceability check
+      // First, get location data for both pincodes
+      let pickupCity = '';
+      let pickupState = '';
+      let deliveryCity = '';
+      let deliveryState = '';
+
+      // Fetch pickup location details
+      try {
+        const pickupResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
+          },
+          body: JSON.stringify({
+            source_postal_code: pickupPincode,
+            destination_postal_code: pickupPincode, // Same to get source location
+            parcel_category: 'ecomm',
+            packages: [{
+              weight: { value: 1, unit: 'kg' },
+              dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
+            }]
+          })
+        });
+        const pickupData = await pickupResponse.json();
+        if (pickupData.partners?.[0]?.capabilities) {
+          pickupCity = pickupData.partners[0].capabilities.city_name || '';
+          pickupState = pickupData.partners[0].capabilities.state_name || '';
+        }
+      } catch (error) {
+        console.log('Could not fetch pickup location details');
+      }
+
+      // Check serviceability between pincodes
       const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
         method: 'POST',
         headers: {
@@ -119,11 +154,25 @@ const BookingStep2 = ({
           onServiceabilityData(data);
         }
         
+        // Extract delivery location data from serviceable partner
+        if (data.partners) {
+          const serviceablePartner = data.partners.find((p: any) => p.is_serviceable);
+          if (serviceablePartner?.capabilities) {
+            deliveryCity = serviceablePartner.capabilities.city_name || '';
+            deliveryState = serviceablePartner.capabilities.state_name || '';
+          }
+        }
+        
+        // Pass location data to parent for auto-fill
+        if (onLocationData) {
+          onLocationData(pickupCity, pickupState, deliveryCity, deliveryState);
+        }
+        
         setIsServiceable(true);
         
         toast({
           title: "Service Available ✓",
-          description: "Great! Delivery is available for this route.",
+          description: "Great! Delivery is available for this route. City and state auto-filled for addresses.",
         });
       } else {
         setIsServiceable(false);

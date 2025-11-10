@@ -61,6 +61,23 @@ const Booking = () => {
     }
   }, [pickupPincode, deliveryPincode]);
 
+  const handleLocationData = (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => {
+    if (pickupCity && pickupState) {
+      setSenderData(prev => ({ 
+        ...prev, 
+        city: pickupCity, 
+        state: pickupState 
+      }));
+    }
+    if (deliveryCity && deliveryState) {
+      setReceiverData(prev => ({ 
+        ...prev, 
+        city: deliveryCity, 
+        state: deliveryState 
+      }));
+    }
+  };
+
   const checkAuth = async () => {
     // Check for Prayog authentication
     const prayogAuth = localStorage.getItem('prayog_auth');
@@ -571,6 +588,7 @@ const Booking = () => {
             onDimensionChange={handleDimensionChange}
             onPricingCalculated={setCalculatedPricing}
             onServiceabilityData={setServiceabilityData}
+            onLocationData={handleLocationData}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
