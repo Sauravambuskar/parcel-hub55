@@ -257,6 +257,9 @@ const Booking = () => {
       case 'shipmentValue':
         setShipmentValue(value);
         break;
+      case 'packageDescription':
+        setPackageDescription(value);
+        break;
     }
   };
 
