@@ -6,21 +6,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Package, Scale } from "lucide-react";
 
 interface BookingStep3Props {
+  goodsType: string;
   packageWeight: string;
+  dimensions: { length: string; width: string; height: string };
+  shipmentValue: string;
   packageDescription: string;
   onInputChange: (field: string, value: string) => void;
+  onDimensionChange: (dimension: string, value: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
 const BookingStep3 = ({ 
+  goodsType,
   packageWeight, 
+  dimensions,
+  shipmentValue,
   packageDescription, 
-  onInputChange, 
+  onInputChange,
+  onDimensionChange,
   onNext, 
   onBack 
 }: BookingStep3Props) => {
-  const isValid = packageWeight && packageDescription;
+  const isValid = goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && packageDescription;
 
   return (
     <div className="space-y-6">
@@ -38,7 +46,24 @@ const BookingStep3 = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Package Weight</Label>
+            <Label htmlFor="goods-type">Type of Goods *</Label>
+            <Select value={goodsType} onValueChange={(value) => onInputChange('goodsType', value)}>
+              <SelectTrigger id="goods-type">
+                <SelectValue placeholder="Select goods type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="documents">Documents</SelectItem>
+                <SelectItem value="electronics">Electronics</SelectItem>
+                <SelectItem value="clothing">Clothing</SelectItem>
+                <SelectItem value="food">Food Items</SelectItem>
+                <SelectItem value="fragile">Fragile Items</SelectItem>
+                <SelectItem value="others">Others</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Package Weight *</Label>
             <Select value={packageWeight} onValueChange={(value) => onInputChange('packageWeight', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select package weight category" />
@@ -73,6 +98,51 @@ const BookingStep3 = ({
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Package Dimensions (cm) *</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                type="number"
+                placeholder="Length"
+                value={dimensions.length}
+                onChange={(e) => onDimensionChange('length', e.target.value)}
+                min="1"
+                required
+              />
+              <Input
+                type="number"
+                placeholder="Width"
+                value={dimensions.width}
+                onChange={(e) => onDimensionChange('width', e.target.value)}
+                min="1"
+                required
+              />
+              <Input
+                type="number"
+                placeholder="Height"
+                value={dimensions.height}
+                onChange={(e) => onDimensionChange('height', e.target.value)}
+                min="1"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="shipment-value">Shipment Value (₹)</Label>
+            <Input
+              id="shipment-value"
+              type="number"
+              value={shipmentValue}
+              onChange={(e) => onInputChange('shipmentValue', e.target.value)}
+              placeholder="Enter value for insurance"
+              min="0"
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional: For insurance purposes
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -54,6 +54,7 @@ const BookingStep2 = ({
   const { toast } = useToast();
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
+  const [isServiceable, setIsServiceable] = useState(false);
   
   const isValid = pickupPincode && deliveryPincode;
 
@@ -103,6 +104,7 @@ const BookingStep2 = ({
       const data = await response.json();
 
       if (data.success === false || data.metadata?.serviceable_count === 0) {
+        setIsServiceable(false);
         toast({
           title: "Service Unavailable",
           description: "Delivery is not available for this route. Please try different pincodes.",
@@ -117,15 +119,14 @@ const BookingStep2 = ({
           onServiceabilityData(data);
         }
         
-        toast({
-          title: "Service Available",
-          description: "Route is serviceable. Pricing calculated!",
-        });
+        setIsServiceable(true);
         
-        setTimeout(() => {
-          onNext();
-        }, 1500);
+        toast({
+          title: "Service Available ✓",
+          description: "Great! Delivery is available for this route.",
+        });
       } else {
+        setIsServiceable(false);
         toast({
           title: "Service Unavailable",
           description: "Unable to check serviceability. Please try again.",
@@ -224,9 +225,19 @@ const BookingStep2 = ({
         </CardContent>
       </Card>
 
+      {/* Serviceability Confirmation */}
+      {isServiceable && (
+        <Alert className="border-green-500/50 bg-green-500/10">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          <AlertDescription className="text-foreground">
+            <strong>Serviceability Confirmed!</strong> Delivery is available between these pincodes. 
+            Continue to enter package details.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Pricing Display */}
-      {pricingData && (
+      {pricingData && isServiceable && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -261,11 +272,11 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={handleContinue} 
+          onClick={isServiceable ? onNext : handleContinue} 
           disabled={!isValid || isCheckingServiceability}
           className="flex-1 h-12"
         >
-          {isCheckingServiceability ? "Checking..." : "Continue"}
+          {isCheckingServiceability ? "Checking Serviceability..." : isServiceable ? "Continue to Package Details" : "Check Serviceability"}
         </Button>
       </div>
     </div>
