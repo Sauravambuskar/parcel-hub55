@@ -446,6 +446,11 @@ const Booking = () => {
         }
       };
 
+      // Get auth token from localStorage
+      const prayogAuth = localStorage.getItem('prayog_auth');
+      const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
+      const idToken = authData?.id_token || '';
+
       // Call Prayog API directly
       const prayogResponse = await fetch(
         `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`,
@@ -454,7 +459,7 @@ const Booking = () => {
           headers: {
             'Content-Type': 'application/json',
             'tenantId': PRAYOG_CONFIG.TENANT_ID,
-            'token': PRAYOG_CONFIG.TOKEN,
+            'token': idToken,
           },
           body: JSON.stringify(prayogPayload),
         }
