@@ -99,6 +99,8 @@ const AddressStep = ({
                 value={senderData.city}
                 onChange={(e) => onSenderChange("city", e.target.value)}
                 placeholder="City"
+                disabled
+                className="bg-muted"
               />
             </div>
             <div>
@@ -108,6 +110,8 @@ const AddressStep = ({
                 value={senderData.state}
                 onChange={(e) => onSenderChange("state", e.target.value)}
                 placeholder="State"
+                disabled
+                className="bg-muted"
               />
             </div>
             <div>
@@ -169,6 +173,8 @@ const AddressStep = ({
                 value={receiverData.city}
                 onChange={(e) => onReceiverChange("city", e.target.value)}
                 placeholder="City"
+                disabled
+                className="bg-muted"
               />
             </div>
             <div>
@@ -178,6 +184,8 @@ const AddressStep = ({
                 value={receiverData.state}
                 onChange={(e) => onReceiverChange("state", e.target.value)}
                 placeholder="State"
+                disabled
+                className="bg-muted"
               />
             </div>
             <div>
