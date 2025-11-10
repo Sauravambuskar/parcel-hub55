@@ -453,7 +453,8 @@ const Booking = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
+            'tenantId': PRAYOG_CONFIG.TENANT_ID,
+            'token': PRAYOG_CONFIG.TOKEN,
           },
           body: JSON.stringify(prayogPayload),
         }

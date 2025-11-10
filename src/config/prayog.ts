@@ -1,4 +1,5 @@
 export const PRAYOG_CONFIG = {
   API_BASE_URL: 'https://sandbox-apis.prayog.io',
-  TENANT_ID: 'your-tenant-id-here', // Replace with your actual tenant ID
+  TENANT_ID: '6901d6e05021c666ba4bef43',
+  TOKEN: '', // Add your token here
 };
