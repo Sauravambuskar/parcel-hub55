@@ -3,10 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, MapPin } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddressStepProps {
   senderData: {
@@ -43,8 +45,85 @@ const AddressStep = ({
   const [senderValidation, setSenderValidation] = useState<{ valid: boolean; message: string } | null>(null);
   const [receiverValidation, setReceiverValidation] = useState<{ valid: boolean; message: string } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [senderSuggestions, setSenderSuggestions] = useState<any[]>([]);
+  const [receiverSuggestions, setReceiverSuggestions] = useState<any[]>([]);
+  const [showSenderSuggestions, setShowSenderSuggestions] = useState(false);
+  const [showReceiverSuggestions, setShowReceiverSuggestions] = useState(false);
+  const senderInputRef = useRef<HTMLTextAreaElement>(null);
+  const receiverInputRef = useRef<HTMLTextAreaElement>(null);
+  const senderDebounceRef = useRef<NodeJS.Timeout>();
+  const receiverDebounceRef = useRef<NodeJS.Timeout>();
 
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const fetchPlaceSuggestions = async (input: string, type: 'sender' | 'receiver') => {
+    if (!input || input.length < 3) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('google-places-autocomplete', {
+        body: { input }
+      });
+      
+      if (error) {
+        console.error('Error fetching place suggestions:', error);
+        return;
+      }
+      
+      if (data.status === 'OK' && data.predictions) {
+        if (type === 'sender') {
+          setSenderSuggestions(data.predictions);
+          setShowSenderSuggestions(true);
+        } else {
+          setReceiverSuggestions(data.predictions);
+          setShowReceiverSuggestions(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching place suggestions:', error);
+    }
+  };
+
+  const handleAddressChange = (value: string, type: 'sender' | 'receiver') => {
+    if (type === 'sender') {
+      onSenderChange('address', value);
+      if (senderDebounceRef.current) {
+        clearTimeout(senderDebounceRef.current);
+      }
+      senderDebounceRef.current = setTimeout(() => {
+        if (value.length >= 3) {
+          fetchPlaceSuggestions(value, type);
+        } else {
+          setSenderSuggestions([]);
+          setShowSenderSuggestions(false);
+        }
+      }, 300);
+    } else {
+      onReceiverChange('address', value);
+      if (receiverDebounceRef.current) {
+        clearTimeout(receiverDebounceRef.current);
+      }
+      receiverDebounceRef.current = setTimeout(() => {
+        if (value.length >= 3) {
+          fetchPlaceSuggestions(value, type);
+        } else {
+          setReceiverSuggestions([]);
+          setShowReceiverSuggestions(false);
+        }
+      }, 300);
+    }
+  };
+
+  const selectSuggestion = (suggestion: any, type: 'sender' | 'receiver') => {
+    if (type === 'sender') {
+      onSenderChange('address', suggestion.description);
+      setSenderSuggestions([]);
+      setShowSenderSuggestions(false);
+    } else {
+      onReceiverChange('address', suggestion.description);
+      setReceiverSuggestions([]);
+      setShowReceiverSuggestions(false);
+    }
+  };
 
   const validateAddress = async (
     address: string,
@@ -102,6 +181,17 @@ const AddressStep = ({
       setIsValidating(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (senderDebounceRef.current) {
+        clearTimeout(senderDebounceRef.current);
+      }
+      if (receiverDebounceRef.current) {
+        clearTimeout(receiverDebounceRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (senderData.address && senderData.city && senderData.state && senderData.pincode) {
@@ -172,15 +262,36 @@ const AddressStep = ({
             </div>
           </div>
 
-          <div>
+          <div className="relative">
             <Label htmlFor="sender-address">Complete Address *</Label>
             <Textarea
+              ref={senderInputRef}
               id="sender-address"
               value={senderData.address}
-              onChange={(e) => onSenderChange("address", e.target.value)}
+              onChange={(e) => handleAddressChange(e.target.value, 'sender')}
+              onFocus={() => senderSuggestions.length > 0 && setShowSenderSuggestions(true)}
               placeholder="House/Flat No., Building Name, Street, Area"
               rows={3}
             />
+            {showSenderSuggestions && senderSuggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-hidden">
+                <ScrollArea className="h-full max-h-60">
+                  {senderSuggestions.map((suggestion) => (
+                    <div
+                      key={suggestion.place_id}
+                      className="px-4 py-3 hover:bg-accent cursor-pointer flex items-start gap-2 border-b border-border last:border-0"
+                      onClick={() => selectSuggestion(suggestion, 'sender')}
+                    >
+                      <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{suggestion.structured_formatting?.main_text}</p>
+                        <p className="text-xs text-muted-foreground truncate">{suggestion.structured_formatting?.secondary_text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            )}
             {senderValidation && (
               <Alert className={`mt-2 ${senderValidation.valid ? 'border-green-500' : 'border-destructive'}`}>
                 {senderValidation.valid ? (
@@ -256,15 +367,36 @@ const AddressStep = ({
             </div>
           </div>
 
-          <div>
+          <div className="relative">
             <Label htmlFor="receiver-address">Complete Address *</Label>
             <Textarea
+              ref={receiverInputRef}
               id="receiver-address"
               value={receiverData.address}
-              onChange={(e) => onReceiverChange("address", e.target.value)}
+              onChange={(e) => handleAddressChange(e.target.value, 'receiver')}
+              onFocus={() => receiverSuggestions.length > 0 && setShowReceiverSuggestions(true)}
               placeholder="House/Flat No., Building Name, Street, Area"
               rows={3}
             />
+            {showReceiverSuggestions && receiverSuggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-hidden">
+                <ScrollArea className="h-full max-h-60">
+                  {receiverSuggestions.map((suggestion) => (
+                    <div
+                      key={suggestion.place_id}
+                      className="px-4 py-3 hover:bg-accent cursor-pointer flex items-start gap-2 border-b border-border last:border-0"
+                      onClick={() => selectSuggestion(suggestion, 'receiver')}
+                    >
+                      <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{suggestion.structured_formatting?.main_text}</p>
+                        <p className="text-xs text-muted-foreground truncate">{suggestion.structured_formatting?.secondary_text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            )}
             {receiverValidation && (
               <Alert className={`mt-2 ${receiverValidation.valid ? 'border-green-500' : 'border-destructive'}`}>
                 {receiverValidation.valid ? (
