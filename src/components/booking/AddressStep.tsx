@@ -221,8 +221,7 @@ const AddressStep = ({
     senderData.address && 
     senderData.city && 
     senderData.state && 
-    senderData.pincode &&
-    (!GOOGLE_MAPS_API_KEY || senderValidation?.valid);
+    senderData.pincode;
 
   const isReceiverValid = 
     receiverData.name && 
@@ -230,8 +229,7 @@ const AddressStep = ({
     receiverData.address && 
     receiverData.city && 
     receiverData.state && 
-    receiverData.pincode &&
-    (!GOOGLE_MAPS_API_KEY || receiverValidation?.valid);
+    receiverData.pincode;
 
   const isValid = isSenderValid && isReceiverValid;
 
