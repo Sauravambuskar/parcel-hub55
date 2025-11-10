@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PRAYOG_CONFIG } from "@/config/prayog";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -316,34 +317,160 @@ const Booking = () => {
         }
       }
 
-      // Create booking via Prayog API
-      const { data: prayogBooking, error: prayogError } = await supabase.functions.invoke(
-        'prayog-create-booking',
-        {
-          body: {
-            sender: senderData,
-            receiver: receiverData,
-            goodsType,
-            packageWeight,
-            dimensions,
-            shipmentValue,
-            urgency,
-            paymentMethod,
-            expectedDeliveryDate: selectedDate?.toISOString(),
-            selectedService,
-            note: packageDescription
+      // Generate orderId
+      const now = new Date();
+      const timestamp = [
+        now.getFullYear().toString().slice(-2),
+        (now.getMonth() + 1).toString().padStart(2, '0'),
+        now.getDate().toString().padStart(2, '0'),
+        now.getHours().toString().padStart(2, '0'),
+        now.getMinutes().toString().padStart(2, '0'),
+        now.getSeconds().toString().padStart(2, '0'),
+      ].join('');
+      
+      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const randomPart = Array.from({ length: 6 }, () => 
+        charset[Math.floor(Math.random() * charset.length)]
+      ).join('');
+      
+      const orderId = timestamp + randomPart;
+
+      // Calculate volumetric weight
+      const length = parseFloat(dimensions?.length) || 10;
+      const width = parseFloat(dimensions?.width) || 10;
+      const height = parseFloat(dimensions?.height) || 10;
+      const volumetricWeight = (length * width * height) / 5000;
+      const physicalWeight = parseFloat(packageWeight) || 1;
+      
+      const baseAmount = selectedService?.rate?.price?.amount || 0;
+
+      // Prepare Prayog API payload
+      const prayogPayload = {
+        referenceId: orderId,
+        orderDate: new Date().toISOString(),
+        orderType: "FORWARD",
+        orderStatus: "READY_FOR_DISPATCH",
+        parcelCategory: "ECOMM",
+        vendorCode: "AWSA",
+        autoManifest: true,
+        eWaybills: [],
+        deliveryPromise: selectedService?.service_name || "standard",
+        metadata: { source: "WEB_APP" },
+        documents: [],
+        addresses: [
+          {
+            type: "PICKUP",
+            zip: senderData.pincode,
+            name: senderData.name,
+            phone: senderData.phone,
+            street: senderData.address,
+            landmark: null,
+            city: senderData.city,
+            state: senderData.state,
+            country: "India",
+            latitude: 0,
+            longitude: 0,
+            addressName: senderData.address
+          },
+          {
+            type: "DELIVERY",
+            zip: receiverData.pincode,
+            name: receiverData.name,
+            phone: receiverData.phone,
+            street: receiverData.address,
+            landmark: null,
+            city: receiverData.city,
+            state: receiverData.state,
+            country: "India",
+            latitude: 0,
+            longitude: 0,
+            addressName: receiverData.address
+          },
+          {
+            type: "BILLING",
+            zip: receiverData.pincode,
+            name: receiverData.name,
+            phone: receiverData.phone,
+            street: receiverData.address,
+            landmark: null,
+            city: receiverData.city,
+            state: receiverData.state,
+            country: "India",
+            latitude: 0,
+            longitude: 0,
+            addressName: receiverData.address
+          },
+          {
+            type: "RETURN",
+            zip: senderData.pincode,
+            name: senderData.name,
+            phone: senderData.phone,
+            street: senderData.address,
+            landmark: null,
+            city: senderData.city,
+            state: senderData.state,
+            country: "India",
+            latitude: 0,
+            longitude: 0,
+            addressName: senderData.address
           }
+        ],
+        shipments: [
+          {
+            dimensions: { 
+              length: length, 
+              width: width, 
+              height: height 
+            },
+            shipmentStatus: "CONFIRMED",
+            awbNumber: "",
+            physicalWeight: physicalWeight,
+            volumetricWeight: volumetricWeight,
+            note: packageDescription || "",
+            items: [
+              {
+                name: goodsType || "Package",
+                description: packageDescription || "Package"
+              }
+            ]
+          }
+        ],
+        payment: {
+          finalAmount: baseAmount,
+          type: "PREPAID",
+          breakdown: {
+            otherCharges: [
+              { name: "Base Rate", chargedAmount: baseAmount }
+            ]
+          }
+        }
+      };
+
+      // Call Prayog API directly
+      const prayogResponse = await fetch(
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
+          },
+          body: JSON.stringify(prayogPayload),
         }
       );
 
-      if (prayogError) {
-        console.error('Prayog booking error:', prayogError);
-        throw new Error('Failed to create booking with courier partner');
+      const prayogResult = await prayogResponse.json();
+
+      if (!prayogResponse.ok) {
+        throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
       }
 
-      if (!prayogBooking?.success) {
-        throw new Error(prayogBooking?.error || 'Failed to create booking');
-      }
+      const prayogBooking = {
+        success: true,
+        orderId: prayogResult.orderId || orderId,
+        awbNumber: prayogResult.shipments?.[0]?.awbNumber || null,
+        trackingId: prayogResult.shipments?.[0]?.awbNumber || orderId,
+      };
 
       // Save booking to our database
       const { error: dbError } = await supabase.from('bookings').insert({
