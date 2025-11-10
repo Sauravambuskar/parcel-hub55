@@ -459,7 +459,7 @@ const Booking = () => {
           headers: {
             'Content-Type': 'application/json',
             'tenantId': PRAYOG_CONFIG.TENANT_ID,
-            'token': idToken,
+            'token': `Bearer ${idToken}`,
           },
           body: JSON.stringify(prayogPayload),
         }
