@@ -3,14 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle2, MapPin } from "lucide-react";
+import { AlertCircle, CheckCircle2, MapPin, Globe } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { COUNTRIES, getCountryName } from "@/data/countries";
 
 interface AddressStepProps {
+  shipmentType: 'domestic' | 'international';
   senderData: {
     name: string;
     phone: string;
@@ -18,6 +21,7 @@ interface AddressStepProps {
     city: string;
     state: string;
     pincode: string;
+    country: string;
   };
   receiverData: {
     name: string;
@@ -26,6 +30,7 @@ interface AddressStepProps {
     city: string;
     state: string;
     pincode: string;
+    country: string;
   };
   onSenderChange: (field: string, value: string) => void;
   onReceiverChange: (field: string, value: string) => void;
@@ -34,6 +39,7 @@ interface AddressStepProps {
 }
 
 const AddressStep = ({
+  shipmentType,
   senderData,
   receiverData,
   onSenderChange,
@@ -258,6 +264,31 @@ const AddressStep = ({
                 placeholder="+91 98765 43210"
               />
             </div>
+            {shipmentType === 'international' && (
+              <div className="md:col-span-2">
+                <Label htmlFor="sender-country">Country *</Label>
+                <Select
+                  value={senderData.country}
+                  onValueChange={(value) => onSenderChange("country", value)}
+                >
+                  <SelectTrigger id="sender-country">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <ScrollArea className="h-[200px]">
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4" />
+                            {country.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </ScrollArea>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -363,6 +394,31 @@ const AddressStep = ({
                 placeholder="+91 98765 43210"
               />
             </div>
+            {shipmentType === 'international' && (
+              <div className="md:col-span-2">
+                <Label htmlFor="receiver-country">Country *</Label>
+                <Select
+                  value={receiverData.country}
+                  onValueChange={(value) => onReceiverChange("country", value)}
+                >
+                  <SelectTrigger id="receiver-country">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <ScrollArea className="h-[200px]">
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4" />
+                            {country.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </ScrollArea>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="relative">

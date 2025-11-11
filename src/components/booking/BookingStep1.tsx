@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Truck, Package } from "lucide-react";
 
 interface BookingStep1Props {
-  onNext: () => void;
+  onNext: (shipmentType: 'domestic' | 'international') => void;
 }
 
 const BookingStep1 = ({ onNext }: BookingStep1Props) => {
@@ -15,7 +15,7 @@ const BookingStep1 = ({ onNext }: BookingStep1Props) => {
       </div>
 
       <div className="grid gap-4">
-        <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={onNext}>
+        <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => onNext('domestic')}>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -33,28 +33,23 @@ const BookingStep1 = ({ onNext }: BookingStep1Props) => {
           </CardContent>
         </Card>
 
-        <Card className="border border-muted opacity-60">
+        <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => onNext('international')}>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
-                <Truck className="w-6 h-6 text-muted-foreground" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Truck className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-muted-foreground">International Delivery</h3>
+                <h3 className="font-semibold text-lg">International Delivery</h3>
                 <p className="text-sm text-muted-foreground">Send packages worldwide</p>
                 <div className="flex gap-2 mt-2">
-                  <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">Coming Soon</span>
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Air Freight</span>
+                  <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full">Customs Support</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="pt-4">
-        <Button onClick={onNext} className="w-full h-12 text-base">
-          Continue with Domestic Delivery
-        </Button>
       </div>
     </div>
   );

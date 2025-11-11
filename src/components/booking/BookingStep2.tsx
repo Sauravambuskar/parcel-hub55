@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, CheckCircle } from "lucide-react";
+import { MapPin, CheckCircle, Globe } from "lucide-react";
 import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -21,8 +21,11 @@ interface PricingData {
 }
 
 interface BookingStep2Props {
+  shipmentType: 'domestic' | 'international';
   pickupPincode: string;
   deliveryPincode: string;
+  senderCountry: string;
+  receiverCountry: string;
   goodsType: string;
   packageWeight: string;
   dimensions: { length: string; width: string; height: string };
@@ -38,8 +41,11 @@ interface BookingStep2Props {
 }
 
 const BookingStep2 = ({ 
+  shipmentType,
   pickupPincode,
   deliveryPincode,
+  senderCountry,
+  receiverCountry,
   goodsType,
   packageWeight,
   dimensions,
@@ -118,6 +124,8 @@ const BookingStep2 = ({
         body: JSON.stringify({
           source_postal_code: pickupPincode,
           destination_postal_code: deliveryPincode,
+          source_country: senderCountry,
+          destination_country: receiverCountry,
           parcel_category: 'ecomm',
           packages: [
             {
@@ -236,6 +244,12 @@ const BookingStep2 = ({
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-semibold">Pincode Information</h2>
         <p className="text-muted-foreground">Enter pickup and delivery pincodes</p>
+        {shipmentType === 'international' && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mt-2">
+            <Globe className="w-4 h-4" />
+            International Shipment
+          </div>
+        )}
       </div>
 
       {/* Pincode Information */}

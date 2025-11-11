@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
+import { getCountryName } from "@/data/countries";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -17,6 +18,7 @@ import BookingStep6 from "@/components/booking/BookingStep6";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [shipmentType, setShipmentType] = useState<'domestic' | 'international'>('domestic');
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [urgency, setUrgency] = useState('');
@@ -36,10 +38,10 @@ const Booking = () => {
   const [serviceabilityData, setServiceabilityData] = useState<any>(null);
   
   const [senderData, setSenderData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
+    name: '', phone: '', address: '', city: '', state: '', pincode: '', country: 'IN'
   });
   const [receiverData, setReceiverData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
+    name: '', phone: '', address: '', city: '', state: '', pincode: '', country: 'IN'
   });
   
   const navigate = useNavigate();
@@ -387,64 +389,64 @@ const Booking = () => {
         deliveryPromise: selectedService?.service_name || "standard",
         metadata: { source: "WEB_APP" },
         documents: [],
-        addresses: [
-          {
-            type: "PICKUP",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address
-          },
-          {
-            type: "DELIVERY",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address
-          },
-          {
-            type: "BILLING",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address
-          },
-          {
-            type: "RETURN",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address
-          }
-        ],
+          addresses: [
+            {
+              type: "PICKUP",
+              zip: senderData.pincode,
+              name: senderData.name,
+              phone: senderData.phone,
+              street: senderData.address,
+              landmark: null,
+              city: senderData.city,
+              state: senderData.state,
+              country: senderData.country === 'IN' ? 'India' : getCountryName(senderData.country),
+              latitude: 0,
+              longitude: 0,
+              addressName: senderData.address
+            },
+            {
+              type: "DELIVERY",
+              zip: receiverData.pincode,
+              name: receiverData.name,
+              phone: receiverData.phone,
+              street: receiverData.address,
+              landmark: null,
+              city: receiverData.city,
+              state: receiverData.state,
+              country: receiverData.country === 'IN' ? 'India' : getCountryName(receiverData.country),
+              latitude: 0,
+              longitude: 0,
+              addressName: receiverData.address
+            },
+            {
+              type: "BILLING",
+              zip: receiverData.pincode,
+              name: receiverData.name,
+              phone: receiverData.phone,
+              street: receiverData.address,
+              landmark: null,
+              city: receiverData.city,
+              state: receiverData.state,
+              country: receiverData.country === 'IN' ? 'India' : getCountryName(receiverData.country),
+              latitude: 0,
+              longitude: 0,
+              addressName: receiverData.address
+            },
+            {
+              type: "RETURN",
+              zip: senderData.pincode,
+              name: senderData.name,
+              phone: senderData.phone,
+              street: senderData.address,
+              landmark: null,
+              city: senderData.city,
+              state: senderData.state,
+              country: senderData.country === 'IN' ? 'India' : getCountryName(senderData.country),
+              latitude: 0,
+              longitude: 0,
+              addressName: senderData.address
+            }
+          ],
         shipments: [
           {
             dimensions: { 
@@ -573,12 +575,27 @@ const Booking = () => {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return <BookingStep1 onNext={handleNextStep} />;
+        return <BookingStep1 onNext={(type) => {
+          setShipmentType(type);
+          if (type === 'international') {
+            // Set default countries for international
+            setSenderData(prev => ({ ...prev, country: 'IN' }));
+            setReceiverData(prev => ({ ...prev, country: 'US' }));
+          } else {
+            // Reset to India for domestic
+            setSenderData(prev => ({ ...prev, country: 'IN' }));
+            setReceiverData(prev => ({ ...prev, country: 'IN' }));
+          }
+          handleNextStep();
+        }} />;
       case 2:
         return (
           <BookingStep2
+            shipmentType={shipmentType}
             pickupPincode={pickupPincode}
             deliveryPincode={deliveryPincode}
+            senderCountry={senderData.country}
+            receiverCountry={receiverData.country}
             goodsType={goodsType}
             packageWeight={packageWeight}
             dimensions={dimensions}
@@ -639,6 +656,7 @@ const Booking = () => {
       case 7:
         return (
           <AddressStep
+            shipmentType={shipmentType}
             senderData={senderData}
             receiverData={receiverData}
             onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
