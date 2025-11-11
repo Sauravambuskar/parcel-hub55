@@ -11,7 +11,13 @@ serve(async (req) => {
   }
 
   try {
-    const { source_postal_code, destination_postal_code } = await req.json();
+    const { 
+      source_postal_code, 
+      destination_postal_code,
+      source_country = 'IN',
+      destination_country = 'IN',
+      parcel_category = 'ecomm'
+    } = await req.json();
     
     if (!source_postal_code || !destination_postal_code) {
       return new Response(
@@ -19,6 +25,9 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Determine if this is an international shipment
+    const isInternational = source_country !== destination_country;
 
     const TENANT_ID = Deno.env.get('PRAYOG_TENANT_ID');
     
@@ -30,7 +39,30 @@ serve(async (req) => {
       );
     }
 
-    console.log('Checking serviceability:', { source_postal_code, destination_postal_code });
+    console.log('Checking serviceability:', { 
+      source_postal_code, 
+      destination_postal_code, 
+      source_country,
+      destination_country,
+      isInternational,
+      parcel_category
+    });
+
+    // Build request payload
+    const payload: any = {
+      source_postal_code,
+      destination_postal_code,
+      parcel_category,
+    };
+
+    // Add country codes for international shipments
+    if (isInternational) {
+      payload.source_country_code = source_country;
+      payload.destination_country_code = destination_country;
+      payload.shipment_type = 'INTERNATIONAL';
+    } else {
+      payload.shipment_type = 'DOMESTIC';
+    }
 
     const response = await fetch('https://sandbox-apis.prayog.io/serviceability/v2/check', {
       method: 'POST',
@@ -38,11 +70,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'X-TENANT-ID': TENANT_ID,
       },
-      body: JSON.stringify({
-        source_postal_code,
-        destination_postal_code,
-        parcel_category: 'ecomm'
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
@@ -57,8 +85,17 @@ serve(async (req) => {
 
     console.log('Serviceability check result:', data);
 
+    // Enhance response with shipment type information
+    const enhancedData = {
+      ...data,
+      shipment_type: isInternational ? 'INTERNATIONAL' : 'DOMESTIC',
+      is_international: isInternational,
+      source_country,
+      destination_country
+    };
+
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify(enhancedData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
