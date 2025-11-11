@@ -289,6 +289,9 @@ const Booking = () => {
       case 'packageDescription':
         setPackageDescription(value);
         break;
+      case 'receiverCountry':
+        setReceiverData(prev => ({ ...prev, country: value }));
+        break;
     }
   };
 
