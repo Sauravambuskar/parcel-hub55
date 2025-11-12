@@ -24,7 +24,7 @@ const BookingStep1 = ({ onNext }: BookingStep1Props) => {
               <h3 className="font-semibold text-lg">Domestic Delivery</h3>
               <p className="text-sm text-muted-foreground">Send packages within India</p>
               <div className="flex gap-2 mt-2">
-                <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">Same Day</span>
+                <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full">Standard</span>
                 <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Express</span>
               </div>
             </div>
