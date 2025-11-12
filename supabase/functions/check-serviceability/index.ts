@@ -16,7 +16,11 @@ serve(async (req) => {
       destination_postal_code,
       source_country = 'IN',
       destination_country = 'IN',
-      parcel_category = 'ecomm'
+      parcel_category = 'ecomm',
+      packages = [{
+        weight: { value: 2, unit: 'kg' },
+        dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
+      }]
     } = await req.json();
     
     if (!source_postal_code || !destination_postal_code) {
@@ -53,6 +57,7 @@ serve(async (req) => {
       source_postal_code,
       destination_postal_code,
       parcel_category,
+      packages,
     };
 
     // Add country codes for international shipments

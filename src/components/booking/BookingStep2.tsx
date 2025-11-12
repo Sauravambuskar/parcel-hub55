@@ -9,7 +9,6 @@ import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PRAYOG_CONFIG } from "@/config/prayog";
 import { supabase } from "@/integrations/supabase/client";
 import { COUNTRIES, getCountryName } from "@/data/countries";
 
@@ -114,7 +113,7 @@ const BookingStep2 = ({
     setIsCheckingServiceability(true);
 
     try {
-      // First, get location data for both pincodes
+      // First, get location data for pickup pincode
       let pickupCity = '';
       let pickupState = '';
       let deliveryCity = '';
@@ -122,24 +121,21 @@ const BookingStep2 = ({
 
       // Fetch pickup location details
       try {
-        const pickupResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
-          },
-          body: JSON.stringify({
+        const { data: pickupData, error: pickupError } = await supabase.functions.invoke('check-serviceability', {
+          body: {
             source_postal_code: pickupPincode,
-            destination_postal_code: pickupPincode, // Same to get source location
+            destination_postal_code: pickupPincode,
+            source_country: senderCountry,
+            destination_country: senderCountry,
             parcel_category: 'ecomm',
             packages: [{
               weight: { value: 1, unit: 'kg' },
               dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
             }]
-          })
+          }
         });
-        const pickupData = await pickupResponse.json();
-        if (pickupData.partners?.[0]?.capabilities) {
+        
+        if (pickupData?.partners?.[0]?.capabilities) {
           pickupCity = pickupData.partners[0].capabilities.city_name || '';
           pickupState = pickupData.partners[0].capabilities.state_name || '';
         }
@@ -148,36 +144,29 @@ const BookingStep2 = ({
       }
 
       // Check serviceability between pincodes
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('check-serviceability', {
+        body: {
           source_postal_code: pickupPincode,
           destination_postal_code: deliveryPincode,
           source_country: senderCountry,
           destination_country: receiverCountry,
           parcel_category: 'ecomm',
-          packages: [
-            {
-              weight: {
-                value: 2,
-                unit: 'kg'
-              },
-              dimensions: {
-                length: 10,
-                width: 10,
-                height: 10,
-                unit: 'cm'
-              }
-            }
-          ]
-        })
+          packages: [{
+            weight: { value: 2, unit: 'kg' },
+            dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
+          }]
+        }
       });
 
-      const data = await response.json();
+      if (error) {
+        console.error('Edge function error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to check serviceability. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       if (data.success === false || data.metadata?.serviceable_count === 0) {
         setIsServiceable(false);
