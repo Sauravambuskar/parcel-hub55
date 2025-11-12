@@ -51,77 +51,77 @@ serve(async (req) => {
     // Get base amount from selected service
     const baseAmount = selectedService?.rate?.price?.amount || 0;
     
-      // Prepare Prayog API payload
-      const prayogPayload = {
-        referenceId: orderId,
-        orderDate: new Date().toISOString(),
-        orderType: "FORWARD",
-        orderStatus: "READY_FOR_DISPATCH",
-        parcelCategory: "ECOMM",
-        vendorCode: "AWSA",
-        autoManifest: true,
-        eWaybills: [],
-        deliveryPromise: selectedService?.service_name || "standard",
-        metadata: { source: "WEB_APP" },
-        documents: [],
-        addresses: [
-          {
-            type: "PICKUP",
-            zip: bookingData.sender.pincode,
-            name: bookingData.sender.name,
-            phone: bookingData.sender.phone,
-            street: bookingData.sender.address,
-            landmark: null,
-            city: bookingData.sender.city,
-            state: bookingData.sender.state,
-            country: bookingData.sender.country || "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: bookingData.sender.address
-          },
-          {
-            type: "DELIVERY",
-            zip: bookingData.receiver.pincode,
-            name: bookingData.receiver.name,
-            phone: bookingData.receiver.phone,
-            street: bookingData.receiver.address,
-            landmark: null,
-            city: bookingData.receiver.city,
-            state: bookingData.receiver.state,
-            country: bookingData.receiver.country || "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: bookingData.receiver.address
-          },
-          {
-            type: "BILLING",
-            zip: bookingData.receiver.pincode,
-            name: bookingData.receiver.name,
-            phone: bookingData.receiver.phone,
-            street: bookingData.receiver.address,
-            landmark: null,
-            city: bookingData.receiver.city,
-            state: bookingData.receiver.state,
-            country: bookingData.receiver.country || "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: bookingData.receiver.address
-          },
-          {
-            type: "RETURN",
-            zip: bookingData.sender.pincode,
-            name: bookingData.sender.name,
-            phone: bookingData.sender.phone,
-            street: bookingData.sender.address,
-            landmark: null,
-            city: bookingData.sender.city,
-            state: bookingData.sender.state,
-            country: bookingData.sender.country || "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: bookingData.sender.address
-          }
-        ],
+    // Prepare Prayog API payload
+    const prayogPayload = {
+      referenceId: orderId,
+      orderDate: new Date().toISOString(),
+      orderType: "FORWARD",
+      orderStatus: "READY_FOR_DISPATCH",
+      parcelCategory: "ECOMM",
+      vendorCode: "AWSA",
+      autoManifest: true,
+      eWaybills: [],
+      deliveryPromise: selectedService?.service_name || "standard",
+      metadata: { source: "WEB_APP" },
+      documents: [],
+      addresses: [
+        {
+          type: "PICKUP",
+          zip: bookingData.sender.pincode,
+          name: bookingData.sender.name,
+          phone: bookingData.sender.phone,
+          street: bookingData.sender.address,
+          landmark: null,
+          city: bookingData.sender.city,
+          state: bookingData.sender.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.sender.address
+        },
+        {
+          type: "DELIVERY",
+          zip: bookingData.receiver.pincode,
+          name: bookingData.receiver.name,
+          phone: bookingData.receiver.phone,
+          street: bookingData.receiver.address,
+          landmark: null,
+          city: bookingData.receiver.city,
+          state: bookingData.receiver.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.receiver.address
+        },
+        {
+          type: "BILLING",
+          zip: bookingData.receiver.pincode,
+          name: bookingData.receiver.name,
+          phone: bookingData.receiver.phone,
+          street: bookingData.receiver.address,
+          landmark: null,
+          city: bookingData.receiver.city,
+          state: bookingData.receiver.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.receiver.address
+        },
+        {
+          type: "RETURN",
+          zip: bookingData.sender.pincode,
+          name: bookingData.sender.name,
+          phone: bookingData.sender.phone,
+          street: bookingData.sender.address,
+          landmark: null,
+          city: bookingData.sender.city,
+          state: bookingData.sender.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: bookingData.sender.address
+        }
+      ],
       shipments: [
         {
           dimensions: { 

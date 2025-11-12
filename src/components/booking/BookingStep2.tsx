@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapPin, CheckCircle, Globe } from "lucide-react";
+import { MapPin, CheckCircle } from "lucide-react";
 import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PRAYOG_CONFIG } from "@/config/prayog";
-import { COUNTRIES, getCountryName } from "@/data/countries";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PricingData {
   basePrice: number;
@@ -22,11 +21,8 @@ interface PricingData {
 }
 
 interface BookingStep2Props {
-  shipmentType: 'domestic' | 'international';
   pickupPincode: string;
   deliveryPincode: string;
-  senderCountry: string;
-  receiverCountry: string;
   goodsType: string;
   packageWeight: string;
   dimensions: { length: string; width: string; height: string };
@@ -42,11 +38,8 @@ interface BookingStep2Props {
 }
 
 const BookingStep2 = ({ 
-  shipmentType,
   pickupPincode,
   deliveryPincode,
-  senderCountry,
-  receiverCountry,
   goodsType,
   packageWeight,
   dimensions,
@@ -65,55 +58,24 @@ const BookingStep2 = ({
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [isServiceable, setIsServiceable] = useState(false);
   
-  const isValid = pickupPincode && deliveryPincode && (shipmentType === 'domestic' || (shipmentType === 'international' && receiverCountry && receiverCountry !== 'IN'));
+  const isValid = pickupPincode && deliveryPincode;
 
   const handleContinue = async () => {
     if (!isValid) return;
     
-    // Validation for domestic
-    if (shipmentType === 'domestic') {
-      if (pickupPincode.length !== 6 || deliveryPincode.length !== 6) {
-        toast({
-          title: "Invalid Pincode",
-          description: "Please enter valid 6-digit pincodes",
-          variant: "destructive"
-        });
-        return;
-      }
-    } else {
-      // Validation for international
-      if (pickupPincode.length !== 6) {
-        toast({
-          title: "Invalid Pincode",
-          description: "Please enter a valid 6-digit Indian pincode",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      if (!receiverCountry || receiverCountry === 'IN') {
-        toast({
-          title: "Country Required",
-          description: "Please select a destination country",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      if (!deliveryPincode || deliveryPincode.trim().length === 0) {
-        toast({
-          title: "Postal Code Required",
-          description: `Please enter the destination postal code for ${getCountryName(receiverCountry)}`,
-          variant: "destructive"
-        });
-        return;
-      }
+    if (pickupPincode.length !== 6 || deliveryPincode.length !== 6) {
+      toast({
+        title: "Invalid Pincode",
+        description: "Please enter valid 6-digit pincodes",
+        variant: "destructive"
+      });
+      return;
     }
 
     setIsCheckingServiceability(true);
 
     try {
-      // First, get location data for pickup pincode
+      // First, get location data for both pincodes
       let pickupCity = '';
       let pickupState = '';
       let deliveryCity = '';
@@ -129,9 +91,7 @@ const BookingStep2 = ({
           },
           body: JSON.stringify({
             source_postal_code: pickupPincode,
-            destination_postal_code: pickupPincode,
-            source_country: senderCountry,
-            destination_country: senderCountry,
+            destination_postal_code: pickupPincode, // Same to get source location
             parcel_category: 'ecomm',
             packages: [{
               weight: { value: 1, unit: 'kg' },
@@ -140,7 +100,7 @@ const BookingStep2 = ({
           })
         });
         const pickupData = await pickupResponse.json();
-        if (pickupData?.partners?.[0]?.capabilities) {
+        if (pickupData.partners?.[0]?.capabilities) {
           pickupCity = pickupData.partners[0].capabilities.city_name || '';
           pickupState = pickupData.partners[0].capabilities.state_name || '';
         }
@@ -158,13 +118,21 @@ const BookingStep2 = ({
         body: JSON.stringify({
           source_postal_code: pickupPincode,
           destination_postal_code: deliveryPincode,
-          source_country: senderCountry,
-          destination_country: receiverCountry,
           parcel_category: 'ecomm',
-          packages: [{
-            weight: { value: 2, unit: 'kg' },
-            dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
-          }]
+          packages: [
+            {
+              weight: {
+                value: 2,
+                unit: 'kg'
+              },
+              dimensions: {
+                length: 10,
+                width: 10,
+                height: 10,
+                unit: 'cm'
+              }
+            }
+          ]
         })
       });
 
@@ -266,117 +234,42 @@ const BookingStep2 = ({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">
-          {shipmentType === 'international' ? 'Origin & Destination' : 'Pincode Information'}
-        </h2>
-        <p className="text-muted-foreground">
-          {shipmentType === 'international' 
-            ? 'Enter origin and select destination country' 
-            : 'Enter pickup and delivery pincodes'}
-        </p>
-        {shipmentType === 'international' && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mt-2">
-            <Globe className="w-4 h-4" />
-            International Shipment
-          </div>
-        )}
+        <h2 className="text-2xl font-semibold">Pincode Information</h2>
+        <p className="text-muted-foreground">Enter pickup and delivery pincodes</p>
       </div>
 
-      {/* Location Information */}
+      {/* Pincode Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            {shipmentType === 'international' ? 'Location Details' : 'Pincode Information'}
+            Pincode Information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
-            {shipmentType === 'domestic' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pickup-pincode">Pickup Pincode *</Label>
-                  <Input
-                    id="pickup-pincode"
-                    value={pickupPincode}
-                    onChange={(e) => onInputChange('pickupPincode', e.target.value)}
-                    placeholder="e.g., 110001"
-                    maxLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="delivery-pincode">Delivery Pincode *</Label>
-                  <Input
-                    id="delivery-pincode"
-                    value={deliveryPincode}
-                    onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
-                    placeholder="e.g., 400001"
-                    maxLength={6}
-                  />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+                <Input
+                  id="pickup-pincode"
+                  value={pickupPincode}
+                  onChange={(e) => onInputChange('pickupPincode', e.target.value)}
+                  placeholder="e.g., 110001"
+                  maxLength={6}
+                />
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="origin-pincode">Origin Pincode (India) *</Label>
-                  <Input
-                    id="origin-pincode"
-                    value={pickupPincode}
-                    onChange={(e) => onInputChange('pickupPincode', e.target.value)}
-                    placeholder="e.g., 110001"
-                    maxLength={6}
-                  />
-                  <p className="text-xs text-muted-foreground">Enter your Indian pincode</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="destination-country">Destination Country *</Label>
-                  <Select
-                    value={receiverCountry}
-                    onValueChange={(value) => {
-                      // Update parent component with country selection
-                      const event = { target: { value } } as any;
-                      onInputChange('receiverCountry', value);
-                    }}
-                  >
-                    <SelectTrigger id="destination-country">
-                      <SelectValue placeholder="Select destination country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <ScrollArea className="h-[300px]">
-                        {COUNTRIES.filter(c => c.code !== 'IN').map((country) => (
-                          <SelectItem key={country.code} value={country.code}>
-                            <div className="flex items-center gap-2">
-                              <Globe className="w-4 h-4" />
-                              {country.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Select where you want to send the package</p>
-                </div>
-
-                {receiverCountry && receiverCountry !== 'IN' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="destination-postal">
-                      Destination {receiverCountry === 'US' ? 'ZIP Code' : 'Postal Code'} *
-                    </Label>
-                    <Input
-                      id="destination-postal"
-                      value={deliveryPincode}
-                      onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
-                      placeholder={receiverCountry === 'US' ? 'e.g., 10001' : 'e.g., SW1A 1AA'}
-                      maxLength={10}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the {receiverCountry === 'US' ? 'ZIP code' : 'postal code'} for {getCountryName(receiverCountry)}
-                    </p>
-                  </div>
-                )}
+              <div className="space-y-2">
+                <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
+                <Input
+                  id="delivery-pincode"
+                  value={deliveryPincode}
+                  onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
+                  placeholder="e.g., 400001"
+                  maxLength={6}
+                />
               </div>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -386,9 +279,8 @@ const BookingStep2 = ({
         <Alert className="border-green-500/50 bg-green-500/10">
           <CheckCircle className="h-5 w-5 text-green-500" />
           <AlertDescription className="text-foreground">
-            <strong>Serviceability Confirmed!</strong> {shipmentType === 'international' 
-              ? `International shipping to ${getCountryName(receiverCountry)} is available.`
-              : 'Delivery is available between these pincodes.'} Continue to enter package details.
+            <strong>Serviceability Confirmed!</strong> Delivery is available between these pincodes. 
+            Continue to enter package details.
           </AlertDescription>
         </Alert>
       )}
