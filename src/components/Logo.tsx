@@ -46,7 +46,7 @@ const Logo = ({ className, size = "md", showText = true }: LogoProps) => {
           "font-bold text-foreground",
           sizeClasses[size].text
         )}>
-          Via<span className="text-primary">Setu</span>
+          Via<span className="text-primary">Setu.</span>
         </h1>
       )}
     </div>
