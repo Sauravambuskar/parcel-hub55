@@ -134,7 +134,7 @@ const Index = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Logo size="lg" className="justify-center mb-6" />
-          <h1 className="text-3xl font-bold mb-2">Welcome to ViaSetu</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome to ViaSetu.</h1>
           <p className="text-muted-foreground mb-8">
             PAN-India coverage: 21,000+ pincodes connected through one app
           </p>
