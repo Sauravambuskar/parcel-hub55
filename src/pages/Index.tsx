@@ -5,52 +5,44 @@ import { Package, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
-
 const Index = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-
   useEffect(() => {
     checkUser();
   }, []);
-
   const checkUser = async () => {
     // Check for Prayog auth
     const prayogAuth = localStorage.getItem('prayog_auth');
     if (prayogAuth) {
       const authData = JSON.parse(prayogAuth);
-      setUser({ 
+      setUser({
         phone: authData.phone,
-        user_id: authData.user_id 
+        user_id: authData.user_id
       });
     }
   };
-
   const fetchProfile = async (userId: string) => {
     // Profile fetching can be implemented later if needed
     // For now, we're using Prayog auth only
   };
-
   const handleLogout = async () => {
     // Clear Prayog auth
     localStorage.removeItem('prayog_auth');
-    
     setUser(null);
     setProfile(null);
-    
     toast({
       title: "Logged out",
-      description: "You have been successfully logged out.",
+      description: "You have been successfully logged out."
     });
-    
     navigate('/login');
   };
-
   if (user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 p-4">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header with User Info */}
           <Card>
@@ -125,16 +117,13 @@ const Index = () => {
             </Card>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Logo size="lg" className="justify-center mb-6" />
-          <h1 className="text-3xl font-bold mb-2">Welcome to ViaSetu.</h1>
+          
           <p className="text-muted-foreground mb-8">
             PAN-India coverage: 21,000+ pincodes connected through one app
           </p>
@@ -160,17 +149,11 @@ const Index = () => {
         </div>
 
         <div className="text-center">
-          <Button 
-            variant="link" 
-            onClick={() => navigate('/admin/login')}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="link" onClick={() => navigate('/admin/login')} className="text-xs text-muted-foreground hover:text-foreground">
             Admin Access
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
