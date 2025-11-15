@@ -136,7 +136,7 @@ const Index = () => {
           <Logo size="lg" className="justify-center mb-6" />
           <h1 className="text-3xl font-bold mb-2">Welcome to ViaSetu</h1>
           <p className="text-muted-foreground mb-8">
-            Fast, reliable courier service at your fingertips
+            PAN-India coverage: 21,000+ pincodes connected through one app
           </p>
         </div>
 
