@@ -29,24 +29,24 @@ const Logo = ({ className, size = "md", showText = true }: LogoProps) => {
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div className={cn(
-        "bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden",
+        "bg-secondary rounded-xl flex items-center justify-center shadow-glow relative overflow-hidden border-2 border-primary",
         sizeClasses[size].container
       )}>
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-white/10 rounded-full" />
-        <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-white/10 rounded-full" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+        <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary/20 rounded-full" />
+        <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-primary/20 rounded-full" />
         
         {/* Icon */}
-        <Package className={cn("text-white relative z-10", sizeClasses[size].icon)} />
+        <Package className={cn("text-primary relative z-10", sizeClasses[size].icon)} />
       </div>
       
       {showText && (
         <h1 className={cn(
-          "font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent",
+          "font-bold text-foreground",
           sizeClasses[size].text
         )}>
-          viaSetu
+          via<span className="text-primary">Setu</span>
         </h1>
       )}
     </div>
