@@ -130,7 +130,7 @@ const Login = () => {
             <Package className="h-10 w-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-            Setu
+            ViaSetu
           </h1>
           <p className="text-muted-foreground mt-2">
             Fast delivery across India
