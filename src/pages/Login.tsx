@@ -18,11 +18,14 @@ const Login = () => {
     toast
   } = useToast();
   useEffect(() => {
-    // Check if user is already logged in with Prayog
-    const prayogAuth = localStorage.getItem('prayog_auth');
-    if (prayogAuth) {
-      navigate("/");
-    }
+    // Check if user is already logged in with Supabase
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/");
+      }
+    };
+    checkAuth();
   }, [navigate]);
   const handleSendOTP = async () => {
     if (phoneNumber.length !== 10) {
@@ -87,9 +90,42 @@ const Login = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      // Store Prayog auth data with tokens
+      // Create/sign in user to Supabase with phone
+      const phoneWithCountryCode = `+91${phoneNumber}`;
+      const generatedPassword = `prayog_${phoneNumber}_${data.user_id}`;
+      
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        phone: phoneWithCountryCode,
+        password: generatedPassword,
+      });
+
+      // If sign in fails, user doesn't exist - create account
+      if (signInError) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          phone: phoneWithCountryCode,
+          password: generatedPassword,
+          options: {
+            data: {
+              prayog_user_id: data.user_id,
+            }
+          }
+        });
+        
+        if (signUpError) throw signUpError;
+
+        // Sign in after creating account
+        const { error: signInAfterSignUpError } = await supabase.auth.signInWithPassword({
+          phone: phoneWithCountryCode,
+          password: generatedPassword,
+        });
+        
+        if (signInAfterSignUpError) throw signInAfterSignUpError;
+      }
+
+      // Store Prayog tokens for API calls
       localStorage.setItem('prayog_auth', JSON.stringify({
-        phone: `+91${phoneNumber}`,
+        phone: phoneWithCountryCode,
         id_token: data.id_token,
         refresh_token: data.refresh_token,
         expires_in: data.expires_in,
@@ -99,6 +135,7 @@ const Login = () => {
         user_email: data.user_email,
         authenticated_at: new Date().toISOString()
       }));
+
       toast({
         title: "Welcome to Setu!",
         description: "Login successful"
@@ -113,9 +150,6 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const handleGuestMode = () => {
-    navigate('/booking');
   };
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -174,19 +208,6 @@ const Login = () => {
                   Resend OTP
                 </Button>
               </>}
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-            
-            <Button variant="outline" onClick={handleGuestMode} className="w-full">
-              Continue as Guest
-            </Button>
           </CardContent>
         </Card>
       </div>
