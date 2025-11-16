@@ -142,7 +142,7 @@ const Index = () => {
                 Book deliveries and track your packages
               </p>
               <Button onClick={() => navigate('/login')} className="w-full bg-gradient-to-r from-primary to-primary-glow">
-                Get Started
+                Start Shipping
               </Button>
             </CardContent>
           </Card>
