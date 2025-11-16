@@ -18,14 +18,11 @@ const Login = () => {
     toast
   } = useToast();
   useEffect(() => {
-    // Check if user is already logged in with Supabase
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-    };
-    checkAuth();
+    // Check if user is already logged in with Prayog
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (prayogAuth) {
+      navigate("/");
+    }
   }, [navigate]);
   const handleSendOTP = async () => {
     if (phoneNumber.length !== 10) {
@@ -90,41 +87,10 @@ const Login = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      // Create/sign in user to Supabase with phone
       const phoneWithCountryCode = `+91${phoneNumber}`;
-      const generatedPassword = `prayog_${phoneNumber}_${data.user_id}`;
       
-      // Try to sign in first
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        phone: phoneWithCountryCode,
-        password: generatedPassword,
-      });
-
-      // If sign in fails, user doesn't exist - create account
-      if (signInError) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          phone: phoneWithCountryCode,
-          password: generatedPassword,
-          options: {
-            data: {
-              prayog_user_id: data.user_id,
-            }
-          }
-        });
-        
-        if (signUpError) throw signUpError;
-
-        // Sign in after creating account
-        const { error: signInAfterSignUpError } = await supabase.auth.signInWithPassword({
-          phone: phoneWithCountryCode,
-          password: generatedPassword,
-        });
-        
-        if (signInAfterSignUpError) throw signInAfterSignUpError;
-      }
-
-      // Store Prayog tokens for API calls
-      localStorage.setItem('prayog_auth', JSON.stringify({
+      // Store Prayog auth data with tokens
+      const authData = {
         phone: phoneWithCountryCode,
         id_token: data.id_token,
         refresh_token: data.refresh_token,
@@ -134,7 +100,34 @@ const Login = () => {
         user_id: data.user_id,
         user_email: data.user_email,
         authenticated_at: new Date().toISOString()
-      }));
+      };
+      localStorage.setItem('prayog_auth', JSON.stringify(authData));
+
+      // Create or update user profile in Supabase
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user_id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        // Update existing profile
+        await supabase
+          .from('profiles')
+          .update({ 
+            phone: phoneWithCountryCode,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', data.user_id);
+      } else {
+        // Create new profile
+        await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user_id,
+            phone: phoneWithCountryCode
+          });
+      }
 
       toast({
         title: "Welcome to Setu!",

@@ -17,10 +17,15 @@ const Index = () => {
     checkUser();
   }, []);
   const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
-      fetchProfile(session.user.id);
+    // Check for Prayog auth
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (prayogAuth) {
+      const authData = JSON.parse(prayogAuth);
+      setUser({
+        phone: authData.phone,
+        user_id: authData.user_id
+      });
+      fetchProfile(authData.user_id);
     }
   };
   
@@ -36,7 +41,6 @@ const Index = () => {
     }
   };
   const handleLogout = async () => {
-    await supabase.auth.signOut();
     localStorage.removeItem('prayog_auth');
     setUser(null);
     setProfile(null);
