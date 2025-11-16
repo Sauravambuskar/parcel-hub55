@@ -127,7 +127,8 @@ const Index = () => {
           
           <div className="space-y-2">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              AI-Powered Multi-Courier Platform
+              AI-Powered 
+Multi-Courier Platform
             </h1>
             <p className="text-muted-foreground text-lg">
               Ship smarter across 21,000+ pincodes
@@ -153,20 +154,12 @@ const Index = () => {
 
         {/* Primary CTA */}
         <div className="space-y-3 text-center">
-          <Button 
-            onClick={() => navigate('/login')} 
-            size="lg"
-            className="w-full max-w-xs bg-gradient-to-r from-primary to-primary-glow hover:shadow-lg transition-all"
-          >
+          <Button onClick={() => navigate('/login')} size="lg" className="w-full max-w-xs bg-gradient-to-r from-primary to-primary-glow hover:shadow-lg transition-all">
             <Package className="h-5 w-5 mr-2" />
             Start Shipping
           </Button>
           
-          <Button 
-            variant="link" 
-            onClick={() => navigate('/tracking')}
-            className="text-sm"
-          >
+          <Button variant="link" onClick={() => navigate('/tracking')} className="text-sm">
             Track Package
           </Button>
         </div>
