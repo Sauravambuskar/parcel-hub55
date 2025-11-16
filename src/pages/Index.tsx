@@ -127,7 +127,7 @@ const Index = () => {
           
           <div className="space-y-2">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              AI-Powered 
+              AI-Powered  
 Multi-Courier Platform
             </h1>
             <p className="text-muted-foreground text-lg">
@@ -165,9 +165,7 @@ Multi-Courier Platform
         </div>
 
         {/* Trust Badge */}
-        <p className="text-center text-xs text-muted-foreground">
-          Trusted by businesses across India
-        </p>
+        
 
         {/* Admin Access */}
         <div className="text-center pt-4">
