@@ -1,4 +1,3 @@
-import { Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 interface LogoProps {
   className?: string;
@@ -35,7 +34,7 @@ const Logo = ({
         <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-primary/20 rounded-full" />
         
         {/* Icon */}
-        <Package className={cn("text-primary relative z-10", sizeClasses[size].icon)} />
+        
       </div>
       
       {showText && <h1 className={cn("font-bold text-foreground", sizeClasses[size].text)}>
