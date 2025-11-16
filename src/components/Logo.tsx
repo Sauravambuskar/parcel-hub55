@@ -23,7 +23,7 @@ const Logo = ({
     lg: {
       container: "h-16 w-16",
       icon: "h-8 w-8",
-      text: "text-3xl"
+      text: "text-4xl md:text-5xl"
     }
   };
   return <div className={cn("flex items-center", className)}>
