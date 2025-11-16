@@ -127,8 +127,8 @@ const Index = () => {
           
           <div className="space-y-2">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              AI-Powered   
-Multi-Courier Platform
+              AI-Powered<br />
+              Multi-Courier Platform
             </h1>
             <p className="text-muted-foreground text-lg">
               Ship smarter across 21,000+ pincodes
