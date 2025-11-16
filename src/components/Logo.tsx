@@ -26,17 +26,7 @@ const Logo = ({
       text: "text-3xl"
     }
   };
-  return <div className={cn("flex items-center gap-3", className)}>
-      <div className={cn("bg-secondary rounded-xl flex items-center justify-center shadow-glow relative overflow-hidden border-2 border-primary", sizeClasses[size].container)}>
-        {/* Background Pattern */}
-        
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary/20 rounded-full" />
-        <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-primary/20 rounded-full" />
-        
-        {/* Icon */}
-        
-      </div>
-      
+  return <div className={cn("flex items-center", className)}>
       {showText && <h1 className={cn("font-bold text-foreground", sizeClasses[size].text)}>
           Via<span className="text-primary">Setu.</span>
         </h1>}
