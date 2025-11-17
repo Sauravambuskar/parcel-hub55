@@ -14,7 +14,7 @@ const AdminDashboard = () => {
   const stats = [
     { title: "Total Users", value: "12,345", change: "+12%", icon: Users, color: "text-blue-600" },
     { title: "Active Orders", value: "2,341", change: "+8%", icon: Package, color: "text-green-600" },
-    { title: "Today's Revenue", value: "$45,678", change: "+23%", icon: DollarSign, color: "text-yellow-600" },
+    { title: "Today's Revenue", value: "₹45,678", change: "+23%", icon: DollarSign, color: "text-yellow-600" },
     { title: "Deliveries Today", value: "1,234", change: "+15%", icon: TrendingUp, color: "text-purple-600" },
   ];
 

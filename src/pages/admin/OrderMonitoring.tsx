@@ -20,7 +20,7 @@ const OrderMonitoring = () => {
       pickup: "Restaurant A", 
       delivery: "123 Main St", 
       time: "25 min",
-      amount: "$24.50",
+      amount: "₹24.50",
       priority: "Normal"
     },
     { 
@@ -32,7 +32,7 @@ const OrderMonitoring = () => {
       pickup: "Store B", 
       delivery: "456 Oak Ave", 
       time: "45 min",
-      amount: "$18.75",
+      amount: "₹18.75",
       priority: "High"
     },
     { 
@@ -44,7 +44,7 @@ const OrderMonitoring = () => {
       pickup: "Shop C", 
       delivery: "789 Pine St", 
       time: "10 min",
-      amount: "$32.00",
+      amount: "₹32.00",
       priority: "Normal"
     },
     { 
@@ -56,7 +56,7 @@ const OrderMonitoring = () => {
       pickup: "Restaurant D", 
       delivery: "321 Elm St", 
       time: "Completed",
-      amount: "$29.25",
+      amount: "₹29.25",
       priority: "Normal"
     },
   ];
