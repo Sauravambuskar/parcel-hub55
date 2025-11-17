@@ -14,6 +14,7 @@ import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import BookingStep6 from "@/components/booking/BookingStep6";
+import KYCVerificationStep from "@/components/booking/KYCVerificationStep";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -45,7 +46,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const totalSteps = 7;
+  const totalSteps = 8;
 
   useEffect(() => {
     checkAuth();
@@ -643,6 +644,14 @@ const Booking = () => {
             receiverData={receiverData}
             onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
             onReceiverChange={(field, value) => setReceiverData(prev => ({ ...prev, [field]: value }))}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 8:
+        return (
+          <KYCVerificationStep
+            userId={userId!}
             onNext={handleProceedToPayment}
             onBack={handlePrevStep}
           />

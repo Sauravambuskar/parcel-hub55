@@ -146,9 +146,13 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          doc_number: string | null
+          doc_type: string | null
           email: string | null
           full_name: string | null
           id: string
+          kyc_completed_at: string | null
+          kyc_status: string | null
           phone: string | null
           status: string | null
           updated_at: string
@@ -156,9 +160,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          doc_number?: string | null
+          doc_type?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          kyc_completed_at?: string | null
+          kyc_status?: string | null
           phone?: string | null
           status?: string | null
           updated_at?: string
@@ -166,9 +174,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          doc_number?: string | null
+          doc_type?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          kyc_completed_at?: string | null
+          kyc_status?: string | null
           phone?: string | null
           status?: string | null
           updated_at?: string
