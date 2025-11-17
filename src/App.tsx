@@ -12,15 +12,18 @@ import History from "./pages/History";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
+import ResetPassword from "./pages/admin/ResetPassword";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import RealTimeTracking from "./pages/admin/RealTimeTracking";
 import UserManagement from "./pages/admin/UserManagement";
+import AdminUserManagement from "./pages/admin/AdminUserManagement";
 import OrderMonitoring from "./pages/admin/OrderMonitoring";
 import RevenueManagement from "./pages/admin/RevenueManagement";
 import SupportManagement from "./pages/admin/SupportManagement";
 import Analytics from "./pages/admin/Analytics";
 import SystemSettings from "./pages/admin/SystemSettings";
+import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -41,11 +44,13 @@ const App = () => (
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin/reset-password" element={<ResetPassword />} />
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="tracking" element={<RealTimeTracking />} />
             <Route path="orders" element={<OrderMonitoring />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="admin-users" element={<ProtectedAdminRoute requireSuperAdmin><AdminUserManagement /></ProtectedAdminRoute>} />
             <Route path="revenue" element={<RevenueManagement />} />
             <Route path="support" element={<SupportManagement />} />
             <Route path="analytics" element={<Analytics />} />
