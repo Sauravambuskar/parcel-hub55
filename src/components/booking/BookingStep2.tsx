@@ -321,11 +321,11 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={isServiceable ? onNext : handleContinue} 
-          disabled={!isValid || isCheckingServiceability}
+          onClick={onNext} 
+          disabled={!isValid}
           className="flex-1 h-12"
         >
-          {isCheckingServiceability ? "Checking Serviceability..." : isServiceable ? "Continue to Package Details" : "Check Serviceability"}
+          Continue to Package Details
         </Button>
       </div>
     </div>
