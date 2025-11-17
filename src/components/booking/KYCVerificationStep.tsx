@@ -123,6 +123,11 @@ const KYCVerificationStep = ({ userId, onNext, onBack }: KYCVerificationStepProp
         throw new Error('Authentication token not found. Please log in again.');
       }
 
+      // Get tenant ID and customer ID
+      const tenantId = '6901d6e05021c666ba4bef43';
+      const customerId = authData.customer_id || authData.user_id || userId;
+      const authToken = authData.id_token || authData.token;
+
       // Save KYC details to profile
       const { error: updateError } = await supabase
         .from('profiles')
@@ -135,20 +140,43 @@ const KYCVerificationStep = ({ userId, onNext, onBack }: KYCVerificationStepProp
 
       if (updateError) throw updateError;
 
-      // Call edge function to initiate KYC
-      const { data, error } = await supabase.functions.invoke('prayog-kyc-initiate', {
-        body: {
+      // Get current origin for redirect URL
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/booking?kycCallback=true`;
+
+      // Prepare KYC payload
+      const kycPayload = {
+        KYC: {
           docType,
           docNumber,
-          userId: authData.user_id || userId,
-          customerId: authData.customer_id || authData.user_id,
-          authToken: authData.id_token || authData.token
+          redirectUrl
         }
-      });
+      };
 
-      if (error) throw error;
+      console.log('Calling Prayog KYC API directly');
 
-      if (data?.success && data?.redirectUrl) {
+      // Call Prayog KYC API directly
+      const response = await fetch(
+        `https://sandbox-apis.prayog.io/gateway/onboarding/api/v1/onboarding/${tenantId}/prospay/customer/${customerId}/kyc`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(kycPayload)
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || `KYC API error: ${response.status}`);
+      }
+
+      console.log('Prayog KYC API Response:', data);
+
+      if (data?.redirectUrl) {
         toast({
           title: "Redirecting to Digilocker",
           description: "Please complete your KYC verification.",
@@ -157,7 +185,7 @@ const KYCVerificationStep = ({ userId, onNext, onBack }: KYCVerificationStepProp
         // Redirect to Digilocker
         window.location.href = data.redirectUrl;
       } else {
-        throw new Error('Failed to get redirect URL');
+        throw new Error('Failed to get redirect URL from Prayog');
       }
 
     } catch (error: any) {
