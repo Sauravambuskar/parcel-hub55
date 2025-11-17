@@ -113,10 +113,15 @@ const KYCVerificationStep = ({ userId, onNext, onBack }: KYCVerificationStepProp
       // Get Prayog auth from localStorage
       const prayogAuth = localStorage.getItem('prayog_auth');
       if (!prayogAuth) {
-        throw new Error('Authentication required');
+        throw new Error('Authentication required. Please log in again.');
       }
 
       const authData = JSON.parse(prayogAuth);
+      
+      // Validate we have the necessary auth data
+      if (!authData.id_token && !authData.token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
 
       // Save KYC details to profile
       const { error: updateError } = await supabase
@@ -135,9 +140,9 @@ const KYCVerificationStep = ({ userId, onNext, onBack }: KYCVerificationStepProp
         body: {
           docType,
           docNumber,
-          userId,
-          customerId: authData.customer_id,
-          authToken: authData.token
+          userId: authData.user_id || userId,
+          customerId: authData.customer_id || authData.user_id,
+          authToken: authData.id_token || authData.token
         }
       });
 
