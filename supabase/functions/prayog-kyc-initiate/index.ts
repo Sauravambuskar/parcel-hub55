@@ -14,12 +14,19 @@ serve(async (req) => {
   try {
     const { docType, docNumber, userId, customerId, authToken } = await req.json();
     
-    console.log('KYC Initiation Request:', { docType, userId, customerId });
+    // Use userId as customerId if customerId is not provided
+    const effectiveCustomerId = customerId || userId;
+    
+    console.log('KYC Initiation Request:', { docType, userId, customerId: effectiveCustomerId });
 
     // Get tenant ID from environment
     const tenantId = Deno.env.get('PRAYOG_TENANT_ID');
     if (!tenantId) {
       throw new Error('PRAYOG_TENANT_ID not configured');
+    }
+
+    if (!authToken) {
+      throw new Error('Authentication token is required');
     }
 
     // Get current origin for redirect URL
@@ -36,10 +43,12 @@ serve(async (req) => {
     };
 
     console.log('Calling Prayog KYC API with payload:', kycPayload);
+    console.log('Using customer ID:', effectiveCustomerId);
+    console.log('Token (first 20 chars):', authToken?.substring(0, 20));
 
     // Call Prayog KYC API
     const response = await fetch(
-      `https://sandbox-apis.prayog.io/gateway/onboarding/api/v1/onboarding/${tenantId}/prospay/customer/${customerId}/kyc`,
+      `https://sandbox-apis.prayog.io/gateway/onboarding/api/v1/onboarding/${tenantId}/prospay/customer/${effectiveCustomerId}/kyc`,
       {
         method: 'POST',
         headers: {

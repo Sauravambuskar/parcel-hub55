@@ -92,12 +92,14 @@ const Login = () => {
       // Store Prayog auth data with tokens
       const authData = {
         phone: phoneWithCountryCode,
+        token: data.id_token, // Add token alias for compatibility
         id_token: data.id_token,
         refresh_token: data.refresh_token,
         expires_in: data.expires_in,
         token_type: data.token_type,
         platform_role: data.platform_role,
         user_id: data.user_id,
+        customer_id: data.customer_id || data.user_id, // Use customer_id from response or fallback to user_id
         user_email: data.user_email,
         authenticated_at: new Date().toISOString()
       };
