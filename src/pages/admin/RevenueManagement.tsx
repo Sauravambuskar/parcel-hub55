@@ -8,31 +8,31 @@ import { DollarSign, TrendingUp, Download, Calendar, Percent, CreditCard } from 
 
 const RevenueManagement = () => {
   const revenueStats = [
-    { title: "Today's Revenue", value: "$12,456", change: "+8.2%", icon: DollarSign, color: "text-green-600" },
-    { title: "Platform Commission", value: "$2,491", change: "+12%", icon: Percent, color: "text-blue-600" },
-    { title: "Partner Payouts", value: "$9,965", change: "+7%", icon: CreditCard, color: "text-purple-600" },
+    { title: "Today's Revenue", value: "₹12,456", change: "+8.2%", icon: DollarSign, color: "text-green-600" },
+    { title: "Platform Commission", value: "₹2,491", change: "+12%", icon: Percent, color: "text-blue-600" },
+    { title: "Partner Payouts", value: "₹9,965", change: "+7%", icon: CreditCard, color: "text-purple-600" },
     { title: "Growth Rate", value: "15.3%", change: "+2.1%", icon: TrendingUp, color: "text-orange-600" },
   ];
 
   const transactions = [
-    { id: "TXN-1234", orderId: "ORD-1234", partner: "Fast Delivery Co", amount: "$24.50", commission: "$4.90", payout: "$19.60", status: "Completed", date: "2024-07-24" },
-    { id: "TXN-1235", orderId: "ORD-1235", partner: "Quick Transport", amount: "$18.75", commission: "$3.75", payout: "$15.00", status: "Pending", date: "2024-07-24" },
-    { id: "TXN-1236", orderId: "ORD-1236", partner: "Express Logistics", amount: "$32.00", commission: "$6.40", payout: "$25.60", status: "Completed", date: "2024-07-24" },
+    { id: "TXN-1234", orderId: "ORD-1234", partner: "Fast Delivery Co", amount: "₹24.50", commission: "₹4.90", payout: "₹19.60", status: "Completed", date: "2024-07-24" },
+    { id: "TXN-1235", orderId: "ORD-1235", partner: "Quick Transport", amount: "₹18.75", commission: "₹3.75", payout: "₹15.00", status: "Pending", date: "2024-07-24" },
+    { id: "TXN-1236", orderId: "ORD-1236", partner: "Express Logistics", amount: "₹32.00", commission: "₹6.40", payout: "₹25.60", status: "Completed", date: "2024-07-24" },
   ];
 
   const partnerPayouts = [
-    { partner: "Fast Delivery Co", totalOrders: 45, totalRevenue: "$1,125.50", commission: "$225.10", payout: "$900.40", status: "Paid" },
-    { partner: "Quick Transport", totalOrders: 32, totalRevenue: "$856.75", commission: "$171.35", payout: "$685.40", status: "Pending" },
-    { partner: "Express Logistics", totalOrders: 67, totalRevenue: "$1,789.25", commission: "$357.85", payout: "$1,431.40", status: "Paid" },
+    { partner: "Fast Delivery Co", totalOrders: 45, totalRevenue: "₹1,125.50", commission: "₹225.10", payout: "₹900.40", status: "Paid" },
+    { partner: "Quick Transport", totalOrders: 32, totalRevenue: "₹856.75", commission: "₹171.35", payout: "₹685.40", status: "Pending" },
+    { partner: "Express Logistics", totalOrders: 67, totalRevenue: "₹1,789.25", commission: "₹357.85", payout: "₹1,431.40", status: "Paid" },
   ];
 
   const monthlyData = [
-    { month: "January", revenue: "$45,678", commission: "$9,135", payouts: "$36,543" },
-    { month: "February", revenue: "$52,341", commission: "$10,468", payouts: "$41,873" },
-    { month: "March", revenue: "$48,912", commission: "$9,782", payouts: "$39,130" },
-    { month: "April", revenue: "$61,234", commission: "$12,247", payouts: "$48,987" },
-    { month: "May", revenue: "$67,891", commission: "$13,578", payouts: "$54,313" },
-    { month: "June", revenue: "$73,456", commission: "$14,691", payouts: "$58,765" },
+    { month: "January", revenue: "₹45,678", commission: "₹9,135", payouts: "₹36,543" },
+    { month: "February", revenue: "₹52,341", commission: "₹10,468", payouts: "₹41,873" },
+    { month: "March", revenue: "₹48,912", commission: "₹9,782", payouts: "₹39,130" },
+    { month: "April", revenue: "₹61,234", commission: "₹12,247", payouts: "₹48,987" },
+    { month: "May", revenue: "₹67,891", commission: "₹13,578", payouts: "₹54,313" },
+    { month: "June", revenue: "₹73,456", commission: "₹14,691", payouts: "₹58,765" },
   ];
 
   const handleExportReport = (type: string) => {
