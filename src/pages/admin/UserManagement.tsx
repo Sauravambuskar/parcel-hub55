@@ -1,51 +1,124 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, UserCheck, UserX, Eye } from "lucide-react";
+import { Search, UserCheck, UserX, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+interface UserData {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  order_count: number;
+  created_at: string;
+}
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const users = [
-    { id: 1, name: "John Doe", email: "john@example.com", type: "Customer", status: "Active", orders: 23, joinDate: "2024-01-15" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", type: "Customer", status: "Active", orders: 45, joinDate: "2024-02-20" },
-    { id: 3, name: "Bob Wilson", email: "bob@example.com", type: "Customer", status: "Suspended", orders: 12, joinDate: "2024-03-10" },
-  ];
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const partners = [
-    { id: 1, name: "Fast Delivery Co", email: "contact@fastdelivery.com", status: "Active", orders: 234, rating: 4.8, joinDate: "2024-01-05" },
-    { id: 2, name: "Quick Transport", email: "info@quicktransport.com", status: "Pending", orders: 0, rating: 0, joinDate: "2024-07-20" },
-    { id: 3, name: "Express Logistics", email: "support@expresslog.com", status: "Active", orders: 156, rating: 4.6, joinDate: "2024-02-15" },
-  ];
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all profiles with booking counts
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
 
-  const handleApprovePartner = (id: number) => {
-    console.log("Approving partner:", id);
+      if (profilesError) throw profilesError;
+
+      // Fetch booking counts for each user
+      const usersWithCounts = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { count } = await supabase
+            .from('bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.user_id);
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name,
+            phone: profile.phone,
+            email: profile.email,
+            status: profile.status || 'active',
+            order_count: count || 0,
+            created_at: profile.created_at,
+          };
+        })
+      );
+
+      setUsers(usersWithCounts);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRejectPartner = (id: number) => {
-    console.log("Rejecting partner:", id);
+  const handleSuspendUser = async (userId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `User ${newStatus === 'suspended' ? 'suspended' : 'activated'} successfully`,
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSuspendUser = (id: number) => {
-    console.log("Suspending user:", id);
-  };
+  const filteredUsers = users.filter(user => 
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">User & Partner Management</h2>
-        <p className="text-muted-foreground">Manage users, partners, and approve applications</p>
+        <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+        <p className="text-muted-foreground">Manage and monitor app users</p>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search users or partners..."
+            placeholder="Search users by name, phone, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
@@ -55,9 +128,7 @@ const UserManagement = () => {
 
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="partners">Partners</TabsTrigger>
-          <TabsTrigger value="pending">Pending Applications</TabsTrigger>
+          <TabsTrigger value="users">All Users</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -66,142 +137,68 @@ const UserManagement = () => {
               <CardTitle>Customer Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Join Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.status === "Active" ? "default" : "destructive"}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{user.orders}</TableCell>
-                      <TableCell>{user.joinDate}</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant={user.status === "Active" ? "destructive" : "default"}
-                          onClick={() => handleSuspendUser(user.id)}
-                        >
-                          {user.status === "Active" ? "Suspend" : "Activate"}
-                        </Button>
-                      </TableCell>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No users found
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Orders</TableHead>
+                      <TableHead>Join Date</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="partners">
-          <Card>
-            <CardHeader>
-              <CardTitle>Partner Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Join Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {partners.filter(p => p.status !== "Pending").map((partner) => (
-                    <TableRow key={partner.id}>
-                      <TableCell className="font-medium">{partner.name}</TableCell>
-                      <TableCell>{partner.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={partner.status === "Active" ? "default" : "secondary"}>
-                          {partner.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{partner.orders}</TableCell>
-                      <TableCell>{partner.rating > 0 ? `${partner.rating}/5` : "N/A"}</TableCell>
-                      <TableCell>{partner.joinDate}</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="destructive">
-                          Suspend
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Partner Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Application Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {partners.filter(p => p.status === "Pending").map((partner) => (
-                    <TableRow key={partner.id}>
-                      <TableCell className="font-medium">{partner.name}</TableCell>
-                      <TableCell>{partner.email}</TableCell>
-                      <TableCell>{partner.joinDate}</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="default"
-                          onClick={() => handleApprovePartner(partner.id)}
-                        >
-                          <UserCheck className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => handleRejectPartner(partner.id)}
-                        >
-                          <UserX className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          {user.full_name || "N/A"}
+                        </TableCell>
+                        <TableCell>{user.phone || "N/A"}</TableCell>
+                        <TableCell>{user.email || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.status === "active" ? "default" : "destructive"}>
+                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{user.order_count}</TableCell>
+                        <TableCell>
+                          {format(new Date(user.created_at), "MMM dd, yyyy")}
+                        </TableCell>
+                        <TableCell className="space-x-2">
+                          <Button 
+                            size="sm" 
+                            variant={user.status === "active" ? "destructive" : "default"}
+                            onClick={() => handleSuspendUser(user.id, user.status)}
+                          >
+                            {user.status === "active" ? (
+                              <>
+                                <UserX className="h-4 w-4 mr-1" />
+                                Suspend
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Activate
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
