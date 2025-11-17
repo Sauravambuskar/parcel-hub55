@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import RealTimeTracking from "./pages/admin/RealTimeTracking";
 import UserManagement from "./pages/admin/UserManagement";
 import OrderMonitoring from "./pages/admin/OrderMonitoring";
 import RevenueManagement from "./pages/admin/RevenueManagement";
@@ -42,8 +43,9 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
+            <Route path="tracking" element={<RealTimeTracking />} />
             <Route path="orders" element={<OrderMonitoring />} />
+            <Route path="users" element={<UserManagement />} />
             <Route path="revenue" element={<RevenueManagement />} />
             <Route path="support" element={<SupportManagement />} />
             <Route path="analytics" element={<Analytics />} />
