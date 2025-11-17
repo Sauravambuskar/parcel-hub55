@@ -28,14 +28,10 @@ const Index = () => {
       fetchProfile(authData.user_id);
     }
   };
-  
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
+    const {
+      data
+    } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
     if (data) {
       setProfile(data);
     }
@@ -168,9 +164,7 @@ const Index = () => {
             Start Shipping
           </Button>
           
-          <Button variant="link" onClick={() => navigate('/tracking')} className="text-sm">
-            Track Package
-          </Button>
+          
         </div>
 
         {/* Trust Badge */}
