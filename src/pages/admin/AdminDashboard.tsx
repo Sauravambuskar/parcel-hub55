@@ -1,27 +1,62 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Package, DollarSign, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Users, Package, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Search, MapPin, Clock, Phone } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [trackingSearch, setTrackingSearch] = useState("");
+
   const stats = [
     { title: "Total Users", value: "12,345", change: "+12%", icon: Users, color: "text-blue-600" },
-    { title: "Active Partners", value: "2,341", change: "+8%", icon: Package, color: "text-green-600" },
+    { title: "Active Orders", value: "2,341", change: "+8%", icon: Package, color: "text-green-600" },
     { title: "Today's Revenue", value: "$45,678", change: "+23%", icon: DollarSign, color: "text-yellow-600" },
-    { title: "Orders Today", value: "1,234", change: "+15%", icon: TrendingUp, color: "text-purple-600" },
+    { title: "Deliveries Today", value: "1,234", change: "+15%", icon: TrendingUp, color: "text-purple-600" },
   ];
 
-  const alerts = [
-    { type: "High Priority", message: "System maintenance scheduled for tonight", status: "warning" },
-    { type: "New Partner", message: "5 new partner applications pending approval", status: "info" },
-    { type: "Revenue Alert", message: "Daily revenue target achieved", status: "success" },
+  const liveOrders = [
+    { id: "ORD-1001", customer: "John Doe", courier: "BlueDart", status: "In Transit", location: "Mumbai", eta: "2 hours", priority: "High" },
+    { id: "ORD-1002", customer: "Sarah Wilson", courier: "Delhivery", status: "Out for Delivery", location: "Delhi", eta: "30 mins", priority: "Normal" },
+    { id: "ORD-1003", customer: "Mike Johnson", courier: "DTDC", status: "Picked Up", location: "Bangalore", eta: "4 hours", priority: "High" },
+    { id: "ORD-1004", customer: "Emma Brown", courier: "FedEx", status: "In Transit", location: "Pune", eta: "3 hours", priority: "Normal" },
+    { id: "ORD-1005", customer: "David Lee", courier: "XpressBees", status: "Processing", location: "Chennai", eta: "5 hours", priority: "Urgent" },
   ];
 
-  const recentActivities = [
-    { action: "New user registered", time: "2 minutes ago", user: "john@example.com" },
-    { action: "Partner application approved", time: "5 minutes ago", user: "delivery_partner_123" },
-    { action: "Order completed", time: "8 minutes ago", user: "Order #ORD-1234" },
-    { action: "Payment processed", time: "12 minutes ago", user: "$234.56" },
+  const supportTickets = [
+    { id: "TKT-001", customer: "John Doe", issue: "Delivery delayed", status: "Open", priority: "High", time: "5 mins ago" },
+    { id: "TKT-002", customer: "Sarah Wilson", issue: "Wrong address", status: "In Progress", priority: "Urgent", time: "15 mins ago" },
+    { id: "TKT-003", customer: "Mike Johnson", issue: "Package damaged", status: "Open", priority: "High", time: "30 mins ago" },
   ];
+
+  const handleTrackPackage = () => {
+    if (trackingSearch.trim()) {
+      navigate(`/admin/tracking?id=${trackingSearch}`);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "in transit": return "default";
+      case "out for delivery": return "default";
+      case "picked up": return "secondary";
+      case "processing": return "secondary";
+      case "delivered": return "default";
+      default: return "secondary";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "urgent": return "destructive";
+      case "high": return "destructive";
+      case "normal": return "secondary";
+      default: return "secondary";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -46,56 +81,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* System Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              System Alerts
-            </CardTitle>
-            <CardDescription>Important notifications and system status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {alerts.map((alert, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={alert.status === "warning" ? "destructive" : 
-                                  alert.status === "success" ? "default" : "secondary"}>
-                      {alert.type}
-                    </Badge>
-                  </div>
-                  <p className="text-sm">{alert.message}</p>
-                </div>
-                {alert.status === "success" && <CheckCircle className="h-4 w-4 text-green-600 mt-1" />}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Recent Activities */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>Latest platform activities and events</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex justify-between items-center p-3 rounded-lg border">
-                  <div>
-                    <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">{activity.user}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

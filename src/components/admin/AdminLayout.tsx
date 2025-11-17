@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Shield,
-  Home
+  Home,
+  MapPin
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -28,8 +29,9 @@ import { NavLink } from "react-router-dom";
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: Home },
-  { title: "User & Partner Management", url: "/admin/users", icon: Users },
+  { title: "Real-Time Tracking", url: "/admin/tracking", icon: MapPin },
   { title: "Order Monitoring", url: "/admin/orders", icon: Package },
+  { title: "User & Partner Management", url: "/admin/users", icon: Users },
   { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign },
   { title: "Support Management", url: "/admin/support", icon: MessageSquare },
   { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3 },
