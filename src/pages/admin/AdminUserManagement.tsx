@@ -82,44 +82,27 @@ const AdminUserManagement = () => {
     }
 
     try {
-      // Create auth user with a temporary password
-      const tempPassword = Math.random().toString(36).slice(-12) + "A1@";
-      
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newUserEmail.trim(),
-        password: tempPassword,
-        email_confirm: true,
-      });
-
-      if (authError) {
-        toast.error(authError.message);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to create admin users");
         return;
       }
 
-      if (!authData.user) {
-        toast.error("Failed to create user");
-        return;
-      }
-
-      // Add to admin_users table
-      const { error: insertError } = await supabase
-        .from("admin_users")
-        .insert({
-          user_id: authData.user.id,
+      const response = await supabase.functions.invoke("create-admin-user", {
+        body: {
           email: newUserEmail.trim(),
           role: newUserRole,
-          is_active: true,
-        });
+        },
+      });
 
-      if (insertError) {
-        toast.error(insertError.message);
-        return;
+      if (response.error) {
+        throw response.error;
       }
 
-      // Send password reset email so user can set their own password
-      await supabase.auth.resetPasswordForEmail(newUserEmail.trim(), {
-        redirectTo: `${window.location.origin}/admin/reset-password`,
-      });
+      if (response.data?.error) {
+        toast.error(response.data.error);
+        return;
+      }
 
       toast.success(`Admin user created successfully. A password reset email has been sent to ${newUserEmail}`);
       setIsAddDialogOpen(false);
@@ -128,7 +111,7 @@ const AdminUserManagement = () => {
       fetchAdminUsers();
     } catch (error) {
       console.error("Error creating admin user:", error);
-      toast.error("Failed to create admin user");
+      toast.error(error.message || "Failed to create admin user");
     }
   };
 
