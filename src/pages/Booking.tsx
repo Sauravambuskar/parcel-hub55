@@ -50,7 +50,13 @@ const Booking = () => {
   const totalSteps = 9;
 
   useEffect(() => {
-    checkAuth();
+    // Generate a guest user ID for non-authenticated users
+    let guestId = localStorage.getItem('guest_user_id');
+    if (!guestId) {
+      guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('guest_user_id', guestId);
+    }
+    setUserId(guestId);
   }, []);
 
   // Auto-populate pincodes from serviceability check
@@ -78,23 +84,6 @@ const Booking = () => {
         state: deliveryState 
       }));
     }
-  };
-
-  const checkAuth = async () => {
-    // Check for Prayog authentication
-    const prayogAuth = localStorage.getItem('prayog_auth');
-    if (!prayogAuth) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to book a courier",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-    
-    const authData = JSON.parse(prayogAuth);
-    setUserId(authData.user_id);
   };
 
   // Calculate convenience fee based on weight and urgency
