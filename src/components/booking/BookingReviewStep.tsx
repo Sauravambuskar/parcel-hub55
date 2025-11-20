@@ -1,0 +1,199 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Package, MapPin, Calendar, IndianRupee, Truck } from "lucide-react";
+
+interface BookingReviewStepProps {
+  senderData: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  receiverData: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  packageDetails: {
+    goodsType: string;
+    weight: string;
+    dimensions: { length: string; width: string; height: string };
+    shipmentValue: string;
+    urgency: string;
+  };
+  courierDetails: {
+    name: string;
+    basePrice: number;
+    convenienceFee: number;
+    deliveryTime: string;
+  };
+  selectedDate?: Date;
+  onConfirm: () => void;
+  onBack: () => void;
+}
+
+const BookingReviewStep = ({
+  senderData,
+  receiverData,
+  packageDetails,
+  courierDetails,
+  selectedDate,
+  onConfirm,
+  onBack,
+}: BookingReviewStepProps) => {
+  const totalAmount = courierDetails.basePrice + courierDetails.convenienceFee;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Review Your Booking</CardTitle>
+        <CardDescription>
+          Please review all details before confirming your order
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Sender Details */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Pickup Details</h3>
+          </div>
+          <div className="ml-7 space-y-1 text-sm">
+            <p className="font-medium">{senderData.name}</p>
+            <p className="text-muted-foreground">{senderData.phone}</p>
+            <p className="text-muted-foreground">
+              {senderData.address}, {senderData.city}, {senderData.state} - {senderData.pincode}
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Receiver Details */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-secondary" />
+            <h3 className="font-semibold">Delivery Details</h3>
+          </div>
+          <div className="ml-7 space-y-1 text-sm">
+            <p className="font-medium">{receiverData.name}</p>
+            <p className="text-muted-foreground">{receiverData.phone}</p>
+            <p className="text-muted-foreground">
+              {receiverData.address}, {receiverData.city}, {receiverData.state} - {receiverData.pincode}
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Package Details */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-accent" />
+            <h3 className="font-semibold">Package Information</h3>
+          </div>
+          <div className="ml-7 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-muted-foreground">Type</p>
+              <p className="font-medium capitalize">{packageDetails.goodsType}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Weight</p>
+              <p className="font-medium">{packageDetails.weight} kg</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Dimensions (L×W×H)</p>
+              <p className="font-medium">
+                {packageDetails.dimensions.length} × {packageDetails.dimensions.width} × {packageDetails.dimensions.height} cm
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Declared Value</p>
+              <p className="font-medium">₹{packageDetails.shipmentValue}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Priority</p>
+              <Badge variant="outline" className="capitalize">{packageDetails.urgency}</Badge>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Courier & Delivery */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Truck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Courier & Schedule</h3>
+          </div>
+          <div className="ml-7 space-y-3 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Courier Service</span>
+              <span className="font-medium">{courierDetails.name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Estimated Delivery</span>
+              <span className="font-medium">{courierDetails.deliveryTime}</span>
+            </div>
+            {selectedDate && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Pickup Date</span>
+                <span className="font-medium">{selectedDate.toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Pricing */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <IndianRupee className="h-5 w-5 text-green-600" />
+            <h3 className="font-semibold">Payment Summary</h3>
+          </div>
+          <div className="ml-7 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Base Price</span>
+              <span>₹{courierDetails.basePrice.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Convenience Fee</span>
+              <span>₹{courierDetails.convenienceFee.toFixed(2)}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between text-base font-semibold">
+              <span>Total Amount</span>
+              <span className="text-primary">₹{totalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-muted p-4 rounded-lg">
+          <p className="text-xs text-muted-foreground">
+            By confirming this booking, you agree to our terms of service and shipping policies. 
+            Your package will be picked up on the selected date.
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onBack} className="flex-1">
+            Back to Edit
+          </Button>
+          <Button onClick={onConfirm} className="flex-1">
+            Confirm & Proceed to Payment
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default BookingReviewStep;
