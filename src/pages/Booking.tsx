@@ -14,7 +14,8 @@ import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import BookingStep6 from "@/components/booking/BookingStep6";
-import KYCVerificationStep from "@/components/booking/KYCVerificationStep";
+import DisclaimerStep from "@/components/booking/DisclaimerStep";
+import BookingReviewStep from "@/components/booking/BookingReviewStep";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -46,7 +47,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const totalSteps = 8;
+  const totalSteps = 9;
 
   useEffect(() => {
     checkAuth();
@@ -650,9 +651,31 @@ const Booking = () => {
         );
       case 8:
         return (
-          <KYCVerificationStep
-            userId={userId!}
-            onNext={handleProceedToPayment}
+          <DisclaimerStep
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 9:
+        return (
+          <BookingReviewStep
+            senderData={senderData}
+            receiverData={receiverData}
+            packageDetails={{
+              goodsType,
+              weight: packageWeight,
+              dimensions,
+              shipmentValue,
+              urgency
+            }}
+            courierDetails={{
+              name: selectedCourierData?.name || '',
+              basePrice: selectedCourierData?.basePrice || 0,
+              convenienceFee: selectedCourierData?.convenienceFee || 0,
+              deliveryTime: selectedCourierData?.deliveryTime || ''
+            }}
+            selectedDate={selectedDate}
+            onConfirm={handleProceedToPayment}
             onBack={handlePrevStep}
           />
         );
