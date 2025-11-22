@@ -91,7 +91,7 @@ const BookingStep2 = ({
           },
           body: JSON.stringify({
             source_postal_code: pickupPincode,
-            destination_postal_code: pickupPincode, // Same to get source location
+            destination_postal_code: pickupPincode,
             parcel_category: 'ecomm',
             packages: [{
               weight: { value: 1, unit: 'kg' },
@@ -145,16 +145,14 @@ const BookingStep2 = ({
           description: "Delivery is not available for this route. Please try different pincodes.",
           variant: "destructive"
         });
+        return;
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
-        // Extract pricing from serviceability response
         extractPricingFromResponse(data);
         
-        // Pass full serviceability data to parent
         if (onServiceabilityData) {
           onServiceabilityData(data);
         }
         
-        // Extract delivery location data from serviceable partner
         if (data.partners) {
           const serviceablePartner = data.partners.find((p: any) => p.is_serviceable);
           if (serviceablePartner?.capabilities) {
@@ -163,7 +161,6 @@ const BookingStep2 = ({
           }
         }
         
-        // Pass location data to parent for auto-fill
         if (onLocationData) {
           onLocationData(pickupCity, pickupState, deliveryCity, deliveryState);
         }
@@ -172,8 +169,11 @@ const BookingStep2 = ({
         
         toast({
           title: "Service Available ✓",
-          description: "Great! Delivery is available for this route. City and state auto-filled for addresses.",
+          description: "Great! Delivery is available for this route.",
         });
+        
+        // Proceed to next step after successful check
+        onNext();
       } else {
         setIsServiceable(false);
         toast({
@@ -321,11 +321,11 @@ const BookingStep2 = ({
           Back
         </Button>
         <Button 
-          onClick={onNext} 
-          disabled={!isValid}
+          onClick={handleContinue} 
+          disabled={!isValid || isCheckingServiceability}
           className="flex-1 h-12"
         >
-          Continue to Package Details
+          {isCheckingServiceability ? "Checking..." : "Check & Continue"}
         </Button>
       </div>
     </div>
