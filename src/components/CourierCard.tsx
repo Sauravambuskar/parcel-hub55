@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,9 @@ interface CourierCardProps {
 
 const CourierCard = ({ courier, isSelected, onSelect }: CourierCardProps) => {
   const totalPrice = courier.basePrice + courier.convenienceFee;
+  const [imageError, setImageError] = useState(false);
+
+  const hasValidImage = courier.image && courier.image !== '/placeholder.svg' && !imageError;
 
   return (
     <Card 
@@ -34,8 +38,17 @@ const CourierCard = ({ courier, isSelected, onSelect }: CourierCardProps) => {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary-glow/10 rounded-lg flex items-center justify-center">
-              <Truck className="h-6 w-6 text-primary" />
+            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-border">
+              {hasValidImage ? (
+                <img 
+                  src={courier.image} 
+                  alt={`${courier.name} logo`} 
+                  className="w-10 h-10 object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <Truck className="h-6 w-6 text-primary" />
+              )}
             </div>
             
             <div>
