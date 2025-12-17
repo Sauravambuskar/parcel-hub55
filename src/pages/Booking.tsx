@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
+import { getPartnerLogo } from "@/config/partnerLogos";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -142,7 +143,7 @@ const Booking = () => {
               basePrice,
               convenienceFee,
               vehicleType: service.delivery_modes?.express ? 'Express' : 'Standard',
-              image: "/placeholder.svg",
+              image: getPartnerLogo(partner.partner_code),
               features: [
                 service.delivery_modes?.express ? 'Express delivery' : 'Standard delivery',
                 service.is_cod ? 'COD available' : 'Prepaid only',
@@ -196,7 +197,7 @@ const Booking = () => {
         basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: "/placeholder.svg",
+        image: getPartnerLogo('bluedart'),
         features: ['Real-time tracking', 'Insurance included', 'SMS updates']
       },
       {
@@ -207,7 +208,7 @@ const Booking = () => {
         basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.9),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: "/placeholder.svg",
+        image: getPartnerLogo('dtdc'),
         features: ['Affordable rates', 'Wide network', 'COD available']
       },
       {
@@ -218,7 +219,7 @@ const Booking = () => {
         basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.95),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: "/placeholder.svg",
+        image: getPartnerLogo('delhivery'),
         features: ['Fast delivery', 'Live tracking', 'Safe handling']
       },
       {
@@ -229,7 +230,7 @@ const Booking = () => {
         basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.8),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: "/placeholder.svg",
+        image: getPartnerLogo('india_post'),
         features: ['Government backed', 'Nationwide reach', 'Budget friendly']
       },
       {
@@ -240,7 +241,7 @@ const Booking = () => {
         basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 1.1),
         convenienceFee,
         vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: "/placeholder.svg",
+        image: getPartnerLogo('ecom_express'),
         features: ['E-commerce focus', 'Quick pickup', 'Flexible delivery']
       }
     ];
