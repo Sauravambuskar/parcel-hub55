@@ -143,7 +143,7 @@ const Booking = () => {
               basePrice,
               convenienceFee,
               vehicleType: service.delivery_modes?.express ? 'Express' : 'Standard',
-              image: getPartnerLogo(partner.partner_code),
+              image: getPartnerLogo(partner.partner_code, partnerName),
               features: [
                 service.delivery_modes?.express ? 'Express delivery' : 'Standard delivery',
                 service.is_cod ? 'COD available' : 'Prepaid only',

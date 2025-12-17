@@ -2,6 +2,12 @@
 // Uses publicly available courier company logos
 
 export const PARTNER_LOGOS: Record<string, string> = {
+  // Prayog sandbox partners
+  'dharmendra': 'https://ui-avatars.com/api/?name=Dharmendra&background=6366f1&color=fff&size=100',
+  'india_post_domestic': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/India_Post_Logo.svg/200px-India_Post_Logo.svg.png',
+  'sunil_baral': 'https://ui-avatars.com/api/?name=Sunil+Baral&background=10b981&color=fff&size=100',
+  
+  // Common courier partners
   'bluedart': 'https://logo.clearbit.com/bluedart.com',
   'delhivery': 'https://logo.clearbit.com/delhivery.com',
   'dtdc': 'https://logo.clearbit.com/dtdc.in',
@@ -11,7 +17,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'ekart': 'https://logo.clearbit.com/ekartlogistics.com',
   'amazon_shipping': 'https://logo.clearbit.com/amazon.in',
   'fedex': 'https://logo.clearbit.com/fedex.com',
-  'india_post': 'https://logo.clearbit.com/indiapost.gov.in',
+  'india_post': 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/India_Post_Logo.svg/200px-India_Post_Logo.svg.png',
   'professional_couriers': 'https://logo.clearbit.com/tpcindia.com',
   'gati': 'https://logo.clearbit.com/gati.com',
   'firstflight': 'https://logo.clearbit.com/firstflight.net',
@@ -24,11 +30,18 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'shiprocket': 'https://logo.clearbit.com/shiprocket.in',
 };
 
-export const getPartnerLogo = (partnerCode: string): string | null => {
-  if (!partnerCode) return null;
+// Generate a fallback logo URL using UI Avatars for unknown partners
+const generateFallbackLogo = (name: string): string => {
+  const encodedName = encodeURIComponent(name.replace(/_/g, ' '));
+  return `https://ui-avatars.com/api/?name=${encodedName}&background=8b5cf6&color=fff&size=100&bold=true`;
+};
+
+export const getPartnerLogo = (partnerCode: string, partnerName?: string): string => {
+  if (!partnerCode) return generateFallbackLogo('?');
   
   // Normalize the partner code to match our mapping keys
   const normalizedCode = partnerCode.toLowerCase().replace(/[- ]/g, '_');
   
-  return PARTNER_LOGOS[normalizedCode] || null;
+  // Return mapped logo or generate a fallback
+  return PARTNER_LOGOS[normalizedCode] || generateFallbackLogo(partnerName || partnerCode);
 };
