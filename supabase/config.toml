@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.prayog-kyc-initiate]
 verify_jwt = false
+
+[functions.razorpay-create-order]
+verify_jwt = false
+
+[functions.razorpay-verify-payment]
+verify_jwt = false
