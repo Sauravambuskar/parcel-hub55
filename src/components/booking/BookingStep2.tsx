@@ -2,13 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, CheckCircle } from "lucide-react";
-import LocationPicker from "@/components/LocationPicker";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PRAYOG_CONFIG } from "@/config/prayog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PricingData {
@@ -75,21 +72,15 @@ const BookingStep2 = ({
     setIsCheckingServiceability(true);
 
     try {
-      // First, get location data for both pincodes
       let pickupCity = '';
       let pickupState = '';
       let deliveryCity = '';
       let deliveryState = '';
 
-      // Fetch pickup location details
+      // Fetch pickup location details via edge function
       try {
-        const pickupResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
-          },
-          body: JSON.stringify({
+        const { data: pickupData, error: pickupError } = await supabase.functions.invoke('check-serviceability', {
+          body: {
             source_postal_code: pickupPincode,
             destination_postal_code: pickupPincode,
             parcel_category: 'ecomm',
@@ -97,46 +88,41 @@ const BookingStep2 = ({
               weight: { value: 1, unit: 'kg' },
               dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
             }]
-          })
+          }
         });
-        const pickupData = await pickupResponse.json();
-        if (pickupData.partners?.[0]?.capabilities) {
+        
+        if (!pickupError && pickupData?.partners?.[0]?.capabilities) {
           pickupCity = pickupData.partners[0].capabilities.city_name || '';
           pickupState = pickupData.partners[0].capabilities.state_name || '';
         }
       } catch (error) {
-        console.log('Could not fetch pickup location details');
+        console.log('Could not fetch pickup location details:', error);
       }
 
-      // Check serviceability between pincodes
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
-        },
-        body: JSON.stringify({
+      // Check serviceability between pincodes via edge function
+      const { data, error } = await supabase.functions.invoke('check-serviceability', {
+        body: {
           source_postal_code: pickupPincode,
           destination_postal_code: deliveryPincode,
           parcel_category: 'ecomm',
-          packages: [
-            {
-              weight: {
-                value: 2,
-                unit: 'kg'
-              },
-              dimensions: {
-                length: 10,
-                width: 10,
-                height: 10,
-                unit: 'cm'
-              }
-            }
-          ]
-        })
+          packages: [{
+            weight: { value: 2, unit: 'kg' },
+            dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
+          }]
+        }
       });
 
-      const data = await response.json();
+      if (error) {
+        console.error('Edge function error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to check serviceability. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Serviceability response:', data);
 
       if (data.success === false || data.metadata?.serviceable_count === 0) {
         setIsServiceable(false);
@@ -172,7 +158,6 @@ const BookingStep2 = ({
           description: "Great! Delivery is available for this route.",
         });
         
-        // Proceed to next step after successful check
         onNext();
       } else {
         setIsServiceable(false);
@@ -196,18 +181,14 @@ const BookingStep2 = ({
 
   const extractPricingFromResponse = (serviceabilityData: any) => {
     try {
-      // Extract pricing from the first serviceable partner
       const serviceablePartner = serviceabilityData.partners?.find(
         (p: any) => p.is_serviceable
       );
 
       if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
-        // Use the first available service (Prayog API returns best match)
         const service = serviceablePartner.services[0];
-
-        // Extract price from rate object
         const totalPrice = Math.round(service.rate?.price?.amount || 0);
-        const basePrice = totalPrice; // Prayog API returns total price only
+        const basePrice = totalPrice;
         const convenienceFee = 0;
 
         const pricing: PricingData = {
@@ -238,7 +219,6 @@ const BookingStep2 = ({
         <p className="text-muted-foreground">Enter pickup and delivery pincodes</p>
       </div>
 
-      {/* Pincode Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -274,7 +254,6 @@ const BookingStep2 = ({
         </CardContent>
       </Card>
 
-      {/* Serviceability Confirmation */}
       {isServiceable && (
         <Alert className="border-green-500/50 bg-green-500/10">
           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -285,7 +264,6 @@ const BookingStep2 = ({
         </Alert>
       )}
 
-      {/* Pricing Display */}
       {pricingData && isServiceable && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
