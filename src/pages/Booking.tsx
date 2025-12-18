@@ -704,6 +704,11 @@ const Booking = () => {
             pickupDate: selectedDate?.toISOString()
           }}
           onPaymentSuccess={handlePaymentSuccess}
+          customerDetails={{
+            name: senderData.name,
+            phone: senderData.phone,
+            email: undefined, // Email not collected in current flow
+          }}
         />
       )}
     </div>

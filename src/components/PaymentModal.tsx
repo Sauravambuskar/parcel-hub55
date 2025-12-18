@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,9 +11,17 @@ import {
   Smartphone, 
   Banknote,
   Lock,
-  CheckCircle 
+  CheckCircle,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -25,34 +33,55 @@ interface PaymentModalProps {
     convenienceFee: number;
     pickupDate?: string;
   };
-  onPaymentSuccess: (paymentMethod: string) => void;
+  onPaymentSuccess: (paymentMethod: string, paymentDetails?: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+  }) => void;
+  customerDetails?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
-const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess }: PaymentModalProps) => {
-  const [paymentMethod, setPaymentMethod] = useState('upi');
+const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, customerDetails }: PaymentModalProps) => {
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const { toast } = useToast();
 
   const totalAmount = orderDetails.basePrice + orderDetails.convenienceFee;
 
+  // Load Razorpay script
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('Razorpay script loaded');
+        setRazorpayLoaded(true);
+      };
+      script.onerror = () => {
+        console.error('Failed to load Razorpay script');
+        toast({
+          title: "Payment Error",
+          description: "Failed to load payment gateway. Please try again.",
+          variant: "destructive",
+        });
+      };
+      document.body.appendChild(script);
+    } else if (window.Razorpay) {
+      setRazorpayLoaded(true);
+    }
+  }, []);
+
   const paymentOptions = [
     {
-      id: 'upi',
-      label: 'UPI Payment',
-      icon: Smartphone,
-      description: 'Pay using UPI apps like GPay, PhonePe, Paytm'
-    },
-    {
-      id: 'wallet',
-      label: 'Digital Wallet',
-      icon: Wallet,
-      description: 'Paytm, Amazon Pay, Mobikwik'
-    },
-    {
-      id: 'card',
-      label: 'Credit/Debit Card',
+      id: 'razorpay',
+      label: 'Pay Online',
       icon: CreditCard,
-      description: 'Visa, Mastercard, RuPay'
+      description: 'UPI, Cards, Wallets, Net Banking via Razorpay'
     },
     {
       id: 'cash',
@@ -62,25 +91,167 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess }: Payme
     }
   ];
 
-  const handlePayment = async () => {
+  const handleRazorpayPayment = async () => {
+    if (!razorpayLoaded) {
+      toast({
+        title: "Please wait",
+        description: "Payment gateway is loading...",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Step 1: Create Razorpay order via edge function
+      console.log('Creating Razorpay order for amount:', totalAmount);
+      
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-create-order', {
+        body: {
+          amount: totalAmount,
+          currency: 'INR',
+          receipt: `booking_${Date.now()}`,
+          notes: {
+            courierName: orderDetails.courierName,
+            courierId: orderDetails.courierId,
+          }
+        }
+      });
+
+      if (orderError || !orderData?.orderId) {
+        console.error('Failed to create order:', orderError || orderData);
+        throw new Error(orderData?.error || 'Failed to create payment order');
+      }
+
+      console.log('Order created:', orderData.orderId);
+
+      // Step 2: Open Razorpay checkout
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'ShipEasy',
+        description: `Delivery - ${orderDetails.courierName}`,
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          console.log('Payment successful, verifying...', response);
+          
+          // Step 3: Verify payment
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('razorpay-verify-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }
+            });
+
+            if (verifyError || !verifyData?.verified) {
+              console.error('Payment verification failed:', verifyError || verifyData);
+              toast({
+                title: "Payment Verification Failed",
+                description: "Please contact support if amount was deducted.",
+                variant: "destructive",
+              });
+              setIsProcessing(false);
+              return;
+            }
+
+            console.log('Payment verified:', verifyData);
+            
+            toast({
+              title: "Payment Successful!",
+              description: `Order confirmed with ${orderDetails.courierName}`,
+              action: (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </div>
+              ),
+            });
+
+            onPaymentSuccess('razorpay', {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+            });
+            onClose();
+          } catch (verifyErr) {
+            console.error('Verification error:', verifyErr);
+            toast({
+              title: "Verification Error",
+              description: "Payment may have succeeded. Please check your email.",
+              variant: "destructive",
+            });
+          }
+          setIsProcessing(false);
+        },
+        prefill: {
+          name: customerDetails?.name || '',
+          email: customerDetails?.email || '',
+          contact: customerDetails?.phone || '',
+        },
+        theme: {
+          color: '#6366f1',
+        },
+        modal: {
+          ondismiss: function() {
+            console.log('Razorpay modal dismissed');
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response.error);
+        toast({
+          title: "Payment Failed",
+          description: response.error.description || "Please try again",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+      });
+      
+      razorpay.open();
+
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCashPayment = () => {
     setIsProcessing(true);
     
-    // Simulate payment processing
+    // For cash on pickup, just confirm the order
     setTimeout(() => {
       setIsProcessing(false);
-      onPaymentSuccess(paymentMethod);
+      onPaymentSuccess('cash');
       onClose();
       
       toast({
-        title: "Payment Successful!",
-        description: `Order confirmed with ${orderDetails.courierName}`,
+        title: "Order Confirmed!",
+        description: `Pay ₹${totalAmount} in cash when courier arrives`,
         action: (
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-success" />
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </div>
         ),
       });
-    }, 2000);
+    }, 1000);
+  };
+
+  const handlePayment = () => {
+    if (paymentMethod === 'razorpay') {
+      handleRazorpayPayment();
+    } else {
+      handleCashPayment();
+    }
   };
 
   return (
@@ -170,15 +341,24 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess }: Payme
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={onClose} className="flex-1" disabled={isProcessing}>
               Cancel
             </Button>
             <Button 
               onClick={handlePayment} 
-              disabled={isProcessing}
+              disabled={isProcessing || (paymentMethod === 'razorpay' && !razorpayLoaded)}
               className="flex-1"
             >
-              {isProcessing ? 'Processing...' : `Pay ₹${totalAmount}`}
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : paymentMethod === 'razorpay' ? (
+                `Pay ₹${totalAmount}`
+              ) : (
+                'Confirm Order'
+              )}
             </Button>
           </div>
         </div>
