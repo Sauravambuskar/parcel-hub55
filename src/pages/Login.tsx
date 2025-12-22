@@ -7,6 +7,7 @@ import { Package, ArrowLeft, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PRAYOG_CONFIG } from "@/config/prayog";
 const Login = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -35,17 +36,24 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('prayog-send-otp', {
-        body: {
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/auth/signup-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify({
+          name: 'User',
           phone: `+91${phoneNumber}`,
-          name: 'User'
-        }
+        }),
       });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+
       setPrayogSession(data.session);
       setStep('otp');
       toast({
@@ -73,19 +81,25 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      // Verify with Prayog API
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('prayog-verify-otp', {
-        body: {
+      // Verify with Prayog API directly
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/auth/verify-mfa`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify({
           phone: `+91${phoneNumber}`,
           session: prayogSession,
-          otp: otp
-        }
+          otp: otp,
+        }),
       });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid OTP');
+      }
 
       const phoneWithCountryCode = `+91${phoneNumber}`;
       
