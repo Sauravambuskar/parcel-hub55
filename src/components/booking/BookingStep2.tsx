@@ -6,7 +6,7 @@ import { MapPin, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { PRAYOG_CONFIG } from "@/config/prayog";
 
 interface PricingData {
   basePrice: number;
@@ -77,10 +77,15 @@ const BookingStep2 = ({
       let deliveryCity = '';
       let deliveryState = '';
 
-      // Fetch pickup location details via edge function
+      // Fetch pickup location details via Prayog API directly
       try {
-        const { data: pickupData, error: pickupError } = await supabase.functions.invoke('check-serviceability', {
-          body: {
+        const pickupResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': PRAYOG_CONFIG.API_KEY,
+          },
+          body: JSON.stringify({
             source_postal_code: pickupPincode,
             destination_postal_code: pickupPincode,
             parcel_category: 'ecomm',
@@ -88,10 +93,12 @@ const BookingStep2 = ({
               weight: { value: 1, unit: 'kg' },
               dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
             }]
-          }
+          }),
         });
         
-        if (!pickupError && pickupData?.partners?.[0]?.capabilities) {
+        const pickupData = await pickupResponse.json();
+        
+        if (pickupResponse.ok && pickupData?.partners?.[0]?.capabilities) {
           pickupCity = pickupData.partners[0].capabilities.city_name || '';
           pickupState = pickupData.partners[0].capabilities.state_name || '';
         }
@@ -99,9 +106,14 @@ const BookingStep2 = ({
         console.log('Could not fetch pickup location details:', error);
       }
 
-      // Check serviceability between pincodes via edge function
-      const { data, error } = await supabase.functions.invoke('check-serviceability', {
-        body: {
+      // Check serviceability between pincodes via Prayog API directly
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify({
           source_postal_code: pickupPincode,
           destination_postal_code: deliveryPincode,
           parcel_category: 'ecomm',
@@ -109,11 +121,13 @@ const BookingStep2 = ({
             weight: { value: 2, unit: 'kg' },
             dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
           }]
-        }
+        }),
       });
 
-      if (error) {
-        console.error('Edge function error:', error);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Prayog API error:', data);
         toast({
           title: "Error",
           description: "Failed to check serviceability. Please try again.",
