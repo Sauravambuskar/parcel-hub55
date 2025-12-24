@@ -51,6 +51,15 @@ const DisclaimerStep = ({ onNext, onBack }: DisclaimerStepProps) => {
             </ul>
           </div>
 
+          <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <p className="text-sm font-medium text-primary mb-2">Important Notice:</p>
+            <p className="text-sm text-muted-foreground">
+              Vaisetu is a facilitator platform that connects you with courier partners. In case of any 
+              damage or stolen parcels, the courier partner will be responsible as per their policies. 
+              <span className="font-medium text-foreground"> Please opt in for insurance if your package is valuable.</span>
+            </p>
+          </div>
+
           <div className="p-4 bg-destructive/10 rounded-lg">
             <p className="text-sm font-medium text-destructive mb-2">Prohibited Items Include:</p>
             <p className="text-xs text-destructive/80">
