@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
 import { getPartnerLogo } from "@/config/partnerLogos";
@@ -497,53 +497,18 @@ const Booking = () => {
         throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
       }
 
-      const prayogBooking = {
-        success: true,
-        orderId: prayogResult.orderId || orderId,
-        awbNumber: prayogResult.shipments?.[0]?.awbNumber || null,
-        trackingId: prayogResult.shipments?.[0]?.awbNumber || orderId,
-      };
-
-      // Save booking to our database
-      const { error: dbError } = await supabase.from("bookings").insert({
-        user_id: userId,
-        sender_name: senderData.name,
-        sender_phone: senderData.phone,
-        sender_address: senderData.address,
-        sender_city: senderData.city,
-        sender_state: senderData.state,
-        sender_pincode: senderData.pincode,
-        receiver_name: receiverData.name,
-        receiver_phone: receiverData.phone,
-        receiver_address: receiverData.address,
-        receiver_city: receiverData.city,
-        receiver_state: receiverData.state,
-        receiver_pincode: receiverData.pincode,
-        goods_type: goodsType,
-        package_weight: packageWeight,
-        length: dimensions.length,
-        width: dimensions.width,
-        height: dimensions.height,
-        shipment_value: parseFloat(shipmentValue) || 0,
-        urgency,
-        courier_name: selectedCourierData?.name || "",
-        courier_price: selectedCourierData?.basePrice || 0,
-        delivery_time: selectedCourierData?.deliveryTime || "",
-        tracking_id: prayogBooking.awbNumber || prayogBooking.trackingId,
-        status: "confirmed",
-      });
-
-      if (dbError) throw dbError;
+      const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
+      const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
 
       toast({
         title: "Booking Confirmed!",
-        description: `Your shipment has been booked. AWB: ${prayogBooking.awbNumber || prayogBooking.trackingId}`,
+        description: `Your shipment has been booked. AWB: ${awbNumber || trackingId}`,
       });
 
       navigate("/tracking", {
         state: {
-          orderId: prayogBooking.trackingId,
-          awbNumber: prayogBooking.awbNumber,
+          orderId: trackingId,
+          awbNumber: awbNumber,
           courier: selectedCourierData?.name,
           pickupAddress: `${senderData.address}, ${senderData.city}`,
           deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
