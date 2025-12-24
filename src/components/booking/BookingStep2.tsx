@@ -6,7 +6,7 @@ import { MapPin, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PRAYOG_CONFIG } from "@/config/prayog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PricingData {
   basePrice: number;
@@ -80,19 +80,11 @@ const BookingStep2 = ({
       // Get auth token for API calls
       const prayogAuth = localStorage.getItem('prayog_auth');
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const authToken = authData?.token || '';
       const userId = authData?.user_id || '';
 
-      // Check serviceability between pincodes via Prayog API v3
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': PRAYOG_CONFIG.API_KEY,
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-          ...(userId && { 'x-user-id': userId }),
-        },
-        body: JSON.stringify({
+      // Check serviceability via edge function (avoids CORS issues)
+      const { data, error } = await supabase.functions.invoke('check-serviceability', {
+        body: {
           source_location: {
             postal_code: pickupPincode,
             country_code: 'IN'
@@ -110,13 +102,14 @@ const BookingStep2 = ({
               unit: 'cm' 
             }
           }]
-        }),
+        },
+        headers: {
+          ...(userId && { 'x-user-id': userId }),
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('Prayog API error:', data);
+      if (error) {
+        console.error('Edge function error:', error);
         toast({
           title: "Error",
           description: "Failed to check serviceability. Please try again.",
@@ -124,7 +117,6 @@ const BookingStep2 = ({
         });
         return;
       }
-
       console.log('Serviceability response:', data);
 
       if (data.success === false || data.metadata?.serviceable_count === 0) {
