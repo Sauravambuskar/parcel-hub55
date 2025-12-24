@@ -56,12 +56,10 @@ const Index = () => {
               <div className="flex items-center gap-4">
                 <Logo size="md" />
               </div>
-              {user && (
-                <Button variant="outline" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              )}
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </CardContent>
         </Card>
