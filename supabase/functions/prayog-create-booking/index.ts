@@ -58,7 +58,6 @@ serve(async (req) => {
       orderType: "FORWARD",
       orderStatus: "READY_FOR_DISPATCH",
       parcelCategory: "ECOMM",
-      vendorCode: "AWSA",
       autoManifest: true,
       eWaybills: [],
       deliveryPromise: selectedService?.service_name || "standard",
