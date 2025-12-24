@@ -6,7 +6,6 @@ import { ArrowLeft, Package, MapPin, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PrayogOrder {
   orderId: string;
@@ -55,16 +54,26 @@ const History = () => {
 
       const authData = JSON.parse(prayogAuth);
 
-      const { data, error } = await supabase.functions.invoke('prayog-get-orders', {
-        headers: {
-          'x-api-key': authData.api_key || PRAYOG_CONFIG.API_KEY,
-        },
-      });
+      const response = await fetch(
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-tenant-id": PRAYOG_CONFIG.TENANT_ID,
+            "x-api-key": authData.api_key || PRAYOG_CONFIG.API_KEY,
+          },
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch orders: ${response.status}`);
+      }
 
+      const result = await response.json();
+      
       // Handle the response - it could be an array or an object with orders property
-      const ordersList = Array.isArray(data) ? data : (data?.orders || data?.data || []);
+      const ordersList = Array.isArray(result) ? result : (result?.orders || result?.data || []);
       setOrders(ordersList);
     } catch (error: any) {
       console.error("Error fetching orders:", error);
