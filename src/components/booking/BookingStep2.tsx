@@ -6,7 +6,7 @@ import { MapPin, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { PRAYOG_CONFIG } from "@/config/prayog";
 
 interface PricingData {
   basePrice: number;
@@ -82,9 +82,16 @@ const BookingStep2 = ({
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
       const userId = authData?.user_id || '';
 
-      // Check serviceability via edge function (avoids CORS issues)
-      const { data, error } = await supabase.functions.invoke('check-serviceability', {
-        body: {
+      // Call Prayog serviceability v3 API directly
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': PRAYOG_CONFIG.API_KEY,
+          'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
+          ...(userId && { 'x-user-id': userId }),
+        },
+        body: JSON.stringify({
           source_location: {
             postal_code: pickupPincode,
             country_code: 'IN'
@@ -102,21 +109,21 @@ const BookingStep2 = ({
               unit: 'cm' 
             }
           }]
-        },
-        headers: {
-          ...(userId && { 'x-user-id': userId }),
-        }
+        }),
       });
 
-      if (error) {
-        console.error('Edge function error:', error);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Prayog API error:', data);
         toast({
           title: "Error",
-          description: "Failed to check serviceability. Please try again.",
+          description: data.message || "Failed to check serviceability. Please try again.",
           variant: "destructive"
         });
         return;
       }
+
       console.log('Serviceability response:', data);
 
       if (data.success === false || data.metadata?.serviceable_count === 0) {
