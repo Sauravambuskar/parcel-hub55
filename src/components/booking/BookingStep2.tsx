@@ -77,49 +77,38 @@ const BookingStep2 = ({
       let deliveryCity = '';
       let deliveryState = '';
 
-      // Fetch pickup location details via Prayog API directly
-      try {
-        const pickupResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': PRAYOG_CONFIG.API_KEY,
-          },
-          body: JSON.stringify({
-            source_postal_code: pickupPincode,
-            destination_postal_code: pickupPincode,
-            parcel_category: 'ecomm',
-            packages: [{
-              weight: { value: 1, unit: 'kg' },
-              dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
-            }]
-          }),
-        });
-        
-        const pickupData = await pickupResponse.json();
-        
-        if (pickupResponse.ok && pickupData?.partners?.[0]?.capabilities) {
-          pickupCity = pickupData.partners[0].capabilities.city_name || '';
-          pickupState = pickupData.partners[0].capabilities.state_name || '';
-        }
-      } catch (error) {
-        console.log('Could not fetch pickup location details:', error);
-      }
+      // Get auth token for API calls
+      const prayogAuth = localStorage.getItem('prayog_auth');
+      const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
+      const authToken = authData?.token || '';
+      const userId = authData?.user_id || '';
 
-      // Check serviceability between pincodes via Prayog API directly
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v2/check`, {
+      // Check serviceability between pincodes via Prayog API v3
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': PRAYOG_CONFIG.API_KEY,
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+          ...(userId && { 'x-user-id': userId }),
         },
         body: JSON.stringify({
-          source_postal_code: pickupPincode,
-          destination_postal_code: deliveryPincode,
-          parcel_category: 'ecomm',
+          source_location: {
+            postal_code: pickupPincode,
+            country_code: 'IN'
+          },
+          destination_location: {
+            postal_code: deliveryPincode,
+            country_code: 'IN'
+          },
           packages: [{
-            weight: { value: 2, unit: 'kg' },
-            dimensions: { length: 10, width: 10, height: 10, unit: 'cm' }
+            weight: { value: parseFloat(packageWeight) || 1.0, unit: 'kg' },
+            dimensions: { 
+              length: parseFloat(dimensions.length) || 10.0, 
+              width: parseFloat(dimensions.width) || 10.0, 
+              height: parseFloat(dimensions.height) || 10.0, 
+              unit: 'cm' 
+            }
           }]
         }),
       });
@@ -147,18 +136,27 @@ const BookingStep2 = ({
         });
         return;
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
+        // Extract location data from v3 response metadata
+        if (data.partners) {
+          const serviceablePartner = data.partners.find((p: any) => p.is_serviceable);
+          if (serviceablePartner?.metadata) {
+            const sourcePinData = serviceablePartner.metadata.source_pincode_data;
+            const destPinData = serviceablePartner.metadata.dest_pincode_data;
+            if (sourcePinData) {
+              pickupCity = sourcePinData.city || '';
+              pickupState = sourcePinData.state || '';
+            }
+            if (destPinData) {
+              deliveryCity = destPinData.city || '';
+              deliveryState = destPinData.state || '';
+            }
+          }
+        }
+        
         extractPricingFromResponse(data);
         
         if (onServiceabilityData) {
           onServiceabilityData(data);
-        }
-        
-        if (data.partners) {
-          const serviceablePartner = data.partners.find((p: any) => p.is_serviceable);
-          if (serviceablePartner?.capabilities) {
-            deliveryCity = serviceablePartner.capabilities.city_name || '';
-            deliveryState = serviceablePartner.capabilities.state_name || '';
-          }
         }
         
         if (onLocationData) {
