@@ -24,6 +24,7 @@ const Booking = () => {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [urgency, setUrgency] = useState("");
   const [packageWeight, setPackageWeight] = useState("");
+  const [customWeight, setCustomWeight] = useState("");
   const [packageDescription, setPackageDescription] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [pickupPincode, setPickupPincode] = useState("");
@@ -288,6 +289,9 @@ const Booking = () => {
         break;
       case "packageDescription":
         setPackageDescription(value);
+        break;
+      case "customWeight":
+        setCustomWeight(value);
         break;
     }
   };
@@ -557,6 +561,7 @@ const Booking = () => {
           <BookingStep3
             goodsType={goodsType}
             packageWeight={packageWeight}
+            customWeight={customWeight}
             dimensions={dimensions}
             shipmentValue={shipmentValue}
             packageDescription={packageDescription}

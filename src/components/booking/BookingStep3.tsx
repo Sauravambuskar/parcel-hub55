@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Scale } from "lucide-react";
+import { Package, Scale, Mail } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BookingStep3Props {
   goodsType: string;
   packageWeight: string;
+  customWeight: string;
   dimensions: { length: string; width: string; height: string };
   shipmentValue: string;
   packageDescription: string;
@@ -19,7 +21,8 @@ interface BookingStep3Props {
 
 const BookingStep3 = ({ 
   goodsType,
-  packageWeight, 
+  packageWeight,
+  customWeight,
   dimensions,
   shipmentValue,
   packageDescription, 
@@ -28,7 +31,17 @@ const BookingStep3 = ({
   onNext, 
   onBack 
 }: BookingStep3Props) => {
-  const isValid = goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && packageDescription;
+  const isCustomWeight = packageWeight === "above-1kg";
+  const customWeightKg = parseFloat(customWeight) || 0;
+  const isOverweight = isCustomWeight && customWeightKg > 20;
+  
+  const isValid = goodsType && 
+    packageWeight && 
+    (isCustomWeight ? customWeight && customWeightKg > 0 && !isOverweight : true) &&
+    dimensions.length && 
+    dimensions.width && 
+    dimensions.height && 
+    packageDescription;
 
   return (
     <div className="space-y-6">
@@ -64,41 +77,77 @@ const BookingStep3 = ({
 
           <div className="space-y-2">
             <Label>Package Weight *</Label>
-            <Select value={packageWeight} onValueChange={(value) => onInputChange('packageWeight', value)}>
+            <Select value={packageWeight} onValueChange={(value) => {
+              onInputChange('packageWeight', value);
+              if (value !== 'above-1kg') {
+                onInputChange('customWeight', '');
+              }
+            }}>
               <SelectTrigger>
-                <SelectValue placeholder="Select package weight category" />
+                <SelectValue placeholder="Select package weight" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="light">
+                <SelectItem value="0-250g">
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Light (0-2 kg)</div>
-                      <div className="text-xs text-muted-foreground">Documents, small items</div>
-                    </div>
+                    <span>0 - 250 gms</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="medium">
+                <SelectItem value="250-500g">
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Medium (2-10 kg)</div>
-                      <div className="text-xs text-muted-foreground">Books, electronics, clothing</div>
-                    </div>
+                    <span>250 - 500 gms</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="heavy">
+                <SelectItem value="500g-1kg">
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4" />
-                    <div>
-                      <div className="font-medium">Heavy (10+ kg)</div>
-                      <div className="text-xs text-muted-foreground">Large items, multiple packages</div>
-                    </div>
+                    <span>500 gms - 1 kg</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="above-1kg">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4" />
+                    <span>Above 1 kg (Enter weight)</span>
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {isCustomWeight && (
+            <div className="space-y-2">
+              <Label htmlFor="custom-weight">Enter Weight (in kg) *</Label>
+              <Input
+                id="custom-weight"
+                type="number"
+                value={customWeight}
+                onChange={(e) => onInputChange('customWeight', e.target.value)}
+                placeholder="Enter weight in kg (e.g., 2.5)"
+                min="1"
+                max="20"
+                step="0.1"
+              />
+              <p className="text-xs text-muted-foreground">
+                Maximum weight: 20 kg
+              </p>
+            </div>
+          )}
+
+          {isOverweight && (
+            <Alert variant="destructive">
+              <Mail className="h-4 w-4" />
+              <AlertDescription className="ml-2">
+                For packages weighing more than 20 kg, please contact us directly at{" "}
+                <a 
+                  href="mailto:support@yourcompany.com?subject=Heavy Package Inquiry&body=I have a package weighing more than 20kg and would like to arrange shipping."
+                  className="underline font-medium"
+                >
+                  support@yourcompany.com
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-2">
             <Label>Package Dimensions (cm) *</Label>
