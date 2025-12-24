@@ -2,47 +2,51 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, DollarSign } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PRAYOG_CONFIG } from "@/config/prayog";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Booking {
-  id: string;
-  tracking_id: string;
-  sender_name: string;
-  sender_address: string;
-  sender_city: string;
-  receiver_name: string;
-  receiver_address: string;
-  receiver_city: string;
-  courier_name: string;
-  courier_price: number;
+interface PrayogOrder {
+  orderId: string;
+  orderDate: string;
   status: string;
-  packaging_required: boolean;
-  insurance_required: boolean;
-  created_at: string;
+  shipments?: Array<{
+    awbNumber: string;
+    partnerName: string;
+    status: string;
+  }>;
+  senderDetails?: {
+    name: string;
+    address: string;
+    city: string;
+  };
+  receiverDetails?: {
+    name: string;
+    address: string;
+    city: string;
+  };
 }
 
 const History = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookings();
+    fetchOrders();
   }, []);
 
-  const fetchBookings = async () => {
+  const fetchOrders = async () => {
     try {
-      // Check for Prayog authentication
       const prayogAuth = localStorage.getItem('prayog_auth');
       
       if (!prayogAuth) {
         toast({
           title: "Authentication required",
-          description: "Please sign in to view your bookings",
+          description: "Please sign in to view your orders",
           variant: "destructive",
         });
         navigate('/login');
@@ -50,20 +54,23 @@ const History = () => {
       }
 
       const authData = JSON.parse(prayogAuth);
-      
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('user_id', authData.user_id)
-        .order('created_at', { ascending: false });
+
+      const { data, error } = await supabase.functions.invoke('prayog-get-orders', {
+        headers: {
+          'x-api-key': authData.api_key || PRAYOG_CONFIG.API_KEY,
+        },
+      });
 
       if (error) throw error;
 
-      setBookings(data || []);
+      // Handle the response - it could be an array or an object with orders property
+      const ordersList = Array.isArray(data) ? data : (data?.orders || data?.data || []);
+      setOrders(ordersList);
     } catch (error: any) {
+      console.error("Error fetching orders:", error);
       toast({
         title: "Error",
-        description: "Failed to load bookings",
+        description: "Failed to load orders",
         variant: "destructive",
       });
     } finally {
@@ -72,12 +79,16 @@ const History = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = status?.toLowerCase() || '';
+    switch (statusLower) {
       case 'delivered':
         return 'bg-green-500';
       case 'in_transit':
+      case 'intransit':
+      case 'shipped':
         return 'bg-blue-500';
       case 'pending':
+      case 'booked':
         return 'bg-yellow-500';
       case 'cancelled':
         return 'bg-red-500';
@@ -87,6 +98,7 @@ const History = () => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -99,7 +111,7 @@ const History = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading your bookings...</p>
+        <p className="text-muted-foreground">Loading your orders...</p>
       </div>
     );
   }
@@ -116,10 +128,10 @@ const History = () => {
       </header>
 
       <div className="p-4 max-w-4xl mx-auto space-y-4">
-        {bookings.length === 0 ? (
+        {orders.length === 0 ? (
           <Card className="p-8 text-center">
             <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">No bookings yet</h2>
+            <h2 className="text-xl font-semibold mb-2">No orders yet</h2>
             <p className="text-muted-foreground mb-4">
               Start by creating your first delivery
             </p>
@@ -128,26 +140,26 @@ const History = () => {
             </Button>
           </Card>
         ) : (
-          bookings.map((booking) => (
-            <Card key={booking.id} className="p-4">
+          orders.map((order) => (
+            <Card key={order.orderId} className="p-4">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-lg">
-                      {booking.tracking_id}
+                      {order.shipments?.[0]?.awbNumber || order.orderId}
                     </h3>
-                    <Badge className={getStatusColor(booking.status)}>
-                      {booking.status}
+                    <Badge className={getStatusColor(order.shipments?.[0]?.status || order.status)}>
+                      {order.shipments?.[0]?.status || order.status || 'Unknown'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {formatDate(booking.created_at)}
+                    {formatDate(order.orderDate)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Courier</p>
-                  <p className="font-semibold">{booking.courier_name}</p>
+                  <p className="font-semibold">{order.shipments?.[0]?.partnerName || 'N/A'}</p>
                 </div>
               </div>
 
@@ -157,9 +169,9 @@ const History = () => {
                     <MapPin className="h-4 w-4 text-primary mt-1" />
                     <div>
                       <p className="text-xs text-muted-foreground">From</p>
-                      <p className="text-sm font-medium">{booking.sender_name}</p>
+                      <p className="text-sm font-medium">{order.senderDetails?.name || 'N/A'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {booking.sender_address}, {booking.sender_city}
+                        {order.senderDetails?.address || ''}{order.senderDetails?.city ? `, ${order.senderDetails.city}` : ''}
                       </p>
                     </div>
                   </div>
@@ -170,27 +182,12 @@ const History = () => {
                     <MapPin className="h-4 w-4 text-destructive mt-1" />
                     <div>
                       <p className="text-xs text-muted-foreground">To</p>
-                      <p className="text-sm font-medium">{booking.receiver_name}</p>
+                      <p className="text-sm font-medium">{order.receiverDetails?.name || 'N/A'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {booking.receiver_address}, {booking.receiver_city}
+                        {order.receiverDetails?.address || ''}{order.receiverDetails?.city ? `, ${order.receiverDetails.city}` : ''}
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between border-t pt-3">
-                <div className="flex gap-2">
-                  {booking.packaging_required && (
-                    <Badge variant="outline">Packaging</Badge>
-                  )}
-                  {booking.insurance_required && (
-                    <Badge variant="outline">Insurance</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 text-lg font-semibold">
-                  <DollarSign className="h-4 w-4" />
-                  ₹{booking.courier_price}
                 </div>
               </div>
 
@@ -199,7 +196,12 @@ const History = () => {
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => navigate('/tracking', { state: { trackingId: booking.tracking_id } })}
+                  onClick={() => navigate('/tracking', { 
+                    state: { 
+                      trackingId: order.shipments?.[0]?.awbNumber || order.orderId,
+                      orderId: order.orderId 
+                    } 
+                  })}
                 >
                   Track Order
                 </Button>
