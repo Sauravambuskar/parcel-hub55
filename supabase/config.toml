@@ -1,25 +1,10 @@
 project_id = "tksfdvnogzsweteetjjw"
 
-[functions.prayog-send-otp]
-verify_jwt = false
-
-[functions.prayog-verify-otp]
-verify_jwt = false
-
-[functions.check-serviceability]
-verify_jwt = false
-
-[functions.calculate-price]
-verify_jwt = false
-
-[functions.prayog-create-booking]
-verify_jwt = false
-
-[functions.prayog-kyc-initiate]
-verify_jwt = false
-
 [functions.razorpay-create-order]
 verify_jwt = false
 
 [functions.razorpay-verify-payment]
 verify_jwt = false
+
+[functions.create-admin-user]
+verify_jwt = true
