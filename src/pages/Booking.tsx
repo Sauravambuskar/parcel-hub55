@@ -20,42 +20,52 @@ import BookingReviewStep from "@/components/booking/BookingReviewStep";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [pickupAddress, setPickupAddress] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [urgency, setUrgency] = useState('');
-  const [packageWeight, setPackageWeight] = useState('');
-  const [packageDescription, setPackageDescription] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [pickupPincode, setPickupPincode] = useState('');
-  const [deliveryPincode, setDeliveryPincode] = useState('');
-  const [goodsType, setGoodsType] = useState('');
-  const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
-  const [shipmentValue, setShipmentValue] = useState('');
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [urgency, setUrgency] = useState("");
+  const [packageWeight, setPackageWeight] = useState("");
+  const [packageDescription, setPackageDescription] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [pickupPincode, setPickupPincode] = useState("");
+  const [deliveryPincode, setDeliveryPincode] = useState("");
+  const [goodsType, setGoodsType] = useState("");
+  const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
+  const [shipmentValue, setShipmentValue] = useState("");
   const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [calculatedPricing, setCalculatedPricing] = useState<any>(null);
   const [serviceabilityData, setServiceabilityData] = useState<any>(null);
-  
+
   const [senderData, setSenderData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
+    name: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
   });
   const [receiverData, setReceiverData] = useState({
-    name: '', phone: '', address: '', city: '', state: '', pincode: ''
+    name: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
   });
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const totalSteps = 9;
 
   useEffect(() => {
     // Generate a guest user ID for non-authenticated users
-    let guestId = localStorage.getItem('guest_user_id');
+    let guestId = localStorage.getItem("guest_user_id");
     if (!guestId) {
       guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('guest_user_id', guestId);
+      localStorage.setItem("guest_user_id", guestId);
     }
     setUserId(guestId);
   }, []);
@@ -63,26 +73,26 @@ const Booking = () => {
   // Auto-populate pincodes from serviceability check
   useEffect(() => {
     if (pickupPincode && !senderData.pincode) {
-      setSenderData(prev => ({ ...prev, pincode: pickupPincode }));
+      setSenderData((prev) => ({ ...prev, pincode: pickupPincode }));
     }
     if (deliveryPincode && !receiverData.pincode) {
-      setReceiverData(prev => ({ ...prev, pincode: deliveryPincode }));
+      setReceiverData((prev) => ({ ...prev, pincode: deliveryPincode }));
     }
   }, [pickupPincode, deliveryPincode]);
 
   const handleLocationData = (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => {
     if (pickupCity && pickupState) {
-      setSenderData(prev => ({ 
-        ...prev, 
-        city: pickupCity, 
-        state: pickupState 
+      setSenderData((prev) => ({
+        ...prev,
+        city: pickupCity,
+        state: pickupState,
       }));
     }
     if (deliveryCity && deliveryState) {
-      setReceiverData(prev => ({ 
-        ...prev, 
-        city: deliveryCity, 
-        state: deliveryState 
+      setReceiverData((prev) => ({
+        ...prev,
+        city: deliveryCity,
+        state: deliveryState,
       }));
     }
   };
@@ -90,20 +100,20 @@ const Booking = () => {
   // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
     if (!packageWeight || !urgency) return 0;
-    
+
     const baseSuperUrgent = 50;
     const baseUrgent = 25;
     const baseNoRush = 10;
     const weightMultipliers = {
-      "light": 1,
-      "medium": 1.5,
-      "heavy": 2
+      light: 1,
+      medium: 1.5,
+      heavy: 2,
     };
-    
+
     let base = baseNoRush;
     if (urgency === "super-urgent") base = baseSuperUrgent;
     else if (urgency === "urgent") base = baseUrgent;
-    
+
     const multiplier = weightMultipliers[packageWeight as keyof typeof weightMultipliers] || 1;
     return Math.round(base * multiplier);
   };
@@ -126,14 +136,14 @@ const Booking = () => {
 
             // Format partner name properly
             const partnerName = partner.partner_code
-              .split('_')
+              .split("_")
               .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ');
+              .join(" ");
 
             const serviceName = service.service_name
-              .split('_')
+              .split("_")
               .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ');
+              .join(" ");
 
             couriers.push({
               id: courierId++,
@@ -142,21 +152,21 @@ const Booking = () => {
               deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
               basePrice,
               convenienceFee,
-              vehicleType: service.delivery_modes?.express ? 'Express' : 'Standard',
+              vehicleType: service.delivery_modes?.express ? "Express" : "Standard",
               image: getPartnerLogo(partner.partner_code, partnerName),
               features: [
-                service.delivery_modes?.express ? 'Express delivery' : 'Standard delivery',
-                service.is_cod ? 'COD available' : 'Prepaid only',
-                service.insurance ? 'Insurance available' : 'Basic coverage',
-                `Price: ₹${totalPrice}`
+                service.delivery_modes?.express ? "Express delivery" : "Standard delivery",
+                service.is_cod ? "COD available" : "Prepaid only",
+                service.insurance ? "Insurance available" : "Basic coverage",
+                `Price: ₹${totalPrice}`,
               ],
               prayogData: {
                 partnerId: partner.partner_id,
                 partnerCode: partner.partner_code,
                 serviceCode: service.service_code,
                 serviceName: service.service_name,
-                rateId: service.rate?.rate_id
-              }
+                rateId: service.rate?.rate_id,
+              },
             });
           });
         }
@@ -172,22 +182,22 @@ const Booking = () => {
   const getMockCouriers = () => {
     let basePrice = 100;
     let urgencyMultiplier = 1;
-    let deliveryTime = '1-2 days';
-    
-    if (urgency === 'super-urgent') {
+    let deliveryTime = "1-2 days";
+
+    if (urgency === "super-urgent") {
       urgencyMultiplier = 2;
-      deliveryTime = '2-4 hours';
-    } else if (urgency === 'urgent') {
+      deliveryTime = "2-4 hours";
+    } else if (urgency === "urgent") {
       urgencyMultiplier = 1.5;
-      deliveryTime = '6-12 hours';
-    } else if (urgency === 'no-rush') {
+      deliveryTime = "6-12 hours";
+    } else if (urgency === "no-rush") {
       urgencyMultiplier = 0.8;
-      deliveryTime = '2-5 days';
+      deliveryTime = "2-5 days";
     }
-    
-    const weightMultiplier = packageWeight === 'heavy' ? 1.5 : packageWeight === 'medium' ? 1.2 : 1;
+
+    const weightMultiplier = packageWeight === "heavy" ? 1.5 : packageWeight === "medium" ? 1.2 : 1;
     const convenienceFee = calculateConvenienceFee();
-    
+
     return [
       {
         id: 1,
@@ -196,96 +206,96 @@ const Booking = () => {
         deliveryTime,
         basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
         convenienceFee,
-        vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: getPartnerLogo('bluedart'),
-        features: ['Real-time tracking', 'Insurance included', 'SMS updates']
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("bluedart"),
+        features: ["Real-time tracking", "Insurance included", "SMS updates"],
       },
       {
         id: 2,
         name: "DTDC Courier",
         rating: 4.3,
         deliveryTime,
-        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.9),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.9),
         convenienceFee,
-        vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: getPartnerLogo('dtdc'),
-        features: ['Affordable rates', 'Wide network', 'COD available']
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("dtdc"),
+        features: ["Affordable rates", "Wide network", "COD available"],
       },
       {
         id: 3,
         name: "Delhivery Express",
         rating: 4.4,
         deliveryTime,
-        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.95),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.95),
         convenienceFee,
-        vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: getPartnerLogo('delhivery'),
-        features: ['Fast delivery', 'Live tracking', 'Safe handling']
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("delhivery"),
+        features: ["Fast delivery", "Live tracking", "Safe handling"],
       },
       {
         id: 4,
         name: "SpeedPost",
         rating: 4.2,
         deliveryTime,
-        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 0.8),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.8),
         convenienceFee,
-        vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: getPartnerLogo('india_post'),
-        features: ['Government backed', 'Nationwide reach', 'Budget friendly']
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("india_post"),
+        features: ["Government backed", "Nationwide reach", "Budget friendly"],
       },
       {
         id: 5,
         name: "Ecom Express",
         rating: 4.5,
         deliveryTime,
-        basePrice: Math.round((basePrice * urgencyMultiplier * weightMultiplier) * 1.1),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 1.1),
         convenienceFee,
-        vehicleType: packageWeight === 'heavy' ? 'Van' : 'Bike',
-        image: getPartnerLogo('ecom_express'),
-        features: ['E-commerce focus', 'Quick pickup', 'Flexible delivery']
-      }
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("ecom_express"),
+        features: ["E-commerce focus", "Quick pickup", "Flexible delivery"],
+      },
     ];
   };
 
   const handleInputChange = (field: string, value: string) => {
-    switch(field) {
-      case 'pickupAddress':
+    switch (field) {
+      case "pickupAddress":
         setPickupAddress(value);
         break;
-      case 'deliveryAddress':
+      case "deliveryAddress":
         setDeliveryAddress(value);
         break;
-      case 'urgency':
+      case "urgency":
         setUrgency(value);
         break;
-      case 'packageWeight':
+      case "packageWeight":
         setPackageWeight(value);
         break;
-      case 'phoneNumber':
+      case "phoneNumber":
         setPhoneNumber(value);
         break;
-      case 'pickupPincode':
+      case "pickupPincode":
         setPickupPincode(value);
         break;
-      case 'deliveryPincode':
+      case "deliveryPincode":
         setDeliveryPincode(value);
         break;
-      case 'goodsType':
+      case "goodsType":
         setGoodsType(value);
         break;
-      case 'shipmentValue':
+      case "shipmentValue":
         setShipmentValue(value);
         break;
-      case 'packageDescription':
+      case "packageDescription":
         setPackageDescription(value);
         break;
     }
   };
 
   const handleDimensionChange = (dimension: string, value: string) => {
-    setDimensions(prev => ({
+    setDimensions((prev) => ({
       ...prev,
-      [dimension]: value
+      [dimension]: value,
     }));
   };
 
@@ -315,23 +325,23 @@ const Booking = () => {
 
   const handlePaymentSuccess = async (paymentMethod: string) => {
     if (!userId) return;
-    
-    const selectedCourierData = getCouriers().find(c => c.id === selectedCourier);
-    
+
+    const selectedCourierData = getCouriers().find((c) => c.id === selectedCourier);
+
     try {
       // Find the selected service from serviceability data
       let selectedService = null;
       if (serviceabilityData?.partners && selectedCourierData?.prayogData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedCourierData.prayogData.partnerId) {
-            const service = partner.services?.find((s: any) => 
-              s.service_code === selectedCourierData.prayogData.serviceCode
+            const service = partner.services?.find(
+              (s: any) => s.service_code === selectedCourierData.prayogData.serviceCode,
             );
             if (service) {
               selectedService = {
                 ...service,
                 partner_id: partner.partner_id,
-                partner_code: partner.partner_code
+                partner_code: partner.partner_code,
               };
               break;
             }
@@ -343,18 +353,16 @@ const Booking = () => {
       const now = new Date();
       const timestamp = [
         now.getFullYear().toString().slice(-2),
-        (now.getMonth() + 1).toString().padStart(2, '0'),
-        now.getDate().toString().padStart(2, '0'),
-        now.getHours().toString().padStart(2, '0'),
-        now.getMinutes().toString().padStart(2, '0'),
-        now.getSeconds().toString().padStart(2, '0'),
-      ].join('');
-      
-      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const randomPart = Array.from({ length: 6 }, () => 
-        charset[Math.floor(Math.random() * charset.length)]
-      ).join('');
-      
+        (now.getMonth() + 1).toString().padStart(2, "0"),
+        now.getDate().toString().padStart(2, "0"),
+        now.getHours().toString().padStart(2, "0"),
+        now.getMinutes().toString().padStart(2, "0"),
+        now.getSeconds().toString().padStart(2, "0"),
+      ].join("");
+
+      const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const randomPart = Array.from({ length: 6 }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
+
       const orderId = timestamp + randomPart;
 
       // Calculate volumetric weight
@@ -363,7 +371,7 @@ const Booking = () => {
       const height = parseFloat(dimensions?.height) || 10;
       const volumetricWeight = (length * width * height) / 5000;
       const physicalWeight = parseFloat(packageWeight) || 1;
-      
+
       const baseAmount = selectedService?.rate?.price?.amount || 0;
 
       // Prepare Prayog API payload
@@ -373,6 +381,7 @@ const Booking = () => {
         orderType: "FORWARD",
         orderStatus: "READY_FOR_DISPATCH",
         parcelCategory: "ECOMM",
+        vendorCode: "AWSA",
         autoManifest: true,
         eWaybills: [],
         deliveryPromise: selectedService?.service_name || "standard",
@@ -391,7 +400,7 @@ const Booking = () => {
             country: "India",
             latitude: 0,
             longitude: 0,
-            addressName: senderData.address
+            addressName: senderData.address,
           },
           {
             type: "DELIVERY",
@@ -405,7 +414,7 @@ const Booking = () => {
             country: "India",
             latitude: 0,
             longitude: 0,
-            addressName: receiverData.address
+            addressName: receiverData.address,
           },
           {
             type: "BILLING",
@@ -419,7 +428,7 @@ const Booking = () => {
             country: "India",
             latitude: 0,
             longitude: 0,
-            addressName: receiverData.address
+            addressName: receiverData.address,
           },
           {
             type: "RETURN",
@@ -433,15 +442,15 @@ const Booking = () => {
             country: "India",
             latitude: 0,
             longitude: 0,
-            addressName: senderData.address
-          }
+            addressName: senderData.address,
+          },
         ],
         shipments: [
           {
-            dimensions: { 
-              length: length, 
-              width: width, 
-              height: height 
+            dimensions: {
+              length: length,
+              width: width,
+              height: height,
             },
             shipmentStatus: "CONFIRMED",
             awbNumber: "",
@@ -451,40 +460,36 @@ const Booking = () => {
             items: [
               {
                 name: goodsType || "Package",
-                description: packageDescription || "Package"
-              }
-            ]
-          }
+                description: packageDescription || "Package",
+              },
+            ],
+          },
         ],
         payment: {
           finalAmount: baseAmount,
           type: "PREPAID",
           breakdown: {
-            otherCharges: [
-              { name: "Base Rate", chargedAmount: baseAmount }
-            ]
-          }
-        }
+            otherCharges: [{ name: "Base Rate", chargedAmount: baseAmount }],
+          },
+        },
+        vendorcode: "VIAS",
       };
 
       // Get auth token from localStorage
-      const prayogAuth = localStorage.getItem('prayog_auth');
+      const prayogAuth = localStorage.getItem("prayog_auth");
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const idToken = authData?.id_token || '';
+      const idToken = authData?.id_token || "";
 
       // Call Prayog API directly
-      const prayogResponse = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'tenantId': PRAYOG_CONFIG.TENANT_ID,
-            'authorization': `Bearer ${idToken}`,
-          },
-          body: JSON.stringify(prayogPayload),
-        }
-      );
+      const prayogResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          tenantId: PRAYOG_CONFIG.TENANT_ID,
+          authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(prayogPayload),
+      });
 
       const prayogResult = await prayogResponse.json();
 
@@ -492,27 +497,62 @@ const Booking = () => {
         throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
       }
 
-      const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
-      const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
+      const prayogBooking = {
+        success: true,
+        orderId: prayogResult.orderId || orderId,
+        awbNumber: prayogResult.shipments?.[0]?.awbNumber || null,
+        trackingId: prayogResult.shipments?.[0]?.awbNumber || orderId,
+      };
+
+      // Save booking to our database
+      const { error: dbError } = await supabase.from("bookings").insert({
+        user_id: userId,
+        sender_name: senderData.name,
+        sender_phone: senderData.phone,
+        sender_address: senderData.address,
+        sender_city: senderData.city,
+        sender_state: senderData.state,
+        sender_pincode: senderData.pincode,
+        receiver_name: receiverData.name,
+        receiver_phone: receiverData.phone,
+        receiver_address: receiverData.address,
+        receiver_city: receiverData.city,
+        receiver_state: receiverData.state,
+        receiver_pincode: receiverData.pincode,
+        goods_type: goodsType,
+        package_weight: packageWeight,
+        length: dimensions.length,
+        width: dimensions.width,
+        height: dimensions.height,
+        shipment_value: parseFloat(shipmentValue) || 0,
+        urgency,
+        courier_name: selectedCourierData?.name || "",
+        courier_price: selectedCourierData?.basePrice || 0,
+        delivery_time: selectedCourierData?.deliveryTime || "",
+        tracking_id: prayogBooking.awbNumber || prayogBooking.trackingId,
+        status: "confirmed",
+      });
+
+      if (dbError) throw dbError;
 
       toast({
         title: "Booking Confirmed!",
-        description: `Your shipment has been booked. AWB: ${awbNumber || trackingId}`,
+        description: `Your shipment has been booked. AWB: ${prayogBooking.awbNumber || prayogBooking.trackingId}`,
       });
 
-      navigate('/tracking', { 
-        state: { 
-          orderId: trackingId,
-          awbNumber: awbNumber,
+      navigate("/tracking", {
+        state: {
+          orderId: prayogBooking.trackingId,
+          awbNumber: prayogBooking.awbNumber,
           courier: selectedCourierData?.name,
           pickupAddress: `${senderData.address}, ${senderData.city}`,
           deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
           paymentMethod,
-          pickupDate: selectedDate?.toISOString()
-        } 
+          pickupDate: selectedDate?.toISOString(),
+        },
       });
     } catch (error: any) {
-      console.error('Booking error:', error);
+      console.error("Booking error:", error);
       toast({
         title: "Booking Failed",
         description: error.message || "Failed to create booking. Please try again.",
@@ -521,10 +561,8 @@ const Booking = () => {
     }
   };
 
-  const selectedCourierData = selectedCourier ? getCouriers().find(c => c.id === selectedCourier) : null;
-  const totalAmount = selectedCourierData 
-    ? selectedCourierData.basePrice + selectedCourierData.convenienceFee
-    : 0;
+  const selectedCourierData = selectedCourier ? getCouriers().find((c) => c.id === selectedCourier) : null;
+  const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -597,19 +635,14 @@ const Booking = () => {
           <AddressStep
             senderData={senderData}
             receiverData={receiverData}
-            onSenderChange={(field, value) => setSenderData(prev => ({ ...prev, [field]: value }))}
-            onReceiverChange={(field, value) => setReceiverData(prev => ({ ...prev, [field]: value }))}
+            onSenderChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
+            onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
         );
       case 8:
-        return (
-          <DisclaimerStep
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
+        return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
       case 9:
         return (
           <BookingReviewStep
@@ -620,13 +653,13 @@ const Booking = () => {
               weight: packageWeight,
               dimensions,
               shipmentValue,
-              urgency
+              urgency,
             }}
             courierDetails={{
-              name: selectedCourierData?.name || '',
+              name: selectedCourierData?.name || "",
               basePrice: selectedCourierData?.basePrice || 0,
               convenienceFee: selectedCourierData?.convenienceFee || 0,
-              deliveryTime: selectedCourierData?.deliveryTime || ''
+              deliveryTime: selectedCourierData?.deliveryTime || "",
             }}
             selectedDate={selectedDate}
             onConfirm={handleProceedToPayment}
@@ -643,7 +676,7 @@ const Booking = () => {
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate('/') : handlePrevStep()}>
+          <Button variant="ghost" size="icon" onClick={() => (currentStep === 1 ? navigate("/") : handlePrevStep())}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Book Delivery</h1>
@@ -665,7 +698,7 @@ const Booking = () => {
             courierName: selectedCourierData.name,
             basePrice: selectedCourierData.basePrice,
             convenienceFee: selectedCourierData.convenienceFee,
-            pickupDate: selectedDate?.toISOString()
+            pickupDate: selectedDate?.toISOString(),
           }}
           onPaymentSuccess={handlePaymentSuccess}
           customerDetails={{
