@@ -43,8 +43,9 @@ const Login = () => {
           'x-api-key': PRAYOG_CONFIG.API_KEY,
         },
         body: JSON.stringify({
-          name: 'User',
-          phone: `+91${phoneNumber}`,
+          name: 'phone',
+          username: `+91${phoneNumber}`,
+          signupType: 'MOBILE',
         }),
       });
 
@@ -89,9 +90,9 @@ const Login = () => {
           'x-api-key': PRAYOG_CONFIG.API_KEY,
         },
         body: JSON.stringify({
-          phone: `+91${phoneNumber}`,
+          username: `+91${phoneNumber}`,
           session: prayogSession,
-          otp: otp,
+          confirmationCode: otp,
         }),
       });
 
