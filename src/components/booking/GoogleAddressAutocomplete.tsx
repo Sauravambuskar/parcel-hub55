@@ -3,12 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Loader2 } from "lucide-react";
 
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
 const GOOGLE_MAPS_API_KEY = "AIzaSyBV-s_rISnIAm3QoDYqmoVH2HhhikVUNQA";
 
 interface AddressData {
@@ -33,13 +27,14 @@ const GoogleAddressAutocomplete = ({
   placeholder = "Start typing an address...",
 }: GoogleAddressAutocompleteProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check if script already exists
-    if (window.google?.maps?.places) {
+    const windowWithGoogle = window as any;
+    if (windowWithGoogle.google?.maps?.places) {
       setIsLoaded(true);
       setIsLoading(false);
       return;
@@ -72,9 +67,10 @@ const GoogleAddressAutocomplete = ({
   }, []);
 
   useEffect(() => {
+    const windowWithGoogle = window as any;
     if (!isLoaded || !inputRef.current || autocompleteRef.current) return;
 
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+    autocompleteRef.current = new windowWithGoogle.google.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: "in" },
       fields: ["address_components", "formatted_address", "geometry"],
     });
@@ -88,7 +84,7 @@ const GoogleAddressAutocomplete = ({
       let pincode = "";
       let country = "";
 
-      place.address_components.forEach((component) => {
+      place.address_components.forEach((component: any) => {
         const types = component.types;
         if (types.includes("locality")) {
           city = component.long_name;
