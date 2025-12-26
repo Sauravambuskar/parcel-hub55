@@ -32,7 +32,8 @@ const Booking = () => {
   const [goodsType, setGoodsType] = useState("");
   const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
   const [shipmentValue, setShipmentValue] = useState("");
-  const [selectedCourier, setSelectedCourier] = useState<number | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedPartnerData, setSelectedPartnerData] = useState<{ partnerId: string; serviceCode: string; rateId: string } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -303,8 +304,45 @@ const Booking = () => {
     }));
   };
 
-  const handleCourierSelect = (courierId: number) => {
-    setSelectedCourier(courierId);
+  const handleServiceSelect = (partnerId: string, serviceCode: string, rateId: string) => {
+    const serviceId = `${partnerId}_${serviceCode}`;
+    setSelectedServiceId(serviceId);
+    setSelectedPartnerData({ partnerId, serviceCode, rateId });
+  };
+
+  // Get partners from serviceability data
+  const getPartners = () => {
+    if (serviceabilityData?.partners) {
+      return serviceabilityData.partners;
+    }
+    return [];
+  };
+
+  // Get selected service details for review step
+  const getSelectedServiceDetails = () => {
+    if (!selectedPartnerData || !serviceabilityData?.partners) return null;
+    
+    for (const partner of serviceabilityData.partners) {
+      if (partner.partner_id === selectedPartnerData.partnerId) {
+        const service = partner.services?.find(
+          (s: any) => s.service_code === selectedPartnerData.serviceCode
+        );
+        if (service) {
+          return {
+            name: `${partner.partner_name} - ${service.service_name}`,
+            basePrice: Math.round(service.rate?.price?.amount || 0),
+            convenienceFee: 0,
+            deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
+            partnerId: partner.partner_id,
+            partnerCode: partner.partner_code,
+            serviceCode: service.service_code,
+            serviceName: service.service_name,
+            rateId: service.rate?.rate_id,
+          };
+        }
+      }
+    }
+    return null;
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -330,16 +368,16 @@ const Booking = () => {
   const handlePaymentSuccess = async (paymentMethod: string) => {
     if (!userId) return;
 
-    const selectedCourierData = getCouriers().find((c) => c.id === selectedCourier);
+    const selectedCourierData = getSelectedServiceDetails();
 
     try {
       // Find the selected service from serviceability data
       let selectedService = null;
-      if (serviceabilityData?.partners && selectedCourierData?.prayogData) {
+      if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
-          if (partner.partner_id === selectedCourierData.prayogData.partnerId) {
+          if (partner.partner_id === selectedPartnerData.partnerId) {
             const service = partner.services?.find(
-              (s: any) => s.service_code === selectedCourierData.prayogData.serviceCode,
+              (s: any) => s.service_code === selectedPartnerData.serviceCode,
             );
             if (service) {
               selectedService = {
@@ -530,7 +568,7 @@ const Booking = () => {
     }
   };
 
-  const selectedCourierData = selectedCourier ? getCouriers().find((c) => c.id === selectedCourier) : null;
+  const selectedCourierData = getSelectedServiceDetails();
   const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
 
   const renderCurrentStep = () => {
@@ -579,9 +617,9 @@ const Booking = () => {
       case 5:
         return (
           <BookingStep5
-            couriers={getCouriers()}
-            selectedCourier={selectedCourier}
-            onCourierSelect={handleCourierSelect}
+            partners={getPartners()}
+            selectedServiceId={selectedServiceId}
+            onServiceSelect={handleServiceSelect}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
@@ -660,8 +698,8 @@ const Booking = () => {
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           orderDetails={{
-            courierId: selectedCourier!,
-            courierName: selectedCourierData.name,
+            courierId: selectedPartnerData?.partnerId ?? '',
+            courierName: selectedCourierData.name ?? '',
             basePrice: selectedCourierData.basePrice,
             convenienceFee: selectedCourierData.convenienceFee,
             pickupDate: selectedDate?.toISOString(),

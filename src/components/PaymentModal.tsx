@@ -27,7 +27,7 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderDetails: {
-    courierId: number;
+    courierId: number | string;
     courierName: string;
     basePrice: number;
     convenienceFee: number;
