@@ -60,7 +60,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const totalSteps = 9;
+  const totalSteps = 8;
 
   useEffect(() => {
     // Generate a guest user ID for non-authenticated users
@@ -607,15 +607,6 @@ const Booking = () => {
         );
       case 4:
         return (
-          <BookingStep4
-            urgency={urgency}
-            onInputChange={handleInputChange}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
-      case 5:
-        return (
           <BookingStep5
             partners={getPartners()}
             selectedServiceId={selectedServiceId}
@@ -624,7 +615,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 6:
+      case 5:
         return (
           <BookingStep6
             selectedDate={selectedDate}
@@ -634,7 +625,7 @@ const Booking = () => {
             totalAmount={totalAmount}
           />
         );
-      case 7:
+      case 6:
         return (
           <AddressStep
             senderData={senderData}
@@ -645,9 +636,9 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 8:
+      case 7:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
-      case 9:
+      case 8:
         return (
           <BookingReviewStep
             senderData={senderData}
