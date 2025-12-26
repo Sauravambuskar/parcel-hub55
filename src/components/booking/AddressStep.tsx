@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 interface AddressStepProps {
   senderData: {
@@ -81,16 +81,18 @@ const AddressStep = ({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="sender-address">Complete Address *</Label>
-            <Textarea
-              id="sender-address"
-              value={senderData.address}
-              onChange={(e) => onSenderChange("address", e.target.value)}
-              placeholder="House/Flat No., Building Name, Street, Area"
-              rows={3}
-            />
-          </div>
+          <AddressAutocomplete
+            id="sender-address"
+            label="Complete Address *"
+            value={senderData.address}
+            onChange={(value) => onSenderChange("address", value)}
+            onAddressSelect={(components) => {
+              onSenderChange("address", components.address);
+              if (components.city) onSenderChange("city", components.city);
+              if (components.state) onSenderChange("state", components.state);
+            }}
+            placeholder="Start typing address..."
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -150,16 +152,18 @@ const AddressStep = ({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="receiver-address">Complete Address *</Label>
-            <Textarea
-              id="receiver-address"
-              value={receiverData.address}
-              onChange={(e) => onReceiverChange("address", e.target.value)}
-              placeholder="House/Flat No., Building Name, Street, Area"
-              rows={3}
-            />
-          </div>
+          <AddressAutocomplete
+            id="receiver-address"
+            label="Complete Address *"
+            value={receiverData.address}
+            onChange={(value) => onReceiverChange("address", value)}
+            onAddressSelect={(components) => {
+              onReceiverChange("address", components.address);
+              if (components.city) onReceiverChange("city", components.city);
+              if (components.state) onReceiverChange("state", components.state);
+            }}
+            placeholder="Start typing address..."
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
