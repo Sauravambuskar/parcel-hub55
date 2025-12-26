@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { input, types } = await req.json();
+    const { input } = await req.json();
     
     if (!input) {
       return new Response(
@@ -28,24 +28,38 @@ serve(async (req) => {
       );
     }
 
-    const params = new URLSearchParams({
-      input,
-      key: apiKey,
-      components: 'country:in', // Restrict to India
-    });
-
-    if (types) {
-      params.append('types', types);
-    }
-
+    // Using the new Places API (New)
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params.toString()}`
+      'https://places.googleapis.com/v1/places:autocomplete',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+        },
+        body: JSON.stringify({
+          input,
+          includedRegionCodes: ['in'], // Restrict to India
+          languageCode: 'en',
+        }),
+      }
     );
 
     const data = await response.json();
+    console.log('Places API response:', JSON.stringify(data));
+
+    // Transform the new API response to match our expected format
+    const predictions = data.suggestions?.map((suggestion: any) => ({
+      place_id: suggestion.placePrediction?.placeId,
+      description: suggestion.placePrediction?.text?.text,
+      structured_formatting: {
+        main_text: suggestion.placePrediction?.structuredFormat?.mainText?.text || '',
+        secondary_text: suggestion.placePrediction?.structuredFormat?.secondaryText?.text || '',
+      },
+    })).filter((p: any) => p.place_id) || [];
 
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({ predictions, status: 'OK' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
