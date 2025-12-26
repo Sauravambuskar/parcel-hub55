@@ -109,64 +109,178 @@ const OrderDetails = () => {
     }
   };
 
-  const handleDownloadInvoice = async () => {
-    if (!orderId) return;
+  const handleDownloadInvoice = () => {
+    if (!order) return;
     
     setDownloadingInvoice(true);
-    try {
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      
-      if (!prayogAuth) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to download invoice",
-          variant: "destructive",
-        });
-        navigate('/login');
-        return;
-      }
+    
+    const pickupAddr = order.addresses?.find(a => a.type === 'PICKUP');
+    const deliveryAddr = order.addresses?.find(a => a.type === 'DELIVERY');
+    const shipmentData = order.shipments?.[0];
+    
+    const invoiceHtml = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Invoice - ${order.orderId}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background: #f5f5f5; }
+          .invoice-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #3b82f6; }
+          .logo { font-size: 28px; font-weight: bold; color: #3b82f6; }
+          .invoice-title { text-align: right; }
+          .invoice-title h1 { font-size: 32px; color: #333; margin-bottom: 8px; }
+          .invoice-title p { color: #666; font-size: 14px; }
+          .info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .info-box { background: #f8fafc; padding: 20px; border-radius: 8px; }
+          .info-box h3 { font-size: 14px; color: #3b82f6; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-box p { color: #333; font-size: 14px; line-height: 1.6; }
+          .info-box .name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+          .order-details { margin-bottom: 30px; }
+          .order-details h3 { font-size: 18px; color: #333; margin-bottom: 15px; }
+          .details-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+          .detail-item { background: #f8fafc; padding: 15px; border-radius: 8px; }
+          .detail-item label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+          .detail-item span { font-size: 14px; font-weight: 600; color: #333; }
+          .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .items-table th { background: #3b82f6; color: white; padding: 12px; text-align: left; font-size: 14px; }
+          .items-table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+          .items-table tr:last-child td { border-bottom: none; }
+          .payment-section { background: #f8fafc; padding: 25px; border-radius: 8px; }
+          .payment-section h3 { font-size: 18px; color: #333; margin-bottom: 20px; }
+          .payment-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+          .payment-row.total { border-top: 2px solid #3b82f6; margin-top: 15px; padding-top: 15px; font-size: 18px; font-weight: bold; color: #3b82f6; }
+          .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+          .status-processing { background: #fef3c7; color: #d97706; }
+          .status-delivered { background: #d1fae5; color: #059669; }
+          .status-failed { background: #fee2e2; color: #dc2626; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px; }
+          @media print { body { padding: 0; background: white; } .invoice-container { box-shadow: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="header">
+            <div class="logo">📦 ShipEasy</div>
+            <div class="invoice-title">
+              <h1>INVOICE</h1>
+              <p>Order ID: ${order.orderId}</p>
+              <p>Date: ${new Date(order.orderDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+          </div>
 
-      const authData = JSON.parse(prayogAuth);
+          <div class="info-section">
+            <div class="info-box">
+              <h3>Pickup Address</h3>
+              ${pickupAddr ? `
+                <p class="name">${pickupAddr.name}</p>
+                <p>${pickupAddr.phone}</p>
+                <p>${pickupAddr.street}</p>
+                <p>${pickupAddr.city}, ${pickupAddr.state} - ${pickupAddr.zip}</p>
+                <p>${pickupAddr.country}</p>
+              ` : '<p>Not available</p>'}
+            </div>
+            <div class="info-box">
+              <h3>Delivery Address</h3>
+              ${deliveryAddr ? `
+                <p class="name">${deliveryAddr.name}</p>
+                <p>${deliveryAddr.phone}</p>
+                <p>${deliveryAddr.street}</p>
+                <p>${deliveryAddr.city}, ${deliveryAddr.state} - ${deliveryAddr.zip}</p>
+                <p>${deliveryAddr.country}</p>
+              ` : '<p>Not available</p>'}
+            </div>
+          </div>
 
-      const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/pdf-generator/invoice/${orderId}`,
-        {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${authData.id_token}`,
-            "tenantId": PRAYOG_CONFIG.TENANT_ID,
-          },
-        }
-      );
+          <div class="order-details">
+            <h3>Order Details</h3>
+            <div class="details-grid">
+              <div class="detail-item">
+                <label>AWB Number</label>
+                <span>${shipmentData?.awbNumber || 'N/A'}</span>
+              </div>
+              <div class="detail-item">
+                <label>Delivery Type</label>
+                <span>${order.deliveryPromise || 'Standard'}</span>
+              </div>
+              <div class="detail-item">
+                <label>Status</label>
+                <span class="status-badge status-${order.orderStatus?.toLowerCase()}">${order.orderStatus}</span>
+              </div>
+              <div class="detail-item">
+                <label>Payment Type</label>
+                <span>${order.payment?.type || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
 
-      if (!response.ok) {
-        throw new Error(`Failed to download invoice: ${response.status}`);
-      }
+          ${shipmentData ? `
+            <div class="order-details">
+              <h3>Shipment Information</h3>
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Dimensions (L×W×H)</th>
+                    <th>Physical Weight</th>
+                    <th>Volumetric Weight</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>${shipmentData.items?.[0]?.name || 'Package'} ${shipmentData.items?.[0]?.description ? `- ${shipmentData.items[0].description}` : ''}</td>
+                    <td>${shipmentData.dimensions ? `${shipmentData.dimensions.length} × ${shipmentData.dimensions.width} × ${shipmentData.dimensions.height} cm` : 'N/A'}</td>
+                    <td>${shipmentData.physicalWeight !== undefined ? `${shipmentData.physicalWeight} g` : 'N/A'}</td>
+                    <td>${shipmentData.volumetricWeight !== undefined ? `${shipmentData.volumetricWeight.toFixed(2)} g` : 'N/A'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `invoice-${orderId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+          <div class="payment-section">
+            <h3>Payment Summary</h3>
+            <div class="payment-row">
+              <span>Base Rate</span>
+              <span>₹${order.payment?.finalAmount?.toFixed(2) || '0.00'}</span>
+            </div>
+            <div class="payment-row">
+              <span>Taxes</span>
+              <span>₹0.00</span>
+            </div>
+            <div class="payment-row">
+              <span>Discount</span>
+              <span>-₹0.00</span>
+            </div>
+            <div class="payment-row total">
+              <span>Total Amount</span>
+              <span>₹${order.payment?.finalAmount?.toFixed(2) || '0.00'}</span>
+            </div>
+          </div>
 
-      toast({
-        title: "Success",
-        description: "Invoice downloaded successfully",
-      });
-    } catch (error: any) {
-      console.error("Error downloading invoice:", error);
-      toast({
-        title: "Error",
-        description: "Failed to download invoice",
-        variant: "destructive",
-      });
-    } finally {
-      setDownloadingInvoice(false);
+          <div class="footer">
+            <p>Thank you for choosing ShipEasy!</p>
+            <p>For support, contact us at support@shipeasy.com</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(invoiceHtml);
+      newWindow.document.close();
     }
+    
+    setDownloadingInvoice(false);
+    toast({
+      title: "Success",
+      description: "Invoice opened in new tab",
+    });
   };
 
   const getStatusColor = (status: string) => {
