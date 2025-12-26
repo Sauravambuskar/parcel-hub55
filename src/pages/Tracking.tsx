@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, User, Truck, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
@@ -54,25 +55,37 @@ const Tracking = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { awbNumber, orderId } = location.state || {};
+  const { awbNumber: initialAwbNumber } = location.state || {};
   
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
+  const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
 
   useEffect(() => {
-    if (awbNumber) {
-      fetchTrackingData();
-    } else {
-      setLoading(false);
+    if (initialAwbNumber) {
+      setCurrentAwb(initialAwbNumber);
+      fetchTrackingData(initialAwbNumber);
+    }
+  }, [initialAwbNumber]);
+
+  const handleTrack = () => {
+    if (!awbInput.trim()) {
       toast({
         title: "Error",
-        description: "No tracking number provided",
+        description: "Please enter an AWB number",
         variant: "destructive",
       });
+      return;
     }
-  }, [awbNumber]);
+    setCurrentAwb(awbInput.trim());
+    fetchTrackingData(awbInput.trim());
+  };
 
-  const fetchTrackingData = async () => {
+  const fetchTrackingData = async (awb: string) => {
+    setLoading(true);
+    setTrackingData(null);
+    
     try {
       const prayogAuth = localStorage.getItem('prayog_auth');
       
@@ -89,7 +102,7 @@ const Tracking = () => {
       const authData = JSON.parse(prayogAuth);
 
       const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awbNumber}`,
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awb}`,
         {
           method: "GET",
           headers: {
@@ -110,7 +123,7 @@ const Tracking = () => {
       console.error("Error fetching tracking:", error);
       toast({
         title: "Error",
-        description: "Failed to load tracking information",
+        description: "Failed to load tracking information. Please check the AWB number.",
         variant: "destructive",
       });
     } finally {
@@ -163,31 +176,64 @@ const Tracking = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading tracking information...</p>
-      </div>
-    );
-  }
-
+  // Show search form when no tracking data
   if (!trackingData) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-background border-b border-border p-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <header className="bg-background border-b border-border p-4 sticky top-0 z-50">
+          <div className="flex items-center gap-3 max-w-4xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-bold">Track Order</h1>
           </div>
         </header>
-        <div className="p-4 text-center">
-          <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">No tracking information available</p>
-          <Button onClick={() => navigate('/history')} className="mt-4">
-            Back to Orders
-          </Button>
+        
+        <div className="p-4 max-w-4xl mx-auto space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                Track Your Shipment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Enter your AWB (Air Waybill) number to track your shipment
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter AWB Number"
+                  value={awbInput}
+                  onChange={(e) => setAwbInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
+                  className="flex-1"
+                />
+                <Button onClick={handleTrack} disabled={loading}>
+                  {loading ? "Tracking..." : "Track"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {loading && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading tracking information...</p>
+            </div>
+          )}
+
+          <Card className="bg-muted/50">
+            <CardContent className="p-6 text-center">
+              <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">Where to find your AWB number?</h3>
+              <p className="text-sm text-muted-foreground">
+                You can find your AWB number in your order confirmation email or in your order history.
+              </p>
+              <Button variant="outline" onClick={() => navigate('/history')} className="mt-4">
+                View Order History
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -207,12 +253,30 @@ const Tracking = () => {
           </Button>
           <div>
             <h1 className="text-xl font-bold">Track Order</h1>
-            <p className="text-sm text-muted-foreground">{orderInformation?.trackingId || awbNumber}</p>
+            <p className="text-sm text-muted-foreground">{orderInformation?.trackingId || currentAwb}</p>
           </div>
         </div>
       </header>
 
       <div className="p-4 space-y-4 max-w-4xl mx-auto">
+        {/* Search Again */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter AWB Number"
+                value={awbInput}
+                onChange={(e) => setAwbInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
+                className="flex-1"
+              />
+              <Button onClick={handleTrack} disabled={loading} size="sm">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Current Status */}
         <Card>
           <CardHeader className="pb-2">
