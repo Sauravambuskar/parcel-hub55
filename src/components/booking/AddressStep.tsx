@@ -35,6 +35,7 @@ interface AddressStepProps {
   onReceiverChange: (field: string, value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  onGoToStep?: (step: number) => void;
 }
 
 const AddressStep = ({
@@ -46,6 +47,7 @@ const AddressStep = ({
   onReceiverChange,
   onNext,
   onBack,
+  onGoToStep,
 }: AddressStepProps) => {
   const [senderPincodeMismatch, setSenderPincodeMismatch] = useState<PincodeMismatch | null>(null);
   const [receiverPincodeMismatch, setReceiverPincodeMismatch] = useState<PincodeMismatch | null>(null);
@@ -157,7 +159,7 @@ const AddressStep = ({
                 <p className="text-sm">
                   Please select an address within pincode {senderPincodeMismatch.expected} or go back to update the pincode.
                 </p>
-                <Button variant="outline" size="sm" onClick={onBack} className="mt-2">
+                <Button variant="outline" size="sm" onClick={() => onGoToStep?.(2)} className="mt-2">
                   Go Back to Change Pincode
                 </Button>
               </AlertDescription>
@@ -247,7 +249,7 @@ const AddressStep = ({
                 <p className="text-sm">
                   Please select an address within pincode {receiverPincodeMismatch.expected} or go back to update the pincode.
                 </p>
-                <Button variant="outline" size="sm" onClick={onBack} className="mt-2">
+                <Button variant="outline" size="sm" onClick={() => onGoToStep?.(2)} className="mt-2">
                   Go Back to Change Pincode
                 </Button>
               </AlertDescription>
