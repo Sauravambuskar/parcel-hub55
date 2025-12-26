@@ -47,6 +47,11 @@ interface OrderDetails {
   addresses?: OrderAddress[];
   shipments?: Shipment[];
   payment?: Payment;
+  metadata?: {
+    razorpay_payment_id?: string;
+    razorpay_order_id?: string;
+    source?: string;
+  };
 }
 
 const OrderDetails = () => {
@@ -164,7 +169,7 @@ const OrderDetails = () => {
       <body>
         <div class="invoice-container">
           <div class="header">
-            <div class="logo">📦 ShipEasy</div>
+            <div class="logo">📦 ViaSetu.</div>
             <div class="invoice-title">
               <h1>INVOICE</h1>
               <p>Order ID: ${order.orderId}</p>
@@ -207,14 +212,24 @@ const OrderDetails = () => {
                 <span>${order.deliveryPromise || 'Standard'}</span>
               </div>
               <div class="detail-item">
-                <label>Status</label>
-                <span class="status-badge status-${order.orderStatus?.toLowerCase()}">${order.orderStatus}</span>
-              </div>
-              <div class="detail-item">
                 <label>Payment Type</label>
                 <span>${order.payment?.type || 'N/A'}</span>
               </div>
+              ${order.metadata?.razorpay_payment_id ? `
+              <div class="detail-item">
+                <label>Payment ID</label>
+                <span>${order.metadata.razorpay_payment_id}</span>
+              </div>
+              ` : ''}
             </div>
+            ${order.metadata?.razorpay_order_id ? `
+            <div class="details-grid" style="margin-top: 15px;">
+              <div class="detail-item">
+                <label>Razorpay Order ID</label>
+                <span>${order.metadata.razorpay_order_id}</span>
+              </div>
+            </div>
+            ` : ''}
           </div>
 
           ${shipmentData ? `
@@ -262,8 +277,8 @@ const OrderDetails = () => {
           </div>
 
           <div class="footer">
-            <p>Thank you for choosing ShipEasy!</p>
-            <p>For support, contact us at support@shipeasy.com</p>
+            <p>Thank you for choosing ViaSetu.!</p>
+            <p>For support, contact us at support@viasetu.com</p>
           </div>
         </div>
       </body>
