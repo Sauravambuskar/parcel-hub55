@@ -60,8 +60,8 @@ const History = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "x-tenant-id": PRAYOG_CONFIG.TENANT_ID,
-            "x-api-key": authData.api_key || PRAYOG_CONFIG.API_KEY,
+            "Authorization": `Bearer ${authData.id_token}`,
+            "tenantId": PRAYOG_CONFIG.TENANT_ID,
           },
         }
       );
