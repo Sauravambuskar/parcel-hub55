@@ -560,13 +560,9 @@ const Booking = () => {
         return (
           <BookingStep3
             goodsType={goodsType}
-            packageWeight={packageWeight}
-            customWeight={customWeight}
-            dimensions={dimensions}
             shipmentValue={shipmentValue}
             packageDescription={packageDescription}
             onInputChange={handleInputChange}
-            onDimensionChange={handleDimensionChange}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
