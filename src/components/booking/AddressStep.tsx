@@ -116,8 +116,9 @@ const AddressStep = ({
               <Input
                 id="sender-pincode"
                 value={senderData.pincode}
-                onChange={(e) => onSenderChange("pincode", e.target.value)}
-                placeholder="110001"
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
             </div>
           </div>
@@ -184,8 +185,9 @@ const AddressStep = ({
               <Input
                 id="receiver-pincode"
                 value={receiverData.pincode}
-                onChange={(e) => onReceiverChange("pincode", e.target.value)}
-                placeholder="110001"
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
             </div>
           </div>
