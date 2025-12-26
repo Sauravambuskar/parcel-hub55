@@ -28,20 +28,43 @@ serve(async (req) => {
       );
     }
 
-    const params = new URLSearchParams({
-      place_id: placeId,
-      key: apiKey,
-      fields: 'address_components,formatted_address,geometry',
-    });
-
+    // Using the new Places API (New)
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`
+      `https://places.googleapis.com/v1/places/${placeId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,addressComponents,location',
+        },
+      }
     );
 
     const data = await response.json();
+    console.log('Place details response:', JSON.stringify(data));
+
+    // Transform the new API response to match our expected format
+    const addressComponents = data.addressComponents?.map((component: any) => ({
+      long_name: component.longText,
+      short_name: component.shortText,
+      types: component.types,
+    })) || [];
 
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({
+        result: {
+          formatted_address: data.formattedAddress,
+          address_components: addressComponents,
+          geometry: {
+            location: {
+              lat: data.location?.latitude,
+              lng: data.location?.longitude,
+            },
+          },
+        },
+        status: 'OK',
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
