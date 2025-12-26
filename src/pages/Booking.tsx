@@ -635,9 +635,11 @@ const Booking = () => {
         );
       case 6:
         return (
-          <AddressStep
+        <AddressStep
             senderData={senderData}
             receiverData={receiverData}
+            pickupPincode={pickupPincode}
+            deliveryPincode={deliveryPincode}
             onSenderChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
             onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
             onNext={handleNextStep}
