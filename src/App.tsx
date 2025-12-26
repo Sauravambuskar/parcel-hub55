@@ -11,6 +11,7 @@ import Tracking from "./pages/Tracking";
 import History from "./pages/History";
 import OrderDetails from "./pages/OrderDetails";
 import Support from "./pages/Support";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/admin/ResetPassword";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/history" element={<History />} />
           <Route path="/order/:orderId" element={<OrderDetails />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/profile" element={<Profile />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
