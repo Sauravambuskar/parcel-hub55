@@ -2,30 +2,32 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
 
+interface OrderAddress {
+  type: string;
+  name: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+}
+
 interface PrayogOrder {
   orderId: string;
   orderDate: string;
-  status: string;
+  orderStatus: string;
   shipments?: Array<{
     awbNumber: string;
     partnerName: string;
-    status: string;
+    shipmentStatus: string;
   }>;
-  senderDetails?: {
-    name: string;
-    address: string;
-    city: string;
-  };
-  receiverDetails?: {
-    name: string;
-    address: string;
-    city: string;
-  };
+  addresses?: OrderAddress[];
 }
 
 const History = () => {
@@ -149,74 +151,82 @@ const History = () => {
             </Button>
           </Card>
         ) : (
-          orders.map((order) => (
-            <Card key={order.orderId} className="p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-lg">
-                      {order.shipments?.[0]?.awbNumber || order.orderId}
-                    </h3>
-                    <Badge className={getStatusColor(order.shipments?.[0]?.status || order.status)}>
-                      {order.shipments?.[0]?.status || order.status || 'Unknown'}
-                    </Badge>
+          orders.map((order) => {
+            const pickupAddress = order.addresses?.find(a => a.type === 'PICKUP');
+            const deliveryAddress = order.addresses?.find(a => a.type === 'DELIVERY');
+            
+            return (
+              <Card key={order.orderId} className="p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">
+                        {order.shipments?.[0]?.awbNumber || order.orderId}
+                      </h3>
+                      <Badge className={getStatusColor(order.orderStatus)}>
+                        {order.orderStatus || 'Unknown'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(order.orderDate)}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(order.orderDate)}
-                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/tracking', { 
+                      state: { 
+                        trackingId: order.shipments?.[0]?.awbNumber || order.orderId,
+                        orderId: order.orderId 
+                      } 
+                    })}
+                    className="text-primary"
+                  >
+                    <Navigation className="h-5 w-5" />
+                  </Button>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Courier</p>
-                  <p className="font-semibold">{order.shipments?.[0]?.partnerName || 'N/A'}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-primary mt-1" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">From</p>
-                      <p className="text-sm font-medium">{order.senderDetails?.name || 'N/A'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {order.senderDetails?.address || ''}{order.senderDetails?.city ? `, ${order.senderDetails.city}` : ''}
-                      </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Pickup</p>
+                        <p className="text-sm font-medium">{pickupAddress?.name || 'N/A'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {pickupAddress?.street}{pickupAddress?.city ? `, ${pickupAddress.city}` : ''}{pickupAddress?.state ? `, ${pickupAddress.state}` : ''} - {pickupAddress?.zip || ''}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-destructive mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Delivery</p>
+                        <p className="text-sm font-medium">{deliveryAddress?.name || 'N/A'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {deliveryAddress?.street}{deliveryAddress?.city ? `, ${deliveryAddress.city}` : ''}{deliveryAddress?.state ? `, ${deliveryAddress.state}` : ''} - {deliveryAddress?.zip || ''}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-destructive mt-1" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">To</p>
-                      <p className="text-sm font-medium">{order.receiverDetails?.name || 'N/A'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {order.receiverDetails?.address || ''}{order.receiverDetails?.city ? `, ${order.receiverDetails.city}` : ''}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3">
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => navigate('/tracking', { 
-                    state: { 
-                      trackingId: order.shipments?.[0]?.awbNumber || order.orderId,
-                      orderId: order.orderId 
-                    } 
-                  })}
+                  onClick={() => navigate(`/order/${order.orderId}`)}
                 >
-                  Track Order
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Details
                 </Button>
-              </div>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         )}
       </div>
     </div>
