@@ -9,6 +9,7 @@ import Onboarding from "./pages/Onboarding";
 import Booking from "./pages/Booking";
 import Tracking from "./pages/Tracking";
 import History from "./pages/History";
+import OrderDetails from "./pages/OrderDetails";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/booking" element={<Booking />} />
           <Route path="/tracking" element={<Tracking />} />
           <Route path="/history" element={<History />} />
+          <Route path="/order/:orderId" element={<OrderDetails />} />
           <Route path="/support" element={<Support />} />
           
           {/* Admin Routes */}
