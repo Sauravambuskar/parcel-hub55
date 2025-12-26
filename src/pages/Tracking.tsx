@@ -2,101 +2,306 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, User, Truck, Calendar } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { PRAYOG_CONFIG } from "@/config/prayog";
+
+interface TrackingStatus {
+  trackingId: string;
+  status: string;
+  location?: string;
+  deliveryPartnerName: string;
+  statusTimestamp: number;
+  event: string;
+  category: string;
+  subcategory: string;
+  createdAt: string;
+}
+
+interface LocationInfo {
+  address: string;
+  city: string;
+  landmark: string;
+  pincode: string;
+  state: string;
+}
+
+interface TrackingData {
+  orderInformation: {
+    trackingId: string;
+    cAwbNumber: string;
+    orderId: string;
+    sourceLocation: LocationInfo;
+    destinationLocation: LocationInfo;
+    senderDetails: {
+      sender_mobile: string;
+      sender_name: string;
+    };
+    receiverDetails: {
+      receiver_mobile: string;
+      receiver_name: string;
+    };
+    travelType: string;
+    serviceType: string;
+    bookingDate: string;
+    type: string;
+  };
+  statuses: TrackingStatus[];
+}
 
 const Tracking = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { bookingId, courierId } = location.state || {};
+  const { toast } = useToast();
+  const { awbNumber, orderId } = location.state || {};
   
-  const [trackingStatus, setTrackingStatus] = useState("confirmed");
-  const [progress, setProgress] = useState(20);
+  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const statusFlow = [
-    { key: "confirmed", label: "Booking Confirmed", progress: 20 },
-    { key: "pickup", label: "Pickup Scheduled", progress: 40 },
-    { key: "collected", label: "Package Collected", progress: 60 },
-    { key: "transit", label: "In Transit", progress: 80 },
-    { key: "delivered", label: "Delivered", progress: 100 }
-  ];
-
-  // Mock status progression for demo
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTrackingStatus(current => {
-        const currentIndex = statusFlow.findIndex(s => s.key === current);
-        if (currentIndex < statusFlow.length - 1) {
-          const nextStatus = statusFlow[currentIndex + 1];
-          setProgress(nextStatus.progress);
-          return nextStatus.key;
-        }
-        return current;
+    if (awbNumber) {
+      fetchTrackingData();
+    } else {
+      setLoading(false);
+      toast({
+        title: "Error",
+        description: "No tracking number provided",
+        variant: "destructive",
       });
-    }, 5000); // Progress every 5 seconds for demo
+    }
+  }, [awbNumber]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const fetchTrackingData = async () => {
+    try {
+      const prayogAuth = localStorage.getItem('prayog_auth');
+      
+      if (!prayogAuth) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to track your order",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
 
-  const getCurrentStatusIndex = () => {
-    return statusFlow.findIndex(s => s.key === trackingStatus);
-  };
+      const authData = JSON.parse(prayogAuth);
 
-  const getStatusColor = (index: number) => {
-    const currentIndex = getCurrentStatusIndex();
-    if (index <= currentIndex) return "text-success";
-    return "text-muted-foreground";
-  };
+      const response = await fetch(
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awbNumber}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authData.id_token}`,
+            "tenantId": PRAYOG_CONFIG.TENANT_ID,
+          },
+        }
+      );
 
-  const getStatusBadgeVariant = () => {
-    switch (trackingStatus) {
-      case "delivered": return "default";
-      case "transit": return "secondary";
-      default: return "outline";
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tracking: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setTrackingData(result);
+    } catch (error: any) {
+      console.error("Error fetching tracking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load tracking information",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+  const getCategoryColor = (category: string) => {
+    const categoryUpper = category?.toUpperCase() || '';
+    switch (categoryUpper) {
+      case 'DELIVERED':
+        return 'bg-green-500';
+      case 'OUT_FOR_DELIVERY':
+        return 'bg-blue-500';
+      case 'IN_TRANSIT':
+      case 'INTRANSIT':
+        return 'bg-indigo-500';
+      case 'READY_FOR_DISPATCH':
+        return 'bg-orange-500';
+      case 'ORDER_CONFIRMED':
+        return 'bg-primary';
+      case 'CANCELLED':
+      case 'RTO':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading tracking information...</p>
+      </div>
+    );
+  }
+
+  if (!trackingData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-background border-b border-border p-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-bold">Track Order</h1>
+          </div>
+        </header>
+        <div className="p-4 text-center">
+          <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">No tracking information available</p>
+          <Button onClick={() => navigate('/history')} className="mt-4">
+            Back to Orders
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const { orderInformation, statuses } = trackingData;
+  const latestStatus = statuses?.[0];
+  const sortedStatuses = [...(statuses || [])].sort((a, b) => b.statusTimestamp - a.statusTimestamp);
 
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header className="bg-background border-b border-border p-4">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/')}
-            className="text-foreground"
-          >
+      <header className="bg-background border-b border-border p-4 sticky top-0 z-50">
+        <div className="flex items-center gap-3 max-w-4xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Track Order</h1>
-            <p className="text-sm text-muted-foreground">#{bookingId}</p>
+            <h1 className="text-xl font-bold">Track Order</h1>
+            <p className="text-sm text-muted-foreground">{orderInformation?.trackingId || awbNumber}</p>
           </div>
         </div>
       </header>
 
-      <div className="p-4 space-y-6 max-w-md mx-auto">
+      <div className="p-4 space-y-4 max-w-4xl mx-auto">
         {/* Current Status */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
-                Order Status
+                Current Status
               </span>
-              <Badge variant={getStatusBadgeVariant()}>
-                {statusFlow.find(s => s.key === trackingStatus)?.label}
+              <Badge className={getCategoryColor(latestStatus?.category)}>
+                {latestStatus?.category?.replace(/_/g, ' ') || 'Unknown'}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <Progress value={progress} className="h-2" />
-              <p className="text-sm text-muted-foreground text-center">
-                {progress}% Complete
-              </p>
+            <p className="text-lg font-medium">{latestStatus?.subcategory || latestStatus?.status}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {formatTimestamp(latestStatus?.statusTimestamp)}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Order Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-primary" />
+              Order Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Booking Date</p>
+                <p className="font-medium">{formatDate(orderInformation?.bookingDate)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Service Type</p>
+                <p className="font-medium capitalize">{orderInformation?.serviceType || 'Standard'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pickup & Delivery Locations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Shipment Route</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Pickup */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <MapPin className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Pickup Location</p>
+                <p className="font-medium">{orderInformation?.senderDetails?.sender_name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {orderInformation?.sourceLocation?.address}, {orderInformation?.sourceLocation?.city}, {orderInformation?.sourceLocation?.state} - {orderInformation?.sourceLocation?.pincode}
+                </p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                  <Phone className="h-3 w-3" />
+                  {orderInformation?.senderDetails?.sender_mobile}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-l-2 border-dashed border-muted-foreground/30 ml-5 h-6" />
+
+            {/* Delivery */}
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <MapPin className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Delivery Location</p>
+                <p className="font-medium">{orderInformation?.receiverDetails?.receiver_name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {orderInformation?.destinationLocation?.address}, {orderInformation?.destinationLocation?.city}, {orderInformation?.destinationLocation?.state} - {orderInformation?.destinationLocation?.pincode}
+                </p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                  <Phone className="h-3 w-3" />
+                  {orderInformation?.receiverDetails?.receiver_mobile}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -104,30 +309,39 @@ const Tracking = () => {
         {/* Status Timeline */}
         <Card>
           <CardHeader>
-            <CardTitle>Delivery Timeline</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Tracking Timeline
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {statusFlow.map((status, index) => (
-                <div key={status.key} className="flex items-center gap-3">
-                  <div className={`p-1 rounded-full ${
-                    index <= getCurrentStatusIndex() ? "bg-success" : "bg-muted"
-                  }`}>
-                    <CheckCircle className={`h-4 w-4 ${
-                      index <= getCurrentStatusIndex() ? "text-success-foreground" : "text-muted-foreground"
-                    }`} />
+              {sortedStatuses.map((status, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className={`p-1.5 rounded-full ${index === 0 ? 'bg-primary' : 'bg-muted'}`}>
+                    <CheckCircle className={`h-4 w-4 ${index === 0 ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                   </div>
-                  <div className="flex-1">
-                    <p className={`font-medium ${getStatusColor(index)}`}>
-                      {status.label}
+                  <div className="flex-1 pb-4 border-b border-border last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
+                        {status.category?.replace(/_/g, ' ')}
+                      </Badge>
+                    </div>
+                    <p className="font-medium text-sm">{status.subcategory}</p>
+                    {status.location && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="h-3 w-3" />
+                        {status.location}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatTimestamp(status.statusTimestamp)}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {index === getCurrentStatusIndex() ? "In Progress" : 
-                       index < getCurrentStatusIndex() ? "Completed" : "Pending"}
-                    </p>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {index <= getCurrentStatusIndex() && "✓"}
+                    {status.deliveryPartnerName && (
+                      <p className="text-xs text-muted-foreground capitalize">
+                        Partner: {status.deliveryPartnerName}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -135,63 +349,24 @@ const Tracking = () => {
           </CardContent>
         </Card>
 
-        {/* Delivery Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Delivery Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <MapPin className="h-4 w-4 text-primary" />
-              <div>
-                <p className="font-medium">Delivery Address</p>
-                <p className="text-sm text-muted-foreground">FC Road, Pune, Maharashtra</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-primary" />
-              <div>
-                <p className="font-medium">Estimated Delivery</p>
-                <p className="text-sm text-muted-foreground">Today, 3:00 PM - 5:00 PM</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-primary" />
-              <div>
-                <p className="font-medium">Delivery Partner</p>
-                <p className="text-sm text-muted-foreground">Raj Kumar • +91 98765 43210</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="w-full">
-            <Phone className="h-4 w-4 mr-2" />
-            Call Partner
-          </Button>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={() => navigate('/support')}>
             Get Help
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => navigate('/history')}>
+            All Orders
           </Button>
         </div>
 
-        {trackingStatus === "delivered" && (
-          <Card className="border-success">
+        {latestStatus?.category?.toUpperCase() === 'DELIVERED' && (
+          <Card className="border-green-500">
             <CardContent className="p-4 text-center">
-              <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-success mb-2">Package Delivered!</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-green-600 mb-2">Package Delivered!</h3>
+              <p className="text-sm text-muted-foreground">
                 Your package has been successfully delivered. Thank you for using our service!
               </p>
-              <Button 
-                onClick={() => navigate('/history')}
-                className="w-full"
-              >
-                View All Orders
-              </Button>
             </CardContent>
           </Card>
         )}

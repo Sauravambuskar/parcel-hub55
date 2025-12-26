@@ -177,7 +177,7 @@ const History = () => {
                     size="icon"
                     onClick={() => navigate('/tracking', { 
                       state: { 
-                        trackingId: order.shipments?.[0]?.awbNumber || order.orderId,
+                        awbNumber: order.shipments?.[0]?.awbNumber,
                         orderId: order.orderId 
                       } 
                     })}
