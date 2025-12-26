@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle } from "lucide-react";
+import { MapPin, CheckCircle, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -55,7 +55,7 @@ const BookingStep2 = ({
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [isServiceable, setIsServiceable] = useState(false);
   
-  const isValid = pickupPincode && deliveryPincode;
+  const isValid = pickupPincode && deliveryPincode && packageWeight && dimensions.length && dimensions.width && dimensions.height;
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -237,26 +237,85 @@ const BookingStep2 = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+              <Input
+                id="pickup-pincode"
+                value={pickupPincode}
+                onChange={(e) => onInputChange('pickupPincode', e.target.value)}
+                placeholder="e.g., 110001"
+                maxLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
+              <Input
+                id="delivery-pincode"
+                value={deliveryPincode}
+                onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
+                placeholder="e.g., 400001"
+                maxLength={6}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            Package Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="package-weight">Weight (kg)</Label>
+            <Input
+              id="package-weight"
+              type="number"
+              value={packageWeight}
+              onChange={(e) => onInputChange('packageWeight', e.target.value)}
+              placeholder="e.g., 1.5"
+              min="0.1"
+              step="0.1"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Dimensions (cm)</Label>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="length" className="text-xs text-muted-foreground">Length</Label>
                 <Input
-                  id="pickup-pincode"
-                  value={pickupPincode}
-                  onChange={(e) => onInputChange('pickupPincode', e.target.value)}
-                  placeholder="e.g., 110001"
-                  maxLength={6}
+                  id="length"
+                  type="number"
+                  value={dimensions.length}
+                  onChange={(e) => onDimensionChange('length', e.target.value)}
+                  placeholder="L"
+                  min="1"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
+              <div className="space-y-1">
+                <Label htmlFor="width" className="text-xs text-muted-foreground">Breadth</Label>
                 <Input
-                  id="delivery-pincode"
-                  value={deliveryPincode}
-                  onChange={(e) => onInputChange('deliveryPincode', e.target.value)}
-                  placeholder="e.g., 400001"
-                  maxLength={6}
+                  id="width"
+                  type="number"
+                  value={dimensions.width}
+                  onChange={(e) => onDimensionChange('width', e.target.value)}
+                  placeholder="B"
+                  min="1"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="height" className="text-xs text-muted-foreground">Height</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  value={dimensions.height}
+                  onChange={(e) => onDimensionChange('height', e.target.value)}
+                  placeholder="H"
+                  min="1"
                 />
               </div>
             </div>
