@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
@@ -55,6 +55,7 @@ const OrderDetails = () => {
   const { toast } = useToast();
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -105,6 +106,66 @@ const OrderDetails = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!orderId) return;
+    
+    setDownloadingInvoice(true);
+    try {
+      const prayogAuth = localStorage.getItem('prayog_auth');
+      
+      if (!prayogAuth) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to download invoice",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
+      const authData = JSON.parse(prayogAuth);
+
+      const response = await fetch(
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/pdf-generator/invoice/${orderId}`,
+        {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${authData.id_token}`,
+            "tenantId": PRAYOG_CONFIG.TENANT_ID,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to download invoice: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully",
+      });
+    } catch (error: any) {
+      console.error("Error downloading invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download invoice",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingInvoice(false);
     }
   };
 
@@ -340,6 +401,17 @@ const OrderDetails = () => {
             </div>
           </Card>
         )}
+
+        {/* Download Invoice */}
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleDownloadInvoice}
+          disabled={downloadingInvoice}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {downloadingInvoice ? "Downloading..." : "Download Invoice"}
+        </Button>
       </div>
     </div>
   );
