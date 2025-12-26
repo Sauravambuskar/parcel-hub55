@@ -644,6 +644,7 @@ const Booking = () => {
             onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
             onNext={handleNextStep}
             onBack={handlePrevStep}
+            onGoToStep={setCurrentStep}
           />
         );
       case 7:
