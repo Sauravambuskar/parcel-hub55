@@ -181,7 +181,7 @@ const OrderDetails = () => {
             size="sm"
             onClick={() => navigate('/tracking', { 
               state: { 
-                trackingId: shipment?.awbNumber || order.orderId,
+                awbNumber: shipment?.awbNumber,
                 orderId: order.orderId 
               } 
             })}
