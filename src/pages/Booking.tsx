@@ -365,7 +365,7 @@ const Booking = () => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (paymentMethod: string) => {
+  const handlePaymentSuccess = async (paymentMethod: string, paymentDetails?: { razorpay_payment_id: string; razorpay_order_id: string }) => {
     if (!userId) return;
 
     const selectedCourierData = getSelectedServiceDetails();
@@ -427,7 +427,13 @@ const Booking = () => {
         autoManifest: true,
         eWaybills: [],
         deliveryPromise: selectedService?.service_name || "standard",
-        metadata: { source: "WEB_APP" },
+        metadata: { 
+          source: "WEB_APP",
+          ...(paymentDetails && {
+            razorpay_payment_id: paymentDetails.razorpay_payment_id,
+            razorpay_order_id: paymentDetails.razorpay_order_id,
+          }),
+        },
         documents: [],
         addresses: [
           {
