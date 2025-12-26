@@ -1,96 +1,182 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Clock, AlertCircle, CheckCircle, MapPin, User } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+interface Booking {
+  id: string;
+  tracking_id: string | null;
+  status: string | null;
+  courier_name: string;
+  courier_price: number;
+  sender_name: string;
+  sender_phone: string;
+  sender_address: string;
+  sender_city: string;
+  sender_state: string;
+  sender_pincode: string;
+  receiver_name: string;
+  receiver_phone: string;
+  receiver_address: string;
+  receiver_city: string;
+  receiver_state: string;
+  receiver_pincode: string;
+  goods_type: string;
+  package_weight: string;
+  urgency: string;
+  delivery_time: string;
+  shipment_value: number | null;
+  insurance_required: boolean | null;
+  packaging_required: boolean | null;
+  created_at: string;
+  updated_at: string;
+  length: string | null;
+  width: string | null;
+  height: string | null;
+  base_fare?: number;
+  platform_fee?: number;
+  prayog_commission?: number;
+  gst?: number;
+  insurance_amount?: number;
+  packaging_amount?: number;
+  payment_id?: string;
+  payment_status?: string;
+  prayog_order_id?: string;
+  prayog_awb?: string;
+}
 
 const OrderMonitoring = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const { toast } = useToast();
 
-  const orders = [
-    { 
-      id: "ORD-1234", 
-      customer: "John Doe", 
-      partner: "Fast Delivery Co", 
-      courier: "Mike Johnson",
-      status: "In Transit", 
-      pickup: "Restaurant A", 
-      delivery: "123 Main St", 
-      time: "25 min",
-      amount: "₹24.50",
-      priority: "Normal"
-    },
-    { 
-      id: "ORD-1235", 
-      customer: "Jane Smith", 
-      partner: "Quick Transport", 
-      courier: "Sarah Wilson",
-      status: "Delayed", 
-      pickup: "Store B", 
-      delivery: "456 Oak Ave", 
-      time: "45 min",
-      amount: "₹18.75",
-      priority: "High"
-    },
-    { 
-      id: "ORD-1236", 
-      customer: "Bob Wilson", 
-      partner: "Express Logistics", 
-      courier: "Tom Brown",
-      status: "Pickup", 
-      pickup: "Shop C", 
-      delivery: "789 Pine St", 
-      time: "10 min",
-      amount: "₹32.00",
-      priority: "Normal"
-    },
-    { 
-      id: "ORD-1237", 
-      customer: "Alice Johnson", 
-      partner: "Fast Delivery Co", 
-      courier: "Lisa Davis",
-      status: "Delivered", 
-      pickup: "Restaurant D", 
-      delivery: "321 Elm St", 
-      time: "Completed",
-      amount: "₹29.25",
-      priority: "Normal"
-    },
-  ];
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Delivered": return "default";
-      case "In Transit": return "secondary";
-      case "Pickup": return "outline";
-      case "Delayed": return "destructive";
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching bookings",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string | null) => {
+    switch (status?.toLowerCase()) {
+      case "delivered": return "default";
+      case "in_transit": case "in transit": return "secondary";
+      case "picked_up": case "picked up": return "outline";
+      case "pending": return "secondary";
+      case "cancelled": return "destructive";
       default: return "secondary";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    return priority === "High" ? "destructive" : "outline";
+  const getStatusLabel = (status: string | null) => {
+    if (!status) return "Pending";
+    return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const handleReassignCourier = (orderId: string) => {
-    console.log("Reassigning courier for order:", orderId);
-  };
+  const filteredBookings = bookings.filter(booking => {
+    const matchesSearch = 
+      booking.tracking_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.sender_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.receiver_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (selectedFilter === "all") return matchesSearch;
+    if (selectedFilter === "pending") return matchesSearch && booking.status === "pending";
+    if (selectedFilter === "in_transit") return matchesSearch && (booking.status === "in_transit" || booking.status === "in transit");
+    if (selectedFilter === "delivered") return matchesSearch && booking.status === "delivered";
+    return matchesSearch;
+  });
 
   const stats = [
-    { title: "Active Orders", value: "12", icon: Package, color: "text-blue-600" },
-    { title: "In Transit", value: "8", icon: Clock, color: "text-green-600" },
-    { title: "Delayed", value: "2", icon: AlertCircle, color: "text-red-600" },
-    { title: "Completed Today", value: "45", icon: CheckCircle, color: "text-purple-600" },
+    { 
+      title: "Total Orders", 
+      value: bookings.length.toString(), 
+      icon: Package, 
+      color: "text-blue-600" 
+    },
+    { 
+      title: "In Transit", 
+      value: bookings.filter(b => b.status === "in_transit" || b.status === "in transit").length.toString(), 
+      icon: Truck, 
+      color: "text-green-600" 
+    },
+    { 
+      title: "Pending", 
+      value: bookings.filter(b => b.status === "pending" || !b.status).length.toString(), 
+      icon: Clock, 
+      color: "text-yellow-600" 
+    },
+    { 
+      title: "Delivered", 
+      value: bookings.filter(b => b.status === "delivered").length.toString(), 
+      icon: CheckCircle, 
+      color: "text-purple-600" 
+    },
   ];
+
+  const calculatePriceBreakdown = (booking: Booking) => {
+    const courierPrice = booking.courier_price || 0;
+    // Default calculation if breakdown not stored
+    const baseFare = booking.base_fare || Math.round(courierPrice * 0.7);
+    const platformFee = booking.platform_fee || Math.round(courierPrice * 0.1);
+    const prayogCommission = booking.prayog_commission || Math.round(courierPrice * 0.05);
+    const gst = booking.gst || Math.round(courierPrice * 0.18);
+    const insurance = booking.insurance_amount || (booking.insurance_required ? Math.round((booking.shipment_value || 0) * 0.02) : 0);
+    const packaging = booking.packaging_amount || (booking.packaging_required ? 50 : 0);
+
+    return {
+      baseFare,
+      platformFee,
+      prayogCommission,
+      gst,
+      insurance,
+      packaging,
+      total: courierPrice
+    };
+  };
+
+  const openDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setDetailsOpen(true);
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Order Monitoring</h2>
-        <p className="text-muted-foreground">Real-time order tracking and courier management</p>
+        <p className="text-muted-foreground">Real-time order tracking with complete visibility</p>
       </div>
 
       {/* Stats Grid */}
@@ -108,92 +194,188 @@ const OrderMonitoring = () => {
         ))}
       </div>
 
-      <div className="flex items-center gap-4">
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by ID, name, or tracking..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         <Select value={selectedFilter} onValueChange={setSelectedFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="active">Active Only</SelectItem>
-            <SelectItem value="delayed">Delayed Only</SelectItem>
-            <SelectItem value="priority">High Priority</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="in_transit">In Transit</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" onClick={fetchBookings}>
+          Refresh
+        </Button>
       </div>
 
-      <Tabs defaultValue="live" className="space-y-4">
+      <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="live">Live Orders</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="issues">Issues & Delays</TabsTrigger>
+          <TabsTrigger value="all">All Orders ({bookings.length})</TabsTrigger>
+          <TabsTrigger value="active">Active ({bookings.filter(b => b.status !== "delivered").length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({bookings.filter(b => b.status === "delivered").length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="live">
+        <TabsContent value="all">
           <Card>
             <CardHeader>
-              <CardTitle>Active Orders Dashboard</CardTitle>
+              <CardTitle>All Orders</CardTitle>
+              <CardDescription>Complete list of all bookings with pricing details</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Partner</TableHead>
-                    <TableHead>Courier</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Route</TableHead>
-                    <TableHead>ETA</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.filter(order => order.status !== "Delivered").map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.customer}</TableCell>
-                      <TableCell>{order.partner}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {order.courier}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          <MapPin className="h-3 w-3" />
-                          {order.pickup} → {order.delivery}
-                        </div>
-                      </TableCell>
-                      <TableCell>{order.time}</TableCell>
-                      <TableCell>
-                        <Badge variant={getPriorityColor(order.priority)}>
-                          {order.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button size="sm" variant="outline">
-                          Track
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="secondary"
-                          onClick={() => handleReassignCourier(order.id)}
-                        >
-                          Reassign
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading orders...</div>
+              ) : filteredBookings.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No orders found</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Sender</TableHead>
+                        <TableHead>Receiver</TableHead>
+                        <TableHead>Route</TableHead>
+                        <TableHead>Courier</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBookings.map((booking) => (
+                        <TableRow key={booking.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex flex-col">
+                              <span className="text-xs text-muted-foreground">{booking.id.slice(0, 8)}...</span>
+                              {booking.tracking_id && (
+                                <span className="text-xs font-medium text-primary">{booking.tracking_id}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {format(new Date(booking.created_at), "dd MMM yyyy")}
+                            <br />
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(booking.created_at), "HH:mm")}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{booking.sender_name}</span>
+                              <span className="text-xs text-muted-foreground">{booking.sender_city}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{booking.receiver_name}</span>
+                              <span className="text-xs text-muted-foreground">{booking.receiver_city}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <span>{booking.sender_pincode}</span>
+                              <span>→</span>
+                              <span>{booking.receiver_pincode}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{booking.courier_name}</TableCell>
+                          <TableCell className="font-medium">
+                            ₹{booking.courier_price?.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusColor(booking.status)}>
+                              {getStatusLabel(booking.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openDetails(booking)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="active">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Orders</CardTitle>
+              <CardDescription>Orders in progress</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Sender → Receiver</TableHead>
+                        <TableHead>Courier</TableHead>
+                        <TableHead>ETA</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBookings.filter(b => b.status !== "delivered").map((booking) => (
+                        <TableRow key={booking.id}>
+                          <TableCell className="font-medium">
+                            {booking.tracking_id || booking.id.slice(0, 8)}
+                          </TableCell>
+                          <TableCell>
+                            {booking.sender_city} → {booking.receiver_city}
+                          </TableCell>
+                          <TableCell>{booking.courier_name}</TableCell>
+                          <TableCell>{booking.delivery_time}</TableCell>
+                          <TableCell className="font-medium">₹{booking.courier_price}</TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusColor(booking.status)}>
+                              {getStatusLabel(booking.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openDetails(booking)}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -202,85 +384,294 @@ const OrderMonitoring = () => {
           <Card>
             <CardHeader>
               <CardTitle>Completed Orders</CardTitle>
+              <CardDescription>Successfully delivered orders</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Partner</TableHead>
-                    <TableHead>Courier</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Completion Time</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.filter(order => order.status === "Delivered").map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.customer}</TableCell>
-                      <TableCell>{order.partner}</TableCell>
-                      <TableCell>{order.courier}</TableCell>
-                      <TableCell>{order.amount}</TableCell>
-                      <TableCell>Just now</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="outline">
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="issues">
-          <Card>
-            <CardHeader>
-              <CardTitle>Orders with Issues</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Issue Type</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Courier</TableHead>
-                    <TableHead>Delay Time</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.filter(order => order.status === "Delayed").map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>
-                        <Badge variant="destructive">Traffic Delay</Badge>
-                      </TableCell>
-                      <TableCell>{order.customer}</TableCell>
-                      <TableCell>{order.courier}</TableCell>
-                      <TableCell>+20 min</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button size="sm" variant="outline">
-                          Contact Customer
-                        </Button>
-                        <Button size="sm" variant="default">
-                          Reassign
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Completed On</TableHead>
+                        <TableHead>Route</TableHead>
+                        <TableHead>Courier</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBookings.filter(b => b.status === "delivered").map((booking) => (
+                        <TableRow key={booking.id}>
+                          <TableCell className="font-medium">
+                            {booking.tracking_id || booking.id.slice(0, 8)}
+                          </TableCell>
+                          <TableCell>{format(new Date(booking.updated_at), "dd MMM yyyy")}</TableCell>
+                          <TableCell>{booking.sender_city} → {booking.receiver_city}</TableCell>
+                          <TableCell>{booking.courier_name}</TableCell>
+                          <TableCell className="font-medium">₹{booking.courier_price}</TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openDetails(booking)}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Order Details Modal */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Order Details
+            </DialogTitle>
+            <DialogDescription>
+              {selectedBooking?.tracking_id && (
+                <span className="font-medium">Tracking: {selectedBooking.tracking_id}</span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedBooking && (
+            <div className="space-y-6">
+              {/* Status Bar */}
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Order Status</p>
+                  <Badge variant={getStatusColor(selectedBooking.status)} className="mt-1">
+                    {getStatusLabel(selectedBooking.status)}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Created</p>
+                  <p className="font-medium">{format(new Date(selectedBooking.created_at), "dd MMM yyyy, HH:mm")}</p>
+                </div>
+              </div>
+
+              {/* Price Breakdown - Admin Only View */}
+              <Card className="border-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <IndianRupee className="h-5 w-5" />
+                    Price Breakdown (Admin View)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const breakdown = calculatePriceBreakdown(selectedBooking);
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Base Fare (Courier Cost)</span>
+                          <span className="font-medium">₹{breakdown.baseFare.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Platform Fee</span>
+                          <span className="font-medium">₹{breakdown.platformFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Prayog Commission</span>
+                          <span className="font-medium">₹{breakdown.prayogCommission.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">GST (18%)</span>
+                          <span className="font-medium">₹{breakdown.gst.toLocaleString()}</span>
+                        </div>
+                        {selectedBooking.insurance_required && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Insurance</span>
+                            <span className="font-medium">₹{breakdown.insurance.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {selectedBooking.packaging_required && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Packaging</span>
+                            <span className="font-medium">₹{breakdown.packaging.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between text-lg font-bold">
+                          <span>Total Amount</span>
+                          <span className="text-primary">₹{breakdown.total.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Sender & Receiver Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-green-600" />
+                      Pickup (Sender)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{selectedBooking.sender_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedBooking.sender_phone}</span>
+                    </div>
+                    <p className="text-muted-foreground">
+                      {selectedBooking.sender_address}
+                      <br />
+                      {selectedBooking.sender_city}, {selectedBooking.sender_state} - {selectedBooking.sender_pincode}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-red-600" />
+                      Delivery (Receiver)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{selectedBooking.receiver_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedBooking.receiver_phone}</span>
+                    </div>
+                    <p className="text-muted-foreground">
+                      {selectedBooking.receiver_address}
+                      <br />
+                      {selectedBooking.receiver_city}, {selectedBooking.receiver_state} - {selectedBooking.receiver_pincode}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Package & Shipping Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Package Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Goods Type</span>
+                      <span className="font-medium capitalize">{selectedBooking.goods_type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Weight</span>
+                      <span className="font-medium">{selectedBooking.package_weight} kg</span>
+                    </div>
+                    {(selectedBooking.length || selectedBooking.width || selectedBooking.height) && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dimensions</span>
+                        <span className="font-medium">
+                          {selectedBooking.length} × {selectedBooking.width} × {selectedBooking.height} cm
+                        </span>
+                      </div>
+                    )}
+                    {selectedBooking.shipment_value && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Declared Value</span>
+                        <span className="font-medium">₹{selectedBooking.shipment_value.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Insurance</span>
+                      <Badge variant={selectedBooking.insurance_required ? "default" : "outline"}>
+                        {selectedBooking.insurance_required ? "Yes" : "No"}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Packaging</span>
+                      <Badge variant={selectedBooking.packaging_required ? "default" : "outline"}>
+                        {selectedBooking.packaging_required ? "Yes" : "No"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Truck className="h-4 w-4" />
+                      Shipping Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Courier</span>
+                      <span className="font-medium">{selectedBooking.courier_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Urgency</span>
+                      <Badge variant="outline" className="capitalize">{selectedBooking.urgency}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Est. Delivery</span>
+                      <span className="font-medium">{selectedBooking.delivery_time}</span>
+                    </div>
+                    {selectedBooking.prayog_order_id && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Prayog Order ID</span>
+                        <span className="font-medium text-xs">{selectedBooking.prayog_order_id}</span>
+                      </div>
+                    )}
+                    {selectedBooking.prayog_awb && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">AWB Number</span>
+                        <span className="font-medium">{selectedBooking.prayog_awb}</span>
+                      </div>
+                    )}
+                    {selectedBooking.payment_id && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Payment ID</span>
+                        <span className="font-medium text-xs">{selectedBooking.payment_id}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Actions */}
+              {selectedBooking.tracking_id && (
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => window.open(`/tracking?id=${selectedBooking.tracking_id}`, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Track Order
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

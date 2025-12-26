@@ -46,17 +46,27 @@ export type Database = {
       }
       bookings: {
         Row: {
+          base_fare: number | null
           courier_name: string
           courier_price: number
           created_at: string
           delivery_time: string
           goods_type: string
+          gst: number | null
           height: string | null
           id: string
+          insurance_amount: number | null
           insurance_required: boolean | null
           length: string | null
           package_weight: string
+          packaging_amount: number | null
           packaging_required: boolean | null
+          payment_id: string | null
+          payment_status: string | null
+          platform_fee: number | null
+          prayog_awb: string | null
+          prayog_commission: number | null
+          prayog_order_id: string | null
           receiver_address: string
           receiver_city: string
           receiver_name: string
@@ -78,17 +88,27 @@ export type Database = {
           width: string | null
         }
         Insert: {
+          base_fare?: number | null
           courier_name: string
           courier_price: number
           created_at?: string
           delivery_time: string
           goods_type: string
+          gst?: number | null
           height?: string | null
           id?: string
+          insurance_amount?: number | null
           insurance_required?: boolean | null
           length?: string | null
           package_weight: string
+          packaging_amount?: number | null
           packaging_required?: boolean | null
+          payment_id?: string | null
+          payment_status?: string | null
+          platform_fee?: number | null
+          prayog_awb?: string | null
+          prayog_commission?: number | null
+          prayog_order_id?: string | null
           receiver_address: string
           receiver_city: string
           receiver_name: string
@@ -110,17 +130,27 @@ export type Database = {
           width?: string | null
         }
         Update: {
+          base_fare?: number | null
           courier_name?: string
           courier_price?: number
           created_at?: string
           delivery_time?: string
           goods_type?: string
+          gst?: number | null
           height?: string | null
           id?: string
+          insurance_amount?: number | null
           insurance_required?: boolean | null
           length?: string | null
           package_weight?: string
+          packaging_amount?: number | null
           packaging_required?: boolean | null
+          payment_id?: string | null
+          payment_status?: string | null
+          platform_fee?: number | null
+          prayog_awb?: string | null
+          prayog_commission?: number | null
+          prayog_order_id?: string | null
           receiver_address?: string
           receiver_city?: string
           receiver_name?: string
