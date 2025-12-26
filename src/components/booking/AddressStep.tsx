@@ -1,8 +1,16 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import AddressAutocomplete from "./AddressAutocomplete";
+
+interface PincodeMismatch {
+  expected: string;
+  actual: string;
+}
 
 interface AddressStepProps {
   senderData: {
@@ -21,6 +29,8 @@ interface AddressStepProps {
     state: string;
     pincode: string;
   };
+  pickupPincode: string;
+  deliveryPincode: string;
   onSenderChange: (field: string, value: string) => void;
   onReceiverChange: (field: string, value: string) => void;
   onNext: () => void;
@@ -30,11 +40,15 @@ interface AddressStepProps {
 const AddressStep = ({
   senderData,
   receiverData,
+  pickupPincode,
+  deliveryPincode,
   onSenderChange,
   onReceiverChange,
   onNext,
   onBack,
 }: AddressStepProps) => {
+  const [senderPincodeMismatch, setSenderPincodeMismatch] = useState<PincodeMismatch | null>(null);
+  const [receiverPincodeMismatch, setReceiverPincodeMismatch] = useState<PincodeMismatch | null>(null);
 
   const isSenderValid = 
     senderData.name && 
@@ -52,7 +66,44 @@ const AddressStep = ({
     receiverData.state && 
     receiverData.pincode;
 
-  const isValid = isSenderValid && isReceiverValid;
+  const hasPincodeMismatch = senderPincodeMismatch !== null || receiverPincodeMismatch !== null;
+  const isValid = isSenderValid && isReceiverValid && !hasPincodeMismatch;
+
+  const handleSenderAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    onSenderChange("address", components.address);
+    if (components.city) onSenderChange("city", components.city);
+    if (components.state) onSenderChange("state", components.state);
+    
+    // Check pincode mismatch
+    if (components.pincode) {
+      if (components.pincode !== pickupPincode) {
+        setSenderPincodeMismatch({
+          expected: pickupPincode,
+          actual: components.pincode,
+        });
+      } else {
+        setSenderPincodeMismatch(null);
+      }
+    }
+  };
+
+  const handleReceiverAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    onReceiverChange("address", components.address);
+    if (components.city) onReceiverChange("city", components.city);
+    if (components.state) onReceiverChange("state", components.state);
+    
+    // Check pincode mismatch
+    if (components.pincode) {
+      if (components.pincode !== deliveryPincode) {
+        setReceiverPincodeMismatch({
+          expected: deliveryPincode,
+          actual: components.pincode,
+        });
+      } else {
+        setReceiverPincodeMismatch(null);
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -85,14 +136,33 @@ const AddressStep = ({
             id="sender-address"
             label="Complete Address *"
             value={senderData.address}
-            onChange={(value) => onSenderChange("address", value)}
-            onAddressSelect={(components) => {
-              onSenderChange("address", components.address);
-              if (components.city) onSenderChange("city", components.city);
-              if (components.state) onSenderChange("state", components.state);
+            onChange={(value) => {
+              onSenderChange("address", value);
+              // Clear mismatch when user manually types
+              setSenderPincodeMismatch(null);
             }}
+            onAddressSelect={handleSenderAddressSelect}
             placeholder="Start typing address..."
           />
+
+          {senderPincodeMismatch && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Pincode Mismatch</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>
+                  The address you selected has pincode <strong>{senderPincodeMismatch.actual}</strong>, 
+                  but you entered <strong>{senderPincodeMismatch.expected}</strong> for pickup.
+                </p>
+                <p className="text-sm">
+                  Please select an address within pincode {senderPincodeMismatch.expected} or go back to update the pincode.
+                </p>
+                <Button variant="outline" size="sm" onClick={onBack} className="mt-2">
+                  Go Back to Change Pincode
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -156,14 +226,33 @@ const AddressStep = ({
             id="receiver-address"
             label="Complete Address *"
             value={receiverData.address}
-            onChange={(value) => onReceiverChange("address", value)}
-            onAddressSelect={(components) => {
-              onReceiverChange("address", components.address);
-              if (components.city) onReceiverChange("city", components.city);
-              if (components.state) onReceiverChange("state", components.state);
+            onChange={(value) => {
+              onReceiverChange("address", value);
+              // Clear mismatch when user manually types
+              setReceiverPincodeMismatch(null);
             }}
+            onAddressSelect={handleReceiverAddressSelect}
             placeholder="Start typing address..."
           />
+
+          {receiverPincodeMismatch && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Pincode Mismatch</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>
+                  The address you selected has pincode <strong>{receiverPincodeMismatch.actual}</strong>, 
+                  but you entered <strong>{receiverPincodeMismatch.expected}</strong> for delivery.
+                </p>
+                <p className="text-sm">
+                  Please select an address within pincode {receiverPincodeMismatch.expected} or go back to update the pincode.
+                </p>
+                <Button variant="outline" size="sm" onClick={onBack} className="mt-2">
+                  Go Back to Change Pincode
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
