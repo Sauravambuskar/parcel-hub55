@@ -9,8 +9,9 @@ import { getPartnerLogo } from "@/config/partnerLogos";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
-import AddressInputStep from "@/components/booking/AddressInputStep";
-import ShipmentDetailsStep from "@/components/booking/ShipmentDetailsStep";
+import BookingStep2 from "@/components/booking/BookingStep2";
+import AddressStep from "@/components/booking/AddressStep";
+import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import BookingStep6 from "@/components/booking/BookingStep6";
@@ -19,9 +20,15 @@ import BookingReviewStep from "@/components/booking/BookingReviewStep";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [urgency, setUrgency] = useState("");
   const [packageWeight, setPackageWeight] = useState("");
+  const [customWeight, setCustomWeight] = useState("");
   const [packageDescription, setPackageDescription] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [pickupPincode, setPickupPincode] = useState("");
+  const [deliveryPincode, setDeliveryPincode] = useState("");
   const [goodsType, setGoodsType] = useState("");
   const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
   const [shipmentValue, setShipmentValue] = useState("");
@@ -31,7 +38,6 @@ const Booking = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [calculatedPricing, setCalculatedPricing] = useState<any>(null);
   const [serviceabilityData, setServiceabilityData] = useState<any>(null);
-  const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
 
   const [senderData, setSenderData] = useState({
     name: "",
@@ -53,9 +59,10 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const totalSteps = 7;
+  const totalSteps = 9;
 
   useEffect(() => {
+    // Generate a guest user ID for non-authenticated users
     let guestId = localStorage.getItem("guest_user_id");
     if (!guestId) {
       guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -64,121 +71,71 @@ const Booking = () => {
     setUserId(guestId);
   }, []);
 
+  // Auto-populate pincodes from serviceability check
+  useEffect(() => {
+    if (pickupPincode && !senderData.pincode) {
+      setSenderData((prev) => ({ ...prev, pincode: pickupPincode }));
+    }
+    if (deliveryPincode && !receiverData.pincode) {
+      setReceiverData((prev) => ({ ...prev, pincode: deliveryPincode }));
+    }
+  }, [pickupPincode, deliveryPincode]);
+
+  const handleLocationData = (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => {
+    if (pickupCity && pickupState) {
+      setSenderData((prev) => ({
+        ...prev,
+        city: pickupCity,
+        state: pickupState,
+      }));
+    }
+    if (deliveryCity && deliveryState) {
+      setReceiverData((prev) => ({
+        ...prev,
+        city: deliveryCity,
+        state: deliveryState,
+      }));
+    }
+  };
+
+  // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
     if (!packageWeight || !urgency) return 0;
+
     const baseSuperUrgent = 50;
     const baseUrgent = 25;
     const baseNoRush = 10;
+    const weightMultipliers = {
+      light: 1,
+      medium: 1.5,
+      heavy: 2,
+    };
+
     let base = baseNoRush;
     if (urgency === "super-urgent") base = baseSuperUrgent;
     else if (urgency === "urgent") base = baseUrgent;
-    return Math.round(base);
-  };
 
-  const checkServiceability = async () => {
-    if (!senderData.pincode || !receiverData.pincode) {
-      toast({
-        title: "Missing Pincodes",
-        description: "Please ensure both pickup and delivery addresses have pincodes",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    setIsCheckingServiceability(true);
-
-    try {
-      const prayogAuth = localStorage.getItem("prayog_auth");
-      const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const userIdFromAuth = authData?.user_id || "";
-
-      const weightInKg = parseFloat(packageWeight) / 1000 || 1.0;
-
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant-id": PRAYOG_CONFIG.TENANT_ID,
-          ...(userIdFromAuth && { "x-user-id": userIdFromAuth }),
-        },
-        body: JSON.stringify({
-          source_location: {
-            postal_code: senderData.pincode,
-            country_code: "IN",
-          },
-          destination_location: {
-            postal_code: receiverData.pincode,
-            country_code: "IN",
-          },
-          packages: [
-            {
-              weight: { value: weightInKg, unit: "kg" },
-              dimensions: {
-                length: parseFloat(dimensions.length) || 10.0,
-                width: parseFloat(dimensions.width) || 10.0,
-                height: parseFloat(dimensions.height) || 10.0,
-                unit: "cm",
-              },
-            },
-          ],
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast({
-          title: "Error",
-          description: data.message || "Failed to check serviceability",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (data.success === false || data.metadata?.serviceable_count === 0) {
-        toast({
-          title: "Service Unavailable",
-          description: "Delivery is not available for this route. Please try different addresses.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (data.success === true && data.metadata?.serviceable_count > 0) {
-        setServiceabilityData(data);
-        toast({
-          title: "Service Available ✓",
-          description: "Delivery is available for this route!",
-        });
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Serviceability check error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to check serviceability. Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsCheckingServiceability(false);
-    }
+    const multiplier = weightMultipliers[packageWeight as keyof typeof weightMultipliers] || 1;
+    return Math.round(base * multiplier);
   };
 
   const getCouriers = () => {
+    // If we have real serviceability data, use it
     if (serviceabilityData?.partners) {
       const couriers: any[] = [];
       let courierId = 1;
 
       serviceabilityData.partners.forEach((partner: any) => {
+        // Check if partner is serviceable
         if (partner.is_serviceable && partner.services) {
           partner.services.forEach((service: any) => {
+            // Extract price from rate object
             const totalPrice = Math.round(service.rate?.price?.amount || 0);
+            // For Prayog API, the amount is the total price (no separate base/fee breakdown)
             const basePrice = totalPrice;
             const convenienceFee = 0;
 
+            // Format partner name properly
             const partnerName = partner.partner_code
               .split("_")
               .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -219,6 +176,7 @@ const Booking = () => {
       return couriers.length > 0 ? couriers : getMockCouriers();
     }
 
+    // Fallback to mock data if no real data available
     return getMockCouriers();
   };
 
@@ -238,6 +196,7 @@ const Booking = () => {
       deliveryTime = "2-5 days";
     }
 
+    const weightMultiplier = packageWeight === "heavy" ? 1.5 : packageWeight === "medium" ? 1.2 : 1;
     const convenienceFee = calculateConvenienceFee();
 
     return [
@@ -246,9 +205,9 @@ const Booking = () => {
         name: "BlueDart Express",
         rating: 4.6,
         deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
         convenienceFee,
-        vehicleType: "Bike",
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
         image: getPartnerLogo("bluedart"),
         features: ["Real-time tracking", "Insurance included", "SMS updates"],
       },
@@ -257,9 +216,9 @@ const Booking = () => {
         name: "DTDC Courier",
         rating: 4.3,
         deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * 0.9),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.9),
         convenienceFee,
-        vehicleType: "Bike",
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
         image: getPartnerLogo("dtdc"),
         features: ["Affordable rates", "Wide network", "COD available"],
       },
@@ -268,22 +227,59 @@ const Booking = () => {
         name: "Delhivery Express",
         rating: 4.4,
         deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * 0.95),
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.95),
         convenienceFee,
-        vehicleType: "Bike",
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
         image: getPartnerLogo("delhivery"),
         features: ["Fast delivery", "Live tracking", "Safe handling"],
+      },
+      {
+        id: 4,
+        name: "SpeedPost",
+        rating: 4.2,
+        deliveryTime,
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.8),
+        convenienceFee,
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("india_post"),
+        features: ["Government backed", "Nationwide reach", "Budget friendly"],
+      },
+      {
+        id: 5,
+        name: "Ecom Express",
+        rating: 4.5,
+        deliveryTime,
+        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 1.1),
+        convenienceFee,
+        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+        image: getPartnerLogo("ecom_express"),
+        features: ["E-commerce focus", "Quick pickup", "Flexible delivery"],
       },
     ];
   };
 
   const handleInputChange = (field: string, value: string) => {
     switch (field) {
+      case "pickupAddress":
+        setPickupAddress(value);
+        break;
+      case "deliveryAddress":
+        setDeliveryAddress(value);
+        break;
       case "urgency":
         setUrgency(value);
         break;
       case "packageWeight":
         setPackageWeight(value);
+        break;
+      case "phoneNumber":
+        setPhoneNumber(value);
+        break;
+      case "pickupPincode":
+        setPickupPincode(value);
+        break;
+      case "deliveryPincode":
+        setDeliveryPincode(value);
         break;
       case "goodsType":
         setGoodsType(value);
@@ -293,6 +289,9 @@ const Booking = () => {
         break;
       case "packageDescription":
         setPackageDescription(value);
+        break;
+      case "customWeight":
+        setCustomWeight(value);
         break;
     }
   };
@@ -324,13 +323,6 @@ const Booking = () => {
     }
   };
 
-  const handleShipmentDetailsNext = async () => {
-    const isServiceable = await checkServiceability();
-    if (isServiceable) {
-      handleNextStep();
-    }
-  };
-
   const handleProceedToPayment = () => {
     setShowPaymentModal(true);
   };
@@ -341,12 +333,13 @@ const Booking = () => {
     const selectedCourierData = getCouriers().find((c) => c.id === selectedCourier);
 
     try {
+      // Find the selected service from serviceability data
       let selectedService = null;
       if (serviceabilityData?.partners && selectedCourierData?.prayogData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedCourierData.prayogData.partnerId) {
             const service = partner.services?.find(
-              (s: any) => s.service_code === selectedCourierData.prayogData.serviceCode
+              (s: any) => s.service_code === selectedCourierData.prayogData.serviceCode,
             );
             if (service) {
               selectedService = {
@@ -360,6 +353,7 @@ const Booking = () => {
         }
       }
 
+      // Generate orderId
       const now = new Date();
       const timestamp = [
         now.getFullYear().toString().slice(-2),
@@ -375,14 +369,16 @@ const Booking = () => {
 
       const orderId = timestamp + randomPart;
 
+      // Calculate volumetric weight
       const length = parseFloat(dimensions?.length) || 10;
       const width = parseFloat(dimensions?.width) || 10;
       const height = parseFloat(dimensions?.height) || 10;
       const volumetricWeight = (length * width * height) / 5000;
-      const physicalWeight = parseFloat(packageWeight) / 1000 || 1;
+      const physicalWeight = parseFloat(packageWeight) || 1;
 
       const baseAmount = selectedService?.rate?.price?.amount || 0;
 
+      // Prepare Prayog API payload
       const prayogPayload = {
         referenceId: orderId,
         orderDate: new Date().toISOString(),
@@ -455,7 +451,11 @@ const Booking = () => {
         ],
         shipments: [
           {
-            dimensions: { length, width, height },
+            dimensions: {
+              length: length,
+              width: width,
+              height: height,
+            },
             shipmentStatus: "CONFIRMED",
             awbNumber: "",
             physicalWeight: physicalWeight,
@@ -479,10 +479,12 @@ const Booking = () => {
         vendorcode: "VIAS",
       };
 
+      // Get auth token from localStorage
       const prayogAuth = localStorage.getItem("prayog_auth");
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
       const idToken = authData?.id_token || "";
 
+      // Call Prayog API directly
       const prayogResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`, {
         method: "POST",
         headers: {
@@ -496,35 +498,39 @@ const Booking = () => {
       const prayogResult = await prayogResponse.json();
 
       if (!prayogResponse.ok) {
-        console.error("Prayog booking failed:", prayogResult);
-        toast({
-          title: "Booking Failed",
-          description: prayogResult.message || "Failed to create booking. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
       }
 
-      console.log("Prayog booking success:", prayogResult);
+      const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
+      const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
 
       toast({
-        title: "Booking Confirmed! 🎉",
-        description: `Order ID: ${prayogResult.data?.orderId || orderId}`,
+        title: "Booking Confirmed!",
+        description: `Your shipment has been booked. AWB: ${awbNumber || trackingId}`,
       });
 
-      setShowPaymentModal(false);
-      navigate(`/tracking?orderId=${prayogResult.data?.orderId || orderId}`);
+      navigate("/tracking", {
+        state: {
+          orderId: trackingId,
+          awbNumber: awbNumber,
+          courier: selectedCourierData?.name,
+          pickupAddress: `${senderData.address}, ${senderData.city}`,
+          deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
+          paymentMethod,
+          pickupDate: selectedDate?.toISOString(),
+        },
+      });
     } catch (error: any) {
       console.error("Booking error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to create booking",
+        title: "Booking Failed",
+        description: error.message || "Failed to create booking. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const selectedCourierData = getCouriers().find((c) => c.id === selectedCourier);
+  const selectedCourierData = selectedCourier ? getCouriers().find((c) => c.id === selectedCourier) : null;
   const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
 
   const renderCurrentStep = () => {
@@ -533,31 +539,48 @@ const Booking = () => {
         return <BookingStep1 onNext={handleNextStep} />;
       case 2:
         return (
-          <AddressInputStep
-            pickupData={senderData}
-            deliveryData={receiverData}
-            onPickupChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
-            onDeliveryChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
+          <BookingStep2
+            pickupPincode={pickupPincode}
+            deliveryPincode={deliveryPincode}
+            goodsType={goodsType}
+            packageWeight={packageWeight}
+            dimensions={dimensions}
+            shipmentValue={shipmentValue}
+            urgency={urgency}
+            onInputChange={handleInputChange}
+            onDimensionChange={handleDimensionChange}
+            onPricingCalculated={setCalculatedPricing}
+            onServiceabilityData={setServiceabilityData}
+            onLocationData={handleLocationData}
             onNext={handleNextStep}
             onBack={handlePrevStep}
           />
         );
       case 3:
         return (
-          <ShipmentDetailsStep
-            weight={packageWeight}
-            dimensions={dimensions}
+          <BookingStep3
             goodsType={goodsType}
-            description={packageDescription}
-            onWeightChange={(value) => setPackageWeight(value)}
+            packageWeight={packageWeight}
+            customWeight={customWeight}
+            dimensions={dimensions}
+            shipmentValue={shipmentValue}
+            packageDescription={packageDescription}
+            onInputChange={handleInputChange}
             onDimensionChange={handleDimensionChange}
-            onGoodsTypeChange={(value) => setGoodsType(value)}
-            onDescriptionChange={(value) => setPackageDescription(value)}
-            onNext={handleShipmentDetailsNext}
+            onNext={handleNextStep}
             onBack={handlePrevStep}
           />
         );
       case 4:
+        return (
+          <BookingStep4
+            urgency={urgency}
+            onInputChange={handleInputChange}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 5:
         return (
           <BookingStep5
             couriers={getCouriers()}
@@ -567,7 +590,7 @@ const Booking = () => {
             onBack={handlePrevStep}
           />
         );
-      case 5:
+      case 6:
         return (
           <BookingStep6
             selectedDate={selectedDate}
@@ -577,9 +600,20 @@ const Booking = () => {
             totalAmount={totalAmount}
           />
         );
-      case 6:
-        return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
       case 7:
+        return (
+          <AddressStep
+            senderData={senderData}
+            receiverData={receiverData}
+            onSenderChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
+            onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
+            onNext={handleNextStep}
+            onBack={handlePrevStep}
+          />
+        );
+      case 8:
+        return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
+      case 9:
         return (
           <BookingReviewStep
             senderData={senderData}
@@ -609,6 +643,7 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
       <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => (currentStep === 1 ? navigate("/") : handlePrevStep())}>
@@ -623,6 +658,7 @@ const Booking = () => {
         {renderCurrentStep()}
       </div>
 
+      {/* Payment Modal */}
       {selectedCourierData && (
         <PaymentModal
           isOpen={showPaymentModal}
@@ -638,7 +674,7 @@ const Booking = () => {
           customerDetails={{
             name: senderData.name,
             phone: senderData.phone,
-            email: undefined,
+            email: undefined, // Email not collected in current flow
           }}
         />
       )}
