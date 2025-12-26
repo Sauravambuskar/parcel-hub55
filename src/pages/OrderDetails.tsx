@@ -44,6 +44,8 @@ interface OrderDetails {
   orderDate: string;
   orderStatus: string;
   deliveryPromise: string;
+  carrierName?: string;
+  carrierId?: string;
   addresses?: OrderAddress[];
   shipments?: Shipment[];
   payment?: Payment;
@@ -207,6 +209,12 @@ const OrderDetails = () => {
                 <label>AWB Number</label>
                 <span>${shipmentData?.awbNumber || 'N/A'}</span>
               </div>
+              ${order.carrierName ? `
+              <div class="detail-item">
+                <label>Carrier</label>
+                <span>${order.carrierName}</span>
+              </div>
+              ` : ''}
               <div class="detail-item">
                 <label>Delivery Type</label>
                 <span>${order.deliveryPromise || 'Standard'}</span>
@@ -395,13 +403,19 @@ const OrderDetails = () => {
             </Badge>
           </div>
           
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {formatDate(order.orderDate)}
             </span>
+            {order.carrierName && (
+              <span className="flex items-center gap-1">
+                <Truck className="h-4 w-4" />
+                {order.carrierName}
+              </span>
+            )}
             <span className="flex items-center gap-1">
-              <Truck className="h-4 w-4" />
+              <Package className="h-4 w-4" />
               {order.deliveryPromise || 'Standard'}
             </span>
           </div>

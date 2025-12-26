@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/prayog";
@@ -22,6 +22,8 @@ interface PrayogOrder {
   orderId: string;
   orderDate: string;
   orderStatus: string;
+  carrierName?: string;
+  carrierId?: string;
   shipments?: Array<{
     awbNumber: string;
     partnerName: string;
@@ -167,6 +169,12 @@ const History = () => {
                         {order.orderStatus || 'Unknown'}
                       </Badge>
                     </div>
+                    {order.carrierName && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Truck className="h-3 w-3" />
+                        {order.carrierName}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(order.orderDate)}
