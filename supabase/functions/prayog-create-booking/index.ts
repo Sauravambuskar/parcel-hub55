@@ -59,6 +59,8 @@ serve(async (req) => {
       orderStatus: "READY_FOR_DISPATCH",
       parcelCategory: "ECOMM",
       autoManifest: true,
+      carrierName: bookingData.carrierName || selectedService?.partner_code || "",
+      carrierId: bookingData.carrierId || selectedService?.partner_id || "",
       eWaybills: [],
       deliveryPromise: selectedService?.service_name || "standard",
       metadata: { source: "WEB_APP" },

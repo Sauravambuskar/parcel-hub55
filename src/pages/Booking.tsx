@@ -425,6 +425,8 @@ const Booking = () => {
         parcelCategory: "ECOMM",
         vendorCode: "AWSA",
         autoManifest: true,
+        carrierName: selectedService?.partner_code || "",
+        carrierId: selectedService?.partner_id || "",
         eWaybills: [],
         deliveryPromise: selectedService?.service_name || "standard",
         metadata: { 
