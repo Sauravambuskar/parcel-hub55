@@ -40,7 +40,7 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': PRAYOG_CONFIG.API_KEY,
+          'api-key': PRAYOG_CONFIG.API_KEY,
         },
         body: JSON.stringify({
           name: 'phone',
@@ -87,7 +87,7 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': PRAYOG_CONFIG.API_KEY,
+          'api-key': PRAYOG_CONFIG.API_KEY,
         },
         body: JSON.stringify({
           username: `+91${phoneNumber}`,
