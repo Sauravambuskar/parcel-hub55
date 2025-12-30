@@ -59,7 +59,7 @@ const History = () => {
       const authData = JSON.parse(prayogAuth);
 
       const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`,
+        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders?filterByCurrentUser=true`,
         {
           method: "GET",
           headers: {
