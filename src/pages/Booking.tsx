@@ -355,10 +355,44 @@ const Booking = () => {
     }
   };
 
+  // Reset dependent data when navigating back to a step
+  const resetDataFromStep = (stepNumber: number) => {
+    // When going back to step 2 (pincodes/package details), reset all downstream data
+    if (stepNumber <= 2) {
+      setServiceabilityData(null);
+      setCalculatedPricing(null);
+      setSelectedServiceId(null);
+      setSelectedPartnerData(null);
+      setSelectedDate(undefined);
+    }
+    // When going back to step 3 (goods details), reset courier selection and beyond
+    if (stepNumber <= 3) {
+      // Serviceability might still be valid, but courier selection should be reconsidered
+    }
+    // When going back to step 4 (courier selection), reset date selection
+    if (stepNumber <= 4) {
+      setSelectedServiceId(null);
+      setSelectedPartnerData(null);
+      setSelectedDate(undefined);
+    }
+    // When going back to step 5 (date selection), reset date
+    if (stepNumber <= 5) {
+      setSelectedDate(undefined);
+    }
+  };
+
   const handlePrevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      const prevStep = currentStep - 1;
+      resetDataFromStep(prevStep);
+      setCurrentStep(prevStep);
     }
+  };
+
+  // Handle going to a specific step (e.g., from pincode mismatch)
+  const handleGoToStep = (stepNumber: number) => {
+    resetDataFromStep(stepNumber);
+    setCurrentStep(stepNumber);
   };
 
   const handleProceedToPayment = () => {
@@ -644,7 +678,7 @@ const Booking = () => {
             onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
             onNext={handleNextStep}
             onBack={handlePrevStep}
-            onGoToStep={setCurrentStep}
+            onGoToStep={handleGoToStep}
           />
         );
       case 7:
