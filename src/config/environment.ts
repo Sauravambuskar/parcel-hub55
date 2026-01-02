@@ -2,7 +2,7 @@
 export type Environment = "sandbox" | "production";
 
 // Change this to switch between environments
-export const CURRENT_ENV: Environment = "production" as Environment;
+export const CURRENT_ENV: Environment = "sandbox" as Environment;
 
 interface EnvironmentConfig {
   prayog: {
