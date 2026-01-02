@@ -2,7 +2,7 @@
 export type Environment = "sandbox" | "production";
 
 // Change this to switch between environments
-export const CURRENT_ENV: Environment = "sandbox";
+export const CURRENT_ENV: Environment = "sandbox" as Environment;
 
 interface EnvironmentConfig {
   prayog: {
@@ -53,5 +53,24 @@ const configs: Record<Environment, EnvironmentConfig> = {
 
 export const getConfig = (): EnvironmentConfig => configs[CURRENT_ENV];
 
-export const isProd = () => CURRENT_ENV === "production";
-export const isSandbox = () => CURRENT_ENV === "sandbox";
+export const isProd = (): boolean => CURRENT_ENV === "production";
+export const isSandbox = (): boolean => CURRENT_ENV === "sandbox";
+
+// Environment-specific Prayog tenant IDs (for frontend API calls)
+const TENANT_IDS: Record<Environment, string> = {
+  sandbox: "fa0d2a1c-aff5-4e8e-8e61-9c1c0b48ec8f",
+  production: "YOUR_PRODUCTION_TENANT_ID", // Replace with production tenant ID
+};
+
+// Environment-specific Prayog API keys (for frontend API calls)
+const API_KEYS: Record<Environment, string> = {
+  sandbox: "kd8H6fT3xL2mQ9vR1wY7aZ5bN4pJ0uCe",
+  production: "YOUR_PRODUCTION_API_KEY", // Replace with production API key
+};
+
+// Backward compatibility - PRAYOG_CONFIG for existing imports
+export const PRAYOG_CONFIG = {
+  API_BASE_URL: getConfig().prayog.apiBaseUrl,
+  TENANT_ID: TENANT_IDS[CURRENT_ENV],
+  API_KEY: API_KEYS[CURRENT_ENV],
+};
