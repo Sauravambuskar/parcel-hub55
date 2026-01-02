@@ -14,7 +14,7 @@ import AddressStep from "@/components/booking/AddressStep";
 import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
-import BookingStep6 from "@/components/booking/BookingStep6";
+
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
 
@@ -60,7 +60,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const totalSteps = 8;
+  const totalSteps = 7;
 
   useEffect(() => {
     // Generate a guest user ID for non-authenticated users
@@ -659,16 +659,6 @@ const Booking = () => {
         );
       case 5:
         return (
-          <BookingStep6
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-            totalAmount={totalAmount}
-          />
-        );
-      case 6:
-        return (
         <AddressStep
             senderData={senderData}
             receiverData={receiverData}
@@ -681,9 +671,9 @@ const Booking = () => {
             onGoToStep={handleGoToStep}
           />
         );
-      case 7:
+      case 6:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
-      case 8:
+      case 7:
         return (
           <BookingReviewStep
             senderData={senderData}
