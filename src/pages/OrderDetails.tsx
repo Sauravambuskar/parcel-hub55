@@ -20,6 +20,7 @@ interface OrderAddress {
 
 interface Shipment {
   awbNumber: string;
+  thirdPartyAwbNumber?: string;
   shipmentStatus: string;
   dimensions?: {
     width: number;
@@ -395,8 +396,11 @@ const OrderDetails = () => {
         <Card className="p-4">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="font-semibold text-lg">{shipment?.awbNumber || order.orderId}</h2>
+              <h2 className="font-semibold text-lg">{shipment?.thirdPartyAwbNumber || shipment?.awbNumber || order.orderId}</h2>
               <p className="text-sm text-muted-foreground">Order ID: {order.orderId}</p>
+              {shipment?.thirdPartyAwbNumber && (
+                <p className="text-sm text-muted-foreground">AWB: {shipment.awbNumber}</p>
+              )}
             </div>
             <Badge className={getStatusColor(order.orderStatus)}>
               {order.orderStatus || 'Unknown'}
