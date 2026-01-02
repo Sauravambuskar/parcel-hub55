@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
+import { getEnvironmentFromRequest, getRazorpayConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
 };
 
 serve(async (req) => {
@@ -23,12 +24,16 @@ serve(async (req) => {
       );
     }
 
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    // Get environment-specific Razorpay config
+    const env = getEnvironmentFromRequest(req);
+    const razorpayConfig = getRazorpayConfig(env);
+    
+    console.log(`Using ${env} environment for Razorpay verification`);
 
-    if (!razorpayKeySecret) {
-      console.error('Razorpay secret not configured');
+    if (!razorpayConfig.keySecret) {
+      console.error(`Razorpay secret not configured for ${env} environment`);
       return new Response(
-        JSON.stringify({ error: 'Payment service not configured' }),
+        JSON.stringify({ error: `Payment service not configured for ${env} environment` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -39,7 +44,7 @@ serve(async (req) => {
     // Signature = HMAC-SHA256(order_id + "|" + payment_id, secret)
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     
-    const hmac = createHmac('sha256', razorpayKeySecret);
+    const hmac = createHmac('sha256', razorpayConfig.keySecret);
     hmac.update(body);
     const expectedSignature = hmac.digest('hex');
 

@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getEnvironmentFromRequest, getPrayogConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id, x-environment',
 };
 
 serve(async (req) => {
@@ -21,10 +22,16 @@ serve(async (req) => {
       );
     }
 
-    const API_KEY = Deno.env.get('PRAYOG_API_KEY') || 'prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad';
+    // Get environment-specific Prayog config
+    const env = getEnvironmentFromRequest(req);
+    const prayogConfig = getPrayogConfig(env);
+    
+    console.log(`Using ${env} environment for Prayog`);
+
+    const API_KEY = prayogConfig.tenantId || Deno.env.get('PRAYOG_API_KEY') || 'prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad';
     const userId = req.headers.get('x-user-id') || '';
     
-    console.log('Checking serviceability v3:', { source_location, destination_location });
+    console.log('Checking serviceability v3:', { source_location, destination_location, env });
 
     // Build the request payload for Prayog API v3
     const prayogPayload = {
@@ -53,7 +60,7 @@ serve(async (req) => {
       headers['x-user-id'] = userId;
     }
 
-    const response = await fetch('https://sandbox-apis.prayog.io/serviceability/v3/check', {
+    const response = await fetch(`${prayogConfig.apiBaseUrl}/serviceability/v3/check`, {
       method: 'POST',
       headers,
       body: JSON.stringify(prayogPayload),

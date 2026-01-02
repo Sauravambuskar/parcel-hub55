@@ -6,7 +6,7 @@ import { MapPin, CheckCircle, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PRAYOG_CONFIG } from "@/config/prayog";
+import { PRAYOG_CONFIG } from "@/config/environment";
 
 interface PricingData {
   basePrice: number;

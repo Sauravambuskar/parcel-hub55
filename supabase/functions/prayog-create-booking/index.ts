@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getEnvironmentFromRequest, getPrayogConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
 };
 
 serve(async (req) => {
@@ -12,9 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    const tenantId = Deno.env.get('PRAYOG_TENANT_ID');
+    // Get environment-specific Prayog config
+    const env = getEnvironmentFromRequest(req);
+    const prayogConfig = getPrayogConfig(env);
+    
+    console.log(`Using ${env} environment for Prayog booking`);
+
+    const tenantId = prayogConfig.tenantId;
     if (!tenantId) {
-      throw new Error('PRAYOG_TENANT_ID not configured');
+      throw new Error(`PRAYOG_TENANT_ID not configured for ${env} environment`);
     }
 
     const bookingData = await req.json();
@@ -156,9 +163,9 @@ serve(async (req) => {
 
     console.log('Sending to Prayog API:', JSON.stringify(prayogPayload, null, 2));
 
-    // Call Prayog Booking API
+    // Call Prayog Booking API with environment-specific URL
     const prayogResponse = await fetch(
-      'https://sandbox-apis.prayog.io/gateway/booking-service/orders',
+      `${prayogConfig.apiBaseUrl}/gateway/booking-service/orders`,
       {
         method: 'POST',
         headers: {

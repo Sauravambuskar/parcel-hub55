@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG } from "@/config/prayog";
+import { PRAYOG_CONFIG } from "@/config/environment";
 
 interface OrderAddress {
   type: string;

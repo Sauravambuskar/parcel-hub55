@@ -7,7 +7,7 @@ import { Package, ArrowLeft, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PRAYOG_CONFIG } from "@/config/prayog";
+import { PRAYOG_CONFIG } from "@/config/environment";
 const Login = () => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');

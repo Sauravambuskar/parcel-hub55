@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getEnvironmentFromRequest, getPrayogConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
 };
 
 serve(async (req) => {
@@ -20,12 +21,18 @@ serve(async (req) => {
       );
     }
 
-    const TENANT_ID = Deno.env.get('PRAYOG_TENANT_ID');
+    // Get environment-specific Prayog config
+    const env = getEnvironmentFromRequest(req);
+    const prayogConfig = getPrayogConfig(env);
+    
+    console.log(`Using ${env} environment for price calculation`);
+
+    const TENANT_ID = prayogConfig.tenantId;
     
     if (!TENANT_ID) {
-      console.error('PRAYOG_TENANT_ID not configured');
+      console.error(`PRAYOG_TENANT_ID not configured for ${env} environment`);
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
+        JSON.stringify({ error: `Server configuration error for ${env} environment` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -34,8 +41,8 @@ serve(async (req) => {
 
     // Fetch the rate card (using default if no specific ID provided)
     const rateCardUrl = rate_card_id 
-      ? `https://sandbox-apis.prayog.io/ratecard/${rate_card_id}`
-      : 'https://sandbox-apis.prayog.io/ratecard';
+      ? `${prayogConfig.apiBaseUrl}/ratecard/${rate_card_id}`
+      : `${prayogConfig.apiBaseUrl}/ratecard`;
     
     const rateCardResponse = await fetch(rateCardUrl, {
       method: 'GET',
