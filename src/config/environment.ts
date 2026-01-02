@@ -58,13 +58,13 @@ export const isSandbox = (): boolean => CURRENT_ENV === "sandbox";
 
 // Environment-specific Prayog tenant IDs (for frontend API calls)
 const TENANT_IDS: Record<Environment, string> = {
-  sandbox: "fa0d2a1c-aff5-4e8e-8e61-9c1c0b48ec8f",
+  sandbox: "6901d6e05021c666ba4bef43",
   production: "YOUR_PRODUCTION_TENANT_ID", // Replace with production tenant ID
 };
 
 // Environment-specific Prayog API keys (for frontend API calls)
 const API_KEYS: Record<Environment, string> = {
-  sandbox: "prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad",
+  sandbox: "kd8H6fT3xL2mQ9vR1wY7aZ5bN4pJ0uCe",
   production: "YOUR_PRODUCTION_API_KEY", // Replace with production API key
 };
 
