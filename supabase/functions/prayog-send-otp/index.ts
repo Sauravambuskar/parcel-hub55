@@ -21,9 +21,10 @@ serve(async (req) => {
     }
 
     const TENANT_ID = Deno.env.get('PRAYOG_TENANT_ID');
+    const API_KEY = Deno.env.get('PRAYOG_API_KEY');
     
-    if (!TENANT_ID) {
-      console.error('PRAYOG_TENANT_ID not configured');
+    if (!TENANT_ID || !API_KEY) {
+      console.error('PRAYOG_TENANT_ID or PRAYOG_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -37,6 +38,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         'X-TENANT-ID': TENANT_ID,
+        'api-key': API_KEY,
       },
       body: JSON.stringify({
         name: name || 'User',

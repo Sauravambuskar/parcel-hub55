@@ -64,7 +64,7 @@ const TENANT_IDS: Record<Environment, string> = {
 
 // Environment-specific Prayog API keys (for frontend API calls)
 const API_KEYS: Record<Environment, string> = {
-  sandbox: "kd8H6fT3xL2mQ9vR1wY7aZ5bN4pJ0uCe",
+  sandbox: "prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad",
   production: "YOUR_PRODUCTION_API_KEY", // Replace with production API key
 };
 
