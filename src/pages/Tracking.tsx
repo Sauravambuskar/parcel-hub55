@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG } from "@/config/prayog";
+import { PRAYOG_CONFIG } from "@/config/environment";
 
 interface TrackingStatus {
   trackingId: string;

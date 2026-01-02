@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getEnvironmentFromRequest, getRazorpayConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
 };
 
 serve(async (req) => {
@@ -22,13 +23,16 @@ serve(async (req) => {
       );
     }
 
-    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    // Get environment-specific Razorpay config
+    const env = getEnvironmentFromRequest(req);
+    const razorpayConfig = getRazorpayConfig(env);
+    
+    console.log(`Using ${env} environment for Razorpay`);
 
-    if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error('Razorpay credentials not configured');
+    if (!razorpayConfig.keyId || !razorpayConfig.keySecret) {
+      console.error(`Razorpay credentials not configured for ${env} environment`);
       return new Response(
-        JSON.stringify({ error: 'Payment service not configured' }),
+        JSON.stringify({ error: `Payment service not configured for ${env} environment` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -36,10 +40,10 @@ serve(async (req) => {
     // Amount should be in paise (smallest currency unit)
     const amountInPaise = Math.round(amount * 100);
 
-    console.log('Creating Razorpay order:', { amountInPaise, currency, receipt });
+    console.log('Creating Razorpay order:', { amountInPaise, currency, receipt, env });
 
     // Create Razorpay order
-    const authHeader = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    const authHeader = btoa(`${razorpayConfig.keyId}:${razorpayConfig.keySecret}`);
     
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
@@ -72,7 +76,7 @@ serve(async (req) => {
         orderId: data.id,
         amount: data.amount,
         currency: data.currency,
-        keyId: razorpayKeyId, // Send key ID to frontend for checkout
+        keyId: razorpayConfig.keyId, // Send key ID to frontend for checkout
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
