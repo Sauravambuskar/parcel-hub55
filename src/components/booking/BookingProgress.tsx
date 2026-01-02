@@ -10,9 +10,10 @@ const steps = [
   "Service Type",
   "Addresses", 
   "Package Details",
-  "Service Options",
   "Select Courier",
-  "Choose Slot"
+  "Contact Details",
+  "Disclaimer",
+  "Review"
 ];
 
 const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
