@@ -6,6 +6,7 @@ export type Environment = 'sandbox' | 'production';
 interface PrayogConfig {
   apiBaseUrl: string;
   tenantIdEnvVar: string;
+  apiKeyEnvVar: string;
 }
 
 interface RazorpayConfig {
@@ -17,10 +18,12 @@ export const PRAYOG_CONFIG: Record<Environment, PrayogConfig> = {
   sandbox: {
     apiBaseUrl: 'https://sandbox-apis.prayog.io',
     tenantIdEnvVar: 'PRAYOG_TENANT_ID',
+    apiKeyEnvVar: 'PRAYOG_API_KEY',
   },
   production: {
     apiBaseUrl: 'https://apis.prayog.io',
     tenantIdEnvVar: 'PRAYOG_PROD_TENANT_ID',
+    apiKeyEnvVar: 'PRAYOG_PROD_API_KEY',
   },
 };
 
@@ -48,6 +51,7 @@ export function getPrayogConfig(env: Environment) {
   return {
     apiBaseUrl: config.apiBaseUrl,
     tenantId: Deno.env.get(config.tenantIdEnvVar),
+    apiKey: Deno.env.get(config.apiKeyEnvVar),
   };
 }
 
