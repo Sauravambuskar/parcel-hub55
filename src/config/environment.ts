@@ -59,7 +59,7 @@ export const isSandbox = (): boolean => CURRENT_ENV === "sandbox";
 // Environment-specific Prayog tenant IDs (for frontend API calls)
 const TENANT_IDS: Record<Environment, string> = {
   sandbox: "6901d6e05021c666ba4bef43",
-  production: "YOUR_PRODUCTION_TENANT_ID", // Replace with production tenant ID
+  production: "6955190688051e07be389dc5",
 };
 
 // Environment-specific Prayog API keys (for frontend API calls)
