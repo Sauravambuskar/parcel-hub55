@@ -615,13 +615,28 @@ const OrderDetails = () => {
                   if (contentType?.includes('application/pdf')) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
-                    window.open(url, '_blank');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `shipping-label-${order?.orderId || 'label'}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
                   } else {
-                    // JSON response with shippingLabelUrl
+                    // JSON response with shippingLabelUrl - fetch and download
                     const result = await response.json();
                     const labelUrl = result?.data?.shippingLabelUrl;
                     if (labelUrl) {
-                      window.open(labelUrl, '_blank');
+                      const pdfResponse = await fetch(labelUrl);
+                      const pdfBlob = await pdfResponse.blob();
+                      const url = window.URL.createObjectURL(pdfBlob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `shipping-label-${order?.orderId || 'label'}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
                     } else {
                       throw new Error('No label URL in response');
                     }
@@ -629,7 +644,7 @@ const OrderDetails = () => {
                   
                   toast({
                     title: "Success",
-                    description: "Shipping label opened",
+                    description: "Shipping label downloaded",
                   });
                 } catch (error: any) {
                   console.error("Error downloading label:", error);
