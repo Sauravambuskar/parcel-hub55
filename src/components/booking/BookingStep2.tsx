@@ -345,12 +345,12 @@ const BookingStep2 = ({
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Base Price</span>
-              <span className="font-semibold">₹{pricingData.basePrice}</span>
+              <span className="text-muted-foreground">Courier Rate</span>
+              <span className="font-semibold">₹{pricingData.basePrice - 50}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Convenience Fee</span>
-              <span className="font-semibold">₹{pricingData.convenienceFee}</span>
+              <span className="text-muted-foreground">Platform Fee</span>
+              <span className="font-semibold">₹50</span>
             </div>
             <div className="border-t pt-2 flex justify-between items-center">
               <span className="font-semibold">Total Estimated Cost</span>
