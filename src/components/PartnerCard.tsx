@@ -155,7 +155,8 @@ const PartnerCard = ({ partner, selectedServiceId, onServiceSelect }: PartnerCar
             {partner.services.map((service) => {
               const serviceId = `${partner.partner_id}_${service.service_code}`;
               const isSelected = selectedServiceId === serviceId;
-              const price = Math.round(service.rate?.price?.amount || 0);
+              const apiPrice = Math.round(service.rate?.price?.amount || 0);
+              const price = apiPrice + 50; // Platform fee included
 
               return (
                 <div

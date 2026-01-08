@@ -132,9 +132,10 @@ const Booking = () => {
         // Check if partner is serviceable
         if (partner.is_serviceable && partner.services) {
           partner.services.forEach((service: any) => {
-            // Extract price from rate object
-            const totalPrice = Math.round(service.rate?.price?.amount || 0);
-            // For Prayog API, the amount is the total price (no separate base/fee breakdown)
+            // Extract price from rate object and add platform fee
+            const apiPrice = Math.round(service.rate?.price?.amount || 0);
+            const platformFee = 50;
+            const totalPrice = apiPrice + platformFee;
             const basePrice = totalPrice;
             const convenienceFee = 0;
 
