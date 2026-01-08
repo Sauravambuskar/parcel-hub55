@@ -43,6 +43,7 @@ const Booking = () => {
   const [senderData, setSenderData] = useState({
     name: "",
     phone: "",
+    flatNo: "",
     address: "",
     city: "",
     state: "",
@@ -51,6 +52,7 @@ const Booking = () => {
   const [receiverData, setReceiverData] = useState({
     name: "",
     phone: "",
+    flatNo: "",
     address: "",
     city: "",
     state: "",

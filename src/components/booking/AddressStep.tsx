@@ -16,6 +16,7 @@ interface AddressStepProps {
   senderData: {
     name: string;
     phone: string;
+    flatNo: string;
     address: string;
     city: string;
     state: string;
@@ -24,6 +25,7 @@ interface AddressStepProps {
   receiverData: {
     name: string;
     phone: string;
+    flatNo: string;
     address: string;
     city: string;
     state: string;
@@ -55,6 +57,7 @@ const AddressStep = ({
   const isSenderValid = 
     senderData.name && 
     senderData.phone && 
+    senderData.flatNo &&
     senderData.address && 
     senderData.city && 
     senderData.state && 
@@ -63,6 +66,7 @@ const AddressStep = ({
   const isReceiverValid = 
     receiverData.name && 
     receiverData.phone && 
+    receiverData.flatNo &&
     receiverData.address && 
     receiverData.city && 
     receiverData.state && 
@@ -132,6 +136,16 @@ const AddressStep = ({
                 placeholder="+91 98765 43210"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="sender-flatNo">Flat No./Building Name/House No. *</Label>
+            <Input
+              id="sender-flatNo"
+              value={senderData.flatNo}
+              onChange={(e) => onSenderChange("flatNo", e.target.value)}
+              placeholder="Enter flat no., building name, or house no."
+            />
           </div>
 
           <AddressAutocomplete
@@ -222,6 +236,16 @@ const AddressStep = ({
                 placeholder="+91 98765 43210"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="receiver-flatNo">Flat No./Building Name/House No. *</Label>
+            <Input
+              id="receiver-flatNo"
+              value={receiverData.flatNo}
+              onChange={(e) => onReceiverChange("flatNo", e.target.value)}
+              placeholder="Enter flat no., building name, or house no."
+            />
           </div>
 
           <AddressAutocomplete
