@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
@@ -16,6 +16,11 @@ interface OrderAddress {
   state: string;
   zip: string;
   country: string;
+}
+
+interface ShipmentDocument {
+  type: string;
+  url: string;
 }
 
 interface Shipment {
@@ -33,6 +38,7 @@ interface Shipment {
     name: string;
     description: string;
   }>;
+  documents?: ShipmentDocument[];
 }
 
 interface Payment {
@@ -549,16 +555,37 @@ const OrderDetails = () => {
           </Card>
         )}
 
-        {/* Download Invoice */}
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          onClick={handleDownloadInvoice}
-          disabled={downloadingInvoice}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {downloadingInvoice ? "Downloading..." : "Download Invoice"}
-        </Button>
+        {/* Download Actions */}
+        <div className="flex flex-col gap-3">
+          {/* Download Label */}
+          {(() => {
+            const labelDoc = shipment?.documents?.find(doc => doc.type === 'label');
+            if (labelDoc?.url) {
+              return (
+                <Button 
+                  variant="default" 
+                  className="w-full" 
+                  onClick={() => window.open(labelDoc.url, '_blank')}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Download Shipping Label
+                </Button>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Download Invoice */}
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleDownloadInvoice}
+            disabled={downloadingInvoice}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {downloadingInvoice ? "Downloading..." : "Download Invoice"}
+          </Button>
+        </div>
       </div>
     </div>
   );
