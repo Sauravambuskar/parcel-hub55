@@ -617,10 +617,11 @@ const OrderDetails = () => {
                     const url = window.URL.createObjectURL(blob);
                     window.open(url, '_blank');
                   } else {
-                    // If JSON response with URL
+                    // JSON response with shippingLabelUrl
                     const result = await response.json();
-                    if (result?.data?.url || result?.url) {
-                      window.open(result?.data?.url || result?.url, '_blank');
+                    const labelUrl = result?.data?.shippingLabelUrl;
+                    if (labelUrl) {
+                      window.open(labelUrl, '_blank');
                     } else {
                       throw new Error('No label URL in response');
                     }
