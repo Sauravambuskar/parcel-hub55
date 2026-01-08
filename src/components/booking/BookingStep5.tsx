@@ -8,6 +8,7 @@ interface Partner {
   partner_id: string;
   partner_code: string;
   partner_name: string;
+  logo_url?: string;
   rating: number;
   is_serviceable: boolean;
   services: Array<{
