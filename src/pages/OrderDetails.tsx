@@ -70,6 +70,7 @@ const OrderDetails = () => {
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [downloadingLabel, setDownloadingLabel] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -560,6 +561,9 @@ const OrderDetails = () => {
           {/* Download Label */}
           {(() => {
             const labelDoc = shipment?.documents?.find(doc => doc.type === 'label');
+            const isSmileEcomm = order.carrierId === 'smile_ecomm' || order.carrierName?.toLowerCase().includes('smile');
+            
+            // If label exists in documents, show direct download
             if (labelDoc?.url) {
               return (
                 <Button 
@@ -572,6 +576,85 @@ const OrderDetails = () => {
                 </Button>
               );
             }
+            
+            // If smile_ecomm partner, fetch label from PDF generator API
+            if (isSmileEcomm) {
+              const handleDownloadSmileLabel = async () => {
+                try {
+                  setDownloadingLabel(true);
+                  const prayogAuth = localStorage.getItem('prayog_auth');
+                  
+                  if (!prayogAuth) {
+                    toast({
+                      title: "Authentication required",
+                      description: "Please sign in to download label",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  const authData = JSON.parse(prayogAuth);
+                  
+                  const response = await fetch(
+                    `${PRAYOG_CONFIG.API_BASE_URL}/gateway/pdf-generator/shipping-label/${order.orderId}`,
+                    {
+                      method: "GET",
+                      headers: {
+                        "Authorization": `Bearer ${authData.id_token}`,
+                        "tenantId": PRAYOG_CONFIG.TENANT_ID,
+                      },
+                    }
+                  );
+
+                  if (!response.ok) {
+                    throw new Error(`Failed to fetch label: ${response.status}`);
+                  }
+
+                  // Check if response is a PDF blob
+                  const contentType = response.headers.get('content-type');
+                  if (contentType?.includes('application/pdf')) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                  } else {
+                    // If JSON response with URL
+                    const result = await response.json();
+                    if (result?.data?.url || result?.url) {
+                      window.open(result?.data?.url || result?.url, '_blank');
+                    } else {
+                      throw new Error('No label URL in response');
+                    }
+                  }
+                  
+                  toast({
+                    title: "Success",
+                    description: "Shipping label opened",
+                  });
+                } catch (error: any) {
+                  console.error("Error downloading label:", error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to download shipping label",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setDownloadingLabel(false);
+                }
+              };
+
+              return (
+                <Button 
+                  variant="default" 
+                  className="w-full" 
+                  onClick={handleDownloadSmileLabel}
+                  disabled={downloadingLabel}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {downloadingLabel ? "Downloading..." : "Download Shipping Label"}
+                </Button>
+              );
+            }
+            
             return null;
           })()}
 
