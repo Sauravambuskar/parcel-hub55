@@ -31,6 +31,7 @@ interface Partner {
   partner_id: string;
   partner_code: string;
   partner_name: string;
+  logo_url?: string;
   rating: number;
   is_serviceable: boolean;
   services: Service[];
@@ -56,7 +57,8 @@ interface PartnerCardProps {
 const PartnerCard = ({ partner, selectedServiceId, onServiceSelect }: PartnerCardProps) => {
   const [imageError, setImageError] = useState(false);
 
-  const partnerLogo = getPartnerLogo(partner.partner_code, partner.partner_name);
+  // Use logo_url from API if available, otherwise fallback to hardcoded logos
+  const partnerLogo = partner.logo_url || getPartnerLogo(partner.partner_code, partner.partner_name);
   const hasValidImage = partnerLogo && partnerLogo !== '/placeholder.svg' && !imageError;
 
   // Extract capabilities as tags
