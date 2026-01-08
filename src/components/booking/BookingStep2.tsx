@@ -197,9 +197,11 @@ const BookingStep2 = ({
 
       if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
         const service = serviceablePartner.services[0];
-        const totalPrice = Math.round(service.rate?.price?.amount || 0);
-        const basePrice = totalPrice;
+        const apiPrice = Math.round(service.rate?.price?.amount || 0);
+        const platformFee = 50; // Platform fee added to base price
+        const basePrice = apiPrice + platformFee;
         const convenienceFee = 0;
+        const totalPrice = basePrice;
 
         const pricing: PricingData = {
           basePrice,
@@ -354,6 +356,9 @@ const BookingStep2 = ({
               <span className="font-semibold">Total Estimated Cost</span>
               <span className="text-xl font-bold text-primary">₹{pricingData.totalPrice}</span>
             </div>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              * Price is inclusive of all taxes, pickup and delivery charges
+            </p>
             <div className="text-xs text-muted-foreground mt-2">
               <p>Service Type: {pricingData.serviceType}</p>
               <p>Weight Range: {pricingData.weightRange}</p>
