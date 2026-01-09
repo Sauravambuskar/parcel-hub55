@@ -10,19 +10,19 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-8">
         {/* Logo */}
-        <div className="space-y-2">
+        <div className="space-y-2 opacity-0 animate-scale-fade-in">
           <div className="flex justify-center">
             <div className="bg-primary/10 p-4 rounded-2xl">
               <Package className="h-16 w-16 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-4xl font-bold opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
             Via<span className="text-primary">Setu.</span>
           </h1>
         </div>
 
         {/* Headline */}
-        <div className="space-y-3">
+        <div className="space-y-3 opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
           <h2 className="text-2xl font-semibold text-foreground leading-tight">
             AI-Powered
             <br />
@@ -34,7 +34,7 @@ const Landing = () => {
         </div>
 
         {/* Benefit Badges */}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2 opacity-0 animate-fade-in-up" style={{ animationDelay: '350ms', animationFillMode: 'forwards' }}>
           <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
             <IndianRupee className="h-4 w-4" />
             Best Rates
@@ -50,7 +50,7 @@ const Landing = () => {
         </div>
 
         {/* CTA Buttons */}
-        <div className="space-y-4 pt-4">
+        <div className="space-y-4 pt-4 opacity-0 animate-fade-in-up" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
           <Button 
             onClick={() => navigate("/login")} 
             size="lg" 
