@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
-import { supabase } from "@/integrations/supabase/client";
+
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -600,7 +600,7 @@ const Booking = () => {
       const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
       const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
 
-      // Save booking to Supabase for admin dashboard and order history
+      // Save booking to Supabase via secure Edge Function
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
@@ -639,12 +639,23 @@ const Booking = () => {
         prayog_commission: Math.round(baseAmount * 0.05),
       };
 
-      const { error: dbError } = await supabase
-        .from("bookings")
-        .insert(bookingData);
+      // Call secure Edge Function with Prayog auth
+      const saveResponse = await fetch(
+        `https://tksfdvnogzsweteetjjw.supabase.co/functions/v1/save-booking`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-prayog-token": idToken,
+            "x-prayog-user-id": userId,
+          },
+          body: JSON.stringify(bookingData),
+        }
+      );
 
-      if (dbError) {
-        console.error("Failed to save booking to database:", dbError);
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        console.error("Failed to save booking to database:", errorData);
         // Don't block the flow, just log the error
       }
 
