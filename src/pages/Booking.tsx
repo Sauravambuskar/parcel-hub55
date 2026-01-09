@@ -331,9 +331,11 @@ const Booking = () => {
           (s: any) => s.service_code === selectedPartnerData.serviceCode
         );
         if (service) {
+          const apiPrice = Math.round(service.rate?.price?.amount || 0);
+          const platformFee = 50;
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
-            basePrice: Math.round(service.rate?.price?.amount || 0),
+            basePrice: apiPrice + platformFee,
             convenienceFee: 0,
             deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
             partnerId: partner.partner_id,
