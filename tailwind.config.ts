@@ -132,11 +132,6 @@ export default {
 					'100%': {
 						transform: 'translateY(-100vh) rotate(360deg)',
 						opacity: '0'
-						transform: 'scale(0.9)'
-					},
-					'100%': {
-						opacity: '1',
-						transform: 'scale(1)'
 					}
 				}
 			},
