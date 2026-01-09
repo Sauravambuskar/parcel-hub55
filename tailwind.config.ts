@@ -141,7 +141,6 @@ export default {
 				'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
 				'scale-fade-in': 'scale-fade-in 0.5s ease-out forwards',
 				'float-up': 'float-up 20s linear infinite'
-				'scale-fade-in': 'scale-fade-in 0.5s ease-out forwards'
 			}
 		}
 	},
