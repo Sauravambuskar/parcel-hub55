@@ -1,0 +1,75 @@
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Package, MapPin, Zap, IndianRupee, Search } from "lucide-react";
+
+const Landing = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4">
+      <div className="max-w-md w-full text-center space-y-8">
+        {/* Logo */}
+        <div className="space-y-2">
+          <div className="flex justify-center">
+            <div className="bg-primary/10 p-4 rounded-2xl">
+              <Package className="h-16 w-16 text-primary" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold">
+            Via<span className="text-primary">Setu.</span>
+          </h1>
+        </div>
+
+        {/* Headline */}
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold text-foreground leading-tight">
+            AI-Powered
+            <br />
+            Multi-Courier Platform
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            Ship smarter across 21,000+ pincodes
+          </p>
+        </div>
+
+        {/* Benefit Badges */}
+        <div className="flex flex-wrap justify-center gap-2">
+          <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
+            <IndianRupee className="h-4 w-4" />
+            Best Rates
+          </Badge>
+          <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
+            <MapPin className="h-4 w-4" />
+            21K+ Pincodes
+          </Badge>
+          <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
+            <Zap className="h-4 w-4" />
+            Instant Booking
+          </Badge>
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="space-y-4 pt-4">
+          <Button 
+            onClick={() => navigate("/login")} 
+            size="lg" 
+            className="w-full text-lg py-6 font-semibold"
+          >
+            Start Shipping
+          </Button>
+          <Button 
+            onClick={() => navigate("/tracking")} 
+            variant="ghost" 
+            className="text-muted-foreground hover:text-foreground gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Track Package
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Landing;
