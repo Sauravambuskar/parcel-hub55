@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
+import { supabase } from "@/integrations/supabase/client";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -65,6 +66,16 @@ const Booking = () => {
   const totalSteps = 7;
 
   useEffect(() => {
+    // Check for Prayog auth first
+    const prayogAuth = localStorage.getItem("prayog_auth");
+    if (prayogAuth) {
+      const authData = JSON.parse(prayogAuth);
+      if (authData.user_id) {
+        setUserId(authData.user_id);
+        return;
+      }
+    }
+    
     // Generate a guest user ID for non-authenticated users
     let guestId = localStorage.getItem("guest_user_id");
     if (!guestId) {
@@ -588,6 +599,54 @@ const Booking = () => {
 
       const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
       const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
+
+      // Save booking to Supabase for admin dashboard and order history
+      const bookingData = {
+        user_id: userId,
+        sender_name: senderData.name,
+        sender_phone: senderData.phone,
+        sender_address: senderData.address,
+        sender_city: senderData.city,
+        sender_state: senderData.state,
+        sender_pincode: senderData.pincode,
+        receiver_name: receiverData.name,
+        receiver_phone: receiverData.phone,
+        receiver_address: receiverData.address,
+        receiver_city: receiverData.city,
+        receiver_state: receiverData.state,
+        receiver_pincode: receiverData.pincode,
+        goods_type: goodsType || "Package",
+        package_weight: packageWeight || "1",
+        length: dimensions?.length || null,
+        width: dimensions?.width || null,
+        height: dimensions?.height || null,
+        shipment_value: shipmentValue ? parseFloat(shipmentValue) : null,
+        urgency: urgency || "standard",
+        packaging_required: false,
+        insurance_required: false,
+        courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
+        courier_price: totalAmount,
+        delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+        tracking_id: trackingId,
+        prayog_order_id: prayogResult.orderId || orderId,
+        prayog_awb: awbNumber,
+        status: "confirmed",
+        payment_id: paymentDetails?.razorpay_payment_id || null,
+        payment_status: "paid",
+        base_fare: baseAmount,
+        platform_fee: selectedCourierData?.convenienceFee || 0,
+        gst: Math.round(baseAmount * 0.18),
+        prayog_commission: Math.round(baseAmount * 0.05),
+      };
+
+      const { error: dbError } = await supabase
+        .from("bookings")
+        .insert(bookingData);
+
+      if (dbError) {
+        console.error("Failed to save booking to database:", dbError);
+        // Don't block the flow, just log the error
+      }
 
       toast({
         title: "Booking Confirmed!",
