@@ -2,12 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, MapPin, Zap, IndianRupee, Search } from "lucide-react";
+import BackgroundParticles from "@/components/BackgroundParticles";
 
 const Landing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      <BackgroundParticles />
       <div className="max-w-md w-full text-center space-y-8">
         {/* Logo */}
         <div className="space-y-2 opacity-0 animate-scale-fade-in">
