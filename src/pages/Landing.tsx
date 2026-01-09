@@ -10,7 +10,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4 relative overflow-hidden">
       <BackgroundParticles />
-      <div className="max-w-md w-full text-center space-y-8">
+      <div className="max-w-md w-full text-center space-y-8 relative z-10">
         {/* Logo */}
         <div className="space-y-2 opacity-0 animate-scale-fade-in">
           <div className="flex justify-center">
