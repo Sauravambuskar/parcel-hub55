@@ -22,7 +22,7 @@ const Login = () => {
     // Check if user is already logged in with Prayog
     const prayogAuth = localStorage.getItem('prayog_auth');
     if (prayogAuth) {
-      navigate("/");
+      navigate("/home");
     }
   }, [navigate]);
   const handleSendOTP = async () => {
@@ -150,7 +150,7 @@ const Login = () => {
         title: "Welcome to Setu!",
         description: "Login successful"
       });
-      navigate("/");
+      navigate("/home");
     } catch (error: any) {
       toast({
         title: "Verification Failed",
