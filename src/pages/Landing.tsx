@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, MapPin, Zap, IndianRupee, Search } from "lucide-react";
@@ -6,6 +7,14 @@ import BackgroundParticles from "@/components/BackgroundParticles";
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect authenticated users to home
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (prayogAuth) {
+      navigate("/home");
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4 relative overflow-hidden">
