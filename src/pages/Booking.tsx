@@ -74,12 +74,12 @@ const Booking = () => {
     setUserId(guestId);
   }, []);
 
-  // Auto-populate pincodes from serviceability check
+  // Auto-populate pincodes from serviceability check - always sync from step 2 values
   useEffect(() => {
-    if (pickupPincode && !senderData.pincode) {
+    if (pickupPincode) {
       setSenderData((prev) => ({ ...prev, pincode: pickupPincode }));
     }
-    if (deliveryPincode && !receiverData.pincode) {
+    if (deliveryPincode) {
       setReceiverData((prev) => ({ ...prev, pincode: deliveryPincode }));
     }
   }, [pickupPincode, deliveryPincode]);
