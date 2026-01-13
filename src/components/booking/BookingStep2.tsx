@@ -87,6 +87,7 @@ const BookingStep2 = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'api-key': PRAYOG_CONFIG.API_KEY,
           'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
           ...(userId && { 'x-user-id': userId }),
         },
