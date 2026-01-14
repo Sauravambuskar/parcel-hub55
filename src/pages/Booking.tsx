@@ -15,7 +15,7 @@ import AddressStep from "@/components/booking/AddressStep";
 import BookingStep3 from "@/components/booking/BookingStep3";
 import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
-import OTPVerificationStep from "@/components/booking/OTPVerificationStep";
+
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
 
@@ -63,7 +63,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const totalSteps = 8;
+  const totalSteps = 7;
 
   useEffect(() => {
     // Check for Prayog auth first
@@ -76,8 +76,7 @@ const Booking = () => {
       }
     }
     
-    // For guests, we'll require OTP verification before step 5
-    // Generate a temporary guest ID
+    // Generate a guest user ID for non-authenticated users
     let guestId = localStorage.getItem("guest_user_id");
     if (!guestId) {
       guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -678,11 +677,6 @@ const Booking = () => {
   const selectedCourierData = getSelectedServiceDetails();
   const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
 
-  const handleOTPVerified = (verifiedUserId: string, phone: string) => {
-    setUserId(verifiedUserId);
-    handleNextStep();
-  };
-
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -729,14 +723,7 @@ const Booking = () => {
         );
       case 5:
         return (
-          <OTPVerificationStep
-            onBack={handlePrevStep}
-            onVerified={handleOTPVerified}
-          />
-        );
-      case 6:
-        return (
-          <AddressStep
+        <AddressStep
             senderData={senderData}
             receiverData={receiverData}
             pickupPincode={pickupPincode}
@@ -748,9 +735,9 @@ const Booking = () => {
             onGoToStep={handleGoToStep}
           />
         );
-      case 7:
+      case 6:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
-      case 8:
+      case 7:
         return (
           <BookingReviewStep
             senderData={senderData}

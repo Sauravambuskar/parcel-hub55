@@ -63,7 +63,7 @@ const Landing = () => {
         {/* CTA Buttons */}
         <div className="space-y-4 pt-4 opacity-0 animate-fade-in-up" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
           <Button 
-            onClick={() => navigate("/booking")} 
+            onClick={() => navigate("/login")} 
             size="lg" 
             className="w-full text-lg py-6 font-semibold"
           >
