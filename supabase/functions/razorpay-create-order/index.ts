@@ -56,7 +56,6 @@ serve(async (req) => {
         currency,
         receipt: receipt || `receipt_${Date.now()}`,
         notes: notes || {},
-        payment_capture: 1, // Enable automatic payment capture
       }),
     });
 
