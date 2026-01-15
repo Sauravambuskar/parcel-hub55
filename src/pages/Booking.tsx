@@ -630,7 +630,7 @@ const Booking = () => {
         tracking_id: trackingId,
         prayog_order_id: prayogResult.orderId || orderId,
         prayog_awb: awbNumber,
-        status: "confirmed",
+        status: "CREATED",
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: "paid",
         base_fare: baseAmount,
