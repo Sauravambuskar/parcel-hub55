@@ -471,7 +471,7 @@ const Booking = () => {
         referenceId: orderId,
         orderDate: new Date().toISOString(),
         orderType: "FORWARD",
-        orderStatus: "READY_FOR_DISPATCH",
+        orderStatus: "CREATED",
         parcelCategory: "ECOMM",
         vendorCode: "AWSA",
         autoManifest: true,
