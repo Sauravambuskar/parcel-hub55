@@ -347,7 +347,7 @@ const Booking = () => {
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
             basePrice: apiPrice + platformFee,
-            convenienceFee: 0,
+            convenienceFee: calculateConvenienceFee(),
             deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
             partnerId: partner.partner_id,
             partnerCode: partner.partner_code,
