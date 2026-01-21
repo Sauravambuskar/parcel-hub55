@@ -37,12 +37,22 @@ interface Partner {
   error?: string;
 }
 
+interface ShipmentSummary {
+  pickupPincode: string;
+  deliveryPincode: string;
+  weight: string;
+  goodsType: string;
+  dimensions?: { length: string; width: string; height: string };
+  shipmentValue?: number;
+}
+
 interface BookingStep5Props {
   partners: Partner[];
   selectedServiceId: string | null;
   onServiceSelect: (partnerId: string, serviceCode: string, rateId: string) => void;
   onNext: () => void;
   onBack: () => void;
+  shipmentSummary?: ShipmentSummary;
 }
 
 const BookingStep5 = ({ 
@@ -50,7 +60,8 @@ const BookingStep5 = ({
   selectedServiceId, 
   onServiceSelect, 
   onNext, 
-  onBack 
+  onBack,
+  shipmentSummary
 }: BookingStep5Props) => {
   const isValid = selectedServiceId !== null;
   const [showNonServiceable, setShowNonServiceable] = React.useState(false);
@@ -66,8 +77,47 @@ const BookingStep5 = ({
         <p className="text-muted-foreground">Select from our trusted delivery partners</p>
       </div>
 
-      {/* Serviceable Partners */}
-      <div className="space-y-4">
+      {/* Shipment Summary */}
+      {shipmentSummary && (
+        <div className="bg-muted/50 rounded-lg p-4 border border-border">
+          <h3 className="text-sm font-medium mb-3 text-muted-foreground">Shipment Details</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+            <div className="flex flex-col">
+              <span className="text-muted-foreground text-xs">From</span>
+              <span className="font-medium">{shipmentSummary.pickupPincode}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-muted-foreground text-xs">To</span>
+              <span className="font-medium">{shipmentSummary.deliveryPincode}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-muted-foreground text-xs">Weight</span>
+              <span className="font-medium">{shipmentSummary.weight} kg</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-muted-foreground text-xs">Type</span>
+              <span className="font-medium capitalize">{shipmentSummary.goodsType}</span>
+            </div>
+            {shipmentSummary.dimensions && (
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Dimensions</span>
+                <span className="font-medium">
+                  {shipmentSummary.dimensions.length}×{shipmentSummary.dimensions.width}×{shipmentSummary.dimensions.height} cm
+                </span>
+              </div>
+            )}
+            {shipmentSummary.shipmentValue && shipmentSummary.shipmentValue > 0 && (
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Value</span>
+                <span className="font-medium">₹{shipmentSummary.shipmentValue}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Serviceable Partners - Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {serviceablePartners.length > 0 ? (
           serviceablePartners.map((partner) => (
             <PartnerCard
@@ -78,7 +128,7 @@ const BookingStep5 = ({
             />
           ))
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="col-span-full text-center py-8 text-muted-foreground">
             No courier partners available for this route.
           </div>
         )}
@@ -95,7 +145,7 @@ const BookingStep5 = ({
           </button>
           
           {showNonServiceable && (
-            <div className="space-y-4 opacity-60">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60">
               {nonServiceablePartners.map((partner) => (
                 <PartnerCard
                   key={partner.partner_id}

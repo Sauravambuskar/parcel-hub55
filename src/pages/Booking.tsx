@@ -719,6 +719,14 @@ const Booking = () => {
             onServiceSelect={handleServiceSelect}
             onNext={handleNextStep}
             onBack={handlePrevStep}
+            shipmentSummary={{
+              pickupPincode,
+              deliveryPincode,
+              weight: packageWeight,
+              goodsType,
+              dimensions,
+              shipmentValue: Number(shipmentValue) || 0,
+            }}
           />
         );
       case 5:
