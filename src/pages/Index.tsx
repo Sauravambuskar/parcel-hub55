@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, LogOut, TrendingDown, MapPin, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Package, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
-import { CURRENT_ENV } from "@/config/environment";
+import { CURRENT_ENV, setEnvironment } from "@/config/environment";
 const Index = () => {
   const navigate = useNavigate();
   const {
@@ -57,20 +58,25 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Logo size="md" />
-                <Badge 
-                  variant={CURRENT_ENV === "production" ? "default" : "secondary"}
-                  className={CURRENT_ENV === "production" 
-                    ? "bg-green-600 hover:bg-green-700 text-white" 
-                    : "bg-amber-500 hover:bg-amber-600 text-white"
-                  }
-                >
-                  {CURRENT_ENV === "production" ? "LIVE" : "SANDBOX"}
-                </Badge>
               </div>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${CURRENT_ENV === "sandbox" ? "text-amber-600" : "text-muted-foreground"}`}>
+                    Sandbox
+                  </span>
+                  <Switch
+                    checked={CURRENT_ENV === "production"}
+                    onCheckedChange={(checked) => setEnvironment(checked ? "production" : "sandbox")}
+                  />
+                  <span className={`text-xs font-medium ${CURRENT_ENV === "production" ? "text-green-600" : "text-muted-foreground"}`}>
+                    Live
+                  </span>
+                </div>
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

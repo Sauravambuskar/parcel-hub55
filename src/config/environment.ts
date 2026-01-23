@@ -1,8 +1,28 @@
 // Environment configuration for sandbox and production
 export type Environment = "sandbox" | "production";
 
-// Change this to switch between environments
-export const CURRENT_ENV: Environment = "production" as Environment;
+// Default environment (can be overridden via localStorage)
+const DEFAULT_ENV: Environment = "production" as Environment;
+
+// Get current environment from localStorage or use default
+export const getCurrentEnv = (): Environment => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('app_environment');
+    if (stored === 'sandbox' || stored === 'production') {
+      return stored;
+    }
+  }
+  return DEFAULT_ENV;
+};
+
+// Set environment and reload page
+export const setEnvironment = (env: Environment): void => {
+  localStorage.setItem('app_environment', env);
+  window.location.reload();
+};
+
+// For backward compatibility - this is now dynamic
+export const CURRENT_ENV: Environment = getCurrentEnv();
 
 interface EnvironmentConfig {
   prayog: {
