@@ -206,7 +206,7 @@ const PartnerComparisonTable = ({
 
                 {/* Price */}
                 <TableCell className="text-right">
-                  <span className="text-lg font-bold text-primary">₹{price}</span>
+                  <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">₹{price}</span>
                 </TableCell>
               </TableRow>
             );
