@@ -2,12 +2,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle, Package, Loader2 } from "lucide-react";
+import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, MoreHorizontal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PRAYOG_CONFIG } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+const goodsTypes = [
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'box', label: 'Box/Parcel', icon: Package },
+  { id: 'envelope', label: 'Envelope', icon: Mail },
+  { id: 'fragile', label: 'Fragile', icon: AlertTriangle },
+  { id: 'others', label: 'Others', icon: MoreHorizontal },
+];
 
 interface PricingData {
   basePrice: number;
@@ -139,7 +148,7 @@ const BookingStep2 = ({
     };
   }, [deliveryPincode]);
   
-  const isValid = pickupPincode && deliveryPincode && packageWeight && dimensions.length && dimensions.width && dimensions.height;
+  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height;
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -392,7 +401,34 @@ const BookingStep2 = ({
             Package Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Type of Good - Icon Selector */}
+          <div className="space-y-3">
+            <Label>Type of Good *</Label>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {goodsTypes.map((type) => {
+                const Icon = type.icon;
+                const isSelected = goodsType === type.id;
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => onInputChange('goodsType', type.id)}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-muted bg-muted/50 text-muted-foreground hover:border-primary/50 hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-6 w-6" />
+                    <span className="text-xs font-medium text-center">{type.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="package-weight">Weight ({weightUnit})</Label>

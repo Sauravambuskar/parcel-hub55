@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Package } from "lucide-react";
 import AddressAutocomplete from "./AddressAutocomplete";
 
 interface PincodeMismatch {
@@ -33,8 +33,11 @@ interface AddressStepProps {
   };
   pickupPincode: string;
   deliveryPincode: string;
+  shipmentValue: string;
+  packageDescription: string;
   onSenderChange: (field: string, value: string) => void;
   onReceiverChange: (field: string, value: string) => void;
+  onPackageChange: (field: string, value: string) => void;
   onNext: () => void;
   onBack: () => void;
   onGoToStep?: (step: number) => void;
@@ -45,8 +48,11 @@ const AddressStep = ({
   receiverData,
   pickupPincode,
   deliveryPincode,
+  shipmentValue,
+  packageDescription,
   onSenderChange,
   onReceiverChange,
+  onPackageChange,
   onNext,
   onBack,
   onGoToStep,
@@ -309,6 +315,43 @@ const AddressStep = ({
                 className="bg-muted cursor-not-allowed"
               />
             </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Package Information Card */}
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          Package Information
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="shipment-value">Shipment Value (₹)</Label>
+            <Input
+              id="shipment-value"
+              type="number"
+              value={shipmentValue}
+              onChange={(e) => onPackageChange("shipmentValue", e.target.value)}
+              placeholder="Enter value for insurance"
+              min="0"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Optional: For insurance purposes
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="package-description">Package Contents *</Label>
+            <Input
+              id="package-description"
+              value={packageDescription}
+              onChange={(e) => onPackageChange("packageDescription", e.target.value)}
+              placeholder="e.g., Documents, Electronics, Clothing"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Describe the contents of your package
+            </p>
           </div>
         </div>
       </Card>

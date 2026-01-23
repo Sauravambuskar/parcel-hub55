@@ -12,8 +12,6 @@ import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
 import BookingStep2 from "@/components/booking/BookingStep2";
 import AddressStep from "@/components/booking/AddressStep";
-import BookingStep3 from "@/components/booking/BookingStep3";
-import BookingStep4 from "@/components/booking/BookingStep4";
 import BookingStep5 from "@/components/booking/BookingStep5";
 
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
@@ -63,7 +61,7 @@ const Booking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const totalSteps = 7;
+  const totalSteps = 6;
 
   useEffect(() => {
     // Check for Prayog auth first
@@ -704,17 +702,6 @@ const Booking = () => {
         );
       case 3:
         return (
-          <BookingStep3
-            goodsType={goodsType}
-            shipmentValue={shipmentValue}
-            packageDescription={packageDescription}
-            onInputChange={handleInputChange}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
-      case 4:
-        return (
           <BookingStep5
             partners={getPartners()}
             selectedServiceId={selectedServiceId}
@@ -733,23 +720,26 @@ const Booking = () => {
             }}
           />
         );
-      case 5:
+      case 4:
         return (
         <AddressStep
             senderData={senderData}
             receiverData={receiverData}
             pickupPincode={pickupPincode}
             deliveryPincode={deliveryPincode}
+            shipmentValue={shipmentValue}
+            packageDescription={packageDescription}
             onSenderChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
             onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
+            onPackageChange={handleInputChange}
             onNext={handleNextStep}
             onBack={handlePrevStep}
             onGoToStep={handleGoToStep}
           />
         );
-      case 6:
+      case 5:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
-      case 7:
+      case 6:
         return (
           <BookingReviewStep
             senderData={senderData}
