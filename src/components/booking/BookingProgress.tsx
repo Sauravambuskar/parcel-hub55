@@ -17,15 +17,29 @@ const steps = [
 ];
 
 const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
+  const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm text-muted-foreground">
           Step {currentStep} of {totalSteps}
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm font-medium text-primary">
           {Math.round((currentStep / totalSteps) * 100)}% Complete
         </div>
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="relative h-2 bg-muted rounded-full mb-6 overflow-hidden">
+        <div 
+          className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${progressPercentage}%` }}
+        />
+        <div 
+          className="absolute left-0 top-0 h-full bg-primary/50 rounded-full animate-pulse"
+          style={{ width: `${progressPercentage}%` }}
+        />
       </div>
       
       <div className="relative">
@@ -37,37 +51,41 @@ const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
             
             return (
               <div key={step} className="flex flex-col items-center relative flex-1">
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
-                    isCompleted && "bg-primary border-primary text-primary-foreground",
-                    isCurrent && "border-primary bg-background text-primary",
-                    !isCompleted && !isCurrent && "border-muted bg-background text-muted-foreground"
-                  )}
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    stepNumber
-                  )}
-                </div>
-                <span className={cn(
-                  "text-xs mt-2 text-center max-w-16",
-                  isCurrent && "text-primary font-medium",
-                  isCompleted && "text-foreground",
-                  !isCompleted && !isCurrent && "text-muted-foreground"
-                )}>
-                  {step}
-                </span>
-                
+                {/* Connecting Line */}
                 {index < totalSteps - 1 && (
                   <div 
                     className={cn(
-                      "absolute top-4 left-8 right-0 h-0.5 -translate-y-1/2",
+                      "absolute top-4 left-[50%] right-[-50%] h-0.5 -translate-y-1/2 transition-colors duration-500",
                       isCompleted ? "bg-primary" : "bg-muted"
                     )} 
                   />
                 )}
+                
+                {/* Step Circle */}
+                <div
+                  className={cn(
+                    "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-all duration-300",
+                    isCompleted && "bg-primary border-primary text-primary-foreground scale-100",
+                    isCurrent && "border-primary bg-background text-primary scale-110 shadow-[0_0_15px_hsl(180_100%_75%/0.4)]",
+                    !isCompleted && !isCurrent && "border-muted bg-background text-muted-foreground"
+                  )}
+                >
+                  {isCompleted ? (
+                    <CheckCircle className="w-4 h-4 animate-in" />
+                  ) : (
+                    <span className={cn(isCurrent && "animate-pulse")}>{stepNumber}</span>
+                  )}
+                </div>
+                
+                {/* Step Label */}
+                <span className={cn(
+                  "text-xs mt-2 text-center max-w-16 transition-colors duration-300",
+                  isCurrent && "text-primary font-semibold",
+                  isCompleted && "text-foreground font-medium",
+                  !isCompleted && !isCurrent && "text-muted-foreground"
+                )}>
+                  {step}
+                </span>
               </div>
             );
           })}

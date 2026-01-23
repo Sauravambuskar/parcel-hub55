@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,41 @@ interface PrayogOrder {
   }>;
   addresses?: OrderAddress[];
 }
+
+const OrderCardSkeleton = () => (
+  <Card className="p-4 animate-in">
+    <div className="flex items-start justify-between mb-4">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-36" />
+      </div>
+      <Skeleton className="h-10 w-10 rounded-md" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="flex items-start gap-2">
+        <Skeleton className="h-4 w-4 mt-1" />
+        <div className="space-y-1 flex-1">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <Skeleton className="h-4 w-4 mt-1" />
+        <div className="space-y-1 flex-1">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      </div>
+    </div>
+    <Skeleton className="h-9 w-full" />
+  </Card>
+);
 
 const History = () => {
   const navigate = useNavigate();
@@ -123,8 +159,18 @@ const History = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading your orders...</p>
+      <div className="min-h-screen bg-background">
+        <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
+          <div className="flex items-center gap-3 max-w-4xl mx-auto">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-7 w-32" />
+          </div>
+        </header>
+        <div className="p-4 max-w-4xl mx-auto space-y-4">
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+        </div>
       </div>
     );
   }
