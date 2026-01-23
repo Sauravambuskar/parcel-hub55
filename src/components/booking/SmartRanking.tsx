@@ -168,11 +168,42 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
               </p>
 
               <div className="flex flex-wrap gap-1">
-                {ranked.rating?.badges?.slice(0, 2).map((badge, i) => (
-                  <Badge key={i} variant="outline" className="text-[10px] py-0">
-                    {badge}
-                  </Badge>
-                ))}
+                {/* Compute badges based on actual shipment prices */}
+                {(() => {
+                  const price = (ranked.partner.services[0]?.rate?.price?.amount || 0) + 50;
+                  const deliveryDays = ranked.partner.services[0]?.tat_days || 7;
+                  const computedBadges: string[] = [];
+                  
+                  // Budget Friendly: only if this partner has the lowest price
+                  if (price === minPrice) {
+                    computedBadges.push("Budget Friendly");
+                  }
+                  // Fastest: only if this partner has the fastest delivery
+                  if (deliveryDays === minDelivery) {
+                    computedBadges.push("Fastest");
+                  }
+                  // Top Rated: if rating >= 4.0
+                  if ((ranked.rating?.rating || 0) >= 4.0) {
+                    computedBadges.push("Top Rated");
+                  }
+                  
+                  // Add other AI badges that aren't price/speed related (max 2 total)
+                  const priceBadges = ["Budget Friendly", "Best Value", "Cheapest", "Affordable"];
+                  const speedBadges = ["Fastest", "Quick Delivery", "Fastest Delivery"];
+                  const ratingBadges = ["Top Rated", "Highly Rated"];
+                  const excludeBadges = [...priceBadges, ...speedBadges, ...ratingBadges];
+                  
+                  const otherBadges = (ranked.rating?.badges || [])
+                    .filter(b => !excludeBadges.some(ex => b.toLowerCase().includes(ex.toLowerCase())));
+                  
+                  const finalBadges = [...computedBadges, ...otherBadges].slice(0, 2);
+                  
+                  return finalBadges.map((badge, i) => (
+                    <Badge key={i} variant="outline" className="text-[10px] py-0">
+                      {badge}
+                    </Badge>
+                  ));
+                })()}
               </div>
 
               <div className="mt-2 pt-2 border-t flex items-center justify-between">
