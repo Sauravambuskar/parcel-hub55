@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
           let locality = '';
           let district = '';
           let sublocality = '';
+          let sublocalityLevel2 = '';
+          let adminLevel3 = '';
+          let neighborhood = '';
           let state = '';
           let country = '';
 
@@ -66,8 +69,17 @@ Deno.serve(async (req) => {
             if (types.includes('administrative_area_level_2')) {
               district = component.long_name;
             }
+            if (types.includes('administrative_area_level_3')) {
+              adminLevel3 = component.long_name;
+            }
             if (types.includes('sublocality_level_1')) {
               sublocality = component.long_name;
+            }
+            if (types.includes('sublocality_level_2')) {
+              sublocalityLevel2 = component.long_name;
+            }
+            if (types.includes('neighborhood')) {
+              neighborhood = component.long_name;
             }
             if (types.includes('administrative_area_level_1')) {
               state = component.long_name;
@@ -77,12 +89,26 @@ Deno.serve(async (req) => {
             }
           }
 
-          // For Indian pincodes, prefer locality as the main city name
-          // Only use district if locality/sublocality not available AND district doesn't contain "Division"
-          // e.g., 400101 should return "Mumbai" (locality) not "Konkan Division" (district)
-          let city = locality || sublocality;
+          // Priority order for Indian pincodes:
+          // 1. locality (actual city name like "Mumbai", "Pune")
+          // 2. sublocality_level_1 (area within city)
+          // 3. administrative_area_level_3 (smaller admin unit, often town/taluka)
+          // 4. sublocality_level_2 or neighborhood
+          // 5. district (administrative_area_level_2) - but filter out "Division" names
+          // 6. For small states like Goa, use state name as city if nothing else available
+          let city = locality || sublocality || adminLevel3 || sublocalityLevel2 || neighborhood;
+          
           if (!city && district && !district.includes('Division')) {
             city = district;
+          }
+          
+          // For small states/UTs like Goa, if no city found, use a meaningful fallback
+          if (!city && state) {
+            // Use state name for small states/UTs as they often don't have distinct city names
+            const smallStates = ['Goa', 'Sikkim', 'Chandigarh', 'Puducherry', 'Andaman and Nicobar Islands', 'Lakshadweep', 'Dadra and Nagar Haveli and Daman and Diu'];
+            if (smallStates.includes(state)) {
+              city = state;
+            }
           }
 
           return {
