@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Shield, Truck, Check, Zap } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
+import { normalizeTatDays } from "@/lib/tat-utils";
 import {
   Table,
   TableBody,
@@ -86,7 +87,7 @@ const PartnerComparisonTable = ({
 
   // Find lowest price and fastest for badges
   const lowestPrice = Math.min(...sortedRows.map((r) => r.price));
-  const fastestDays = Math.min(...sortedRows.map((r) => r.service.tat_days));
+  const fastestDays = Math.min(...sortedRows.map((r) => normalizeTatDays(r.service.tat_days, r.service.service_name)));
 
   const handleImageError = (partnerId: string) => {
     setImageErrors((prev) => new Set(prev).add(partnerId));
@@ -199,7 +200,10 @@ const PartnerComparisonTable = ({
                   <div className="flex items-center justify-center gap-1 text-sm">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>
-                      {service.tat_days} {service.tat_days === 1 ? "day" : "days"}
+                      {(() => {
+                        const days = normalizeTatDays(service.tat_days, service.service_name);
+                        return `${days} ${days === 1 ? "day" : "days"}`;
+                      })()}
                     </span>
                   </div>
                 </TableCell>
