@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, TrendingUp, Zap, Shield, ThumbsUp } from "lucide-react";
+import { normalizeTatDays } from "@/lib/tat-utils";
 
 interface Partner {
   partner_id: string;
@@ -48,7 +49,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
         partner,
         service,
         price: (service.rate?.price?.amount || 0) + 50,
-        deliveryDays: service.tat_days || 7,
+        deliveryDays: normalizeTatDays(service.tat_days, service.service_name),
         rating: ratings.get(partner.partner_code),
       }))
     );
@@ -170,8 +171,9 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
               <div className="flex flex-wrap gap-1">
                 {/* Compute badges based on actual shipment prices */}
                 {(() => {
-                  const price = (ranked.partner.services[0]?.rate?.price?.amount || 0) + 50;
-                  const deliveryDays = ranked.partner.services[0]?.tat_days || 7;
+                  const service = ranked.partner.services[0];
+                  const price = (service?.rate?.price?.amount || 0) + 50;
+                  const deliveryDays = normalizeTatDays(service?.tat_days, service?.service_name);
                   const computedBadges: string[] = [];
                   
                   // Budget Friendly: only if this partner has the lowest price
@@ -211,7 +213,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
                   ₹{((ranked.partner.services[0]?.rate?.price?.amount || 0) + 50)}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {ranked.partner.services[0]?.tat_days || '?'} days
+                  {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days
                 </span>
               </div>
             </button>

@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeTatDays, formatTatRange } from "@/lib/tat-utils";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -163,7 +164,7 @@ const Booking = () => {
               id: courierId++,
               name: `${partnerName} - ${serviceName}`,
               rating: partner.rating || 4.0,
-              deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
+              deliveryTime: formatTatRange(service.tat_days, service.service_name),
               basePrice,
               convenienceFee,
               vehicleType: service.delivery_modes?.express ? "Express" : "Standard",
@@ -346,7 +347,7 @@ const Booking = () => {
             name: `${partner.partner_name} - ${service.service_name}`,
             basePrice: apiPrice + platformFee,
             convenienceFee: calculateConvenienceFee(),
-            deliveryTime: `${service.tat_days || 2}-${(service.tat_days || 2) + 1} days`,
+            deliveryTime: formatTatRange(service.tat_days, service.service_name),
             partnerId: partner.partner_id,
             partnerCode: partner.partner_code,
             serviceCode: service.service_code,

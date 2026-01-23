@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Truck, Check, Package, Zap, Shield, MapPin, Info } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
+import { normalizeTatDays } from "@/lib/tat-utils";
 import {
   Tooltip,
   TooltipContent,
@@ -249,7 +250,10 @@ const PartnerCard = ({ partner, selectedServiceId, onServiceSelect, aiRating }: 
                         <div className="font-medium">{service.service_name}</div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          <span>{service.tat_days} {service.tat_days === 1 ? 'day' : 'days'}</span>
+                          <span>{(() => {
+                            const days = normalizeTatDays(service.tat_days, service.service_name);
+                            return `${days} ${days === 1 ? 'day' : 'days'}`;
+                          })()}</span>
                           {service.delivery_modes?.express && (
                             <>
                               <span>•</span>
