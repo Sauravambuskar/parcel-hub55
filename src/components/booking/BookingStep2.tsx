@@ -61,6 +61,7 @@ const BookingStep2 = ({
   const [isServiceable, setIsServiceable] = useState(false);
   const [isLoadingPickupCity, setIsLoadingPickupCity] = useState(false);
   const [isLoadingDeliveryCity, setIsLoadingDeliveryCity] = useState(false);
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg');
   
   // Refs to track previous pincode values for debouncing
   const pickupDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -183,10 +184,15 @@ const BookingStep2 = ({
             country_code: 'IN'
           },
           packages: [{
-            weight: { value: parseFloat(packageWeight) || 1.0, unit: 'kg' },
+            weight: { 
+              value: weightUnit === 'g' 
+                ? (parseFloat(packageWeight) || 1000) / 1000 
+                : parseFloat(packageWeight) || 1.0, 
+              unit: 'kg' 
+            },
             dimensions: { 
               length: parseFloat(dimensions.length) || 10.0, 
-              width: parseFloat(dimensions.width) || 10.0, 
+              width: parseFloat(dimensions.width) || 10.0,
               height: parseFloat(dimensions.height) || 10.0, 
               unit: 'cm' 
             }
@@ -388,15 +394,41 @@ const BookingStep2 = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="package-weight">Weight (kg)</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="package-weight">Weight ({weightUnit})</Label>
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setWeightUnit('kg')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    weightUnit === 'kg' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  kg
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeightUnit('g')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    weightUnit === 'g' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  g
+                </button>
+              </div>
+            </div>
             <Input
               id="package-weight"
               type="number"
               value={packageWeight}
               onChange={(e) => onInputChange('packageWeight', e.target.value)}
-              placeholder="e.g., 1.5"
-              min="0.1"
-              step="0.1"
+              placeholder={weightUnit === 'kg' ? "e.g., 1.5" : "e.g., 500"}
+              min={weightUnit === 'kg' ? "0.1" : "1"}
+              step={weightUnit === 'kg' ? "0.1" : "1"}
             />
           </div>
           <div className="space-y-2">
