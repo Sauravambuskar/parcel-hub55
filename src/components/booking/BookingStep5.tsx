@@ -163,17 +163,21 @@ const BookingStep5 = ({
             <div className="hidden sm:block w-px h-12 bg-border" />
 
             {/* Package Details */}
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-6 text-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Package</p>
                   <p className="font-medium capitalize">{shipmentSummary.goodsType}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Scale className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                  <Scale className="h-4 w-4 text-muted-foreground" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Weight</p>
                   <p className="font-medium">{shipmentSummary.weight} kg</p>
@@ -181,8 +185,10 @@ const BookingStep5 = ({
               </div>
 
               {volumetricWeight && (
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Vol. Weight</p>
                     <p className="font-medium">{volumetricWeight} kg</p>
@@ -191,9 +197,14 @@ const BookingStep5 = ({
               )}
 
               {shipmentSummary.shipmentValue && shipmentSummary.shipmentValue > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Value</p>
-                  <p className="font-medium">₹{shipmentSummary.shipmentValue.toLocaleString()}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Value</p>
+                    <p className="font-medium">₹{shipmentSummary.shipmentValue.toLocaleString()}</p>
+                  </div>
                 </div>
               )}
             </div>

@@ -50,30 +50,37 @@ Deno.serve(async (req) => {
           const result = data.results[0];
           const addressComponents = result.address_components || [];
 
-          let city = '';
+          let locality = '';
+          let district = '';
+          let sublocality = '';
           let state = '';
           let country = '';
 
+          // First pass: collect all relevant components
           for (const component of addressComponents) {
             const types = component.types || [];
             
-            // City can be locality, administrative_area_level_2, or sublocality_level_1
             if (types.includes('locality')) {
-              city = component.long_name;
-            } else if (!city && types.includes('administrative_area_level_2')) {
-              city = component.long_name;
-            } else if (!city && types.includes('sublocality_level_1')) {
-              city = component.long_name;
+              locality = component.long_name;
             }
-            
+            if (types.includes('administrative_area_level_2')) {
+              district = component.long_name;
+            }
+            if (types.includes('sublocality_level_1')) {
+              sublocality = component.long_name;
+            }
             if (types.includes('administrative_area_level_1')) {
               state = component.long_name;
             }
-            
             if (types.includes('country')) {
               country = component.long_name;
             }
           }
+
+          // For Indian pincodes, prefer district (administrative_area_level_2) as the main city
+          // because localities can be neighborhoods within larger cities
+          // e.g., 462022 returns "Kokta" as locality but "Bhopal" as district
+          let city = district || locality || sublocality;
 
           return {
             pincode,
