@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Package, LogOut, TrendingDown, MapPin, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
+import { CURRENT_ENV } from "@/config/environment";
 const Index = () => {
   const navigate = useNavigate();
   const {
@@ -55,6 +57,15 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Logo size="md" />
+                <Badge 
+                  variant={CURRENT_ENV === "production" ? "default" : "secondary"}
+                  className={CURRENT_ENV === "production" 
+                    ? "bg-green-600 hover:bg-green-700 text-white" 
+                    : "bg-amber-500 hover:bg-amber-600 text-white"
+                  }
+                >
+                  {CURRENT_ENV === "production" ? "LIVE" : "SANDBOX"}
+                </Badge>
               </div>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
