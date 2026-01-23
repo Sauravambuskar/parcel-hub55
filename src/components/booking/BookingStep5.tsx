@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import SmartRanking from "./SmartRanking";
 import CourierAssistant from "./CourierAssistant";
 import PartnerComparisonTable from "./PartnerComparisonTable";
@@ -228,11 +229,32 @@ const BookingStep5 = ({
         />
       )}
 
-      {/* Rating Loading Indicator */}
+      {/* Rating Loading Indicator - Now with skeletons */}
       {ratingsLoading && (
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Fetching latest reviews...</span>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Fetching latest reviews...</span>
+          </div>
+          <div className="grid gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 rounded-xl border border-border bg-card animate-in" style={{ animationDelay: `${i * 100}ms` }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-28" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <Skeleton className="h-6 w-16 ml-auto" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
