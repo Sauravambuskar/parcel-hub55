@@ -40,33 +40,71 @@ interface RankedPartner {
 }
 
 const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps) => {
-  // Calculate smart scores for each partner
+  // Get all services with prices for proper comparison
+  const allServices = partners
+    .filter(p => p.is_serviceable && p.services?.length > 0)
+    .flatMap(partner => 
+      partner.services.map(service => ({
+        partner,
+        service,
+        price: (service.rate?.price?.amount || 0) + 50,
+        deliveryDays: service.tat_days || 7,
+        rating: ratings.get(partner.partner_code),
+      }))
+    );
+
+  if (allServices.length === 0) return null;
+
+  // Find the actual lowest price and fastest delivery
+  const prices = allServices.map(s => s.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const deliveryTimes = allServices.map(s => s.deliveryDays);
+  const minDelivery = Math.min(...deliveryTimes);
+
+  // Calculate smart scores for each partner (using their best service)
   const rankedPartners: RankedPartner[] = partners
     .filter(p => p.is_serviceable && p.services?.length > 0)
     .map(partner => {
       const rating = ratings.get(partner.partner_code);
-      const bestService = partner.services[0];
+      const bestService = partner.services.reduce((best, current) => {
+        const bestPrice = (best?.rate?.price?.amount || Infinity) + 50;
+        const currentPrice = (current.rate?.price?.amount || Infinity) + 50;
+        return currentPrice < bestPrice ? current : best;
+      }, partner.services[0]);
+      
       const price = (bestService?.rate?.price?.amount || 0) + 50;
       const deliveryDays = bestService?.tat_days || 7;
       
-      // Score calculation (higher is better)
-      // Rating: 0-5 (weight 40%)
-      // Price: inverse, normalized (weight 30%)
-      // Speed: inverse, normalized (weight 30%)
-      const ratingScore = (rating?.rating || 3.5) * 8; // 0-40
-      const priceScore = Math.max(0, 30 - (price / 50)); // Lower price = higher score
-      const speedScore = Math.max(0, 30 - (deliveryDays * 4)); // Faster = higher score
+      // Normalized scoring (0-100 scale for each)
+      const ratingScore = ((rating?.rating || 3) / 5) * 40; // 0-40 points
+      
+      // Price score: lower price = higher score (normalized)
+      const priceRange = maxPrice - minPrice || 1;
+      const priceScore = ((maxPrice - price) / priceRange) * 35; // 0-35 points
+      
+      // Speed score: faster = higher score
+      const speedRange = Math.max(...deliveryTimes) - minDelivery || 1;
+      const speedScore = ((Math.max(...deliveryTimes) - deliveryDays) / speedRange) * 25; // 0-25 points
       
       const totalScore = ratingScore + priceScore + speedScore;
 
-      // Generate reason based on top attribute
+      // Generate reason based on actual attributes
       let reason = "";
-      if (ratingScore >= priceScore && ratingScore >= speedScore) {
-        reason = `Top rated with ${rating?.rating || 3.5}/5 stars`;
-      } else if (priceScore >= ratingScore && priceScore >= speedScore) {
-        reason = `Best value at ₹${price}`;
+      const isLowestPrice = price === minPrice;
+      const isFastest = deliveryDays === minDelivery;
+      const isTopRated = (rating?.rating || 0) >= 4.0;
+      
+      if (isLowestPrice && isFastest) {
+        reason = `Best deal: ₹${price}, ${deliveryDays} day${deliveryDays > 1 ? 's' : ''}`;
+      } else if (isLowestPrice) {
+        reason = `Lowest price at ₹${price}`;
+      } else if (isFastest) {
+        reason = `Fastest: ${deliveryDays} day${deliveryDays > 1 ? 's' : ''} delivery`;
+      } else if (isTopRated) {
+        reason = `Highly rated: ${rating?.rating?.toFixed(1)}/5 stars`;
       } else {
-        reason = `Fast delivery in ${deliveryDays} day${deliveryDays > 1 ? 's' : ''}`;
+        reason = `Good balance of price & speed`;
       }
 
       return { partner, rating, score: totalScore, reason };

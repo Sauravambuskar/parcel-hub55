@@ -722,8 +722,8 @@ const Booking = () => {
             shipmentSummary={{
               pickupPincode,
               deliveryPincode,
-              pickupCity: senderData.city,
-              deliveryCity: receiverData.city,
+              pickupCity: senderData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.source_pincode_data?.city || "",
+              deliveryCity: receiverData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.dest_pincode_data?.city || "",
               weight: packageWeight,
               goodsType,
               dimensions,
