@@ -686,6 +686,8 @@ const Booking = () => {
           <BookingStep2
             pickupPincode={pickupPincode}
             deliveryPincode={deliveryPincode}
+            pickupCity={senderData.city}
+            deliveryCity={receiverData.city}
             goodsType={goodsType}
             packageWeight={packageWeight}
             dimensions={dimensions}

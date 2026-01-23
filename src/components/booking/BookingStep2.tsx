@@ -21,6 +21,8 @@ interface PricingData {
 interface BookingStep2Props {
   pickupPincode: string;
   deliveryPincode: string;
+  pickupCity?: string;
+  deliveryCity?: string;
   goodsType: string;
   packageWeight: string;
   dimensions: { length: string; width: string; height: string };
@@ -38,6 +40,8 @@ interface BookingStep2Props {
 const BookingStep2 = ({ 
   pickupPincode,
   deliveryPincode,
+  pickupCity,
+  deliveryCity,
   goodsType,
   packageWeight,
   dimensions,
@@ -260,6 +264,12 @@ const BookingStep2 = ({
                 placeholder="e.g., 110001"
                 maxLength={6}
               />
+              {pickupCity && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {pickupCity}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
@@ -270,6 +280,12 @@ const BookingStep2 = ({
                 placeholder="e.g., 400001"
                 maxLength={6}
               />
+              {deliveryCity && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {deliveryCity}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
