@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import PartnerCard from "@/components/PartnerCard";
-import { Badge } from "@/components/ui/badge";
-import { Filter } from "lucide-react";
+import SmartRanking from "./SmartRanking";
+import CourierAssistant from "./CourierAssistant";
+import { usePartnerRatings } from "@/hooks/usePartnerRatings";
+import { Loader2 } from "lucide-react";
 import React from "react";
 
 interface Partner {
@@ -66,9 +68,35 @@ const BookingStep5 = ({
   const isValid = selectedServiceId !== null;
   const [showNonServiceable, setShowNonServiceable] = React.useState(false);
 
+  // Fetch AI ratings for all partners
+  const { ratings, isLoading: ratingsLoading } = usePartnerRatings(partners);
+
   // Separate serviceable and non-serviceable partners
   const serviceablePartners = partners.filter(p => p.is_serviceable && p.services?.length > 0);
   const nonServiceablePartners = partners.filter(p => !p.is_serviceable || !p.services?.length);
+
+  // Prepare partner context for AI assistant
+  const partnerContextForAI = serviceablePartners.map(p => {
+    const rating = ratings.get(p.partner_code);
+    return {
+      partner_id: p.partner_id,
+      partner_code: p.partner_code,
+      partner_name: p.partner_name,
+      rating: rating?.rating,
+      review_count: rating?.review_count,
+      summary: rating?.summary,
+      pros: rating?.pros,
+      cons: rating?.cons,
+      badges: rating?.badges,
+      services: p.services.map(s => ({
+        service_name: s.service_name,
+        tat_days: s.tat_days,
+        price: (s.rate?.price?.amount || 0) + 50,
+        is_cod: s.is_cod,
+        insurance: s.insurance,
+      })),
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -116,6 +144,23 @@ const BookingStep5 = ({
         </div>
       )}
 
+      {/* AI-Powered Smart Ranking */}
+      {serviceablePartners.length > 0 && (
+        <SmartRanking
+          partners={serviceablePartners}
+          ratings={ratings}
+          onSelectPartner={onServiceSelect}
+        />
+      )}
+
+      {/* Rating Loading Indicator */}
+      {ratingsLoading && (
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Fetching latest reviews...</span>
+        </div>
+      )}
+
       {/* Serviceable Partners - Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {serviceablePartners.length > 0 ? (
@@ -125,6 +170,7 @@ const BookingStep5 = ({
               partner={partner}
               selectedServiceId={selectedServiceId}
               onServiceSelect={onServiceSelect}
+              aiRating={ratings.get(partner.partner_code)}
             />
           ))
         ) : (
@@ -171,6 +217,14 @@ const BookingStep5 = ({
           Continue
         </Button>
       </div>
+
+      {/* AI Courier Assistant - Floating Chat Button */}
+      {shipmentSummary && serviceablePartners.length > 0 && (
+        <CourierAssistant
+          shipmentContext={shipmentSummary}
+          partners={partnerContextForAI}
+        />
+      )}
     </div>
   );
 };

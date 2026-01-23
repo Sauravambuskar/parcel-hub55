@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Truck, Check, Package, Zap, Shield, MapPin } from "lucide-react";
+import { Star, Clock, Truck, Check, Package, Zap, Shield, MapPin, Info } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Service {
   service_code: string;
@@ -48,13 +54,23 @@ interface Partner {
   error?: string;
 }
 
+interface AIRating {
+  rating: number;
+  review_count: number;
+  summary: string;
+  pros: string[];
+  cons: string[];
+  badges: string[];
+}
+
 interface PartnerCardProps {
   partner: Partner;
   selectedServiceId: string | null;
   onServiceSelect: (partnerId: string, serviceCode: string, rateId: string) => void;
+  aiRating?: AIRating;
 }
 
-const PartnerCard = ({ partner, selectedServiceId, onServiceSelect }: PartnerCardProps) => {
+const PartnerCard = ({ partner, selectedServiceId, onServiceSelect, aiRating }: PartnerCardProps) => {
   const [imageError, setImageError] = useState(false);
 
   // Use logo_url from API if available, otherwise fallback to hardcoded logos
@@ -107,14 +123,55 @@ const PartnerCard = ({ partner, selectedServiceId, onServiceSelect }: PartnerCar
             </div>
             
             <div>
-              <h3 className="font-semibold text-lg">{partner.partner_name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg">{partner.partner_name}</h3>
+                {aiRating && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-muted-foreground hover:text-foreground transition-colors">
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs">
+                        <div className="space-y-2">
+                          <p className="text-sm">{aiRating.summary}</p>
+                          {aiRating.pros.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-green-500">Pros:</p>
+                              <ul className="text-xs list-disc pl-4">
+                                {aiRating.pros.slice(0, 2).map((pro, i) => (
+                                  <li key={i}>{pro}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {aiRating.cons.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-destructive">Cons:</p>
+                              <ul className="text-xs list-disc pl-4">
+                                {aiRating.cons.slice(0, 2).map((con, i) => (
+                                  <li key={i}>{con}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {partner.rating > 0 && (
+                {(aiRating?.rating || partner.rating > 0) && (
                   <>
                     <div className="flex items-center gap-1">
                       <Star className="h-3 w-3 fill-warning text-warning" />
-                      <span>{partner.rating.toFixed(1)}</span>
+                      <span className="font-medium">{(aiRating?.rating || partner.rating).toFixed(1)}</span>
                     </div>
+                    {aiRating?.review_count && aiRating.review_count > 0 && (
+                      <span className="text-xs">({aiRating.review_count.toLocaleString()} reviews)</span>
+                    )}
                     <span>•</span>
                   </>
                 )}
@@ -122,6 +179,17 @@ const PartnerCard = ({ partner, selectedServiceId, onServiceSelect }: PartnerCar
               </div>
             </div>
           </div>
+
+          {/* AI Badges */}
+          {aiRating?.badges && aiRating.badges.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {aiRating.badges.slice(0, 3).map((badge, index) => (
+                <Badge key={index} variant="secondary" className="text-xs bg-primary/10 text-primary">
+                  {badge}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           {!partner.is_serviceable && (
             <Badge variant="destructive" className="text-xs">

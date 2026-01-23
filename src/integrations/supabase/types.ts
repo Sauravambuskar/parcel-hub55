@@ -173,6 +173,54 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_ratings: {
+        Row: {
+          badges: string[] | null
+          cons: string[] | null
+          created_at: string | null
+          id: string
+          last_fetched_at: string | null
+          partner_code: string
+          partner_name: string
+          pros: string[] | null
+          rating: number | null
+          rating_source: string | null
+          review_count: number | null
+          summary: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          badges?: string[] | null
+          cons?: string[] | null
+          created_at?: string | null
+          id?: string
+          last_fetched_at?: string | null
+          partner_code: string
+          partner_name: string
+          pros?: string[] | null
+          rating?: number | null
+          rating_source?: string | null
+          review_count?: number | null
+          summary?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          badges?: string[] | null
+          cons?: string[] | null
+          created_at?: string | null
+          id?: string
+          last_fetched_at?: string | null
+          partner_code?: string
+          partner_name?: string
+          pros?: string[] | null
+          rating?: number | null
+          rating_source?: string | null
+          review_count?: number | null
+          summary?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

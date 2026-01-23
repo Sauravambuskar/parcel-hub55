@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.create-admin-user]
 verify_jwt = true
+
+[functions.fetch-partner-ratings]
+verify_jwt = false
+
+[functions.courier-recommendation-assistant]
+verify_jwt = false
