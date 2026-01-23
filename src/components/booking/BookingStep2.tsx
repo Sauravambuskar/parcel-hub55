@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, MoreHorizontal } from "lucide-react";
+import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, MoreHorizontal, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -466,6 +466,10 @@ const BookingStep2 = ({
               min={weightUnit === 'kg' ? "0.1" : "1"}
               step={weightUnit === 'kg' ? "0.1" : "1"}
             />
+            <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
+              <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
+              <span>Note: Weight discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Dimensions (cm)</Label>
