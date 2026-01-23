@@ -722,6 +722,8 @@ const Booking = () => {
             shipmentSummary={{
               pickupPincode,
               deliveryPincode,
+              pickupCity: senderData.city,
+              deliveryCity: receiverData.city,
               weight: packageWeight,
               goodsType,
               dimensions,
