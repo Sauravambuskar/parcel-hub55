@@ -157,32 +157,47 @@ All colors MUST be HSL.
 @layer utilities {
   /* Hover lift effect for cards */
   .hover-lift {
-    @apply transition-all duration-200 hover:scale-[1.02] hover:-translate-y-0.5;
+    @apply transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1;
   }
 
   /* Glass morphism effect */
   .glass {
-    @apply bg-background/80 backdrop-blur-md border border-border/50;
+    @apply bg-background/70 backdrop-blur-xl border border-border/50;
   }
 
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-lg;
+    @apply bg-card/70 backdrop-blur-xl border border-border/50 shadow-xl;
+  }
+
+  /* Stronger glass effect */
+  .glass-strong {
+    @apply bg-background/90 backdrop-blur-2xl border border-border/30 shadow-2xl;
   }
 
   /* Glow effect for primary elements */
   .glow-primary {
-    box-shadow: 0 0 20px hsl(180 100% 75% / 0.3);
+    box-shadow: 0 0 30px hsl(180 100% 75% / 0.4);
+  }
+
+  .glow-sm {
+    box-shadow: 0 0 15px hsl(180 100% 75% / 0.25);
+  }
+
+  /* Gradient text utility */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent;
   }
 
   /* Smooth entrance animation */
   .animate-in {
-    animation: fadeInUp 0.4s ease-out forwards;
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
   }
 
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
@@ -190,10 +205,102 @@ All colors MUST be HSL.
     }
   }
 
+  /* Slide in from right */
+  .animate-slide-in {
+    animation: slideInRight 0.4s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Scale in animation */
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Pulse glow animation */
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(180 100% 75% / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(180 100% 75% / 0.5);
+    }
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
   /* Stagger animation delays for lists */
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-  .stagger-5 { animation-delay: 0.5s; }
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+
+  /* Interactive card styles */
+  .card-interactive {
+    @apply transition-all duration-300 cursor-pointer;
+    @apply hover:shadow-xl hover:shadow-primary/10;
+    @apply hover:-translate-y-1 hover:border-primary/30;
+    @apply active:scale-[0.98];
+  }
+
+  /* Floating animation for decorative elements */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
 }
