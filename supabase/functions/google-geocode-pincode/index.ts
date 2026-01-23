@@ -77,10 +77,13 @@ Deno.serve(async (req) => {
             }
           }
 
-          // For Indian pincodes, prefer district (administrative_area_level_2) as the main city
-          // because localities can be neighborhoods within larger cities
-          // e.g., 462022 returns "Kokta" as locality but "Bhopal" as district
-          let city = district || locality || sublocality;
+          // For Indian pincodes, prefer locality as the main city name
+          // Only use district if locality/sublocality not available AND district doesn't contain "Division"
+          // e.g., 400101 should return "Mumbai" (locality) not "Konkan Division" (district)
+          let city = locality || sublocality;
+          if (!city && district && !district.includes('Division')) {
+            city = district;
+          }
 
           return {
             pincode,
