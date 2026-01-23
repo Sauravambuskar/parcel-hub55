@@ -207,7 +207,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
               </div>
 
               <div className="mt-2 pt-2 border-t flex items-center justify-between">
-                <span className="text-lg font-bold text-primary">
+                <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
                   ₹{((ranked.partner.services[0]?.rate?.price?.amount || 0) + 50)}
                 </span>
                 <span className="text-xs text-muted-foreground">
