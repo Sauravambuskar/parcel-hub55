@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PricingData {
   basePrice: number;
@@ -134,21 +135,31 @@ const BookingStep2 = ({
         });
         return;
       } else if (data.success === true && data.metadata?.serviceable_count > 0) {
-        // Extract location data from v3 response metadata
-        if (data.partners) {
-          const serviceablePartner = data.partners.find((p: any) => p.is_serviceable);
-          if (serviceablePartner?.metadata) {
-            const sourcePinData = serviceablePartner.metadata.source_pincode_data;
-            const destPinData = serviceablePartner.metadata.dest_pincode_data;
-            if (sourcePinData) {
-              pickupCity = sourcePinData.city || '';
-              pickupState = sourcePinData.state || '';
+        // Fetch city names using Google Geocoding API
+        try {
+          const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-geocode-pincode', {
+            body: { pincodes: [pickupPincode, deliveryPincode] }
+          });
+
+          if (!geocodeError && geocodeData?.results) {
+            const pickupResult = geocodeData.results.find((r: any) => r.pincode === pickupPincode);
+            const deliveryResult = geocodeData.results.find((r: any) => r.pincode === deliveryPincode);
+            
+            if (pickupResult) {
+              pickupCity = pickupResult.city || '';
+              pickupState = pickupResult.state || '';
             }
-            if (destPinData) {
-              deliveryCity = destPinData.city || '';
-              deliveryState = destPinData.state || '';
+            if (deliveryResult) {
+              deliveryCity = deliveryResult.city || '';
+              deliveryState = deliveryResult.state || '';
             }
+            
+            console.log('Geocode results:', { pickupCity, pickupState, deliveryCity, deliveryState });
+          } else {
+            console.warn('Geocoding failed:', geocodeError);
           }
+        } catch (geocodeErr) {
+          console.error('Geocoding error:', geocodeErr);
         }
         
         extractPricingFromResponse(data);

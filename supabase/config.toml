@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.courier-recommendation-assistant]
 verify_jwt = false
+
+[functions.google-geocode-pincode]
+verify_jwt = false
