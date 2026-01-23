@@ -110,7 +110,6 @@ const PartnerComparisonTable = ({
             <TableHead>Service</TableHead>
             <TableHead className="text-center">Rating</TableHead>
             <TableHead className="text-center">Delivery</TableHead>
-            <TableHead className="text-center">Features</TableHead>
             <TableHead className="text-right">Price</TableHead>
           </TableRow>
         </TableHeader>
@@ -202,29 +201,6 @@ const PartnerComparisonTable = ({
                     <span>
                       {service.tat_days} {service.tat_days === 1 ? "day" : "days"}
                     </span>
-                  </div>
-                </TableCell>
-
-                {/* Features */}
-                <TableCell>
-                  <div className="flex flex-wrap gap-1 justify-center">
-                    {service.insurance && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        <Shield className="h-2.5 w-2.5 mr-0.5" />
-                        Insured
-                      </Badge>
-                    )}
-                    {service.is_cod && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        COD
-                      </Badge>
-                    )}
-                    {service.delivery_modes?.express && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-warning/10 text-warning border-warning/20">
-                        <Zap className="h-2.5 w-2.5 mr-0.5" />
-                        Express
-                      </Badge>
-                    )}
                   </div>
                 </TableCell>
 
