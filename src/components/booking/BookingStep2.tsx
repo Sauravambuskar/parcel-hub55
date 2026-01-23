@@ -2,9 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle, Package } from "lucide-react";
+import { MapPin, CheckCircle, Package, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PRAYOG_CONFIG } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +59,84 @@ const BookingStep2 = ({
   const [isCheckingServiceability, setIsCheckingServiceability] = useState(false);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [isServiceable, setIsServiceable] = useState(false);
+  const [isLoadingPickupCity, setIsLoadingPickupCity] = useState(false);
+  const [isLoadingDeliveryCity, setIsLoadingDeliveryCity] = useState(false);
+  
+  // Refs to track previous pincode values for debouncing
+  const pickupDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const deliveryDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced city lookup for pickup pincode
+  useEffect(() => {
+    if (pickupDebounceRef.current) {
+      clearTimeout(pickupDebounceRef.current);
+    }
+
+    if (pickupPincode.length === 6) {
+      setIsLoadingPickupCity(true);
+      pickupDebounceRef.current = setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke('google-geocode-pincode', {
+            body: { pincodes: [pickupPincode] }
+          });
+
+          if (!error && data?.results?.[0]) {
+            const result = data.results[0];
+            if (onLocationData && result.city) {
+              // Only update pickup city, preserve delivery city
+              onLocationData(result.city, result.state || '', deliveryCity || '', '');
+            }
+          }
+        } catch (err) {
+          console.error('Pickup city lookup error:', err);
+        } finally {
+          setIsLoadingPickupCity(false);
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (pickupDebounceRef.current) {
+        clearTimeout(pickupDebounceRef.current);
+      }
+    };
+  }, [pickupPincode]);
+
+  // Debounced city lookup for delivery pincode
+  useEffect(() => {
+    if (deliveryDebounceRef.current) {
+      clearTimeout(deliveryDebounceRef.current);
+    }
+
+    if (deliveryPincode.length === 6) {
+      setIsLoadingDeliveryCity(true);
+      deliveryDebounceRef.current = setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke('google-geocode-pincode', {
+            body: { pincodes: [deliveryPincode] }
+          });
+
+          if (!error && data?.results?.[0]) {
+            const result = data.results[0];
+            if (onLocationData && result.city) {
+              // Only update delivery city, preserve pickup city
+              onLocationData(pickupCity || '', '', result.city, result.state || '');
+            }
+          }
+        } catch (err) {
+          console.error('Delivery city lookup error:', err);
+        } finally {
+          setIsLoadingDeliveryCity(false);
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (deliveryDebounceRef.current) {
+        clearTimeout(deliveryDebounceRef.current);
+      }
+    };
+  }, [deliveryPincode]);
   
   const isValid = pickupPincode && deliveryPincode && packageWeight && dimensions.length && dimensions.width && dimensions.height;
 
@@ -264,12 +342,17 @@ const BookingStep2 = ({
                 placeholder="e.g., 110001"
                 maxLength={6}
               />
-              {pickupCity && (
+              {isLoadingPickupCity ? (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Looking up city...
+                </p>
+              ) : pickupCity ? (
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {pickupCity}
                 </p>
-              )}
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
@@ -280,12 +363,17 @@ const BookingStep2 = ({
                 placeholder="e.g., 400001"
                 maxLength={6}
               />
-              {deliveryCity && (
+              {isLoadingDeliveryCity ? (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Looking up city...
+                </p>
+              ) : deliveryCity ? (
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {deliveryCity}
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
         </CardContent>
