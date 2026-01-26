@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "होम",
+    "book": "बुक करें",
+    "track": "ट्रैक",
+    "history": "इतिहास",
+    "support": "सहायता"
+  },
+  "home": {
+    "welcome": "ViaSetu में आपका स्वागत है",
+    "welcomeWithName": "{{name}}, ViaSetu में आपका स्वागत है",
+    "whatToDo": "आज आप क्या करना चाहेंगे?",
+    "logout": "लॉग आउट"
+  },
+  "quickActions": {
+    "bookDelivery": "नई डिलीवरी बुक करें",
+    "bookDeliveryDesc": "पैकेज जल्दी और सुरक्षित रूप से भेजें",
+    "orderHistory": "ऑर्डर इतिहास",
+    "orderHistoryDesc": "अपनी पिछली डिलीवरी देखें",
+    "trackPackage": "पैकेज ट्रैक करें",
+    "trackPackageDesc": "रियल-टाइम में अपनी डिलीवरी देखें",
+    "support": "सहायता",
+    "supportDesc": "अपनी डिलीवरी के लिए मदद लें"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "profile": "प्रोफ़ाइल",
+    "name": "नाम",
+    "phone": "फ़ोन",
+    "kycStatus": "KYC स्थिति",
+    "language": "भाषा",
+    "selectLanguage": "भाषा चुनें",
+    "english": "English",
+    "hindi": "हिंदी",
+    "notifications": "सूचनाएं",
+    "smsNotifications": "SMS सूचनाएं",
+    "smsNotificationsDesc": "SMS द्वारा ऑर्डर अपडेट प्राप्त करें",
+    "promoNotifications": "प्रचार सूचनाएं",
+    "promoNotificationsDesc": "ऑफ़र और प्रचार प्राप्त करें",
+    "appearance": "दिखावट",
+    "theme": "थीम",
+    "light": "लाइट",
+    "dark": "डार्क",
+    "system": "सिस्टम",
+    "quickLinks": "त्वरित लिंक",
+    "privacyPolicy": "गोपनीयता नीति",
+    "termsOfService": "सेवा की शर्तें",
+    "rateApp": "ऐप को रेट करें",
+    "shareApp": "दोस्तों के साथ शेयर करें",
+    "appVersion": "ऐप संस्करण",
+    "account": "खाता",
+    "logout": "लॉग आउट",
+    "deleteAccount": "खाता हटाएं",
+    "deleteAccountConfirm": "क्या आप वाकई अपना खाता हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+    "cancel": "रद्द करें",
+    "confirm": "पुष्टि करें",
+    "saving": "सहेज रहा है...",
+    "saved": "सहेजा गया",
+    "pending": "लंबित",
+    "verified": "सत्यापित",
+    "notVerified": "सत्यापित नहीं"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "कुछ गलत हुआ",
+    "retry": "पुनः प्रयास करें",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "confirm": "पुष्टि करें",
+    "back": "वापस"
+  }
+}

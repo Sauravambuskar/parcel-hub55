@@ -12,7 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, full_name, phone } = await req.json();
+    const { 
+      user_id, 
+      full_name, 
+      phone, 
+      preferred_language, 
+      theme_preference, 
+      sms_notifications, 
+      promo_notifications 
+    } = await req.json();
 
     if (!user_id) {
       return new Response(
@@ -38,6 +46,10 @@ serve(async (req) => {
       const updateData: Record<string, any> = { updated_at: new Date().toISOString() };
       if (full_name !== undefined) updateData.full_name = full_name;
       if (phone !== undefined) updateData.phone = phone;
+      if (preferred_language !== undefined) updateData.preferred_language = preferred_language;
+      if (theme_preference !== undefined) updateData.theme_preference = theme_preference;
+      if (sms_notifications !== undefined) updateData.sms_notifications = sms_notifications;
+      if (promo_notifications !== undefined) updateData.promo_notifications = promo_notifications;
 
       const { error } = await supabase
         .from("profiles")
@@ -53,6 +65,10 @@ serve(async (req) => {
           user_id,
           full_name: full_name || null,
           phone: phone || null,
+          preferred_language: preferred_language || 'en',
+          theme_preference: theme_preference || 'light',
+          sms_notifications: sms_notifications ?? true,
+          promo_notifications: promo_notifications ?? true,
         });
 
       if (error) throw error;

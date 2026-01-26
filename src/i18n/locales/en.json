@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "home": "Home",
+    "book": "Book",
+    "track": "Track",
+    "history": "History",
+    "support": "Support"
+  },
+  "home": {
+    "welcome": "Welcome to ViaSetu",
+    "welcomeWithName": "{{name}}, Welcome to ViaSetu",
+    "whatToDo": "What would you like to do today?",
+    "logout": "Logout"
+  },
+  "quickActions": {
+    "bookDelivery": "Book New Delivery",
+    "bookDeliveryDesc": "Send packages quickly and securely",
+    "orderHistory": "Order History",
+    "orderHistoryDesc": "View your past deliveries",
+    "trackPackage": "Track Package",
+    "trackPackageDesc": "Monitor your delivery in real-time",
+    "support": "Support",
+    "supportDesc": "Get help with your deliveries"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "name": "Name",
+    "phone": "Phone",
+    "kycStatus": "KYC Status",
+    "language": "Language",
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "hindi": "हिंदी",
+    "notifications": "Notifications",
+    "smsNotifications": "SMS Notifications",
+    "smsNotificationsDesc": "Receive order updates via SMS",
+    "promoNotifications": "Promotional Notifications",
+    "promoNotificationsDesc": "Receive offers and promotions",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "quickLinks": "Quick Links",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "rateApp": "Rate the App",
+    "shareApp": "Share App with Friends",
+    "appVersion": "App Version",
+    "account": "Account",
+    "logout": "Logout",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "pending": "Pending",
+    "verified": "Verified",
+    "notVerified": "Not Verified"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back"
+  }
+}

@@ -1,18 +1,20 @@
 import { Home, Package, Navigation, Clock, HelpCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Package, label: "Book", path: "/booking" },
-  { icon: Navigation, label: "Track", path: "/tracking" },
-  { icon: Clock, label: "History", path: "/history" },
-  { icon: HelpCircle, label: "Support", path: "/support" },
+  { icon: Home, labelKey: "nav.home", path: "/home" },
+  { icon: Package, labelKey: "nav.book", path: "/booking" },
+  { icon: Navigation, labelKey: "nav.track", path: "/tracking" },
+  { icon: Clock, labelKey: "nav.history", path: "/history" },
+  { icon: HelpCircle, labelKey: "nav.support", path: "/support" },
 ];
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
@@ -54,7 +56,7 @@ const BottomNav = () => {
                   "text-[10px] font-medium transition-all",
                   isActive ? "text-foreground" : "text-muted-foreground"
                 )}>
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
               </button>
             );
