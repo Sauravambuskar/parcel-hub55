@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
@@ -20,6 +20,15 @@ interface OrderAddress {
   country: string;
 }
 
+interface ShipmentDocument {
+  id: number;
+  type: string;
+  url?: string;
+  number?: string;
+  date?: string;
+  is_active?: boolean;
+}
+
 interface PrayogOrder {
   orderId: string;
   orderDate: string;
@@ -30,6 +39,7 @@ interface PrayogOrder {
     awbNumber: string;
     partnerName: string;
     shipmentStatus: string;
+    documents?: ShipmentDocument[];
   }>;
   addresses?: OrderAddress[];
 }
@@ -204,6 +214,20 @@ const History = () => {
             const pickupAddress = order.addresses?.find(a => a.type === 'PICKUP');
             const deliveryAddress = order.addresses?.find(a => a.type === 'DELIVERY');
             
+            // Extract label URL from shipment documents
+            const labelDocument = order.shipments?.[0]?.documents?.find(
+              (doc) => doc.type === "label" && doc.url
+            );
+            const labelUrl = labelDocument?.url;
+            
+            // Check if carrier is Shree Maruti (case-insensitive)
+            const isShreeMaruti = order.carrierName?.toLowerCase().includes('shree maruti') || 
+                                  order.carrierName?.toLowerCase().includes('shreemaruti') ||
+                                  order.carrierName?.toLowerCase().includes('smcourier');
+            
+            // Show label button if URL exists and NOT Shree Maruti
+            const showLabelButton = labelUrl && !isShreeMaruti;
+            
             return (
               <Card key={order.orderId} className="p-4">
                 <div className="flex items-start justify-between mb-4">
@@ -270,15 +294,28 @@ const History = () => {
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => navigate(`/order/${order.orderId}`)}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Details
-                </Button>
+                <div className="flex gap-2">
+                  {showLabelButton && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => window.open(labelUrl, '_blank')}
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Download Label
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={showLabelButton ? "flex-1" : "w-full"}
+                    onClick={() => navigate(`/order/${order.orderId}`)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </Button>
+                </div>
               </Card>
             );
           })

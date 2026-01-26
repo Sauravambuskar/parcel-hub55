@@ -57,6 +57,7 @@ export type Database = {
           id: string
           insurance_amount: number | null
           insurance_required: boolean | null
+          label_url: string | null
           length: string | null
           package_weight: string
           packaging_amount: number | null
@@ -99,6 +100,7 @@ export type Database = {
           id?: string
           insurance_amount?: number | null
           insurance_required?: boolean | null
+          label_url?: string | null
           length?: string | null
           package_weight: string
           packaging_amount?: number | null
@@ -141,6 +143,7 @@ export type Database = {
           id?: string
           insurance_amount?: number | null
           insurance_required?: boolean | null
+          label_url?: string | null
           length?: string | null
           package_weight?: string
           packaging_amount?: number | null
