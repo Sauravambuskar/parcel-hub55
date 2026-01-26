@@ -62,8 +62,8 @@ const Landing = () => {
             Best Rates
           </Badge>
           <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
-            <MapPin className="h-4 w-4" />
-            21K+ Pincodes
+            <Zap className="h-4 w-4" />
+            Instant Comparison
           </Badge>
           <Badge variant="secondary" className="px-4 py-2 text-sm font-medium gap-2">
             <Zap className="h-4 w-4" />
