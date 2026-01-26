@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Truck, Check, Package, Zap, Shield, MapPin, Info } from "lucide-react";
+import { Star, Clock, Truck, Check, Package, Zap, Shield, MapPin, Info, ExternalLink } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { normalizeTatDays } from "@/lib/tat-utils";
 import {
@@ -62,6 +62,7 @@ interface AIRating {
   pros: string[];
   cons: string[];
   badges: string[];
+  review_url?: string;
 }
 
 interface PartnerCardProps {
@@ -166,12 +167,30 @@ const PartnerCard = ({ partner, selectedServiceId, onServiceSelect, aiRating }: 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {(aiRating?.rating || partner.rating > 0) && (
                   <>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-warning text-warning" />
-                      <span className="font-medium">{(aiRating?.rating || partner.rating).toFixed(1)}</span>
-                    </div>
-                    {aiRating?.review_count && aiRating.review_count > 0 && (
-                      <span className="text-xs">({aiRating.review_count.toLocaleString()} reviews)</span>
+                    {aiRating?.review_url ? (
+                      <a
+                        href={aiRating.review_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 hover:underline text-foreground group"
+                      >
+                        <Star className="h-3 w-3 fill-warning text-warning" />
+                        <span className="font-medium">{(aiRating?.rating || partner.rating).toFixed(1)}</span>
+                        {aiRating?.review_count && aiRating.review_count > 0 && (
+                          <span className="text-xs text-muted-foreground">({aiRating.review_count.toLocaleString()} reviews)</span>
+                        )}
+                        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </a>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-warning text-warning" />
+                          <span className="font-medium">{(aiRating?.rating || partner.rating).toFixed(1)}</span>
+                        </div>
+                        {aiRating?.review_count && aiRating.review_count > 0 && (
+                          <span className="text-xs">({aiRating.review_count.toLocaleString()} reviews)</span>
+                        )}
+                      </>
                     )}
                     <span>•</span>
                   </>
