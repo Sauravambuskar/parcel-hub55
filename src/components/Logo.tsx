@@ -28,7 +28,7 @@ const Logo = ({
   };
   return <div className={cn("flex items-center", className)}>
       {showText && <h1 className={cn("font-bold text-foreground", sizeClasses[size].text)}>
-          Via<span className="text-primary">Setu.</span>
+          Via<span className="bg-primary text-primary-foreground px-1 rounded">Setu.</span>
         </h1>}
     </div>;
 };

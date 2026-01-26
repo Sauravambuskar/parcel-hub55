@@ -93,8 +93,17 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary-glow/5 p-4 pb-24 md:pb-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary-glow/5 pb-24 md:pb-4">
+      {/* Personalized Welcome Bar */}
+      {profile?.full_name && (
+        <div className="w-full bg-primary py-3 text-center shadow-sm">
+          <span className="font-medium text-primary-foreground">
+            {profile.full_name}, welcome to ViaSetu
+          </span>
+        </div>
+      )}
+
+      <div className="p-4 max-w-4xl mx-auto space-y-6">
         {/* Header Card - Glassmorphism */}
         <Card className="bg-background/60 backdrop-blur-xl border-border/50 shadow-xl">
           <CardContent className="p-6">
@@ -134,11 +143,11 @@ const Index = () => {
 
         {/* Welcome Message */}
         <div className="text-center py-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium mb-4">
             <Sparkles className="h-4 w-4" />
             Welcome to ViaSetu
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             What would you like to do today?
           </h1>
         </div>
@@ -173,14 +182,14 @@ const Index = () => {
                       <Icon className={cn("h-6 w-6", action.iconColor)} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                      <h3 className="font-semibold text-lg group-hover:text-foreground transition-colors">
                         {action.title}
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {action.description}
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
                   </div>
                 </CardContent>
               </Card>

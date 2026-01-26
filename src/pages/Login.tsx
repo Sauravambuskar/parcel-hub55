@@ -11,11 +11,13 @@ import { PRAYOG_CONFIG } from "@/config/environment";
 import SecureLoginIllustration from "@/components/illustrations/SecureLoginIllustration";
 
 const Login = () => {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(false);
   const [prayogSession, setPrayogSession] = useState('');
+  const [pendingAuthData, setPendingAuthData] = useState<any>(null);
   const navigate = useNavigate();
   const {
     toast
@@ -122,7 +124,7 @@ const Login = () => {
       };
       localStorage.setItem('prayog_auth', JSON.stringify(authData));
 
-      // Create or update user profile in Supabase
+      // Check if user profile exists and has a name
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -138,21 +140,33 @@ const Login = () => {
             updated_at: new Date().toISOString()
           })
           .eq('user_id', data.user_id);
+        
+        // If profile has name, go to home directly
+        if (existingProfile.full_name) {
+          localStorage.setItem('prayog_auth', JSON.stringify(authData));
+          toast({
+            title: "Welcome back!",
+            description: `Good to see you again, ${existingProfile.full_name}`
+          });
+          navigate("/home");
+        } else {
+          // No name, ask for it
+          setPendingAuthData(authData);
+          setStep('name');
+        }
       } else {
-        // Create new profile
+        // Create new profile without name first
         await supabase
           .from('profiles')
           .insert({
             user_id: data.user_id,
             phone: phoneWithCountryCode
           });
+        
+        // Ask for name
+        setPendingAuthData(authData);
+        setStep('name');
       }
-
-      toast({
-        title: "Welcome to Setu!",
-        description: "Login successful"
-      });
-      navigate("/home");
     } catch (error: any) {
       toast({
         title: "Verification Failed",
@@ -163,6 +177,51 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleSaveName = async () => {
+    if (userName.trim().length === 0) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your name to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Update profile with name
+      await supabase
+        .from('profiles')
+        .update({ 
+          full_name: userName.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', pendingAuthData.user_id);
+
+      // Save auth data with name
+      const authDataWithName = {
+        ...pendingAuthData,
+        userName: userName.trim()
+      };
+      localStorage.setItem('prayog_auth', JSON.stringify(authDataWithName));
+
+      toast({
+        title: "Welcome to ViaSetu!",
+        description: `Nice to meet you, ${userName.trim()}`
+      });
+      navigate("/home");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to save your name. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Decorative gradient blobs */}
@@ -201,14 +260,21 @@ const Login = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 )}
+                {step === 'name' && (
+                  <Button variant="ghost" size="icon" onClick={() => setStep('otp')}>
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                )}
                 <div>
                   <CardTitle>
-                    {step === 'phone' ? 'Enter Mobile Number' : 'Verify OTP'}
+                    {step === 'phone' ? 'Enter Mobile Number' : step === 'otp' ? 'Verify OTP' : 'Almost there!'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
                     {step === 'phone' 
                       ? 'We\'ll send you a verification code' 
-                      : 'Enter the 6-digit code sent to your phone'}
+                      : step === 'otp'
+                      ? 'Enter the 6-digit code sent to your phone'
+                      : 'What should we call you?'}
                   </p>
                 </div>
               </div>
@@ -238,13 +304,13 @@ const Login = () => {
                     {loading ? 'Sending...' : 'Send OTP'}
                   </Button>
                 </>
-              ) : (
+              ) : step === 'otp' ? (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="otp">Verification Code</Label>
-                    <Input 
+                  <Input 
                       id="otp" 
-                      type="text" 
+                      type="password" 
                       placeholder="Enter 6-digit OTP" 
                       value={otp} 
                       onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} 
@@ -261,6 +327,28 @@ const Login = () => {
                   
                   <Button variant="ghost" onClick={handleSendOTP} className="w-full text-sm">
                     Resend OTP
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Your Name</Label>
+                    <Input 
+                      id="name" 
+                      type="text" 
+                      placeholder="Enter your name" 
+                      value={userName} 
+                      onChange={e => setUserName(e.target.value)} 
+                      className="text-lg" 
+                      autoFocus
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This will be used to personalize your experience
+                    </p>
+                  </div>
+                  
+                  <Button onClick={handleSaveName} disabled={loading || userName.trim().length === 0} className="w-full">
+                    {loading ? 'Saving...' : 'Continue to ViaSetu'}
                   </Button>
                 </>
               )}

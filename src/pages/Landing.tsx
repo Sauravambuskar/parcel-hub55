@@ -29,12 +29,12 @@ const Landing = () => {
         {/* Logo */}
         <div className="space-y-2 opacity-0 animate-scale-fade-in">
           <div className="flex justify-center">
-            <div className="bg-primary/10 p-4 rounded-2xl">
-              <Package className="h-16 w-16 text-primary" />
+            <div className="bg-primary p-4 rounded-2xl">
+              <Package className="h-16 w-16 text-primary-foreground" />
             </div>
           </div>
           <h1 className="text-4xl font-bold opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
-            Via<span className="text-primary">Setu.</span>
+            Via<span className="bg-primary text-primary-foreground px-2 rounded">Setu.</span>
           </h1>
         </div>
 
