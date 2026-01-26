@@ -8,6 +8,7 @@ import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar,
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 
 interface TrackingStatus {
   trackingId: string;
@@ -191,7 +192,7 @@ const Tracking = () => {
         </header>
         
         <div className="p-4 max-w-4xl mx-auto space-y-6">
-          <Card>
+          <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-primary" />
@@ -199,8 +200,9 @@ const Tracking = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Enter your AWB (Air Waybill) number to track your shipment
+              <TrackingSearchIllustration className="my-4" />
+              <p className="text-sm text-muted-foreground text-center">
+                Enter your AWB (Air Waybill) number to track your shipment in real-time
               </p>
               <div className="flex gap-2">
                 <Input

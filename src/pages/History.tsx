@@ -7,6 +7,7 @@ import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck } from "lu
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 
 interface OrderAddress {
   type: string;
@@ -188,14 +189,14 @@ const History = () => {
 
       <div className="p-4 max-w-4xl mx-auto space-y-4">
         {orders.length === 0 ? (
-          <Card className="p-8 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <Card className="p-8 text-center bg-gradient-to-br from-muted/30 to-background border-dashed">
+            <EmptyBoxIllustration className="mb-6" />
             <h2 className="text-xl font-semibold mb-2">No orders yet</h2>
-            <p className="text-muted-foreground mb-4">
-              Start by creating your first delivery
+            <p className="text-muted-foreground mb-6 max-w-xs mx-auto">
+              Your delivery history will appear here once you book your first shipment
             </p>
-            <Button onClick={() => navigate('/booking')}>
-              Book a Delivery
+            <Button onClick={() => navigate('/booking')} size="lg">
+              Book Your First Delivery
             </Button>
           </Card>
         ) : (
