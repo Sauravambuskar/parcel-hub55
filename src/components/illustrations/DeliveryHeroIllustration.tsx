@@ -10,21 +10,44 @@ const DeliveryHeroIllustration = ({ className = "" }: { className?: string }) =>
         
         {/* Main container */}
         <div className="relative w-48 h-48 mx-auto">
-          {/* Orbiting elements */}
+          {/* Orbiting elements - 3 icons at 120° intervals */}
           <div className="absolute inset-0 animate-spin" style={{ animationDuration: '20s' }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2">
-              <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
-                <Plane className="h-5 w-5 text-primary" />
+            {/* Air - Top (0°) */}
+            <div 
+              className="absolute left-1/2 top-1/2"
+              style={{ transform: 'translate(-50%, -50%) rotate(0deg) translateY(-80px)' }}
+            >
+              <div 
+                className="p-3 bg-background rounded-full border-2 border-primary shadow-lg"
+                style={{ transform: 'rotate(0deg)' }}
+              >
+                <Plane className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2">
-              <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
-                <Ship className="h-5 w-5 text-primary" />
+            
+            {/* Road - Bottom Left (120°) */}
+            <div 
+              className="absolute left-1/2 top-1/2"
+              style={{ transform: 'translate(-50%, -50%) rotate(120deg) translateY(-80px)' }}
+            >
+              <div 
+                className="p-3 bg-background rounded-full border-2 border-primary shadow-lg"
+                style={{ transform: 'rotate(-120deg)' }}
+              >
+                <Truck className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2">
-              <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
-                <Truck className="h-5 w-5 text-primary" />
+            
+            {/* Sea - Bottom Right (240°) */}
+            <div 
+              className="absolute left-1/2 top-1/2"
+              style={{ transform: 'translate(-50%, -50%) rotate(240deg) translateY(-80px)' }}
+            >
+              <div 
+                className="p-3 bg-background rounded-full border-2 border-primary shadow-lg"
+                style={{ transform: 'rotate(-240deg)' }}
+              >
+                <Ship className="h-6 w-6 text-primary" />
               </div>
             </div>
           </div>
