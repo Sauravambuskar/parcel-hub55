@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Shield, Truck, Check, Zap, ExternalLink } from "lucide-react";
+import { Star, Clock, Shield, Truck, Check, Zap } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { normalizeTatDays } from "@/lib/tat-utils";
 import {
@@ -54,7 +54,6 @@ interface AIRating {
   pros: string[];
   cons: string[];
   badges: string[];
-  review_url?: string;
 }
 
 interface PartnerComparisonTableProps {
@@ -187,24 +186,10 @@ const PartnerComparisonTable = ({
                 {/* Rating */}
                 <TableCell className="text-center">
                   {displayRating > 0 ? (
-                    aiRating?.review_url ? (
-                      <a
-                        href={aiRating.review_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 hover:underline text-foreground group"
-                      >
-                        <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                        <span className="text-sm font-medium">{displayRating.toFixed(1)}</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                    ) : (
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                        <span className="text-sm font-medium">{displayRating.toFixed(1)}</span>
-                      </div>
-                    )
+                    <div className="flex items-center justify-center gap-1">
+                      <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                      <span className="text-sm font-medium">{displayRating.toFixed(1)}</span>
+                    </div>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
                   )}

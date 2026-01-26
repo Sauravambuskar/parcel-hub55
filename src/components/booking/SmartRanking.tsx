@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, TrendingUp, Zap, Shield, ThumbsUp, ExternalLink } from "lucide-react";
+import { Sparkles, TrendingUp, Zap, Shield, ThumbsUp } from "lucide-react";
 import { normalizeTatDays } from "@/lib/tat-utils";
 
 interface Partner {
@@ -25,7 +25,6 @@ interface PartnerRating {
   pros: string[];
   cons: string[];
   badges: string[];
-  review_url?: string;
 }
 
 interface SmartRankingProps {
@@ -159,22 +158,9 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
                   </span>
                 </div>
                 {ranked.rating && (
-                  ranked.rating.review_url ? (
-                    <a
-                      href={ranked.rating.review_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-0.5 text-xs font-semibold text-warning hover:underline group"
-                    >
-                      ★ {ranked.rating.rating.toFixed(1)}
-                      <ExternalLink className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
-                  ) : (
-                    <span className="text-xs font-semibold text-warning">
-                      ★ {ranked.rating.rating.toFixed(1)}
-                    </span>
-                  )
+                  <span className="text-xs font-semibold text-warning">
+                    ★ {ranked.rating.rating.toFixed(1)}
+                  </span>
                 )}
               </div>
               

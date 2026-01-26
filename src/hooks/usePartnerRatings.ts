@@ -14,7 +14,6 @@ interface PartnerRating {
   cons: string[];
   badges: string[];
   rating_source: string;
-  review_url: string;
 }
 
 const SUPABASE_URL = "https://tksfdvnogzsweteetjjw.supabase.co";

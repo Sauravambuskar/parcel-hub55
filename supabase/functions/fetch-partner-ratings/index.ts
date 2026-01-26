@@ -22,25 +22,6 @@ interface RatingResult {
   cons: string[];
   badges: string[];
   rating_source: string;
-  review_url: string;
-}
-
-// Generate review URL for partner - direct links to review platforms
-function getReviewUrl(partnerCode: string, partnerName: string): string {
-  const urlMap: Record<string, string> = {
-    delhivery: "https://www.mouthshut.com/product-reviews/Delhivery-reviews-925712605",
-    xpressbees: "https://www.mouthshut.com/product-reviews/Xpressbees-reviews-925760605",
-    bluedart: "https://www.mouthshut.com/product-reviews/Blue-Dart-Express-reviews-925066289",
-    dtdc: "https://www.mouthshut.com/product-reviews/DTDC-Courier-reviews-925066288",
-    ecom_express: "https://www.mouthshut.com/product-reviews/Ecom-Express-reviews-925712608",
-    ekart: "https://www.mouthshut.com/product-reviews/Ekart-Logistics-reviews-925712606",
-    shadowfax: "https://www.trustpilot.com/review/shadowfax.in",
-    smile_ecomm: "https://www.justdial.com/jdmart/Smile-Ecommerce",
-    urbanbolt: "https://www.justdial.com/Urbanbolt-Logistics",
-  };
-  // Fallback to MouthShut search for unknown partners
-  const searchQuery = encodeURIComponent(partnerName);
-  return urlMap[partnerCode.toLowerCase()] || `https://www.mouthshut.com/search/s/${searchQuery}`;
 }
 
 serve(async (req) => {
@@ -98,7 +79,6 @@ serve(async (req) => {
 
     // Add cached results
     for (const [code, cached] of cachedMap) {
-      const partner = partners.find(p => p.partner_code === code);
       results.push({
         partner_code: code,
         rating: cached.rating,
@@ -108,7 +88,6 @@ serve(async (req) => {
         cons: cached.cons || [],
         badges: cached.badges || [],
         rating_source: cached.rating_source,
-        review_url: getReviewUrl(code, partner?.partner_name || cached.partner_name || code),
       });
     }
 
@@ -205,7 +184,6 @@ For each, provide:
               cons: [],
               badges: [],
               rating_source: "fallback",
-              review_url: getReviewUrl(partner.partner_code, partner.partner_name),
             });
           }
         } else {
@@ -248,7 +226,6 @@ For each, provide:
                 cons: rating.cons,
                 badges: rating.badges,
                 rating_source: "ai_aggregated",
-                review_url: getReviewUrl(rating.partner_code, rating.partner_name),
               });
             }
           }
@@ -266,7 +243,6 @@ For each, provide:
             cons: [],
             badges: [],
             rating_source: "fallback",
-            review_url: getReviewUrl(partner.partner_code, partner.partner_name),
           });
         }
       }
