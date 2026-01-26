@@ -131,7 +131,7 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: 'ShipEasy',
+        name: 'ViaSetu',
         description: `Delivery - ${orderDetails.courierName}`,
         order_id: orderData.orderId,
         handler: async function (response: any) {
@@ -256,7 +256,7 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />

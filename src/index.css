@@ -303,4 +303,24 @@ All colors MUST be HSL.
       transform: translateY(-10px);
     }
   }
+
+  /* Razorpay modal centering fix */
+  .razorpay-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .razorpay-container iframe {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  /* Ensure backdrop covers full screen */
+  .razorpay-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+  }
 }
