@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import BottomNav from "@/components/BottomNav";
-import { CURRENT_ENV, setEnvironment } from "@/config/environment";
+import { CURRENT_ENV, setEnvironment, isLovablePreview } from "@/config/environment";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -103,24 +103,26 @@ const Index = () => {
                 <Logo size="md" />
               </div>
               <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50">
-                  <span className={cn(
-                    "text-xs font-medium transition-colors",
-                    CURRENT_ENV === "sandbox" ? "text-warning" : "text-muted-foreground"
-                  )}>
-                    Sandbox
-                  </span>
-                  <Switch
-                    checked={CURRENT_ENV === "production"}
-                    onCheckedChange={(checked) => setEnvironment(checked ? "production" : "sandbox")}
-                  />
-                  <span className={cn(
-                    "text-xs font-medium transition-colors",
-                    CURRENT_ENV === "production" ? "text-success" : "text-muted-foreground"
-                  )}>
-                    Live
-                  </span>
-                </div>
+                {isLovablePreview() && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50">
+                    <span className={cn(
+                      "text-xs font-medium transition-colors",
+                      CURRENT_ENV === "sandbox" ? "text-warning" : "text-muted-foreground"
+                    )}>
+                      Sandbox
+                    </span>
+                    <Switch
+                      checked={CURRENT_ENV === "production"}
+                      onCheckedChange={(checked) => setEnvironment(checked ? "production" : "sandbox")}
+                    />
+                    <span className={cn(
+                      "text-xs font-medium transition-colors",
+                      CURRENT_ENV === "production" ? "text-success" : "text-muted-foreground"
+                    )}>
+                      Live
+                    </span>
+                  </div>
+                )}
                 <Button variant="outline" onClick={handleLogout} className="gap-2">
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>

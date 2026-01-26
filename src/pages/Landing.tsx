@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, MapPin, Zap, IndianRupee, Search } from "lucide-react";
 import BackgroundParticles from "@/components/BackgroundParticles";
+import DeliveryHeroIllustration from "@/components/illustrations/DeliveryHeroIllustration";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -19,7 +20,12 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col items-center justify-center px-4 relative overflow-hidden">
       <BackgroundParticles />
-      <div className="max-w-md w-full text-center space-y-8 relative z-10">
+      
+      {/* Decorative gradient blobs */}
+      <div className="absolute top-20 -left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 -right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+      
+      <div className="max-w-md w-full text-center space-y-6 relative z-10">
         {/* Logo */}
         <div className="space-y-2 opacity-0 animate-scale-fade-in">
           <div className="flex justify-center">
@@ -30,6 +36,11 @@ const Landing = () => {
           <h1 className="text-4xl font-bold opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
             Via<span className="text-primary">Setu.</span>
           </h1>
+        </div>
+
+        {/* Hero Illustration */}
+        <div className="opacity-0 animate-fade-in-up py-4" style={{ animationDelay: '150ms', animationFillMode: 'forwards' }}>
+          <DeliveryHeroIllustration className="scale-90" />
         </div>
 
         {/* Headline */}

@@ -76,6 +76,15 @@ export const getConfig = (): EnvironmentConfig => configs[CURRENT_ENV];
 export const isProd = (): boolean => CURRENT_ENV === "production";
 export const isSandbox = (): boolean => CURRENT_ENV === "sandbox";
 
+// Check if running on Lovable preview (not the published live app)
+// Preview URLs contain "-preview--" in the hostname
+// Published URL is viasetu.lovable.app or custom domains
+export const isLovablePreview = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname.includes('-preview--') || hostname === 'localhost' || hostname === '127.0.0.1';
+};
+
 // Environment-specific Prayog tenant IDs (for frontend API calls)
 const TENANT_IDS: Record<Environment, string> = {
   sandbox: "6901d6e05021c666ba4bef43",
