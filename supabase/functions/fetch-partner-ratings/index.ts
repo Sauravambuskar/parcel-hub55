@@ -22,6 +22,23 @@ interface RatingResult {
   cons: string[];
   badges: string[];
   rating_source: string;
+  review_url: string;
+}
+
+// Generate review URL for partner
+function getReviewUrl(partnerCode: string, partnerName: string): string {
+  const searchQuery = encodeURIComponent(`${partnerName} courier reviews India`);
+  const urlMap: Record<string, string> = {
+    delhivery: "https://www.google.com/search?q=Delhivery+courier+reviews",
+    xpressbees: "https://www.google.com/search?q=XpressBees+courier+reviews",
+    bluedart: "https://www.google.com/search?q=Blue+Dart+courier+reviews",
+    dtdc: "https://www.google.com/search?q=DTDC+courier+reviews",
+    ecom_express: "https://www.google.com/search?q=Ecom+Express+courier+reviews",
+    ekart: "https://www.google.com/search?q=Ekart+Logistics+courier+reviews",
+    shadowfax: "https://www.google.com/search?q=Shadowfax+courier+reviews",
+    smile_ecomm: "https://www.google.com/search?q=Smile+Ecommerce+courier+reviews",
+  };
+  return urlMap[partnerCode.toLowerCase()] || `https://www.google.com/search?q=${searchQuery}`;
 }
 
 serve(async (req) => {
@@ -79,6 +96,7 @@ serve(async (req) => {
 
     // Add cached results
     for (const [code, cached] of cachedMap) {
+      const partner = partners.find(p => p.partner_code === code);
       results.push({
         partner_code: code,
         rating: cached.rating,
@@ -88,6 +106,7 @@ serve(async (req) => {
         cons: cached.cons || [],
         badges: cached.badges || [],
         rating_source: cached.rating_source,
+        review_url: getReviewUrl(code, partner?.partner_name || cached.partner_name || code),
       });
     }
 
@@ -184,6 +203,7 @@ For each, provide:
               cons: [],
               badges: [],
               rating_source: "fallback",
+              review_url: getReviewUrl(partner.partner_code, partner.partner_name),
             });
           }
         } else {
@@ -226,6 +246,7 @@ For each, provide:
                 cons: rating.cons,
                 badges: rating.badges,
                 rating_source: "ai_aggregated",
+                review_url: getReviewUrl(rating.partner_code, rating.partner_name),
               });
             }
           }
@@ -243,6 +264,7 @@ For each, provide:
             cons: [],
             badges: [],
             rating_source: "fallback",
+            review_url: getReviewUrl(partner.partner_code, partner.partner_name),
           });
         }
       }
