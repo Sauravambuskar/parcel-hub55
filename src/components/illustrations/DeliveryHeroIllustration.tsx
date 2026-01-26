@@ -1,4 +1,4 @@
-import { Package, Truck, MapPin, Zap, Globe, ArrowRight } from "lucide-react";
+import { Package, Truck, Plane, Ship, ArrowRight } from "lucide-react";
 
 const DeliveryHeroIllustration = ({ className = "" }: { className?: string }) => {
   return (
@@ -14,22 +14,17 @@ const DeliveryHeroIllustration = ({ className = "" }: { className?: string }) =>
           <div className="absolute inset-0 animate-spin" style={{ animationDuration: '20s' }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2">
               <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
-                <Truck className="h-5 w-5 text-primary" />
+                <Plane className="h-5 w-5 text-primary" />
               </div>
             </div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2">
-              <div className="p-2 bg-success/10 rounded-full border border-success/20">
-                <MapPin className="h-5 w-5 text-success" />
+              <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
+                <Ship className="h-5 w-5 text-primary" />
               </div>
             </div>
             <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2">
-              <div className="p-2 bg-accent/20 rounded-full border border-accent/30">
-                <Zap className="h-5 w-5 text-accent-foreground" />
-              </div>
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2">
-              <div className="p-2 bg-secondary/50 rounded-full border border-border">
-                <Globe className="h-5 w-5 text-secondary-foreground" />
+              <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
+                <Truck className="h-5 w-5 text-primary" />
               </div>
             </div>
           </div>
