@@ -124,46 +124,30 @@ const Login = () => {
       };
       localStorage.setItem('prayog_auth', JSON.stringify(authData));
 
-      // Check if user profile exists and has a name
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', data.user_id)
-        .maybeSingle();
+      // Check if user profile exists and has a name using edge function
+      const profileResponse = await supabase.functions.invoke('get-profile', {
+        body: { user_id: data.user_id }
+      });
+      
+      const existingProfile = profileResponse.data?.profile;
 
-      if (existingProfile) {
-        // Update existing profile
-        await supabase
-          .from('profiles')
-          .update({ 
-            phone: phoneWithCountryCode,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', data.user_id);
+      if (existingProfile?.full_name) {
+        // Update phone in profile
+        await supabase.functions.invoke('update-profile', {
+          body: { user_id: data.user_id, phone: phoneWithCountryCode }
+        });
         
-        // If profile has name, go to home directly
-        if (existingProfile.full_name) {
-          localStorage.setItem('prayog_auth', JSON.stringify(authData));
-          toast({
-            title: "Welcome back!",
-            description: `Good to see you again, ${existingProfile.full_name}`
-          });
-          navigate("/home");
-        } else {
-          // No name, ask for it
-          setPendingAuthData(authData);
-          setStep('name');
-        }
+        toast({
+          title: "Welcome back!",
+          description: `Good to see you again, ${existingProfile.full_name}`
+        });
+        navigate("/home");
       } else {
-        // Create new profile without name first
-        await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user_id,
-            phone: phoneWithCountryCode
-          });
+        // Create/update profile with phone, then ask for name
+        await supabase.functions.invoke('update-profile', {
+          body: { user_id: data.user_id, phone: phoneWithCountryCode }
+        });
         
-        // Ask for name
         setPendingAuthData(authData);
         setStep('name');
       }
@@ -190,14 +174,13 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Update profile with name
-      await supabase
-        .from('profiles')
-        .update({ 
-          full_name: userName.trim(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', pendingAuthData.user_id);
+      // Update profile with name using edge function
+      await supabase.functions.invoke('update-profile', {
+        body: { 
+          user_id: pendingAuthData.user_id, 
+          full_name: userName.trim() 
+        }
+      });
 
       // Save auth data with name
       const authDataWithName = {

@@ -35,9 +35,11 @@ const Index = () => {
   };
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-    if (data) {
-      setProfile(data);
+    const { data } = await supabase.functions.invoke('get-profile', {
+      body: { user_id: userId }
+    });
+    if (data?.profile) {
+      setProfile(data.profile);
     }
   };
 
