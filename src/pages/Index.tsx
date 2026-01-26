@@ -96,14 +96,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary-glow/5 pb-24 md:pb-4">
-      {/* Personalized Welcome Bar */}
-      {profile?.full_name && (
-        <div className="w-full bg-primary py-3 text-center shadow-sm">
-          <span className="font-medium text-primary-foreground">
-            {profile.full_name}, welcome to ViaSetu
-          </span>
-        </div>
-      )}
 
       <div className="p-4 max-w-4xl mx-auto space-y-6">
         {/* Header Card - Glassmorphism */}
@@ -147,7 +139,7 @@ const Index = () => {
         <div className="text-center py-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium mb-4">
             <Sparkles className="h-4 w-4" />
-            Welcome to ViaSetu
+            {profile?.full_name ? `${profile.full_name}, welcome to ViaSetu` : 'Welcome to ViaSetu'}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             What would you like to do today?
