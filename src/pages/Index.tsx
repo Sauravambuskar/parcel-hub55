@@ -139,7 +139,7 @@ const Index = () => {
         <div className="text-center py-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium mb-4">
             <Sparkles className="h-4 w-4" />
-            {profile?.full_name ? `${profile.full_name}, welcome to ViaSetu` : 'Welcome to ViaSetu'}
+            Welcome to ViaSetu
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             What would you like to do today?
