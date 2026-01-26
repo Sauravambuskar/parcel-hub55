@@ -34,7 +34,7 @@ const BottomNav = () => {
                   "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200",
                   "active:scale-95",
                   isActive 
-                    ? "text-primary bg-primary/10" 
+                    ? "text-foreground bg-primary/20" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
@@ -52,7 +52,7 @@ const BottomNav = () => {
                 </div>
                 <span className={cn(
                   "text-[10px] font-medium transition-all",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isActive ? "text-foreground" : "text-muted-foreground"
                 )}>
                   {item.label}
                 </span>
