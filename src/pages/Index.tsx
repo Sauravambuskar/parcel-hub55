@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Package, LogOut, Navigation, Clock, HelpCircle, ArrowRight, Sparkles } from "lucide-react";
+import { Package, LogOut, Navigation, Clock, HelpCircle, ArrowRight, Sparkles, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
 
@@ -57,8 +58,8 @@ const Index = () => {
   const quickActions = [
     {
       icon: Package,
-      title: "Book New Delivery",
-      description: "Send packages quickly and securely",
+      titleKey: "quickActions.bookDelivery",
+      descKey: "quickActions.bookDeliveryDesc",
       path: "/booking",
       gradient: "from-primary/20 to-primary-glow/20",
       iconBg: "bg-primary/10",
@@ -67,8 +68,8 @@ const Index = () => {
     },
     {
       icon: Clock,
-      title: "Order History",
-      description: "View your past deliveries",
+      titleKey: "quickActions.orderHistory",
+      descKey: "quickActions.orderHistoryDesc",
       path: "/history",
       gradient: "from-secondary/10 to-accent/10",
       iconBg: "bg-secondary/10",
@@ -76,8 +77,8 @@ const Index = () => {
     },
     {
       icon: Navigation,
-      title: "Track Package",
-      description: "Monitor your delivery in real-time",
+      titleKey: "quickActions.trackPackage",
+      descKey: "quickActions.trackPackageDesc",
       path: "/tracking",
       gradient: "from-success/10 to-success/5",
       iconBg: "bg-success/10",
@@ -85,8 +86,8 @@ const Index = () => {
     },
     {
       icon: HelpCircle,
-      title: "Support",
-      description: "Get help with your deliveries",
+      titleKey: "quickActions.support",
+      descKey: "quickActions.supportDesc",
       path: "/support",
       gradient: "from-accent/20 to-muted/20",
       iconBg: "bg-accent/50",
@@ -105,7 +106,7 @@ const Index = () => {
               <div className="flex items-center gap-4">
                 <Logo size="md" />
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 {isLovablePreview() && (
                   <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50">
                     <span className={cn(
@@ -126,9 +127,12 @@ const Index = () => {
                     </span>
                   </div>
                 )}
+                <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="h-9 w-9">
+                  <Settings className="h-5 w-5" />
+                </Button>
                 <Button variant="outline" onClick={handleLogout} className="gap-2">
                   <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{t('home.logout')}</span>
                 </Button>
               </div>
             </div>
@@ -139,10 +143,10 @@ const Index = () => {
         <div className="text-center py-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium mb-4">
             <Sparkles className="h-4 w-4" />
-            {profile?.full_name ? `${profile.full_name}, Welcome to ViaSetu` : 'Welcome to ViaSetu'}
+            {profile?.full_name ? t('home.welcomeWithName', { name: profile.full_name }) : t('home.welcome')}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            What would you like to do today?
+            {t('home.whatToDo')}
           </h1>
         </div>
 
@@ -177,10 +181,10 @@ const Index = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg group-hover:text-foreground transition-colors">
-                        {action.title}
+                        {t(action.titleKey)}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {action.description}
+                        {t(action.descKey)}
                       </p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />

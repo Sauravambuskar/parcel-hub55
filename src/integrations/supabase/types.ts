@@ -235,7 +235,11 @@ export type Database = {
           kyc_completed_at: string | null
           kyc_status: string | null
           phone: string | null
+          preferred_language: string | null
+          promo_notifications: boolean | null
+          sms_notifications: boolean | null
           status: string | null
+          theme_preference: string | null
           updated_at: string
           user_id: string
         }
@@ -249,7 +253,11 @@ export type Database = {
           kyc_completed_at?: string | null
           kyc_status?: string | null
           phone?: string | null
+          preferred_language?: string | null
+          promo_notifications?: boolean | null
+          sms_notifications?: boolean | null
           status?: string | null
+          theme_preference?: string | null
           updated_at?: string
           user_id: string
         }
@@ -263,7 +271,11 @@ export type Database = {
           kyc_completed_at?: string | null
           kyc_status?: string | null
           phone?: string | null
+          preferred_language?: string | null
+          promo_notifications?: boolean | null
+          sms_notifications?: boolean | null
           status?: string | null
+          theme_preference?: string | null
           updated_at?: string
           user_id?: string
         }
