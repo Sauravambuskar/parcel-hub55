@@ -598,6 +598,12 @@ const Booking = () => {
 
       const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
       const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
+      
+      // Extract shipping label URL from documents array (type: "label")
+      const labelDocument = prayogResult.shipments?.[0]?.documents?.find(
+        (doc: { type: string; url?: string }) => doc.type === "label"
+      );
+      const labelUrl = labelDocument?.url || null;
 
       // Save booking to Supabase for admin dashboard and order history
       const bookingData = {
@@ -629,6 +635,7 @@ const Booking = () => {
         tracking_id: trackingId,
         prayog_order_id: prayogResult.orderId || orderId,
         prayog_awb: awbNumber,
+        label_url: labelUrl,
         status: "CREATED",
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: "paid",
