@@ -25,20 +25,22 @@ interface RatingResult {
   review_url: string;
 }
 
-// Generate review URL for partner
+// Generate review URL for partner - direct links to review platforms
 function getReviewUrl(partnerCode: string, partnerName: string): string {
-  const searchQuery = encodeURIComponent(`${partnerName} courier reviews India`);
   const urlMap: Record<string, string> = {
-    delhivery: "https://www.google.com/search?q=Delhivery+courier+reviews",
-    xpressbees: "https://www.google.com/search?q=XpressBees+courier+reviews",
-    bluedart: "https://www.google.com/search?q=Blue+Dart+courier+reviews",
-    dtdc: "https://www.google.com/search?q=DTDC+courier+reviews",
-    ecom_express: "https://www.google.com/search?q=Ecom+Express+courier+reviews",
-    ekart: "https://www.google.com/search?q=Ekart+Logistics+courier+reviews",
-    shadowfax: "https://www.google.com/search?q=Shadowfax+courier+reviews",
-    smile_ecomm: "https://www.google.com/search?q=Smile+Ecommerce+courier+reviews",
+    delhivery: "https://www.mouthshut.com/product-reviews/Delhivery-reviews-925712605",
+    xpressbees: "https://www.mouthshut.com/product-reviews/Xpressbees-reviews-925760605",
+    bluedart: "https://www.mouthshut.com/product-reviews/Blue-Dart-Express-reviews-925066289",
+    dtdc: "https://www.mouthshut.com/product-reviews/DTDC-Courier-reviews-925066288",
+    ecom_express: "https://www.mouthshut.com/product-reviews/Ecom-Express-reviews-925712608",
+    ekart: "https://www.mouthshut.com/product-reviews/Ekart-Logistics-reviews-925712606",
+    shadowfax: "https://www.trustpilot.com/review/shadowfax.in",
+    smile_ecomm: "https://www.justdial.com/jdmart/Smile-Ecommerce",
+    urbanbolt: "https://www.justdial.com/Urbanbolt-Logistics",
   };
-  return urlMap[partnerCode.toLowerCase()] || `https://www.google.com/search?q=${searchQuery}`;
+  // Fallback to MouthShut search for unknown partners
+  const searchQuery = encodeURIComponent(partnerName);
+  return urlMap[partnerCode.toLowerCase()] || `https://www.mouthshut.com/search/s/${searchQuery}`;
 }
 
 serve(async (req) => {
