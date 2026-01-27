@@ -65,9 +65,9 @@ const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
                 <div
                   className={cn(
                     "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-all duration-300",
-                    isCompleted && "bg-primary border-primary text-primary-foreground scale-100",
-                    isCurrent && "border-primary bg-background text-primary scale-110 shadow-[0_0_15px_hsl(180_100%_75%/0.4)]",
-                    !isCompleted && !isCurrent && "border-muted bg-background text-muted-foreground"
+                    isCompleted && "bg-secondary border-secondary text-primary scale-100",
+                    isCurrent && "border-primary bg-secondary text-primary scale-110 shadow-[0_0_15px_hsl(180_100%_75%/0.4)]",
+                    !isCompleted && !isCurrent && "border-muted bg-secondary text-primary"
                   )}
                 >
                   {isCompleted ? (
