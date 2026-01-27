@@ -173,7 +173,7 @@ const BookingStep2 = ({
       // Get auth token for API calls
       const prayogAuth = localStorage.getItem('prayog_auth');
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const userId = authData?.user_id || '';
+      const userId = authData?.user_id || 'guest';
 
       // Call Prayog serviceability v3 API directly
       const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
@@ -181,7 +181,7 @@ const BookingStep2 = ({
         headers: {
           'Content-Type': 'application/json',
           'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
-          ...(userId && { 'x-user-id': userId }),
+          'x-user-id': userId,
         },
         body: JSON.stringify({
           source_location: {
