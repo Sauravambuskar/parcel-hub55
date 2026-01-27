@@ -11,7 +11,7 @@ const BookingStep1 = ({ onNext }: BookingStep1Props) => {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mb-2">
           <Sparkles className="h-4 w-4" />
           Fast & Reliable
         </div>
