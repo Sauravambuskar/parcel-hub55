@@ -79,10 +79,9 @@ const BookingProgress = ({ currentStep, totalSteps }: BookingProgressProps) => {
                 
                 {/* Step Label */}
                 <span className={cn(
-                  "text-xs mt-2 text-center max-w-16 transition-colors duration-300",
-                  isCurrent && "text-primary font-semibold",
-                  isCompleted && "text-foreground font-medium",
-                  !isCompleted && !isCurrent && "text-muted-foreground"
+                  "text-xs mt-2 text-center px-2 py-1 rounded-md bg-secondary text-primary transition-colors duration-300",
+                  isCurrent && "font-semibold",
+                  isCompleted && "font-medium"
                 )}>
                   {step}
                 </span>
