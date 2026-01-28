@@ -8,6 +8,7 @@ import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays, formatTatRange } from "@/lib/tat-utils";
+import { usePlatformFee } from "@/hooks/usePlatformFee";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -61,6 +62,15 @@ const Booking = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Dynamic platform fee based on distance
+  const { platformFee, feeData: platformFeeData, isLoading: platformFeeLoading } = usePlatformFee({
+    sourcePincode: pickupPincode,
+    destinationPincode: deliveryPincode,
+    weightKg: parseFloat(packageWeight) || 1,
+    shipmentValue: parseFloat(shipmentValue) || 0,
+    enabled: pickupPincode.length === 6 && deliveryPincode.length === 6,
+  });
 
   const totalSteps = 6;
 
@@ -142,10 +152,10 @@ const Booking = () => {
         // Check if partner is serviceable
         if (partner.is_serviceable && partner.services) {
           partner.services.forEach((service: any) => {
-            // Extract price from rate object and add platform fee
+            // Extract price from rate object and add dynamic platform fee
             const apiPrice = Math.round(service.rate?.price?.amount || 0);
-            const platformFee = 50;
-            const totalPrice = apiPrice + platformFee;
+            const dynamicFee = platformFee; // Use dynamic platform fee from hook
+            const totalPrice = apiPrice + dynamicFee;
             const basePrice = totalPrice;
             const convenienceFee = 0;
 
@@ -342,12 +352,13 @@ const Booking = () => {
         );
         if (service) {
           const apiPrice = Math.round(service.rate?.price?.amount || 0);
-          const platformFee = 50;
+          const dynamicFee = platformFee; // Use dynamic platform fee from hook
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
-            basePrice: apiPrice + platformFee,
+            basePrice: apiPrice + dynamicFee,
             convenienceFee: calculateConvenienceFee(),
             deliveryTime: formatTatRange(service.tat_days, service.service_name),
+            platformFeeBreakdown: platformFeeData, // Include fee breakdown for display
             partnerId: partner.partner_id,
             partnerCode: partner.partner_code,
             serviceCode: service.service_code,
@@ -716,6 +727,8 @@ const Booking = () => {
             onServiceSelect={handleServiceSelect}
             onNext={handleNextStep}
             onBack={handlePrevStep}
+            platformFee={platformFee}
+            platformFeeData={platformFeeData}
             shipmentSummary={{
               pickupPincode,
               deliveryPincode,

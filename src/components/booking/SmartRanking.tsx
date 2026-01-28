@@ -31,6 +31,7 @@ interface SmartRankingProps {
   partners: Partner[];
   ratings: Map<string, PartnerRating>;
   onSelectPartner: (partnerId: string, serviceCode: string, rateId: string) => void;
+  platformFee?: number;
 }
 
 interface RankedPartner {
@@ -40,7 +41,7 @@ interface RankedPartner {
   reason: string;
 }
 
-const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps) => {
+const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: SmartRankingProps) => {
   // Get all services with prices for proper comparison
   const allServices = partners
     .filter(p => p.is_serviceable && p.services?.length > 0)
@@ -48,7 +49,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
       partner.services.map(service => ({
         partner,
         service,
-        price: (service.rate?.price?.amount || 0) + 50,
+        price: (service.rate?.price?.amount || 0) + platformFee,
         deliveryDays: normalizeTatDays(service.tat_days, service.service_name),
         rating: ratings.get(partner.partner_code),
       }))
@@ -69,12 +70,12 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
     .map(partner => {
       const rating = ratings.get(partner.partner_code);
       const bestService = partner.services.reduce((best, current) => {
-        const bestPrice = (best?.rate?.price?.amount || Infinity) + 50;
-        const currentPrice = (current.rate?.price?.amount || Infinity) + 50;
+        const bestPrice = (best?.rate?.price?.amount || Infinity) + platformFee;
+        const currentPrice = (current.rate?.price?.amount || Infinity) + platformFee;
         return currentPrice < bestPrice ? current : best;
       }, partner.services[0]);
       
-      const price = (bestService?.rate?.price?.amount || 0) + 50;
+      const price = (bestService?.rate?.price?.amount || 0) + platformFee;
       const deliveryDays = bestService?.tat_days || 7;
       
       // Normalized scoring (0-100 scale for each)
@@ -170,9 +171,9 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
 
               <div className="flex flex-wrap gap-1">
                 {/* Compute badges based on actual shipment prices */}
-                {(() => {
-                  const service = ranked.partner.services[0];
-                  const price = (service?.rate?.price?.amount || 0) + 50;
+              {(() => {
+                const service = ranked.partner.services[0];
+                const price = (service?.rate?.price?.amount || 0) + platformFee;
                   const deliveryDays = normalizeTatDays(service?.tat_days, service?.service_name);
                   const computedBadges: string[] = [];
                   
@@ -210,7 +211,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner }: SmartRankingProps)
 
               <div className="mt-2 pt-2 border-t flex items-center justify-between">
                 <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
-                  ₹{((ranked.partner.services[0]?.rate?.price?.amount || 0) + 50)}
+                  ₹{((ranked.partner.services[0]?.rate?.price?.amount || 0) + platformFee)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days
