@@ -7,9 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { 
   CreditCard, 
-  Wallet, 
-  Smartphone, 
-  Banknote,
   Lock,
   CheckCircle,
   Loader2
@@ -83,12 +80,6 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
       label: 'Pay Online',
       icon: CreditCard,
       description: 'UPI, Cards, Wallets, Net Banking via Razorpay'
-    },
-    {
-      id: 'cash',
-      label: 'Cash on Pickup',
-      icon: Banknote,
-      description: 'Pay cash when courier arrives'
     }
   ];
 
@@ -226,33 +217,8 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
     }
   };
 
-  const handleCashPayment = () => {
-    setIsProcessing(true);
-    
-    // For cash on pickup, just confirm the order
-    setTimeout(() => {
-      setIsProcessing(false);
-      onPaymentSuccess('cash');
-      onClose();
-      
-      toast({
-        title: "Order Confirmed!",
-        description: `Pay ₹${totalAmount} in cash when courier arrives`,
-        action: (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </div>
-        ),
-      });
-    }, 1000);
-  };
-
   const handlePayment = () => {
-    if (paymentMethod === 'razorpay') {
-      handleRazorpayPayment();
-    } else {
-      handleCashPayment();
-    }
+    handleRazorpayPayment();
   };
 
   return (
