@@ -41,9 +41,17 @@ interface Shipment {
   documents?: ShipmentDocument[];
 }
 
+interface PaymentBreakdown {
+  otherCharges?: Array<{
+    name: string;
+    chargedAmount: number;
+  }>;
+}
+
 interface Payment {
   finalAmount: number;
   type: string;
+  breakdown?: PaymentBreakdown;
 }
 
 interface OrderDetails {
@@ -60,6 +68,10 @@ interface OrderDetails {
     razorpay_payment_id?: string;
     razorpay_order_id?: string;
     source?: string;
+    baseFare?: number;
+    gstAmount?: number;
+    totalAmount?: number;
+    platformFee?: number;
   };
 }
 
@@ -274,18 +286,23 @@ const OrderDetails = () => {
 
           <div class="payment-section">
             <h3>Payment Summary</h3>
-            <div class="payment-row">
-              <span>Base Rate</span>
-              <span>₹${Math.round(order.payment?.finalAmount || 0)}</span>
-            </div>
-            <div class="payment-row">
-              <span>Taxes</span>
-              <span>₹0</span>
-            </div>
-            <div class="payment-row">
-              <span>Discount</span>
-              <span>-₹0</span>
-            </div>
+            ${order.payment?.breakdown?.otherCharges?.map(charge => `
+              <div class="payment-row">
+                <span>${charge.name}</span>
+                <span>₹${Math.round(charge.chargedAmount)}</span>
+              </div>
+            `).join('') || `
+              <div class="payment-row">
+                <span>Base Fare</span>
+                <span>₹${Math.round(order.metadata?.baseFare || order.payment?.finalAmount || 0)}</span>
+              </div>
+              ${order.metadata?.gstAmount ? `
+                <div class="payment-row">
+                  <span>GST (18%)</span>
+                  <span>₹${Math.round(order.metadata.gstAmount)}</span>
+                </div>
+              ` : ''}
+            `}
             <div class="payment-row total">
               <span>Total Amount</span>
               <span>₹${Math.round(order.payment?.finalAmount || 0)}</span>
@@ -543,14 +560,40 @@ const OrderDetails = () => {
         {order.payment && (
           <Card className="p-4">
             <h3 className="font-semibold mb-4">Payment Details</h3>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-muted-foreground">Payment Type</p>
-                <p className="font-medium">{order.payment.type}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-xl font-bold text-primary">₹{Math.round(order.payment.finalAmount || 0)}</p>
+            <div className="space-y-3">
+              {/* Payment breakdown */}
+              {order.payment.breakdown?.otherCharges?.map((charge, index) => (
+                <div key={index} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{charge.name}</span>
+                  <span>₹{Math.round(charge.chargedAmount)}</span>
+                </div>
+              ))}
+              
+              {/* Fallback for orders without breakdown - use metadata */}
+              {(!order.payment.breakdown?.otherCharges || order.payment.breakdown.otherCharges.length === 0) && order.metadata?.baseFare && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Base Fare</span>
+                    <span>₹{Math.round(order.metadata.baseFare)}</span>
+                  </div>
+                  {order.metadata.gstAmount && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">GST (18%)</span>
+                      <span>₹{Math.round(order.metadata.gstAmount)}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <div className="border-t pt-3 flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Type</p>
+                  <p className="font-medium">{order.payment.type}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-xl font-bold text-primary">₹{Math.round(order.payment.finalAmount || 0)}</p>
+                </div>
               </div>
             </div>
           </Card>
