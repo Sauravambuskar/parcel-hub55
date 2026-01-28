@@ -18,6 +18,7 @@ import BookingStep5 from "@/components/booking/BookingStep5";
 
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
+import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -40,6 +41,13 @@ const Booking = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [calculatedPricing, setCalculatedPricing] = useState<any>(null);
   const [serviceabilityData, setServiceabilityData] = useState<any>(null);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<{
+    awbNumber: string;
+    labelUrl: string | null;
+    courierName: string;
+    trackingId: string;
+  } | null>(null);
 
   const [senderData, setSenderData] = useState({
     name: "",
@@ -665,22 +673,15 @@ const Booking = () => {
         // Don't block the flow, just log the error
       }
 
-      toast({
-        title: "Booking Confirmed!",
-        description: `Your shipment has been booked. AWB: ${awbNumber || trackingId}`,
+      // Store confirmation data and show dialog
+      setConfirmationData({
+        awbNumber: awbNumber || trackingId,
+        labelUrl: labelUrl,
+        courierName: selectedCourierData?.name || selectedService?.partner_code || "",
+        trackingId: trackingId,
       });
-
-      navigate("/tracking", {
-        state: {
-          orderId: trackingId,
-          awbNumber: awbNumber,
-          courier: selectedCourierData?.name,
-          pickupAddress: `${senderData.address}, ${senderData.city}`,
-          deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
-          paymentMethod,
-          pickupDate: selectedDate?.toISOString(),
-        },
-      });
+      setShowPaymentModal(false);
+      setShowConfirmationDialog(true);
     } catch (error: any) {
       console.error("Booking error:", error);
       toast({
@@ -829,6 +830,29 @@ const Booking = () => {
           }}
         />
       )}
+
+      {/* Booking Confirmation Dialog */}
+      <BookingConfirmationDialog
+        isOpen={showConfirmationDialog}
+        onClose={() => {
+          setShowConfirmationDialog(false);
+          if (confirmationData) {
+            navigate("/tracking", {
+              state: {
+                orderId: confirmationData.trackingId,
+                awbNumber: confirmationData.awbNumber,
+                courier: confirmationData.courierName,
+                pickupAddress: `${senderData.address}, ${senderData.city}`,
+                deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
+                pickupDate: selectedDate?.toISOString(),
+              },
+            });
+          }
+        }}
+        awbNumber={confirmationData?.awbNumber || ""}
+        labelUrl={confirmationData?.labelUrl}
+        courierName={confirmationData?.courierName}
+      />
     </div>
   );
 };
