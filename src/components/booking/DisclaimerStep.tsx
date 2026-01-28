@@ -50,7 +50,7 @@ const DisclaimerStep = ({
           </div>
 
           <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-sm font-medium text-primary mb-2 bg-primary-foreground">Important Notice:</p>
+            <p className="text-sm font-medium text-primary mb-2 bg-primary-foreground text-center">Important Notice</p>
             <p className="text-sm text-muted-foreground">
               Vaisetu is a facilitator platform that connects you with courier partners. In case of any 
               damage or stolen parcels, the courier partner will be responsible as per their policies. 
