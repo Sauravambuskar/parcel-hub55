@@ -58,10 +58,10 @@ PRICING RULES:
 - Base platform fee: ₹30 (minimum)
 - Distance tiers:
   - Local (same city/district, <50 km): ₹30-40
-  - Regional (same state, 50-300 km): ₹40-60
-  - Zonal (adjacent states, 300-800 km): ₹60-80
-  - National (across country, 800-1500 km): ₹80-100
-  - Remote (>1500 km or hard-to-reach areas): ₹100-150
+  - Regional (same state, 50-300 km): ₹50-80
+  - Zonal (adjacent states, 300-800 km): ₹120-150
+  - National (across country, 800-1500 km): ₹150-200
+  - Remote (>1500 km or hard-to-reach areas): ₹200-250
 
 - Weight surcharge: Add ₹5 for every kg above 5kg
 - High-value shipment bonus: If shipment value > ₹10,000, add ₹10
@@ -176,8 +176,8 @@ Return JSON with this exact structure:
       );
     }
 
-    // Ensure fee is within reasonable bounds (₹30 - ₹200)
-    feeData.platform_fee = Math.min(200, Math.max(30, Math.round(feeData.platform_fee)));
+  // Ensure fee is within reasonable bounds (₹30 - ₹250)
+  feeData.platform_fee = Math.min(250, Math.max(30, Math.round(feeData.platform_fee)));
 
     console.log('AI calculated platform fee:', feeData);
 
@@ -217,7 +217,7 @@ function calculateFallbackFee(source: string, destination: string, weightKg: num
       distanceKm = 150;
       tier = 'Regional';
       baseFee = 30;
-      distanceFee = 20;
+      distanceFee = 35;
     }
   } else {
     // Different zones - calculate based on digit difference
@@ -226,17 +226,17 @@ function calculateFallbackFee(source: string, destination: string, weightKg: num
       distanceKm = 500;
       tier = 'Zonal';
       baseFee = 30;
-      distanceFee = 40;
+      distanceFee = 105;
     } else if (diff <= 3) {
       distanceKm = 1000;
       tier = 'National';
       baseFee = 30;
-      distanceFee = 60;
+      distanceFee = 145;
     } else {
       distanceKm = 1800;
       tier = 'Remote';
       baseFee = 30;
-      distanceFee = 90;
+      distanceFee = 195;
     }
   }
 
@@ -246,7 +246,7 @@ function calculateFallbackFee(source: string, destination: string, weightKg: num
   const platformFee = baseFee + distanceFee + weightSurcharge;
 
   return {
-    platform_fee: Math.min(200, Math.max(30, platformFee)),
+    platform_fee: Math.min(250, Math.max(30, platformFee)),
     distance_km: distanceKm,
     distance_tier: tier,
     breakdown: {
