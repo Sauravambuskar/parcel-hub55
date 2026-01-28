@@ -19,8 +19,8 @@ const DisclaimerStep = ({
     }
   };
   return <Card className="mt-6">
-      <CardHeader>
-        <div className="flex items-center gap-2">
+      <CardHeader className="text-center">
+        <div className="flex items-center justify-center gap-2">
           <AlertTriangle className="h-6 w-6 text-warning" />
           <CardTitle>Important Declaration</CardTitle>
         </div>
