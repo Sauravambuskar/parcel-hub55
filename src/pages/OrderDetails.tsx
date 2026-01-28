@@ -276,19 +276,19 @@ const OrderDetails = () => {
             <h3>Payment Summary</h3>
             <div class="payment-row">
               <span>Base Rate</span>
-              <span>₹${order.payment?.finalAmount?.toFixed(2) || '0.00'}</span>
+              <span>₹${Math.round(order.payment?.finalAmount || 0)}</span>
             </div>
             <div class="payment-row">
               <span>Taxes</span>
-              <span>₹0.00</span>
+              <span>₹0</span>
             </div>
             <div class="payment-row">
               <span>Discount</span>
-              <span>-₹0.00</span>
+              <span>-₹0</span>
             </div>
             <div class="payment-row total">
               <span>Total Amount</span>
-              <span>₹${order.payment?.finalAmount?.toFixed(2) || '0.00'}</span>
+              <span>₹${Math.round(order.payment?.finalAmount || 0)}</span>
             </div>
           </div>
 
@@ -550,7 +550,7 @@ const OrderDetails = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-xl font-bold text-primary">₹{order.payment.finalAmount?.toFixed(2)}</p>
+                <p className="text-xl font-bold text-primary">₹{Math.round(order.payment.finalAmount || 0)}</p>
               </div>
             </div>
           </Card>

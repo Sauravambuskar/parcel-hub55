@@ -24,7 +24,7 @@ const PackagingInsuranceStep = ({
   shipmentValue,
 }: PackagingInsuranceStepProps) => {
   const packagingFee = 50;
-  const insuranceFee = shipmentValue ? (parseFloat(shipmentValue) * 0.02).toFixed(2) : "0.00";
+  const insuranceFee = shipmentValue ? Math.round(parseFloat(shipmentValue) * 0.02) : 0;
 
   return (
     <div className="space-y-6">
@@ -99,10 +99,7 @@ const PackagingInsuranceStep = ({
             <div className="border-t pt-2 flex justify-between font-semibold">
               <span>Total Additional Charges</span>
               <span>
-                ₹{(
-                  (packagingRequired ? packagingFee : 0) +
-                  (insuranceRequired ? parseFloat(insuranceFee) : 0)
-                ).toFixed(2)}
+                ₹{(packagingRequired ? packagingFee : 0) + (insuranceRequired ? insuranceFee : 0)}
               </span>
             </div>
           </div>

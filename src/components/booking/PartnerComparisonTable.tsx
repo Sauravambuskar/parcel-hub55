@@ -79,7 +79,7 @@ const PartnerComparisonTable = ({
       partner,
       service,
       serviceId: `${partner.partner_id}_${service.service_code}`,
-      price: (service.rate?.price?.amount || 0) + platformFee,
+      price: Math.round((service.rate?.price?.amount || 0) + platformFee),
       aiRating: ratings.get(partner.partner_code),
     }))
   );
