@@ -100,7 +100,7 @@ const BookingStep6 = ({
           <Package className="h-5 w-5 mt-1 text-primary" />
           <div className="flex-1">
             <h3 className="font-semibold mb-2">Order Summary</h3>
-            <div className="text-2xl font-bold">₹{totalAmount.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{Math.round(totalAmount)}</div>
           </div>
         </div>
       </Card>
