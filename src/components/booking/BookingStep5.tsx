@@ -214,8 +214,7 @@ const BookingStep5 = ({
             </div>
           </div>
 
-          {/* Distance Tier Info (without showing platform fee) */}
-          {platformFeeData}
+          {/* Distance Tier Info - hidden from users per design decision */}
 
           {/* Chargeable Weight Note */}
           {volumetricWeight && parseFloat(volumetricWeight) > actualWeight && <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-primary/10">
