@@ -61,6 +61,7 @@ interface PartnerComparisonTableProps {
   selectedServiceId: string | null;
   onServiceSelect: (partnerId: string, serviceCode: string, rateId: string) => void;
   ratings: Map<string, AIRating>;
+  platformFee?: number;
 }
 
 const PartnerComparisonTable = ({
@@ -68,6 +69,7 @@ const PartnerComparisonTable = ({
   selectedServiceId,
   onServiceSelect,
   ratings,
+  platformFee = 50,
 }: PartnerComparisonTableProps) => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
@@ -77,7 +79,7 @@ const PartnerComparisonTable = ({
       partner,
       service,
       serviceId: `${partner.partner_id}_${service.service_code}`,
-      price: (service.rate?.price?.amount || 0) + 50,
+      price: (service.rate?.price?.amount || 0) + platformFee,
       aiRating: ratings.get(partner.partner_code),
     }))
   );

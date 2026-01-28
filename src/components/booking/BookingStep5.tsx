@@ -4,7 +4,7 @@ import SmartRanking from "./SmartRanking";
 import CourierAssistant from "./CourierAssistant";
 import PartnerComparisonTable from "./PartnerComparisonTable";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
-import { Loader2, MapPin, Package, Scale, ArrowRight, Truck } from "lucide-react";
+import { Loader2, MapPin, Package, Scale, ArrowRight, Truck, Route } from "lucide-react";
 import React from "react";
 
 interface Partner {
@@ -58,6 +58,12 @@ interface BookingStep5Props {
   onNext: () => void;
   onBack: () => void;
   shipmentSummary?: ShipmentSummary;
+  platformFee?: number;
+  platformFeeData?: {
+    distance_tier?: string;
+    distance_km?: number;
+    explanation?: string;
+  } | null;
 }
 
 const BookingStep5 = ({ 
@@ -66,7 +72,9 @@ const BookingStep5 = ({
   onServiceSelect, 
   onNext, 
   onBack,
-  shipmentSummary
+  shipmentSummary,
+  platformFee = 50,
+  platformFeeData,
 }: BookingStep5Props) => {
   const isValid = selectedServiceId !== null;
   const [showNonServiceable, setShowNonServiceable] = React.useState(false);
@@ -94,7 +102,7 @@ const BookingStep5 = ({
       services: p.services.map(s => ({
         service_name: s.service_name,
         tat_days: s.tat_days,
-        price: (s.rate?.price?.amount || 0) + 50,
+        price: (s.rate?.price?.amount || 0) + platformFee,
         is_cod: s.is_cod,
         insurance: s.insurance,
       })),
@@ -211,6 +219,22 @@ const BookingStep5 = ({
             </div>
           </div>
 
+          {/* Distance Tier & Platform Fee Info */}
+          {platformFeeData && (
+            <div className="mt-3 pt-3 border-t border-primary/10 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-primary" />
+                <span className="text-xs font-medium text-primary">{platformFeeData.distance_tier} Delivery</span>
+              </div>
+              {platformFeeData.distance_km && platformFeeData.distance_km > 0 && (
+                <span className="text-xs text-muted-foreground">~{platformFeeData.distance_km} km</span>
+              )}
+              <span className="text-xs bg-secondary text-primary px-2 py-0.5 rounded-full font-medium">
+                ViaSetu Fee: ₹{platformFee}
+              </span>
+            </div>
+          )}
+
           {/* Chargeable Weight Note */}
           {volumetricWeight && parseFloat(volumetricWeight) > actualWeight && (
             <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-primary/10">
@@ -226,6 +250,7 @@ const BookingStep5 = ({
           partners={serviceablePartners}
           ratings={ratings}
           onSelectPartner={onServiceSelect}
+          platformFee={platformFee}
         />
       )}
 
@@ -269,6 +294,7 @@ const BookingStep5 = ({
             selectedServiceId={selectedServiceId}
             onServiceSelect={onServiceSelect}
             ratings={ratings}
+            platformFee={platformFee}
           />
         ) : (
           <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-xl border border-dashed">

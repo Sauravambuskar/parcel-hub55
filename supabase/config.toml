@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.google-geocode-pincode]
 verify_jwt = false
+
+[functions.calculate-platform-fee]
+verify_jwt = false
