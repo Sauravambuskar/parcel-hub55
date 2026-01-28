@@ -131,7 +131,7 @@ const PartnerComparisonTable = ({
                           {isLowestPrice && <Badge className="bg-success/20 border-0 text-[10px] px-1 py-0 text-primary-foreground">
                               Best Price
                             </Badge>}
-                          {isFastest && !isLowestPrice && <Badge className="bg-warning/20 text-warning border-0 text-[10px] px-1 py-0">
+                          {isFastest && !isLowestPrice && <Badge className="bg-warning/20 border-0 text-[10px] px-1 py-0 text-primary-foreground">
                               Fastest
                             </Badge>}
                         </div>}
