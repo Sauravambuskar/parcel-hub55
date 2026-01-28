@@ -211,7 +211,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
 
               <div className="mt-2 pt-2 border-t flex items-center justify-between">
                 <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
-                  ₹{((ranked.partner.services[0]?.rate?.price?.amount || 0) + platformFee)}
+                  ₹{Math.round((ranked.partner.services[0]?.rate?.price?.amount || 0) + platformFee)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days
