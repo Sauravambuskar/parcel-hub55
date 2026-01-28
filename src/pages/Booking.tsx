@@ -499,6 +499,10 @@ const Booking = () => {
         deliveryPromise: selectedService?.service_name || "standard",
         metadata: { 
           source: "WEB_APP",
+          baseFare: baseFare,
+          gstAmount: gstAmount,
+          totalAmount: totalAmount,
+          platformFee: platformFee,
           ...(paymentDetails && {
             razorpay_payment_id: paymentDetails.razorpay_payment_id,
             razorpay_order_id: paymentDetails.razorpay_order_id,
@@ -584,10 +588,13 @@ const Booking = () => {
           },
         ],
         payment: {
-          finalAmount: baseAmount,
+          finalAmount: totalAmount, // Total amount paid by user (includes platform fee + GST)
           type: "PREPAID",
           breakdown: {
-            otherCharges: [{ name: "Base Rate", chargedAmount: baseAmount }],
+            otherCharges: [
+              { name: "Base Rate", chargedAmount: baseFare }, // Base fare includes platform fee
+              { name: "GST (18%)", chargedAmount: gstAmount },
+            ],
           },
         },
         vendorcode: "VIAS",
