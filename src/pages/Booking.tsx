@@ -692,8 +692,8 @@ const Booking = () => {
   };
 
   const selectedCourierData = getSelectedServiceDetails();
-  // Calculate pricing with 18% GST
-  const baseFare = selectedCourierData ? selectedCourierData.basePrice : 0;
+  // Calculate pricing with 18% GST (all values rounded)
+  const baseFare = Math.round(selectedCourierData ? selectedCourierData.basePrice : 0);
   const gstAmount = Math.round(baseFare * 0.18);
   const totalAmount = baseFare + gstAmount;
 
