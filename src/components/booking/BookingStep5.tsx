@@ -219,7 +219,7 @@ const BookingStep5 = ({
             </div>
           </div>
 
-          {/* Distance Tier & Platform Fee Info */}
+          {/* Distance Tier Info (without showing platform fee) */}
           {platformFeeData && (
             <div className="mt-3 pt-3 border-t border-primary/10 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
@@ -229,9 +229,6 @@ const BookingStep5 = ({
               {platformFeeData.distance_km && platformFeeData.distance_km > 0 && (
                 <span className="text-xs text-muted-foreground">~{platformFeeData.distance_km} km</span>
               )}
-              <span className="text-xs bg-secondary text-primary px-2 py-0.5 rounded-full font-medium">
-                ViaSetu Fee: ₹{platformFee}
-              </span>
             </div>
           )}
 
