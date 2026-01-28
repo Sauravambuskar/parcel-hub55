@@ -30,8 +30,7 @@ interface BookingReviewStepProps {
   };
   courierDetails: {
     name: string;
-    basePrice: number;
-    convenienceFee: number;
+    baseFare: number; // Courier price + platform fee (hidden from user)
     deliveryTime: string;
   };
   selectedDate?: Date;
@@ -48,7 +47,9 @@ const BookingReviewStep = ({
   onConfirm,
   onBack,
 }: BookingReviewStepProps) => {
-  const totalAmount = courierDetails.basePrice + courierDetails.convenienceFee;
+  // Calculate GST at 18% on the base fare (which includes hidden platform fee)
+  const gstAmount = Math.round(courierDetails.baseFare * 0.18);
+  const totalAmount = courierDetails.baseFare + gstAmount;
 
   return (
     <Card className="mt-6">
@@ -161,12 +162,12 @@ const BookingReviewStep = ({
           </div>
           <div className="ml-7 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Base Price</span>
-              <span>₹{courierDetails.basePrice.toFixed(2)}</span>
+              <span className="text-muted-foreground">Base Fare</span>
+              <span>₹{courierDetails.baseFare.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Convenience Fee</span>
-              <span>₹{courierDetails.convenienceFee.toFixed(2)}</span>
+              <span className="text-muted-foreground">GST (18%)</span>
+              <span>₹{gstAmount.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-base font-semibold">

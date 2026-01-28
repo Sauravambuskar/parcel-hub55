@@ -650,9 +650,9 @@ const Booking = () => {
         status: "CREATED",
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: "paid",
-        base_fare: baseAmount,
-        platform_fee: selectedCourierData?.convenienceFee || 0,
-        gst: Math.round(baseAmount * 0.18),
+        base_fare: baseFare,
+        platform_fee: platformFee, // Store platform fee for internal tracking
+        gst: gstAmount,
         prayog_commission: Math.round(baseAmount * 0.05),
       };
 
@@ -692,7 +692,10 @@ const Booking = () => {
   };
 
   const selectedCourierData = getSelectedServiceDetails();
-  const totalAmount = selectedCourierData ? selectedCourierData.basePrice + selectedCourierData.convenienceFee : 0;
+  // Calculate pricing with 18% GST
+  const baseFare = selectedCourierData ? selectedCourierData.basePrice : 0;
+  const gstAmount = Math.round(baseFare * 0.18);
+  const totalAmount = baseFare + gstAmount;
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -761,6 +764,7 @@ const Booking = () => {
       case 5:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
       case 6:
+        const baseFare = selectedCourierData?.basePrice || 0;
         return (
           <BookingReviewStep
             senderData={senderData}
@@ -774,8 +778,7 @@ const Booking = () => {
             }}
             courierDetails={{
               name: selectedCourierData?.name || "",
-              basePrice: selectedCourierData?.basePrice || 0,
-              convenienceFee: selectedCourierData?.convenienceFee || 0,
+              baseFare: baseFare, // This already includes platform fee (merged into displayed price)
               deliveryTime: selectedCourierData?.deliveryTime || "",
             }}
             selectedDate={selectedDate}
@@ -813,15 +816,16 @@ const Booking = () => {
           orderDetails={{
             courierId: selectedPartnerData?.partnerId ?? '',
             courierName: selectedCourierData.name ?? '',
-            basePrice: selectedCourierData.basePrice,
-            convenienceFee: selectedCourierData.convenienceFee,
+            baseFare: baseFare,
+            gstAmount: gstAmount,
+            totalAmount: totalAmount,
             pickupDate: selectedDate?.toISOString(),
           }}
           onPaymentSuccess={handlePaymentSuccess}
           customerDetails={{
             name: senderData.name,
             phone: senderData.phone,
-            email: undefined, // Email not collected in current flow
+            email: undefined,
           }}
         />
       )}

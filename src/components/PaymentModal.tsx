@@ -29,8 +29,9 @@ interface PaymentModalProps {
   orderDetails: {
     courierId: number | string;
     courierName: string;
-    basePrice: number;
-    convenienceFee: number;
+    baseFare: number; // Base fare (courier price + platform fee)
+    gstAmount: number; // GST at 18%
+    totalAmount: number; // Total to be charged
     pickupDate?: string;
   };
   onPaymentSuccess: (paymentMethod: string, paymentDetails?: {
@@ -50,7 +51,7 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const { toast } = useToast();
 
-  const totalAmount = orderDetails.basePrice + orderDetails.convenienceFee;
+  const { baseFare, gstAmount, totalAmount } = orderDetails;
 
   // Load Razorpay script
   useEffect(() => {
@@ -290,12 +291,12 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
               )}
               <Separator />
               <div className="flex justify-between text-sm">
-                <span>Base Delivery Charge</span>
-                <span>₹{orderDetails.basePrice}</span>
+                <span>Base Fare</span>
+                <span>₹{baseFare}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Convenience Fee</span>
-                <span>₹{orderDetails.convenienceFee}</span>
+                <span>GST (18%)</span>
+                <span>₹{gstAmount}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">
