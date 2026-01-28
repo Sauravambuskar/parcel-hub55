@@ -4,23 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-
 interface DisclaimerStepProps {
   onNext: () => void;
   onBack: () => void;
 }
-
-const DisclaimerStep = ({ onNext, onBack }: DisclaimerStepProps) => {
+const DisclaimerStep = ({
+  onNext,
+  onBack
+}: DisclaimerStepProps) => {
   const [accepted, setAccepted] = useState(false);
-
   const handleContinue = () => {
     if (accepted) {
       onNext();
     }
   };
-
-  return (
-    <Card className="mt-6">
+  return <Card className="mt-6">
       <CardHeader>
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-6 w-6 text-warning" />
@@ -52,7 +50,7 @@ const DisclaimerStep = ({ onNext, onBack }: DisclaimerStepProps) => {
           </div>
 
           <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-sm font-medium text-primary mb-2">Important Notice:</p>
+            <p className="text-sm font-medium text-primary mb-2 bg-primary-foreground">Important Notice:</p>
             <p className="text-sm text-muted-foreground">
               Vaisetu is a facilitator platform that connects you with courier partners. In case of any 
               damage or stolen parcels, the courier partner will be responsible as per their policies. 
@@ -71,15 +69,8 @@ const DisclaimerStep = ({ onNext, onBack }: DisclaimerStepProps) => {
         </div>
 
         <div className="flex items-start gap-3 p-4 border border-border rounded-lg">
-          <Checkbox 
-            id="disclaimer-accept" 
-            checked={accepted}
-            onCheckedChange={(checked) => setAccepted(checked === true)}
-          />
-          <label
-            htmlFor="disclaimer-accept"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-          >
+          <Checkbox id="disclaimer-accept" checked={accepted} onCheckedChange={checked => setAccepted(checked === true)} />
+          <label htmlFor="disclaimer-accept" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
             I have read and accept the above declaration. I confirm that my shipment 
             complies with all applicable laws and regulations.
           </label>
@@ -89,17 +80,11 @@ const DisclaimerStep = ({ onNext, onBack }: DisclaimerStepProps) => {
           <Button variant="outline" onClick={onBack} className="flex-1">
             Back
           </Button>
-          <Button 
-            onClick={handleContinue} 
-            disabled={!accepted}
-            className="flex-1"
-          >
+          <Button onClick={handleContinue} disabled={!accepted} className="flex-1">
             Accept & Continue
           </Button>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default DisclaimerStep;
