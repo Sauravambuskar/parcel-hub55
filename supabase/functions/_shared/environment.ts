@@ -21,7 +21,7 @@ export const PRAYOG_CONFIG: Record<Environment, PrayogConfig> = {
     apiKeyEnvVar: 'PRAYOG_API_KEY',
   },
   production: {
-    apiBaseUrl: 'https://apis.prayog.io',
+    apiBaseUrl: 'https://prod-apis.prayog.io',
     tenantIdEnvVar: 'PRAYOG_PROD_TENANT_ID',
     apiKeyEnvVar: 'PRAYOG_PROD_API_KEY',
   },
