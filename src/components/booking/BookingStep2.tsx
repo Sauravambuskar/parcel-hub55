@@ -176,7 +176,7 @@ const BookingStep2 = ({
       const userId = authData?.user_id || 'guest';
 
       // Call Prayog serviceability v3 API directly
-      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/serviceability/v3/check`, {
+      const response = await fetch(`${PRAYOG_CONFIG.SERVICEABILITY_BASE_URL}/serviceability/v3/check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
