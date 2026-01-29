@@ -60,7 +60,7 @@ serve(async (req) => {
       headers['x-user-id'] = userId;
     }
 
-    const response = await fetch(`${prayogConfig.apiBaseUrl}/serviceability/v3/check`, {
+    const response = await fetch(`${prayogConfig.serviceabilityBaseUrl}/serviceability/v3/check`, {
       method: 'POST',
       headers,
       body: JSON.stringify(prayogPayload),
