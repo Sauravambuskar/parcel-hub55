@@ -5,6 +5,7 @@ export type Environment = 'sandbox' | 'production';
 
 interface PrayogConfig {
   apiBaseUrl: string;
+  serviceabilityBaseUrl?: string;
   tenantIdEnvVar: string;
   apiKeyEnvVar: string;
 }
@@ -21,7 +22,8 @@ export const PRAYOG_CONFIG: Record<Environment, PrayogConfig> = {
     apiKeyEnvVar: 'PRAYOG_API_KEY',
   },
   production: {
-    apiBaseUrl: 'https://prod-apis.prayog.io',
+    apiBaseUrl: 'https://apis.prayog.io',
+    serviceabilityBaseUrl: 'https://prod-apis.prayog.io',
     tenantIdEnvVar: 'PRAYOG_PROD_TENANT_ID',
     apiKeyEnvVar: 'PRAYOG_PROD_API_KEY',
   },
@@ -50,6 +52,7 @@ export function getPrayogConfig(env: Environment) {
   const config = PRAYOG_CONFIG[env];
   return {
     apiBaseUrl: config.apiBaseUrl,
+    serviceabilityBaseUrl: config.serviceabilityBaseUrl || config.apiBaseUrl,
     tenantId: Deno.env.get(config.tenantIdEnvVar),
     apiKey: Deno.env.get(config.apiKeyEnvVar),
   };

@@ -27,7 +27,7 @@ export const CURRENT_ENV: Environment = getCurrentEnv();
 interface EnvironmentConfig {
   prayog: {
     apiBaseUrl: string;
-    // Tenant ID is stored in Supabase secrets
+    serviceabilityBaseUrl?: string; // Optional - only used in production
   };
   razorpay: {
     // Keys are stored in Supabase secrets with environment prefix
@@ -57,7 +57,8 @@ const configs: Record<Environment, EnvironmentConfig> = {
   },
   production: {
     prayog: {
-      apiBaseUrl: "https://prod-apis.prayog.io", // Production Prayog URL
+      apiBaseUrl: "https://apis.prayog.io", // Production Prayog URL
+      serviceabilityBaseUrl: "https://prod-apis.prayog.io", // Serviceability uses different URL
     },
     razorpay: {
       keyIdSecret: "RAZORPAY_PROD_KEY_ID",
