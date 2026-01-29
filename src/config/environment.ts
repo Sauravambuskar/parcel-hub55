@@ -57,7 +57,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
   },
   production: {
     prayog: {
-      apiBaseUrl: "https://apis.prayog.io", // Production Prayog URL
+      apiBaseUrl: "https://prod-apis.prayog.io", // Production Prayog URL
     },
     razorpay: {
       keyIdSecret: "RAZORPAY_PROD_KEY_ID",
