@@ -41,8 +41,8 @@ const BookingProgress = ({
                 {index < totalSteps - 1 && <div className={cn("absolute top-4 left-[50%] right-[-50%] h-0.5 -translate-y-1/2 transition-colors duration-500", isCompleted ? "bg-primary" : "bg-muted")} />}
                 
                 {/* Step Circle */}
-                <div className={cn("relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-all duration-300", isCompleted && "bg-secondary border-secondary text-primary scale-100", isCurrent && "border-primary bg-secondary text-primary scale-110 shadow-[0_0_15px_hsl(180_100%_75%/0.4)]", !isCompleted && !isCurrent && "border-muted bg-secondary text-primary")}>
-                  {isCompleted ? <CheckCircle className="w-4 h-4 animate-in" /> : <span className={cn(isCurrent && "animate-pulse")}>{stepNumber}</span>}
+                <div className={cn("relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-all duration-300 leading-none", isCompleted && "bg-secondary border-secondary text-primary scale-100", isCurrent && "border-primary bg-secondary text-primary scale-110 shadow-[0_0_15px_hsl(180_100%_75%/0.4)]", !isCompleted && !isCurrent && "border-muted bg-secondary text-primary")}>
+                  {isCompleted ? <CheckCircle className="w-4 h-4 animate-in" /> : <span className={cn("flex items-center justify-center w-full h-full", isCurrent && "animate-pulse")}>{stepNumber}</span>}
                 </div>
                 
                 {/* Step Label */}
