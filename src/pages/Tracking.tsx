@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
+import PageBackground from "@/components/PageBackground";
 
 interface TrackingStatus {
   trackingId: string;
@@ -181,27 +182,29 @@ const Tracking = () => {
   // Show search form when no tracking data
   if (!trackingData) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="bg-background border-b border-border p-4 sticky top-0 z-50">
+      <div className="min-h-screen relative">
+        <PageBackground variant="logistics" opacity={0.75} />
+        
+        <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
           <div className="flex items-center gap-3 max-w-4xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="text-white hover:bg-white/10">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Track Order</h1>
+            <h1 className="text-xl font-bold text-white">Track Order</h1>
           </div>
         </header>
         
-        <div className="p-4 max-w-4xl mx-auto space-y-6">
-          <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+        <div className="p-4 max-w-4xl mx-auto space-y-6 relative z-10">
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-white">
                 <Search className="h-5 w-5 text-primary" />
                 Track Your Shipment
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <TrackingSearchIllustration className="my-4" />
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-white/70 text-center">
                 Enter your AWB (Air Waybill) number to track your shipment in real-time
               </p>
               <div className="flex gap-2">
@@ -210,7 +213,7 @@ const Tracking = () => {
                   value={awbInput}
                   onChange={(e) => setAwbInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-                  className="flex-1"
+                  className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/50"
                 />
                 <Button onClick={handleTrack} disabled={loading}>
                   {loading ? "Tracking..." : "Track"}
@@ -221,65 +224,26 @@ const Tracking = () => {
 
           {loading && (
             <div className="space-y-4">
-              <Card>
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20">
                 <CardHeader>
-                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-6 w-32 bg-white/20" />
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Skeleton className="h-8 w-full" />
-                  <Skeleton className="h-4 w-24" />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-40" />
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-full" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-6 w-px ml-5" />
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-full" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-36" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Skeleton className="h-7 w-7 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-20 rounded-full" />
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                      </div>
-                    </div>
-                  ))}
+                  <Skeleton className="h-8 w-full bg-white/20" />
+                  <Skeleton className="h-4 w-24 bg-white/20" />
                 </CardContent>
               </Card>
             </div>
           )}
 
-          <Card className="bg-muted/50">
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardContent className="p-6 text-center">
-              <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">Where to find your AWB number?</h3>
-              <p className="text-sm text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-4 text-white/50" />
+              <h3 className="font-semibold mb-2 text-white">Where to find your AWB number?</h3>
+              <p className="text-sm text-white/70">
                 You can find your AWB number in your order confirmation email or in your order history.
               </p>
-              <Button variant="outline" onClick={() => navigate('/history')} className="mt-4">
+              <Button variant="outline" onClick={() => navigate('/history')} className="mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20">
                 View Order History
               </Button>
             </CardContent>
@@ -294,23 +258,25 @@ const Tracking = () => {
   const sortedStatuses = [...(statuses || [])].sort((a, b) => b.statusTimestamp - a.statusTimestamp);
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen relative">
+      <PageBackground variant="logistics" opacity={0.75} />
+      
       {/* Header */}
-      <header className="bg-background border-b border-border p-4 sticky top-0 z-50">
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold">Track Order</h1>
-            <p className="text-sm text-muted-foreground">{orderInformation?.trackingId || currentAwb}</p>
+            <h1 className="text-xl font-bold text-white">Track Order</h1>
+            <p className="text-sm text-white/70">{orderInformation?.trackingId || currentAwb}</p>
           </div>
         </div>
       </header>
 
-      <div className="p-4 space-y-4 max-w-4xl mx-auto">
+      <div className="p-4 space-y-4 max-w-4xl mx-auto relative z-10">
         {/* Search Again */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardContent className="p-3">
             <div className="flex gap-2">
               <Input
@@ -318,7 +284,7 @@ const Tracking = () => {
                 value={awbInput}
                 onChange={(e) => setAwbInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-                className="flex-1"
+                className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/50"
               />
               <Button onClick={handleTrack} disabled={loading} size="sm">
                 <Search className="h-4 w-4" />
@@ -328,9 +294,9 @@ const Tracking = () => {
         </Card>
 
         {/* Current Status */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-white">
               <span className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
                 Current Status
@@ -341,77 +307,77 @@ const Tracking = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-medium">{latestStatus?.subcategory || latestStatus?.status}</p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-lg font-medium text-white">{latestStatus?.subcategory || latestStatus?.status}</p>
+            <p className="text-sm text-white/70 mt-1">
               {formatTimestamp(latestStatus?.statusTimestamp)}
             </p>
           </CardContent>
         </Card>
 
         {/* Order Info */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Truck className="h-5 w-5 text-primary" />
               Order Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-white/50" />
               <div>
-                <p className="text-sm text-muted-foreground">Booking Date</p>
-                <p className="font-medium">{formatDate(orderInformation?.bookingDate)}</p>
+                <p className="text-sm text-white/60">Booking Date</p>
+                <p className="font-medium text-white">{formatDate(orderInformation?.bookingDate)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-white/50" />
               <div>
-                <p className="text-sm text-muted-foreground">Service Type</p>
-                <p className="font-medium capitalize">{orderInformation?.serviceType || 'Standard'}</p>
+                <p className="text-sm text-white/60">Service Type</p>
+                <p className="font-medium capitalize text-white">{orderInformation?.serviceType || 'Standard'}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Pickup & Delivery Locations */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle>Shipment Route</CardTitle>
+            <CardTitle className="text-white">Shipment Route</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Pickup */}
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
+              <div className="p-2 rounded-full bg-primary/20">
                 <MapPin className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Pickup Location</p>
-                <p className="font-medium">{orderInformation?.senderDetails?.sender_name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-white/50">Pickup Location</p>
+                <p className="font-medium text-white">{orderInformation?.senderDetails?.sender_name}</p>
+                <p className="text-sm text-white/70">
                   {orderInformation?.sourceLocation?.address}, {orderInformation?.sourceLocation?.city}, {orderInformation?.sourceLocation?.state} - {orderInformation?.sourceLocation?.pincode}
                 </p>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                <p className="text-sm text-white/60 flex items-center gap-1 mt-1">
                   <Phone className="h-3 w-3" />
                   {orderInformation?.senderDetails?.sender_mobile}
                 </p>
               </div>
             </div>
 
-            <div className="border-l-2 border-dashed border-muted-foreground/30 ml-5 h-6" />
+            <div className="border-l-2 border-dashed border-white/30 ml-5 h-6" />
 
             {/* Delivery */}
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-full bg-destructive/10">
-                <MapPin className="h-4 w-4 text-destructive" />
+              <div className="p-2 rounded-full bg-red-500/20">
+                <MapPin className="h-4 w-4 text-red-400" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Delivery Location</p>
-                <p className="font-medium">{orderInformation?.receiverDetails?.receiver_name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-white/50">Delivery Location</p>
+                <p className="font-medium text-white">{orderInformation?.receiverDetails?.receiver_name}</p>
+                <p className="text-sm text-white/70">
                   {orderInformation?.destinationLocation?.address}, {orderInformation?.destinationLocation?.city}, {orderInformation?.destinationLocation?.state} - {orderInformation?.destinationLocation?.pincode}
                 </p>
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                <p className="text-sm text-white/60 flex items-center gap-1 mt-1">
                   <Phone className="h-3 w-3" />
                   {orderInformation?.receiverDetails?.receiver_mobile}
                 </p>
@@ -421,9 +387,9 @@ const Tracking = () => {
         </Card>
 
         {/* Status Timeline */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Clock className="h-5 w-5 text-primary" />
               Tracking Timeline
             </CardTitle>
@@ -432,27 +398,27 @@ const Tracking = () => {
             <div className="space-y-4">
               {sortedStatuses.map((status, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <div className={`p-1.5 rounded-full ${index === 0 ? 'bg-primary' : 'bg-muted'}`}>
-                    <CheckCircle className={`h-4 w-4 ${index === 0 ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                  <div className={`p-1.5 rounded-full ${index === 0 ? 'bg-primary' : 'bg-white/20'}`}>
+                    <CheckCircle className={`h-4 w-4 ${index === 0 ? 'text-primary-foreground' : 'text-white/50'}`} />
                   </div>
-                  <div className="flex-1 pb-4 border-b border-border last:border-0 last:pb-0">
+                  <div className="flex-1 pb-4 border-b border-white/10 last:border-0 last:pb-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
                         {status.category?.replace(/_/g, ' ')}
                       </Badge>
                     </div>
-                    <p className="font-medium text-sm">{status.subcategory}</p>
+                    <p className="font-medium text-sm text-white">{status.subcategory}</p>
                     {status.location && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <p className="text-xs text-white/60 flex items-center gap-1 mt-1">
                         <MapPin className="h-3 w-3" />
                         {status.location}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-white/50 mt-1">
                       {formatTimestamp(status.statusTimestamp)}
                     </p>
                     {status.deliveryPartnerName && (
-                      <p className="text-xs text-muted-foreground capitalize">
+                      <p className="text-xs text-white/50 capitalize">
                         Partner: {status.deliveryPartnerName}
                       </p>
                     )}
@@ -465,25 +431,13 @@ const Tracking = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="w-full" onClick={() => navigate('/support')}>
+          <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/support')}>
             Get Help
           </Button>
-          <Button variant="outline" className="w-full" onClick={() => navigate('/history')}>
+          <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/history')}>
             All Orders
           </Button>
         </div>
-
-        {latestStatus?.category?.toUpperCase() === 'DELIVERED' && (
-          <Card className="border-green-500">
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-green-600 mb-2">Package Delivered!</h3>
-              <p className="text-sm text-muted-foreground">
-                Your package has been successfully delivered. Thank you for using our service!
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
