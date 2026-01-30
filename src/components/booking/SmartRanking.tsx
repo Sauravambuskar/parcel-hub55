@@ -98,9 +98,9 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
       const isTopRated = (rating?.rating || 0) >= 4.0;
       
       if (isLowestPrice && isFastest) {
-        reason = `Best deal: ₹${price}, ${deliveryDays} day${deliveryDays > 1 ? 's' : ''}`;
+        reason = `Best deal: ₹${Math.round(price)}, ${deliveryDays} day${deliveryDays > 1 ? 's' : ''}`;
       } else if (isLowestPrice) {
-        reason = `Lowest price at ₹${price}`;
+        reason = `Lowest price at ₹${Math.round(price)}`;
       } else if (isFastest) {
         reason = `Fastest: ${deliveryDays} day${deliveryDays > 1 ? 's' : ''} delivery`;
       } else if (isTopRated) {
