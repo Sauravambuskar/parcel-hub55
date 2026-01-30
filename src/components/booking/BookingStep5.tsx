@@ -145,37 +145,6 @@ const BookingStep5 = ({
         <p className="text-muted-foreground">Compare partners and select the best option for your shipment</p>
       </div>
 
-      {/* Enhanced Shipment Summary */}
-      {shipmentSummary && (
-        <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>{shipmentSummary.pickupCity || shipmentSummary.pickupPincode}</span>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>{shipmentSummary.deliveryCity || shipmentSummary.deliveryPincode}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Scale className="h-3 w-3" />
-              <span>{shipmentSummary.weight} kg</span>
-              {volumetricWeight && (
-                <span className="text-primary">
-                  (Vol: {volumetricWeight} kg, Chargeable: {chargeableWeight} kg)
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              <span>{shipmentSummary.goodsType}</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* AI-Powered Smart Ranking */}
       {serviceablePartners.length > 0 && <SmartRanking partners={serviceablePartners} ratings={ratings} onSelectPartner={onServiceSelect} platformFee={platformFee} />}
