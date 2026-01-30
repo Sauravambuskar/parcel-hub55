@@ -132,17 +132,13 @@ const BookingStep5 = ({
   const volumetricWeight = calculateVolumetricWeight();
   const actualWeight = parseFloat(shipmentSummary?.weight || "0");
   const chargeableWeight = volumetricWeight ? Math.max(actualWeight, parseFloat(volumetricWeight)) : actualWeight;
-  return (
-    <div className="relative space-y-6">
+  return <div className="relative space-y-6">
       {/* Subtle background image */}
-      <div 
-        className="absolute inset-0 -m-4 rounded-2xl overflow-hidden opacity-[0.06] pointer-events-none"
-        style={{
-          backgroundImage: `url(${warehouseBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
+      <div className="absolute inset-0 -m-4 rounded-2xl overflow-hidden opacity-[0.06] pointer-events-none" style={{
+      backgroundImage: `url(${warehouseBg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }} />
       
       <div className="relative text-center space-y-2">
         <h2 className="text-2xl font-semibold">Choose Your Courier</h2>
@@ -150,38 +146,7 @@ const BookingStep5 = ({
       </div>
 
       {/* Enhanced Shipment Summary */}
-      {shipmentSummary && (
-        <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Route className="h-4 w-4 text-primary" />
-            <span>Shipment Route</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{shipmentSummary.pickupCity || shipmentSummary.pickupPincode}</span>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{shipmentSummary.deliveryCity || shipmentSummary.deliveryPincode}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Scale className="h-4 w-4" />
-              <span>{shipmentSummary.weight} kg</span>
-              {volumetricWeight && (
-                <span className="text-xs">(Vol: {volumetricWeight} kg)</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Package className="h-4 w-4" />
-              <span className="capitalize">{shipmentSummary.goodsType}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      {shipmentSummary}
 
       {/* AI-Powered Smart Ranking */}
       {serviceablePartners.length > 0 && <SmartRanking partners={serviceablePartners} ratings={ratings} onSelectPartner={onServiceSelect} platformFee={platformFee} />}
@@ -251,7 +216,6 @@ const BookingStep5 = ({
 
       {/* AI Courier Assistant - Floating Chat Button */}
       {shipmentSummary && serviceablePartners.length > 0 && <CourierAssistant shipmentContext={shipmentSummary} partners={partnerContextForAI} />}
-    </div>
-  );
+    </div>;
 };
 export default BookingStep5;
