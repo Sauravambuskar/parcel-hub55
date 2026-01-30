@@ -14,7 +14,7 @@ const BookingStep1 = ({
           <Sparkles className="h-4 w-4" />
           Fast & Reliable
         </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-primary-foreground">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-secondary-foreground">
           Choose Service Type
         </h2>
         
