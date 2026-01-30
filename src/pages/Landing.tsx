@@ -2,9 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Zap, IndianRupee, Search } from "lucide-react";
+import { Package, Zap, IndianRupee, Search } from "lucide-react";
 import BackgroundParticles from "@/components/BackgroundParticles";
-import DeliveryHeroIllustration from "@/components/illustrations/DeliveryHeroIllustration";
+import deliveryHeroImage from "@/assets/delivery-hero.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -38,9 +38,13 @@ const Landing = () => {
           </h1>
         </div>
 
-        {/* Hero Illustration */}
+        {/* Hero Image */}
         <div className="opacity-0 animate-fade-in-up py-4" style={{ animationDelay: '150ms', animationFillMode: 'forwards' }}>
-          <DeliveryHeroIllustration className="scale-90" />
+          <img 
+            src={deliveryHeroImage} 
+            alt="Happy delivery person handing package to customer" 
+            className="w-64 h-64 mx-auto rounded-2xl shadow-lg object-cover"
+          />
         </div>
 
         {/* Headline */}
