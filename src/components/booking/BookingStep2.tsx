@@ -11,11 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const goodsTypes = [
-  { id: 'documents', label: 'Documents', icon: FileText },
-  { id: 'box', label: 'Box/Parcel', icon: Package },
-  { id: 'envelope', label: 'Envelope', icon: Mail },
-  { id: 'fragile', label: 'Fragile', icon: AlertTriangle },
-  { id: 'others', label: 'Others', icon: MoreHorizontal },
+  { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
+  { id: 'box', label: 'Box / Parcel', icon: Package, weightHint: '250g - 2kg' },
+  { id: 'others', label: 'Others', icon: MoreHorizontal, weightHint: 'Specify below' },
 ];
 
 interface PricingData {
@@ -71,6 +69,7 @@ const BookingStep2 = ({
   const [isLoadingPickupCity, setIsLoadingPickupCity] = useState(false);
   const [isLoadingDeliveryCity, setIsLoadingDeliveryCity] = useState(false);
   const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg');
+  const [customGoodsType, setCustomGoodsType] = useState('');
   
   // Refs to track previous pincode values for debouncing
   const pickupDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,7 +147,7 @@ const BookingStep2 = ({
     };
   }, [deliveryPincode]);
   
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height;
+  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && (goodsType !== 'others' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -405,7 +404,7 @@ const BookingStep2 = ({
           {/* Type of Good - Icon Selector */}
           <div className="space-y-3">
             <Label>Type of Good *</Label>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {goodsTypes.map((type) => {
                 const Icon = type.icon;
                 const isSelected = goodsType === type.id;
@@ -423,10 +422,23 @@ const BookingStep2 = ({
                   >
                     <Icon className="h-6 w-6" />
                     <span className="text-xs font-medium text-center">{type.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{type.weightHint}</span>
                   </button>
                 );
               })}
             </div>
+            {goodsType === 'others' && (
+              <div className="space-y-2 mt-3">
+                <Label htmlFor="custom-goods-type">Please specify the type of good *</Label>
+                <Input
+                  id="custom-goods-type"
+                  value={customGoodsType}
+                  onChange={(e) => setCustomGoodsType(e.target.value)}
+                  placeholder="e.g., Electronics, Clothing, Food items"
+                  maxLength={50}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
