@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import PageBackground from "@/components/PageBackground";
 
 const Support = () => {
   const [selectedIssue, setSelectedIssue] = useState<string>('');
@@ -50,7 +51,6 @@ const Support = () => {
       description: "We'll get back to you within 24 hours",
     });
 
-    // Reset form
     setSelectedIssue('');
     setMessage('');
     setOrderId('');
@@ -75,35 +75,37 @@ const Support = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5">
+    <div className="min-h-screen relative">
+      <PageBackground variant="parcels" opacity={0.8} />
+      
       {/* Header */}
-      <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
         <div className="flex items-center gap-3 max-w-md mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Support & Help</h1>
+          <h1 className="text-xl font-semibold text-white">Support & Help</h1>
         </div>
       </header>
 
-      <div className="p-4 space-y-6 max-w-md mx-auto">
+      <div className="p-4 space-y-6 max-w-md mx-auto relative z-10">
         {/* Quick Contact */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle>Need Immediate Help?</CardTitle>
+            <CardTitle className="text-white">Need Immediate Help?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-16 flex-col gap-2">
+              <Button variant="outline" className="h-16 flex-col gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20">
                 <Phone className="h-5 w-5" />
                 <span className="text-sm">Call Support</span>
               </Button>
-              <Button variant="outline" className="h-16 flex-col gap-2">
+              <Button variant="outline" className="h-16 flex-col gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20">
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-sm">Live Chat</span>
               </Button>
             </div>
-            <Button variant="outline" className="w-full h-12 flex items-center gap-2">
+            <Button variant="outline" className="w-full h-12 flex items-center gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20">
               <Mail className="h-4 w-4" />
               <span>Email: support@setu.delivery</span>
             </Button>
@@ -111,9 +113,9 @@ const Support = () => {
         </Card>
 
         {/* Rate Your Experience */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle>Rate Your Experience</CardTitle>
+            <CardTitle className="text-white">Rate Your Experience</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-center gap-2">
@@ -127,7 +129,7 @@ const Support = () => {
                     className={`h-8 w-8 ${
                       star <= rating 
                         ? 'fill-warning text-warning' 
-                        : 'text-muted-foreground'
+                        : 'text-white/40'
                     }`} 
                   />
                 </button>
@@ -144,31 +146,32 @@ const Support = () => {
         </Card>
 
         {/* Report an Issue */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <HelpCircle className="h-5 w-5" />
               Report an Issue
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Order ID (Optional)</label>
+              <label className="text-sm font-medium text-white/90">Order ID (Optional)</label>
               <Input
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
                 placeholder="Enter your order ID"
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/50"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">What's the issue?</label>
+              <label className="text-sm font-medium text-white/90">What's the issue?</label>
               <div className="flex flex-wrap gap-2">
                 {commonIssues.map((issue) => (
                   <Badge
                     key={issue}
                     variant={selectedIssue === issue ? "default" : "outline"}
-                    className="cursor-pointer"
+                    className={`cursor-pointer ${selectedIssue !== issue ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : ''}`}
                     onClick={() => setSelectedIssue(issue)}
                   >
                     {issue}
@@ -178,12 +181,13 @@ const Support = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Describe your problem</label>
+              <label className="text-sm font-medium text-white/90">Describe your problem</label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Please provide details about your issue..."
                 rows={4}
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/50"
               />
             </div>
 
@@ -198,9 +202,9 @@ const Support = () => {
         </Card>
 
         {/* FAQ Section */}
-        <Card>
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle>Frequently Asked Questions</CardTitle>
+            <CardTitle className="text-white">Frequently Asked Questions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
@@ -212,7 +216,7 @@ const Support = () => {
             ].map((faq, index) => (
               <button
                 key={index}
-                className="w-full text-left p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-sm"
+                className="w-full text-left p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors text-sm text-white"
               >
                 {faq}
               </button>
