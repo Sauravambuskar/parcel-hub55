@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
@@ -16,11 +15,9 @@ import BookingStep2 from "@/components/booking/BookingStep2";
 import AddressStep from "@/components/booking/AddressStep";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import PageBackground from "@/components/PageBackground";
-
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
 import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
-
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState("");
@@ -33,10 +30,18 @@ const Booking = () => {
   const [pickupPincode, setPickupPincode] = useState("");
   const [deliveryPincode, setDeliveryPincode] = useState("");
   const [goodsType, setGoodsType] = useState("");
-  const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
+  const [dimensions, setDimensions] = useState({
+    length: "",
+    width: "",
+    height: ""
+  });
   const [shipmentValue, setShipmentValue] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [selectedPartnerData, setSelectedPartnerData] = useState<{ partnerId: string; serviceCode: string; rateId: string } | null>(null);
+  const [selectedPartnerData, setSelectedPartnerData] = useState<{
+    partnerId: string;
+    serviceCode: string;
+    rateId: string;
+  } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -49,7 +54,6 @@ const Booking = () => {
     courierName: string;
     trackingId: string;
   } | null>(null);
-
   const [senderData, setSenderData] = useState({
     name: "",
     phone: "",
@@ -57,7 +61,7 @@ const Booking = () => {
     address: "",
     city: "",
     state: "",
-    pincode: "",
+    pincode: ""
   });
   const [receiverData, setReceiverData] = useState({
     name: "",
@@ -66,23 +70,26 @@ const Booking = () => {
     address: "",
     city: "",
     state: "",
-    pincode: "",
+    pincode: ""
   });
-
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Dynamic platform fee based on distance
-  const { platformFee, feeData: platformFeeData, isLoading: platformFeeLoading } = usePlatformFee({
+  const {
+    platformFee,
+    feeData: platformFeeData,
+    isLoading: platformFeeLoading
+  } = usePlatformFee({
     sourcePincode: pickupPincode,
     destinationPincode: deliveryPincode,
     weightKg: parseFloat(packageWeight) || 1,
     shipmentValue: parseFloat(shipmentValue) || 0,
-    enabled: pickupPincode.length === 6 && deliveryPincode.length === 6,
+    enabled: pickupPincode.length === 6 && deliveryPincode.length === 6
   });
-
   const totalSteps = 6;
-
   useEffect(() => {
     // Check for Prayog auth first
     const prayogAuth = localStorage.getItem("prayog_auth");
@@ -93,7 +100,7 @@ const Booking = () => {
         return;
       }
     }
-    
+
     // Generate a guest user ID for non-authenticated users
     let guestId = localStorage.getItem("guest_user_id");
     if (!guestId) {
@@ -106,26 +113,31 @@ const Booking = () => {
   // Auto-populate pincodes from serviceability check - always sync from step 2 values
   useEffect(() => {
     if (pickupPincode) {
-      setSenderData((prev) => ({ ...prev, pincode: pickupPincode }));
+      setSenderData(prev => ({
+        ...prev,
+        pincode: pickupPincode
+      }));
     }
     if (deliveryPincode) {
-      setReceiverData((prev) => ({ ...prev, pincode: deliveryPincode }));
+      setReceiverData(prev => ({
+        ...prev,
+        pincode: deliveryPincode
+      }));
     }
   }, [pickupPincode, deliveryPincode]);
-
   const handleLocationData = (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => {
     if (pickupCity && pickupState) {
-      setSenderData((prev) => ({
+      setSenderData(prev => ({
         ...prev,
         city: pickupCity,
-        state: pickupState,
+        state: pickupState
       }));
     }
     if (deliveryCity && deliveryState) {
-      setReceiverData((prev) => ({
+      setReceiverData(prev => ({
         ...prev,
         city: deliveryCity,
-        state: deliveryState,
+        state: deliveryState
       }));
     }
   };
@@ -133,30 +145,24 @@ const Booking = () => {
   // Calculate convenience fee based on weight and urgency
   const calculateConvenienceFee = () => {
     if (!packageWeight || !urgency) return 0;
-
     const baseSuperUrgent = 50;
     const baseUrgent = 25;
     const baseNoRush = 10;
     const weightMultipliers = {
       light: 1,
       medium: 1.5,
-      heavy: 2,
+      heavy: 2
     };
-
     let base = baseNoRush;
-    if (urgency === "super-urgent") base = baseSuperUrgent;
-    else if (urgency === "urgent") base = baseUrgent;
-
+    if (urgency === "super-urgent") base = baseSuperUrgent;else if (urgency === "urgent") base = baseUrgent;
     const multiplier = weightMultipliers[packageWeight as keyof typeof weightMultipliers] || 1;
     return Math.round(base * multiplier);
   };
-
   const getCouriers = () => {
     // If we have real serviceability data, use it
     if (serviceabilityData?.partners) {
       const couriers: any[] = [];
       let courierId = 1;
-
       serviceabilityData.partners.forEach((partner: any) => {
         // Check if partner is serviceable
         if (partner.is_serviceable && partner.services) {
@@ -169,16 +175,8 @@ const Booking = () => {
             const convenienceFee = 0;
 
             // Format partner name properly
-            const partnerName = partner.partner_code
-              .split("_")
-              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" ");
-
-            const serviceName = service.service_name
-              .split("_")
-              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" ");
-
+            const partnerName = partner.partner_code.split("_").map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+            const serviceName = service.service_name.split("_").map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
             couriers.push({
               id: courierId++,
               name: `${partnerName} - ${serviceName}`,
@@ -188,36 +186,28 @@ const Booking = () => {
               convenienceFee,
               vehicleType: service.delivery_modes?.express ? "Express" : "Standard",
               image: getPartnerLogo(partner.partner_code, partnerName),
-              features: [
-                service.delivery_modes?.express ? "Express delivery" : "Standard delivery",
-                service.is_cod ? "COD available" : "Prepaid only",
-                service.insurance ? "Insurance available" : "Basic coverage",
-                `Price: ₹${totalPrice}`,
-              ],
+              features: [service.delivery_modes?.express ? "Express delivery" : "Standard delivery", service.is_cod ? "COD available" : "Prepaid only", service.insurance ? "Insurance available" : "Basic coverage", `Price: ₹${totalPrice}`],
               prayogData: {
                 partnerId: partner.partner_id,
                 partnerCode: partner.partner_code,
                 serviceCode: service.service_code,
                 serviceName: service.service_name,
-                rateId: service.rate?.rate_id,
-              },
+                rateId: service.rate?.rate_id
+              }
             });
           });
         }
       });
-
       return couriers.length > 0 ? couriers : getMockCouriers();
     }
 
     // Fallback to mock data if no real data available
     return getMockCouriers();
   };
-
   const getMockCouriers = () => {
     let basePrice = 100;
     let urgencyMultiplier = 1;
     let deliveryTime = "1-2 days";
-
     if (urgency === "super-urgent") {
       urgencyMultiplier = 2;
       deliveryTime = "2-4 hours";
@@ -228,69 +218,60 @@ const Booking = () => {
       urgencyMultiplier = 0.8;
       deliveryTime = "2-5 days";
     }
-
     const weightMultiplier = packageWeight === "heavy" ? 1.5 : packageWeight === "medium" ? 1.2 : 1;
     const convenienceFee = calculateConvenienceFee();
-
-    return [
-      {
-        id: 1,
-        name: "BlueDart Express",
-        rating: 4.6,
-        deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
-        convenienceFee,
-        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
-        image: getPartnerLogo("bluedart"),
-        features: ["Real-time tracking", "Insurance included", "SMS updates"],
-      },
-      {
-        id: 2,
-        name: "DTDC Courier",
-        rating: 4.3,
-        deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.9),
-        convenienceFee,
-        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
-        image: getPartnerLogo("dtdc"),
-        features: ["Affordable rates", "Wide network", "COD available"],
-      },
-      {
-        id: 3,
-        name: "Delhivery Express",
-        rating: 4.4,
-        deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.95),
-        convenienceFee,
-        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
-        image: getPartnerLogo("delhivery"),
-        features: ["Fast delivery", "Live tracking", "Safe handling"],
-      },
-      {
-        id: 4,
-        name: "SpeedPost",
-        rating: 4.2,
-        deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.8),
-        convenienceFee,
-        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
-        image: getPartnerLogo("india_post"),
-        features: ["Government backed", "Nationwide reach", "Budget friendly"],
-      },
-      {
-        id: 5,
-        name: "Ecom Express",
-        rating: 4.5,
-        deliveryTime,
-        basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 1.1),
-        convenienceFee,
-        vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
-        image: getPartnerLogo("ecom_express"),
-        features: ["E-commerce focus", "Quick pickup", "Flexible delivery"],
-      },
-    ];
+    return [{
+      id: 1,
+      name: "BlueDart Express",
+      rating: 4.6,
+      deliveryTime,
+      basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier),
+      convenienceFee,
+      vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+      image: getPartnerLogo("bluedart"),
+      features: ["Real-time tracking", "Insurance included", "SMS updates"]
+    }, {
+      id: 2,
+      name: "DTDC Courier",
+      rating: 4.3,
+      deliveryTime,
+      basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.9),
+      convenienceFee,
+      vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+      image: getPartnerLogo("dtdc"),
+      features: ["Affordable rates", "Wide network", "COD available"]
+    }, {
+      id: 3,
+      name: "Delhivery Express",
+      rating: 4.4,
+      deliveryTime,
+      basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.95),
+      convenienceFee,
+      vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+      image: getPartnerLogo("delhivery"),
+      features: ["Fast delivery", "Live tracking", "Safe handling"]
+    }, {
+      id: 4,
+      name: "SpeedPost",
+      rating: 4.2,
+      deliveryTime,
+      basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 0.8),
+      convenienceFee,
+      vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+      image: getPartnerLogo("india_post"),
+      features: ["Government backed", "Nationwide reach", "Budget friendly"]
+    }, {
+      id: 5,
+      name: "Ecom Express",
+      rating: 4.5,
+      deliveryTime,
+      basePrice: Math.round(basePrice * urgencyMultiplier * weightMultiplier * 1.1),
+      convenienceFee,
+      vehicleType: packageWeight === "heavy" ? "Van" : "Bike",
+      image: getPartnerLogo("ecom_express"),
+      features: ["E-commerce focus", "Quick pickup", "Flexible delivery"]
+    }];
   };
-
   const handleInputChange = (field: string, value: string) => {
     switch (field) {
       case "pickupAddress":
@@ -328,18 +309,20 @@ const Booking = () => {
         break;
     }
   };
-
   const handleDimensionChange = (dimension: string, value: string) => {
-    setDimensions((prev) => ({
+    setDimensions(prev => ({
       ...prev,
-      [dimension]: value,
+      [dimension]: value
     }));
   };
-
   const handleServiceSelect = (partnerId: string, serviceCode: string, rateId: string) => {
     const serviceId = `${partnerId}_${serviceCode}`;
     setSelectedServiceId(serviceId);
-    setSelectedPartnerData({ partnerId, serviceCode, rateId });
+    setSelectedPartnerData({
+      partnerId,
+      serviceCode,
+      rateId
+    });
   };
 
   // Get partners from serviceability data
@@ -353,12 +336,9 @@ const Booking = () => {
   // Get selected service details for review step
   const getSelectedServiceDetails = () => {
     if (!selectedPartnerData || !serviceabilityData?.partners) return null;
-    
     for (const partner of serviceabilityData.partners) {
       if (partner.partner_id === selectedPartnerData.partnerId) {
-        const service = partner.services?.find(
-          (s: any) => s.service_code === selectedPartnerData.serviceCode
-        );
+        const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
         if (service) {
           const apiPrice = Math.round(service.rate?.price?.amount || 0);
           const dynamicFee = platformFee; // Use dynamic platform fee from hook
@@ -367,23 +347,22 @@ const Booking = () => {
             basePrice: apiPrice + dynamicFee,
             convenienceFee: calculateConvenienceFee(),
             deliveryTime: formatTatRange(service.tat_days, service.service_name),
-            platformFeeBreakdown: platformFeeData, // Include fee breakdown for display
+            platformFeeBreakdown: platformFeeData,
+            // Include fee breakdown for display
             partnerId: partner.partner_id,
             partnerCode: partner.partner_code,
             serviceCode: service.service_code,
             serviceName: service.service_name,
-            rateId: service.rate?.rate_id,
+            rateId: service.rate?.rate_id
           };
         }
       }
     }
     return null;
   };
-
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
   };
-
   const handleNextStep = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
@@ -415,7 +394,6 @@ const Booking = () => {
       setSelectedDate(undefined);
     }
   };
-
   const handlePrevStep = () => {
     if (currentStep > 1) {
       const prevStep = currentStep - 1;
@@ -429,30 +407,27 @@ const Booking = () => {
     resetDataFromStep(stepNumber);
     setCurrentStep(stepNumber);
   };
-
   const handleProceedToPayment = () => {
     setShowPaymentModal(true);
   };
-
-  const handlePaymentSuccess = async (paymentMethod: string, paymentDetails?: { razorpay_payment_id: string; razorpay_order_id: string }) => {
+  const handlePaymentSuccess = async (paymentMethod: string, paymentDetails?: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+  }) => {
     if (!userId) return;
-
     const selectedCourierData = getSelectedServiceDetails();
-
     try {
       // Find the selected service from serviceability data
       let selectedService = null;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
-            const service = partner.services?.find(
-              (s: any) => s.service_code === selectedPartnerData.serviceCode,
-            );
+            const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
               selectedService = {
                 ...service,
                 partner_id: partner.partner_id,
-                partner_code: partner.partner_code,
+                partner_code: partner.partner_code
               };
               break;
             }
@@ -462,27 +437,19 @@ const Booking = () => {
 
       // Generate orderId
       const now = new Date();
-      const timestamp = [
-        now.getFullYear().toString().slice(-2),
-        (now.getMonth() + 1).toString().padStart(2, "0"),
-        now.getDate().toString().padStart(2, "0"),
-        now.getHours().toString().padStart(2, "0"),
-        now.getMinutes().toString().padStart(2, "0"),
-        now.getSeconds().toString().padStart(2, "0"),
-      ].join("");
-
+      const timestamp = [now.getFullYear().toString().slice(-2), (now.getMonth() + 1).toString().padStart(2, "0"), now.getDate().toString().padStart(2, "0"), now.getHours().toString().padStart(2, "0"), now.getMinutes().toString().padStart(2, "0"), now.getSeconds().toString().padStart(2, "0")].join("");
       const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      const randomPart = Array.from({ length: 6 }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
-
+      const randomPart = Array.from({
+        length: 6
+      }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
       const orderId = timestamp + randomPart;
 
       // Calculate volumetric weight
       const length = parseFloat(dimensions?.length) || 10;
       const width = parseFloat(dimensions?.width) || 10;
       const height = parseFloat(dimensions?.height) || 10;
-      const volumetricWeight = (length * width * height) / 5000;
+      const volumetricWeight = length * width * height / 5000;
       const physicalWeight = parseFloat(packageWeight) || 1;
-
       const baseAmount = selectedService?.rate?.price?.amount || 0;
 
       // Prepare Prayog API payload
@@ -498,7 +465,7 @@ const Booking = () => {
         carrierId: selectedService?.partner_id || "",
         eWaybills: [],
         deliveryPromise: selectedService?.service_name || "standard",
-        metadata: { 
+        metadata: {
           source: "WEB_APP",
           baseFare: baseFare,
           gstAmount: gstAmount,
@@ -506,99 +473,96 @@ const Booking = () => {
           platformFee: platformFee,
           ...(paymentDetails && {
             razorpay_payment_id: paymentDetails.razorpay_payment_id,
-            razorpay_order_id: paymentDetails.razorpay_order_id,
-          }),
+            razorpay_order_id: paymentDetails.razorpay_order_id
+          })
         },
         documents: [],
-        addresses: [
-          {
-            type: "PICKUP",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address,
+        addresses: [{
+          type: "PICKUP",
+          zip: senderData.pincode,
+          name: senderData.name,
+          phone: senderData.phone,
+          street: senderData.address,
+          landmark: null,
+          city: senderData.city,
+          state: senderData.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: senderData.address
+        }, {
+          type: "DELIVERY",
+          zip: receiverData.pincode,
+          name: receiverData.name,
+          phone: receiverData.phone,
+          street: receiverData.address,
+          landmark: null,
+          city: receiverData.city,
+          state: receiverData.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: receiverData.address
+        }, {
+          type: "BILLING",
+          zip: receiverData.pincode,
+          name: receiverData.name,
+          phone: receiverData.phone,
+          street: receiverData.address,
+          landmark: null,
+          city: receiverData.city,
+          state: receiverData.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: receiverData.address
+        }, {
+          type: "RETURN",
+          zip: senderData.pincode,
+          name: senderData.name,
+          phone: senderData.phone,
+          street: senderData.address,
+          landmark: null,
+          city: senderData.city,
+          state: senderData.state,
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+          addressName: senderData.address
+        }],
+        shipments: [{
+          dimensions: {
+            length: length,
+            width: width,
+            height: height
           },
-          {
-            type: "DELIVERY",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address,
-          },
-          {
-            type: "BILLING",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address,
-          },
-          {
-            type: "RETURN",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address,
-          },
-        ],
-        shipments: [
-          {
-            dimensions: {
-              length: length,
-              width: width,
-              height: height,
-            },
-            shipmentStatus: "CONFIRMED",
-            awbNumber: "",
-            physicalWeight: physicalWeight,
-            volumetricWeight: volumetricWeight,
-            note: packageDescription || "",
-            items: [
-              {
-                name: goodsType || "Package",
-                description: packageDescription || "Package",
-              },
-            ],
-          },
-        ],
+          shipmentStatus: "CONFIRMED",
+          awbNumber: "",
+          physicalWeight: physicalWeight,
+          volumetricWeight: volumetricWeight,
+          note: packageDescription || "",
+          items: [{
+            name: goodsType || "Package",
+            description: packageDescription || "Package"
+          }]
+        }],
         payment: {
-          finalAmount: totalAmount, // Total amount paid by user (includes platform fee + GST)
+          finalAmount: totalAmount,
+          // Total amount paid by user (includes platform fee + GST)
           type: "PREPAID",
           breakdown: {
-            otherCharges: [
-              { name: "Base Rate", chargedAmount: baseFare }, // Base fare includes platform fee
-              { name: "GST (18%)", chargedAmount: gstAmount },
-            ],
-          },
+            otherCharges: [{
+              name: "Base Rate",
+              chargedAmount: baseFare
+            },
+            // Base fare includes platform fee
+            {
+              name: "GST (18%)",
+              chargedAmount: gstAmount
+            }]
+          }
         },
-        vendorcode: "VIAS",
+        vendorcode: "VIAS"
       };
 
       // Get auth token from localStorage
@@ -612,24 +576,22 @@ const Booking = () => {
         headers: {
           "Content-Type": "application/json",
           tenantId: PRAYOG_CONFIG.TENANT_ID,
-          authorization: `Bearer ${idToken}`,
+          authorization: `Bearer ${idToken}`
         },
-        body: JSON.stringify(prayogPayload),
+        body: JSON.stringify(prayogPayload)
       });
-
       const prayogResult = await prayogResponse.json();
-
       if (!prayogResponse.ok) {
         throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
       }
-
       const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
       const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
-      
+
       // Extract shipping label URL from documents array (type: "label")
-      const labelDocument = prayogResult.shipments?.[0]?.documents?.find(
-        (doc: { type: string; url?: string }) => doc.type === "label"
-      );
+      const labelDocument = prayogResult.shipments?.[0]?.documents?.find((doc: {
+        type: string;
+        url?: string;
+      }) => doc.type === "label");
       const labelUrl = labelDocument?.url || null;
 
       // Save booking to Supabase for admin dashboard and order history
@@ -667,15 +629,14 @@ const Booking = () => {
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: "paid",
         base_fare: baseFare,
-        platform_fee: platformFee, // Store platform fee for internal tracking
+        platform_fee: platformFee,
+        // Store platform fee for internal tracking
         gst: gstAmount,
-        prayog_commission: Math.round(baseAmount * 0.05),
+        prayog_commission: Math.round(baseAmount * 0.05)
       };
-
-      const { error: dbError } = await supabase
-        .from("bookings")
-        .insert(bookingData);
-
+      const {
+        error: dbError
+      } = await supabase.from("bookings").insert(bookingData);
       if (dbError) {
         console.error("Failed to save booking to database:", dbError);
         // Don't block the flow, just log the error
@@ -686,7 +647,7 @@ const Booking = () => {
         awbNumber: awbNumber || trackingId,
         labelUrl: labelUrl,
         courierName: selectedCourierData?.name || selectedService?.partner_code || "",
-        trackingId: trackingId,
+        trackingId: trackingId
       });
       setShowPaymentModal(false);
       setShowConfirmationDialog(true);
@@ -695,118 +656,66 @@ const Booking = () => {
       toast({
         title: "Booking Failed",
         description: error.message || "Failed to create booking. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const selectedCourierData = getSelectedServiceDetails();
   // Calculate pricing with 18% GST (all values rounded)
   const baseFare = Math.round(selectedCourierData ? selectedCourierData.basePrice : 0);
   const gstAmount = Math.round(baseFare * 0.18);
   const totalAmount = baseFare + gstAmount;
-
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
         return <BookingStep1 onNext={handleNextStep} />;
       case 2:
-        return (
-          <BookingStep2
-            pickupPincode={pickupPincode}
-            deliveryPincode={deliveryPincode}
-            pickupCity={senderData.city}
-            deliveryCity={receiverData.city}
-            goodsType={goodsType}
-            packageWeight={packageWeight}
-            dimensions={dimensions}
-            shipmentValue={shipmentValue}
-            urgency={urgency}
-            onInputChange={handleInputChange}
-            onDimensionChange={handleDimensionChange}
-            onPricingCalculated={setCalculatedPricing}
-            onServiceabilityData={setServiceabilityData}
-            onLocationData={handleLocationData}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-          />
-        );
+        return <BookingStep2 pickupPincode={pickupPincode} deliveryPincode={deliveryPincode} pickupCity={senderData.city} deliveryCity={receiverData.city} goodsType={goodsType} packageWeight={packageWeight} dimensions={dimensions} shipmentValue={shipmentValue} urgency={urgency} onInputChange={handleInputChange} onDimensionChange={handleDimensionChange} onPricingCalculated={setCalculatedPricing} onServiceabilityData={setServiceabilityData} onLocationData={handleLocationData} onNext={handleNextStep} onBack={handlePrevStep} />;
       case 3:
-        return (
-          <BookingStep5
-            partners={getPartners()}
-            selectedServiceId={selectedServiceId}
-            onServiceSelect={handleServiceSelect}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-            platformFee={platformFee}
-            platformFeeData={platformFeeData}
-            shipmentSummary={{
-              pickupPincode,
-              deliveryPincode,
-              pickupCity: senderData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.source_pincode_data?.city || "",
-              deliveryCity: receiverData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.dest_pincode_data?.city || "",
-              weight: packageWeight,
-              goodsType,
-              dimensions,
-              shipmentValue: Number(shipmentValue) || 0,
-            }}
-          />
-        );
+        return <BookingStep5 partners={getPartners()} selectedServiceId={selectedServiceId} onServiceSelect={handleServiceSelect} onNext={handleNextStep} onBack={handlePrevStep} platformFee={platformFee} platformFeeData={platformFeeData} shipmentSummary={{
+          pickupPincode,
+          deliveryPincode,
+          pickupCity: senderData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.source_pincode_data?.city || "",
+          deliveryCity: receiverData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.dest_pincode_data?.city || "",
+          weight: packageWeight,
+          goodsType,
+          dimensions,
+          shipmentValue: Number(shipmentValue) || 0
+        }} />;
       case 4:
-        return (
-        <AddressStep
-            senderData={senderData}
-            receiverData={receiverData}
-            pickupPincode={pickupPincode}
-            deliveryPincode={deliveryPincode}
-            shipmentValue={shipmentValue}
-            packageDescription={packageDescription}
-            onSenderChange={(field, value) => setSenderData((prev) => ({ ...prev, [field]: value }))}
-            onReceiverChange={(field, value) => setReceiverData((prev) => ({ ...prev, [field]: value }))}
-            onPackageChange={handleInputChange}
-            onNext={handleNextStep}
-            onBack={handlePrevStep}
-            onGoToStep={handleGoToStep}
-          />
-        );
+        return <AddressStep senderData={senderData} receiverData={receiverData} pickupPincode={pickupPincode} deliveryPincode={deliveryPincode} shipmentValue={shipmentValue} packageDescription={packageDescription} onSenderChange={(field, value) => setSenderData(prev => ({
+          ...prev,
+          [field]: value
+        }))} onReceiverChange={(field, value) => setReceiverData(prev => ({
+          ...prev,
+          [field]: value
+        }))} onPackageChange={handleInputChange} onNext={handleNextStep} onBack={handlePrevStep} onGoToStep={handleGoToStep} />;
       case 5:
         return <DisclaimerStep onNext={handleNextStep} onBack={handlePrevStep} />;
       case 6:
         const baseFare = selectedCourierData?.basePrice || 0;
-        return (
-          <BookingReviewStep
-            senderData={senderData}
-            receiverData={receiverData}
-            packageDetails={{
-              goodsType,
-              weight: packageWeight,
-              dimensions,
-              shipmentValue,
-              urgency,
-            }}
-            courierDetails={{
-              name: selectedCourierData?.name || "",
-              baseFare: baseFare, // This already includes platform fee (merged into displayed price)
-              deliveryTime: selectedCourierData?.deliveryTime || "",
-            }}
-            selectedDate={selectedDate}
-            onConfirm={handleProceedToPayment}
-            onBack={handlePrevStep}
-          />
-        );
+        return <BookingReviewStep senderData={senderData} receiverData={receiverData} packageDetails={{
+          goodsType,
+          weight: packageWeight,
+          dimensions,
+          shipmentValue,
+          urgency
+        }} courierDetails={{
+          name: selectedCourierData?.name || "",
+          baseFare: baseFare,
+          // This already includes platform fee (merged into displayed price)
+          deliveryTime: selectedCourierData?.deliveryTime || ""
+        }} selectedDate={selectedDate} onConfirm={handleProceedToPayment} onBack={handlePrevStep} />;
       default:
         return null;
     }
   };
-
-  return (
-    <PageBackground variant="logistics" opacity={0.7}>
+  return <PageBackground variant="logistics" opacity={0.7}>
       <div className="min-h-screen relative z-10">
         {/* Header */}
-        <header className="bg-background/80 backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-50">
+        <header className="backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-50 bg-primary-glow">
           <div className="flex items-center gap-3 max-w-2xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => (currentStep === 1 ? navigate("/") : handlePrevStep())}>
+            <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-semibold">Book Delivery</h1>
@@ -819,52 +728,36 @@ const Booking = () => {
         </div>
 
         {/* Payment Modal */}
-        {selectedCourierData && (
-          <PaymentModal
-            isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
-            orderDetails={{
-              courierId: selectedPartnerData?.partnerId ?? '',
-              courierName: selectedCourierData.name ?? '',
-              baseFare: baseFare,
-              gstAmount: gstAmount,
-              totalAmount: totalAmount,
-              pickupDate: selectedDate?.toISOString(),
-            }}
-            onPaymentSuccess={handlePaymentSuccess}
-            customerDetails={{
-              name: senderData.name,
-              phone: senderData.phone,
-              email: undefined,
-            }}
-          />
-        )}
+        {selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
+        courierId: selectedPartnerData?.partnerId ?? '',
+        courierName: selectedCourierData.name ?? '',
+        baseFare: baseFare,
+        gstAmount: gstAmount,
+        totalAmount: totalAmount,
+        pickupDate: selectedDate?.toISOString()
+      }} onPaymentSuccess={handlePaymentSuccess} customerDetails={{
+        name: senderData.name,
+        phone: senderData.phone,
+        email: undefined
+      }} />}
 
         {/* Booking Confirmation Dialog */}
-        <BookingConfirmationDialog
-          isOpen={showConfirmationDialog}
-          onClose={() => {
-            setShowConfirmationDialog(false);
-            if (confirmationData) {
-              navigate("/tracking", {
-                state: {
-                  orderId: confirmationData.trackingId,
-                  awbNumber: confirmationData.awbNumber,
-                  courier: confirmationData.courierName,
-                  pickupAddress: `${senderData.address}, ${senderData.city}`,
-                  deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
-                  pickupDate: selectedDate?.toISOString(),
-                },
-              });
+        <BookingConfirmationDialog isOpen={showConfirmationDialog} onClose={() => {
+        setShowConfirmationDialog(false);
+        if (confirmationData) {
+          navigate("/tracking", {
+            state: {
+              orderId: confirmationData.trackingId,
+              awbNumber: confirmationData.awbNumber,
+              courier: confirmationData.courierName,
+              pickupAddress: `${senderData.address}, ${senderData.city}`,
+              deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
+              pickupDate: selectedDate?.toISOString()
             }
-          }}
-          awbNumber={confirmationData?.awbNumber || ""}
-          labelUrl={confirmationData?.labelUrl}
-          courierName={confirmationData?.courierName}
-        />
+          });
+        }
+      }} awbNumber={confirmationData?.awbNumber || ""} labelUrl={confirmationData?.labelUrl} courierName={confirmationData?.courierName} />
       </div>
-    </PageBackground>
-  );
+    </PageBackground>;
 };
-
 export default Booking;
