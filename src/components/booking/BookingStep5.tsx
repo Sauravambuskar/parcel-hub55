@@ -6,6 +6,7 @@ import PartnerComparisonTable from "./PartnerComparisonTable";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
 import { Loader2, MapPin, Package, Scale, ArrowRight, Truck, Route } from "lucide-react";
 import React from "react";
+import warehouseBg from "@/assets/warehouse-bg.jpg";
 interface Partner {
   partner_id: string;
   partner_code: string;
@@ -131,8 +132,19 @@ const BookingStep5 = ({
   const volumetricWeight = calculateVolumetricWeight();
   const actualWeight = parseFloat(shipmentSummary?.weight || "0");
   const chargeableWeight = volumetricWeight ? Math.max(actualWeight, parseFloat(volumetricWeight)) : actualWeight;
-  return <div className="space-y-6">
-      <div className="text-center space-y-2">
+  return (
+    <div className="relative space-y-6">
+      {/* Subtle background image */}
+      <div 
+        className="absolute inset-0 -m-4 rounded-2xl overflow-hidden opacity-[0.06] pointer-events-none"
+        style={{
+          backgroundImage: `url(${warehouseBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      
+      <div className="relative text-center space-y-2">
         <h2 className="text-2xl font-semibold">Choose Your Courier</h2>
         <p className="text-muted-foreground">Compare partners and select the best option for your shipment</p>
       </div>
@@ -239,6 +251,7 @@ const BookingStep5 = ({
 
       {/* AI Courier Assistant - Floating Chat Button */}
       {shipmentSummary && serviceablePartners.length > 0 && <CourierAssistant shipmentContext={shipmentSummary} partners={partnerContextForAI} />}
-    </div>;
+    </div>
+  );
 };
 export default BookingStep5;
