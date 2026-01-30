@@ -15,6 +15,7 @@ import BookingStep1 from "@/components/booking/BookingStep1";
 import BookingStep2 from "@/components/booking/BookingStep2";
 import AddressStep from "@/components/booking/AddressStep";
 import BookingStep5 from "@/components/booking/BookingStep5";
+import PageBackground from "@/components/PageBackground";
 
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
@@ -800,67 +801,69 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-background/95 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
-        <div className="flex items-center gap-3 max-w-2xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => (currentStep === 1 ? navigate("/") : handlePrevStep())}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Book Delivery</h1>
+    <PageBackground variant="logistics" opacity={0.7}>
+      <div className="min-h-screen relative z-10">
+        {/* Header */}
+        <header className="bg-background/80 backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-50">
+          <div className="flex items-center gap-3 max-w-2xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => (currentStep === 1 ? navigate("/") : handlePrevStep())}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Book Delivery</h1>
+          </div>
+        </header>
+
+        <div className="p-4 max-w-2xl mx-auto">
+          <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
+          {renderCurrentStep()}
         </div>
-      </header>
 
-      <div className="p-4 max-w-2xl mx-auto">
-        <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
-        {renderCurrentStep()}
-      </div>
+        {/* Payment Modal */}
+        {selectedCourierData && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            orderDetails={{
+              courierId: selectedPartnerData?.partnerId ?? '',
+              courierName: selectedCourierData.name ?? '',
+              baseFare: baseFare,
+              gstAmount: gstAmount,
+              totalAmount: totalAmount,
+              pickupDate: selectedDate?.toISOString(),
+            }}
+            onPaymentSuccess={handlePaymentSuccess}
+            customerDetails={{
+              name: senderData.name,
+              phone: senderData.phone,
+              email: undefined,
+            }}
+          />
+        )}
 
-      {/* Payment Modal */}
-      {selectedCourierData && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          orderDetails={{
-            courierId: selectedPartnerData?.partnerId ?? '',
-            courierName: selectedCourierData.name ?? '',
-            baseFare: baseFare,
-            gstAmount: gstAmount,
-            totalAmount: totalAmount,
-            pickupDate: selectedDate?.toISOString(),
+        {/* Booking Confirmation Dialog */}
+        <BookingConfirmationDialog
+          isOpen={showConfirmationDialog}
+          onClose={() => {
+            setShowConfirmationDialog(false);
+            if (confirmationData) {
+              navigate("/tracking", {
+                state: {
+                  orderId: confirmationData.trackingId,
+                  awbNumber: confirmationData.awbNumber,
+                  courier: confirmationData.courierName,
+                  pickupAddress: `${senderData.address}, ${senderData.city}`,
+                  deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
+                  pickupDate: selectedDate?.toISOString(),
+                },
+              });
+            }
           }}
-          onPaymentSuccess={handlePaymentSuccess}
-          customerDetails={{
-            name: senderData.name,
-            phone: senderData.phone,
-            email: undefined,
-          }}
+          awbNumber={confirmationData?.awbNumber || ""}
+          labelUrl={confirmationData?.labelUrl}
+          courierName={confirmationData?.courierName}
         />
-      )}
-
-      {/* Booking Confirmation Dialog */}
-      <BookingConfirmationDialog
-        isOpen={showConfirmationDialog}
-        onClose={() => {
-          setShowConfirmationDialog(false);
-          if (confirmationData) {
-            navigate("/tracking", {
-              state: {
-                orderId: confirmationData.trackingId,
-                awbNumber: confirmationData.awbNumber,
-                courier: confirmationData.courierName,
-                pickupAddress: `${senderData.address}, ${senderData.city}`,
-                deliveryAddress: `${receiverData.address}, ${receiverData.city}`,
-                pickupDate: selectedDate?.toISOString(),
-              },
-            });
-          }
-        }}
-        awbNumber={confirmationData?.awbNumber || ""}
-        labelUrl={confirmationData?.labelUrl}
-        courierName={confirmationData?.courierName}
-      />
-    </div>
+      </div>
+    </PageBackground>
   );
 };
 
