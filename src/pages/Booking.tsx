@@ -550,6 +550,8 @@ const Booking = () => {
           finalAmount: totalAmount,
           // Total amount paid by user (includes platform fee + GST)
           type: "PREPAID",
+          // Add paymentMethod for Delhivery orders only
+          ...(selectedService?.partner_code?.toLowerCase().includes('delhivery') && { paymentMethod: "Pickup" }),
           breakdown: {
             otherCharges: [{
               name: "Base Rate",

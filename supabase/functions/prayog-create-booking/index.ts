@@ -153,6 +153,8 @@ serve(async (req) => {
       payment: {
         finalAmount: baseAmount,
         type: "PREPAID",
+        // Add paymentMethod for Delhivery orders only
+        ...(prayogPayload.carrierName?.toLowerCase().includes('delhivery') && { paymentMethod: "Pickup" }),
         breakdown: {
           otherCharges: [
             { name: "Base Rate", chargedAmount: baseAmount }
