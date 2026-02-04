@@ -58,6 +58,16 @@ serve(async (req) => {
     // Get base amount from selected service
     const baseAmount = selectedService?.rate?.price?.amount || 0;
     
+    // Check if this is a "delivery" order (swap addresses)
+    const orderFlowType = bookingData.orderFlowType || "pickup"; // Default to pickup if not specified
+    const isDeliveryOrder = orderFlowType === "delivery";
+    
+    // For delivery orders, swap: sender becomes DELIVERY, receiver becomes PICKUP
+    const pickupAddress = isDeliveryOrder ? bookingData.receiver : bookingData.sender;
+    const deliveryAddress = isDeliveryOrder ? bookingData.sender : bookingData.receiver;
+    const billingAddress = deliveryAddress;
+    const returnAddress = pickupAddress;
+
     // Prepare Prayog API payload
     const prayogPayload = {
       referenceId: orderId,
@@ -75,59 +85,59 @@ serve(async (req) => {
       addresses: [
         {
           type: "PICKUP",
-          zip: bookingData.sender.pincode,
-          name: bookingData.sender.name,
-          phone: bookingData.sender.phone,
-          street: bookingData.sender.address,
+          zip: pickupAddress.pincode,
+          name: pickupAddress.name,
+          phone: pickupAddress.phone,
+          street: pickupAddress.address,
           landmark: null,
-          city: bookingData.sender.city,
-          state: bookingData.sender.state,
+          city: pickupAddress.city,
+          state: pickupAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: bookingData.sender.address
+          addressName: pickupAddress.address
         },
         {
           type: "DELIVERY",
-          zip: bookingData.receiver.pincode,
-          name: bookingData.receiver.name,
-          phone: bookingData.receiver.phone,
-          street: bookingData.receiver.address,
+          zip: deliveryAddress.pincode,
+          name: deliveryAddress.name,
+          phone: deliveryAddress.phone,
+          street: deliveryAddress.address,
           landmark: null,
-          city: bookingData.receiver.city,
-          state: bookingData.receiver.state,
+          city: deliveryAddress.city,
+          state: deliveryAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: bookingData.receiver.address
+          addressName: deliveryAddress.address
         },
         {
           type: "BILLING",
-          zip: bookingData.receiver.pincode,
-          name: bookingData.receiver.name,
-          phone: bookingData.receiver.phone,
-          street: bookingData.receiver.address,
+          zip: billingAddress.pincode,
+          name: billingAddress.name,
+          phone: billingAddress.phone,
+          street: billingAddress.address,
           landmark: null,
-          city: bookingData.receiver.city,
-          state: bookingData.receiver.state,
+          city: billingAddress.city,
+          state: billingAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: bookingData.receiver.address
+          addressName: billingAddress.address
         },
         {
           type: "RETURN",
-          zip: bookingData.sender.pincode,
-          name: bookingData.sender.name,
-          phone: bookingData.sender.phone,
-          street: bookingData.sender.address,
+          zip: returnAddress.pincode,
+          name: returnAddress.name,
+          phone: returnAddress.phone,
+          street: returnAddress.address,
           landmark: null,
-          city: bookingData.sender.city,
-          state: bookingData.sender.state,
+          city: returnAddress.city,
+          state: returnAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: bookingData.sender.address
+          addressName: returnAddress.address
         }
       ],
       shipments: [
@@ -154,7 +164,7 @@ serve(async (req) => {
         finalAmount: baseAmount,
         type: "PREPAID",
         // Add paymentMethod for Delhivery orders only
-        ...(prayogPayload.carrierName?.toLowerCase().includes('delhivery') && { paymentMethod: "Pickup" }),
+        ...((bookingData.carrierName || selectedService?.partner_code || "").toLowerCase().includes('delhivery') && { paymentMethod: "Pickup" }),
         breakdown: {
           otherCharges: [
             { name: "Base Rate", chargedAmount: baseAmount }
