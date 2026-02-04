@@ -5,6 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Package } from "lucide-react";
+
+// Validate 10-digit phone number (digits only, no country code)
+const validatePhone = (phone: string): boolean => {
+  const digitsOnly = phone.replace(/\D/g, '');
+  return digitsOnly.length === 10;
+};
+
+const formatPhoneDisplay = (phone: string): string => {
+  // Remove any non-digit characters except for display
+  return phone.replace(/[^\d]/g, '').slice(0, 10);
+};
 import AddressAutocomplete from "./AddressAutocomplete";
 
 interface PincodeMismatch {
@@ -60,9 +71,13 @@ const AddressStep = ({
   const [senderPincodeMismatch, setSenderPincodeMismatch] = useState<PincodeMismatch | null>(null);
   const [receiverPincodeMismatch, setReceiverPincodeMismatch] = useState<PincodeMismatch | null>(null);
 
+  const isSenderPhoneValid = validatePhone(senderData.phone);
+  const isReceiverPhoneValid = validatePhone(receiverData.phone);
+
   const isSenderValid = 
     senderData.name && 
     senderData.phone && 
+    isSenderPhoneValid &&
     senderData.flatNo &&
     senderData.address && 
     senderData.city && 
@@ -72,6 +87,7 @@ const AddressStep = ({
   const isReceiverValid = 
     receiverData.name && 
     receiverData.phone && 
+    isReceiverPhoneValid &&
     receiverData.flatNo &&
     receiverData.address && 
     receiverData.city && 
@@ -80,6 +96,16 @@ const AddressStep = ({
 
   const hasPincodeMismatch = senderPincodeMismatch !== null || receiverPincodeMismatch !== null;
   const isValid = isSenderValid && isReceiverValid && !hasPincodeMismatch;
+
+  const handlePhoneChange = (type: 'sender' | 'receiver', value: string) => {
+    // Only allow digits, limit to 10
+    const formatted = formatPhoneDisplay(value);
+    if (type === 'sender') {
+      onSenderChange("phone", formatted);
+    } else {
+      onReceiverChange("phone", formatted);
+    }
+  };
 
   const handleSenderAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
     onSenderChange("address", components.address);
@@ -133,14 +159,21 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="sender-phone">Phone Number *</Label>
+              <Label htmlFor="sender-phone">Phone Number * (10 digits)</Label>
               <Input
                 id="sender-phone"
                 type="tel"
                 value={senderData.phone}
-                onChange={(e) => onSenderChange("phone", e.target.value)}
-                placeholder="+91 98765 43210"
+                onChange={(e) => handlePhoneChange('sender', e.target.value)}
+                placeholder="9876543210"
+                maxLength={10}
+                className={senderData.phone && !isSenderPhoneValid ? "border-destructive" : ""}
               />
+              {senderData.phone && !isSenderPhoneValid && (
+                <p className="text-xs text-destructive mt-1">
+                  Please enter a valid 10-digit phone number
+                </p>
+              )}
             </div>
           </div>
 
@@ -233,14 +266,21 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="receiver-phone">Phone Number *</Label>
+              <Label htmlFor="receiver-phone">Phone Number * (10 digits)</Label>
               <Input
                 id="receiver-phone"
                 type="tel"
                 value={receiverData.phone}
-                onChange={(e) => onReceiverChange("phone", e.target.value)}
-                placeholder="+91 98765 43210"
+                onChange={(e) => handlePhoneChange('receiver', e.target.value)}
+                placeholder="9876543210"
+                maxLength={10}
+                className={receiverData.phone && !isReceiverPhoneValid ? "border-destructive" : ""}
               />
+              {receiverData.phone && !isReceiverPhoneValid && (
+                <p className="text-xs text-destructive mt-1">
+                  Please enter a valid 10-digit phone number
+                </p>
+              )}
             </div>
           </div>
 
