@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
@@ -598,6 +598,33 @@ const OrderDetails = () => {
             </div>
           </Card>
         )}
+
+        {/* Label Printing Instructions */}
+        <Card className="p-4">
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Printer className="h-5 w-5 text-warning" />
+              <h4 className="font-semibold text-sm">Important: Label Printing Instructions</h4>
+            </div>
+            <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+              <li>
+                <span className="font-medium text-foreground">Download</span> the shipping label using the button below
+              </li>
+              <li>
+                <span className="font-medium text-foreground">Print</span> the label on an A4 or A6 paper
+              </li>
+              <li>
+                <span className="font-medium text-foreground">Attach</span> the printed label securely on your shipment box
+              </li>
+            </ol>
+          </div>
+          <div className="flex items-start gap-3 rounded-lg bg-primary/10 p-3 mt-3">
+            <Package className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Note:</span> The courier will only pick up your shipment if the shipping label is clearly visible and attached to the package.
+            </p>
+          </div>
+        </Card>
 
         {/* Download Actions */}
         <div className="flex flex-col gap-3">

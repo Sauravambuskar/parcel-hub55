@@ -91,7 +91,7 @@ const BookingConfirmationDialog = ({
             </Button>
           )}
           <Button variant="outline" onClick={onClose} className="w-full">
-            Continue to Tracking
+            Go to Order History
           </Button>
         </DialogFooter>
       </DialogContent>
