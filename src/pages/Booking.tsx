@@ -36,9 +36,6 @@ const Booking = () => {
     height: ""
   });
   const [shipmentValue, setShipmentValue] = useState("");
-  // Order flow type: "delivery" means user is receiving, "pickup" means user is sending
-  // For "delivery" orders, swap addresses in API payload (sender becomes delivery, receiver becomes pickup)
-  const [orderFlowType, setOrderFlowType] = useState<"pickup" | "delivery">("delivery");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedPartnerData, setSelectedPartnerData] = useState<{
     partnerId: string;
@@ -480,66 +477,7 @@ const Booking = () => {
           })
         },
         documents: [],
-        // For "delivery" orders, swap addresses: sender becomes DELIVERY, receiver becomes PICKUP
-        // For "pickup" orders, sender is PICKUP, receiver is DELIVERY (normal flow)
-        addresses: orderFlowType === "delivery" ? [
-          {
-            type: "PICKUP",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address
-          },
-          {
-            type: "DELIVERY",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address
-          },
-          {
-            type: "BILLING",
-            zip: senderData.pincode,
-            name: senderData.name,
-            phone: senderData.phone,
-            street: senderData.address,
-            landmark: null,
-            city: senderData.city,
-            state: senderData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: senderData.address
-          },
-          {
-            type: "RETURN",
-            zip: receiverData.pincode,
-            name: receiverData.name,
-            phone: receiverData.phone,
-            street: receiverData.address,
-            landmark: null,
-            city: receiverData.city,
-            state: receiverData.state,
-            country: "India",
-            latitude: 0,
-            longitude: 0,
-            addressName: receiverData.address
-          }
-        ] : [
+        addresses: [
           {
             type: "PICKUP",
             zip: senderData.pincode,

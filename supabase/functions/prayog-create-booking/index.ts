@@ -58,13 +58,8 @@ serve(async (req) => {
     // Get base amount from selected service
     const baseAmount = selectedService?.rate?.price?.amount || 0;
     
-    // Check if this is a "delivery" order (swap addresses)
-    const orderFlowType = bookingData.orderFlowType || "pickup"; // Default to pickup if not specified
-    const isDeliveryOrder = orderFlowType === "delivery";
-    
-    // For delivery orders, swap: sender becomes DELIVERY, receiver becomes PICKUP
-    const pickupAddress = isDeliveryOrder ? bookingData.receiver : bookingData.sender;
-    const deliveryAddress = isDeliveryOrder ? bookingData.sender : bookingData.receiver;
+    const pickupAddress = bookingData.sender;
+    const deliveryAddress = bookingData.receiver;
     const billingAddress = deliveryAddress;
     const returnAddress = pickupAddress;
 
