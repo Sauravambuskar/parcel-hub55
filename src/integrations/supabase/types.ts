@@ -328,7 +328,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_safe: {
+        Row: {
+          created_at: string | null
+          doc_number: string | null
+          doc_type: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          kyc_completed_at: string | null
+          kyc_status: string | null
+          phone: string | null
+          preferred_language: string | null
+          promo_notifications: boolean | null
+          sms_notifications: boolean | null
+          status: string | null
+          theme_preference: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doc_number?: never
+          doc_type?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          kyc_completed_at?: string | null
+          kyc_status?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          promo_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          status?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doc_number?: never
+          doc_type?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          kyc_completed_at?: string | null
+          kyc_status?: string | null
+          phone?: string | null
+          preferred_language?: string | null
+          promo_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          status?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_admin_role: {
@@ -337,6 +393,7 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      mask_doc_number: { Args: { doc: string }; Returns: string }
     }
     Enums: {
       admin_role: "super_admin" | "support"
