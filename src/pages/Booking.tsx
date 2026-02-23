@@ -36,6 +36,7 @@ const Booking = () => {
     height: ""
   });
   const [shipmentValue, setShipmentValue] = useState("");
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedPartnerData, setSelectedPartnerData] = useState<{
     partnerId: string;
@@ -495,7 +496,7 @@ const Booking = () => {
       const width = parseFloat(dimensions?.width) || (isDocuments ? 22 : 10);
       const height = parseFloat(dimensions?.height) || (isDocuments ? 2 : 10);
       const volumetricWeight = length * width * height / 5000;
-      const physicalWeight = parseFloat(packageWeight) || 1;
+      const physicalWeight = weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1;
       const baseAmount = selectedService?.rate?.price?.amount || 0;
 
       // Prepare Prayog API payload
@@ -663,7 +664,7 @@ const Booking = () => {
         receiver_state: receiverData.state,
         receiver_pincode: receiverData.pincode,
         goods_type: goodsType || "Package",
-        package_weight: packageWeight || "1",
+        package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
         length: dimensions?.length || null,
         width: dimensions?.width || null,
         height: dimensions?.height || null,
@@ -725,7 +726,7 @@ const Booking = () => {
       case 1:
         return <BookingStep1 onNext={handleNextStep} />;
       case 2:
-        return <BookingStep2 pickupPincode={pickupPincode} deliveryPincode={deliveryPincode} pickupCity={senderData.city} deliveryCity={receiverData.city} goodsType={goodsType} packageWeight={packageWeight} dimensions={dimensions} shipmentValue={shipmentValue} urgency={urgency} onInputChange={handleInputChange} onDimensionChange={handleDimensionChange} onPricingCalculated={setCalculatedPricing} onServiceabilityData={setServiceabilityData} onLocationData={handleLocationData} onNext={handleNextStep} onBack={handlePrevStep} />;
+        return <BookingStep2 pickupPincode={pickupPincode} deliveryPincode={deliveryPincode} pickupCity={senderData.city} deliveryCity={receiverData.city} goodsType={goodsType} packageWeight={packageWeight} dimensions={dimensions} shipmentValue={shipmentValue} urgency={urgency} onInputChange={handleInputChange} onDimensionChange={handleDimensionChange} onPricingCalculated={setCalculatedPricing} onServiceabilityData={setServiceabilityData} onLocationData={handleLocationData} onWeightUnitChange={setWeightUnit} onNext={handleNextStep} onBack={handlePrevStep} />;
       case 3:
         return <BookingStep5 partners={getPartners()} selectedServiceId={selectedServiceId} onServiceSelect={handleServiceSelect} onNext={handleNextStep} onBack={handlePrevStep} platformFee={platformFee} platformFeeData={platformFeeData} shipmentSummary={{
           pickupPincode,
