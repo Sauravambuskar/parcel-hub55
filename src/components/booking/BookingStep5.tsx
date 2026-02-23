@@ -141,7 +141,7 @@ const BookingStep5 = ({
     }} />
       
       <div className="relative text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-primary-glow">Compare and Choose Your Courier Partner </h2>
+        <h2 className="text-2xl font-semibold text-primary-glow">Courier Partners</h2>
         
       </div>
 

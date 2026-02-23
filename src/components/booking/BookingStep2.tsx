@@ -147,7 +147,8 @@ const BookingStep2 = ({
     };
   }, [deliveryPincode]);
   
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && dimensions.length && dimensions.width && dimensions.height && (goodsType !== 'others' || customGoodsType.trim());
+  const dimensionsRequired = goodsType !== 'documents';
+  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height)) && (goodsType !== 'others' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -483,44 +484,50 @@ const BookingStep2 = ({
               <span>Note: Weight discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
             </p>
           </div>
-          <div className="space-y-2">
-            <Label>Dimensions (cm)</Label>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="length" className="text-xs text-muted-foreground">Length</Label>
-                <Input
-                  id="length"
-                  type="number"
-                  value={dimensions.length}
-                  onChange={(e) => onDimensionChange('length', e.target.value)}
-                  placeholder="L"
-                  min="1"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="width" className="text-xs text-muted-foreground">Breadth</Label>
-                <Input
-                  id="width"
-                  type="number"
-                  value={dimensions.width}
-                  onChange={(e) => onDimensionChange('width', e.target.value)}
-                  placeholder="B"
-                  min="1"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="height" className="text-xs text-muted-foreground">Height</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  value={dimensions.height}
-                  onChange={(e) => onDimensionChange('height', e.target.value)}
-                  placeholder="H"
-                  min="1"
-                />
+          {dimensionsRequired ? (
+            <div className="space-y-2">
+              <Label>Dimensions (cm)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="length" className="text-xs text-muted-foreground">Length</Label>
+                  <Input
+                    id="length"
+                    type="number"
+                    value={dimensions.length}
+                    onChange={(e) => onDimensionChange('length', e.target.value)}
+                    placeholder="L"
+                    min="1"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="width" className="text-xs text-muted-foreground">Breadth</Label>
+                  <Input
+                    id="width"
+                    type="number"
+                    value={dimensions.width}
+                    onChange={(e) => onDimensionChange('width', e.target.value)}
+                    placeholder="B"
+                    min="1"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="height" className="text-xs text-muted-foreground">Height</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={dimensions.height}
+                    onChange={(e) => onDimensionChange('height', e.target.value)}
+                    placeholder="H"
+                    min="1"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              📄 Dimensions not required for documents/envelopes.
+            </p>
+          )}
         </CardContent>
       </Card>
 

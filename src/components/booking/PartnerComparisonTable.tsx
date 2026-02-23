@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Shield, Truck, Check, Zap } from "lucide-react";
+import { Star, Clock, Shield, Truck, Check, Zap, ArrowUpDown, Filter } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { normalizeTatDays } from "@/lib/tat-utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type SortOption = 'price-asc' | 'price-desc' | 'time-asc' | 'rating-desc';
+type ModeFilter = 'all' | 'surface' | 'air' | 'express' | 'standard';
+
+const inferMode = (serviceName: string, deliveryModes?: { express: boolean; standard: boolean }): string => {
+  const name = serviceName.toLowerCase();
+  if (deliveryModes?.express || name.includes('express') || name.includes('air')) return 'Air';
+  if (name.includes('surface') || name.includes('ground')) return 'Surface';
+  if (name.includes('standard')) return 'Standard';
+  return 'Standard';
+};
+
 interface Service {
   service_code: string;
   service_name: string;
@@ -70,12 +84,35 @@ const PartnerComparisonTable = ({
     aiRating: ratings.get(partner.partner_code)
   })));
 
-  // Sort by price (lowest first)
-  const sortedRows = [...tableRows].sort((a, b) => a.price - b.price);
+  const [sortBy, setSortBy] = useState<SortOption>('price-asc');
+  const [modeFilter, setModeFilter] = useState<ModeFilter>('all');
+
+  // Apply filter and sort
+  const sortedRows = useMemo(() => {
+    let filtered = [...tableRows];
+    
+    if (modeFilter !== 'all') {
+      filtered = filtered.filter(r => {
+        const mode = inferMode(r.service.service_name, r.service.delivery_modes).toLowerCase();
+        return mode === modeFilter;
+      });
+    }
+
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc': return a.price - b.price;
+        case 'price-desc': return b.price - a.price;
+        case 'time-asc': return normalizeTatDays(a.service.tat_days, a.service.service_name) - normalizeTatDays(b.service.tat_days, b.service.service_name);
+        case 'rating-desc': return (b.aiRating?.rating || b.partner.rating || 0) - (a.aiRating?.rating || a.partner.rating || 0);
+        default: return 0;
+      }
+    });
+    return filtered;
+  }, [tableRows, sortBy, modeFilter]);
 
   // Find lowest price and fastest for badges
-  const lowestPrice = Math.min(...sortedRows.map(r => r.price));
-  const fastestDays = Math.min(...sortedRows.map(r => normalizeTatDays(r.service.tat_days, r.service.service_name)));
+  const lowestPrice = Math.min(...tableRows.map(r => r.price));
+  const fastestDays = Math.min(...tableRows.map(r => normalizeTatDays(r.service.tat_days, r.service.service_name)));
   const handleImageError = (partnerId: string) => {
     setImageErrors(prev => new Set(prev).add(partnerId));
   };
@@ -86,13 +123,43 @@ const PartnerComparisonTable = ({
     }
     return logo;
   };
-  return <div className="rounded-xl border border-border overflow-hidden bg-card">
+  return <div className="space-y-3">
+      {/* Sort & Filter Controls */}
+      <div className="flex flex-wrap gap-2">
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-[160px] h-9 text-xs">
+            <ArrowUpDown className="h-3 w-3 mr-1" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="price-asc">Price: Low → High</SelectItem>
+            <SelectItem value="price-desc">Price: High → Low</SelectItem>
+            <SelectItem value="time-asc">Fastest First</SelectItem>
+            <SelectItem value="rating-desc">Highest Rated</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={modeFilter} onValueChange={(v) => setModeFilter(v as ModeFilter)}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <Filter className="h-3 w-3 mr-1" />
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Modes</SelectItem>
+            <SelectItem value="surface">Surface</SelectItem>
+            <SelectItem value="air">Air</SelectItem>
+            <SelectItem value="express">Express</SelectItem>
+            <SelectItem value="standard">Standard</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="rounded-xl border border-border overflow-hidden bg-card">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             <TableHead className="w-12"></TableHead>
             <TableHead>Partner</TableHead>
-            <TableHead>Service</TableHead>
+            <TableHead>Mode</TableHead>
             <TableHead className="text-center">Rating</TableHead>
             <TableHead className="text-center">Delivery</TableHead>
             <TableHead className="text-right">Price</TableHead>
@@ -139,9 +206,9 @@ const PartnerComparisonTable = ({
                   </div>
                 </TableCell>
 
-                {/* Service */}
+                {/* Mode */}
                 <TableCell>
-                  <p className="text-sm">{service.service_name}</p>
+                  <p className="text-sm">{inferMode(service.service_name, service.delivery_modes)}</p>
                 </TableCell>
 
                 {/* Rating */}
@@ -173,6 +240,7 @@ const PartnerComparisonTable = ({
         })}
         </TableBody>
       </Table>
+    </div>
     </div>;
 };
 export default PartnerComparisonTable;

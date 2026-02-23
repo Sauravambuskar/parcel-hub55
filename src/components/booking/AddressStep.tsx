@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Package } from "lucide-react";
+import { AlertTriangle, Package, User, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Validate 10-digit phone number (digits only, no country code)
 const validatePhone = (phone: string): boolean => {
@@ -68,8 +69,35 @@ const AddressStep = ({
   onBack,
   onGoToStep,
 }: AddressStepProps) => {
+  const { toast } = useToast();
   const [senderPincodeMismatch, setSenderPincodeMismatch] = useState<PincodeMismatch | null>(null);
   const [receiverPincodeMismatch, setReceiverPincodeMismatch] = useState<PincodeMismatch | null>(null);
+  const [bookingFor, setBookingFor] = useState<'self' | 'other'>('other');
+  const [submitted, setSubmitted] = useState(false);
+
+  // Auto-fill sender from profile when "Self" is selected
+  useEffect(() => {
+    if (bookingFor === 'self') {
+      try {
+        const prayogAuth = localStorage.getItem('prayog_auth');
+        const profileData = localStorage.getItem('user_profile');
+        let name = '';
+        let phone = '';
+        if (profileData) {
+          const profile = JSON.parse(profileData);
+          name = profile.full_name || '';
+          phone = profile.phone || '';
+        }
+        if (!name && prayogAuth) {
+          const auth = JSON.parse(prayogAuth);
+          name = auth.name || auth.full_name || '';
+          phone = phone || auth.phone || '';
+        }
+        if (name) onSenderChange('name', name);
+        if (phone) onSenderChange('phone', formatPhoneDisplay(phone));
+      } catch {}
+    }
+  }, [bookingFor]);
 
   const isSenderPhoneValid = validatePhone(senderData.phone);
   const isReceiverPhoneValid = validatePhone(receiverData.phone);
@@ -96,6 +124,40 @@ const AddressStep = ({
 
   const hasPincodeMismatch = senderPincodeMismatch !== null || receiverPincodeMismatch !== null;
   const isValid = isSenderValid && isReceiverValid && !hasPincodeMismatch;
+
+  // Get missing fields for validation messages
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (!senderData.name) missing.push('Sender Name');
+    if (!senderData.phone) missing.push('Sender Phone');
+    else if (!isSenderPhoneValid) missing.push('Valid Sender Phone');
+    if (!senderData.flatNo) missing.push('Sender Flat/House No.');
+    if (!senderData.address) missing.push('Sender Address');
+    if (!senderData.city) missing.push('Sender City');
+    if (!senderData.state) missing.push('Sender State');
+    if (!receiverData.name) missing.push('Receiver Name');
+    if (!receiverData.phone) missing.push('Receiver Phone');
+    else if (!isReceiverPhoneValid) missing.push('Valid Receiver Phone');
+    if (!receiverData.flatNo) missing.push('Receiver Flat/House No.');
+    if (!receiverData.address) missing.push('Receiver Address');
+    if (!receiverData.city) missing.push('Receiver City');
+    if (!receiverData.state) missing.push('Receiver State');
+    return missing;
+  };
+
+  const handleContinue = () => {
+    setSubmitted(true);
+    if (!isValid) {
+      const missing = getMissingFields();
+      toast({
+        title: "Missing Fields",
+        description: `Please fill: ${missing.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    onNext();
+  };
 
   const handlePhoneChange = (type: 'sender' | 'receiver', value: string) => {
     // Only allow digits, limit to 10
@@ -143,8 +205,35 @@ const AddressStep = ({
     }
   };
 
+  const fieldError = (condition: boolean) => submitted && condition ? "border-destructive" : "";
+
   return (
     <div className="space-y-6">
+      {/* Self / Someone Else Toggle */}
+      <Card className="p-4">
+        <Label className="text-sm font-medium mb-3 block">Sending for</Label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={bookingFor === 'self' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBookingFor('self')}
+            className="flex-1"
+          >
+            <User className="h-4 w-4 mr-1.5" /> Self
+          </Button>
+          <Button
+            type="button"
+            variant={bookingFor === 'other' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBookingFor('other')}
+            className="flex-1"
+          >
+            <Users className="h-4 w-4 mr-1.5" /> Someone Else
+          </Button>
+        </div>
+      </Card>
+
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Sender Details</h2>
         <div className="space-y-4">
@@ -156,7 +245,10 @@ const AddressStep = ({
                 value={senderData.name}
                 onChange={(e) => onSenderChange("name", e.target.value)}
                 placeholder="Enter sender name"
+                readOnly={bookingFor === 'self'}
+                className={`${fieldError(!senderData.name)} ${bookingFor === 'self' ? 'bg-muted' : ''}`}
               />
+              {submitted && !senderData.name && <p className="text-xs text-destructive mt-1">Name is required</p>}
             </div>
             <div>
               <Label htmlFor="sender-phone">Phone Number * (10 digits)</Label>
@@ -167,7 +259,8 @@ const AddressStep = ({
                 onChange={(e) => handlePhoneChange('sender', e.target.value)}
                 placeholder="9876543210"
                 maxLength={10}
-                className={senderData.phone && !isSenderPhoneValid ? "border-destructive" : ""}
+                readOnly={bookingFor === 'self'}
+                className={`${(senderData.phone && !isSenderPhoneValid) || (submitted && !senderData.phone) ? "border-destructive" : ""} ${bookingFor === 'self' ? 'bg-muted' : ''}`}
               />
               {senderData.phone && !isSenderPhoneValid && (
                 <p className="text-xs text-destructive mt-1">
@@ -184,7 +277,9 @@ const AddressStep = ({
               value={senderData.flatNo}
               onChange={(e) => onSenderChange("flatNo", e.target.value)}
               placeholder="Enter flat no., building name, or house no."
+              className={fieldError(!senderData.flatNo)}
             />
+            {submitted && !senderData.flatNo && <p className="text-xs text-destructive mt-1">Required</p>}
           </div>
 
           <AddressAutocomplete
@@ -263,7 +358,9 @@ const AddressStep = ({
                 value={receiverData.name}
                 onChange={(e) => onReceiverChange("name", e.target.value)}
                 placeholder="Enter receiver name"
+                className={fieldError(!receiverData.name)}
               />
+              {submitted && !receiverData.name && <p className="text-xs text-destructive mt-1">Name is required</p>}
             </div>
             <div>
               <Label htmlFor="receiver-phone">Phone Number * (10 digits)</Label>
@@ -274,7 +371,7 @@ const AddressStep = ({
                 onChange={(e) => handlePhoneChange('receiver', e.target.value)}
                 placeholder="9876543210"
                 maxLength={10}
-                className={receiverData.phone && !isReceiverPhoneValid ? "border-destructive" : ""}
+                className={`${(receiverData.phone && !isReceiverPhoneValid) || (submitted && !receiverData.phone) ? "border-destructive" : ""}`}
               />
               {receiverData.phone && !isReceiverPhoneValid && (
                 <p className="text-xs text-destructive mt-1">
@@ -291,7 +388,9 @@ const AddressStep = ({
               value={receiverData.flatNo}
               onChange={(e) => onReceiverChange("flatNo", e.target.value)}
               placeholder="Enter flat no., building name, or house no."
+              className={fieldError(!receiverData.flatNo)}
             />
+            {submitted && !receiverData.flatNo && <p className="text-xs text-destructive mt-1">Required</p>}
           </div>
 
           <AddressAutocomplete
@@ -400,7 +499,7 @@ const AddressStep = ({
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onNext} disabled={!isValid}>
+        <Button onClick={handleContinue}>
           Continue
         </Button>
       </div>
