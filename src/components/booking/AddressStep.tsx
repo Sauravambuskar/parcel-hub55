@@ -279,7 +279,7 @@ const AddressStep = ({
                 type="tel"
                 value={senderData.phone}
                 onChange={(e) => handlePhoneChange('sender', e.target.value)}
-                placeholder="9876543210"
+                placeholder="1234567890"
                 maxLength={10}
                 readOnly={bookingFor === 'self'}
                 className={`${(senderData.phone && !isSenderPhoneValid) || (submitted && !senderData.phone) ? "border-destructive" : ""} ${bookingFor === 'self' ? 'bg-muted' : ''}`}
@@ -405,7 +405,7 @@ const AddressStep = ({
                 type="tel"
                 value={receiverData.phone}
                 onChange={(e) => handlePhoneChange('receiver', e.target.value)}
-                placeholder="9876543210"
+                placeholder="1234567890"
                 maxLength={10}
                 className={`${(receiverData.phone && !isReceiverPhoneValid) || (submitted && !receiverData.phone) ? "border-destructive" : ""}`}
               />
