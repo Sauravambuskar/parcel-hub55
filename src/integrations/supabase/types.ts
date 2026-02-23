@@ -281,6 +281,51 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_addresses: {
+        Row: {
+          address: string
+          city: string
+          created_at: string | null
+          flat_no: string | null
+          id: string
+          label: string | null
+          name: string
+          phone: string
+          pincode: string
+          state: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string | null
+          flat_no?: string | null
+          id?: string
+          label?: string | null
+          name: string
+          phone: string
+          pincode: string
+          state: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string | null
+          flat_no?: string | null
+          id?: string
+          label?: string | null
+          name?: string
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
