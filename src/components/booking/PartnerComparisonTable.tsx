@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SortOption = 'price-asc' | 'price-desc' | 'time-asc' | 'rating-desc';
-type ModeFilter = 'all' | 'surface' | 'air' | 'express' | 'standard';
+type ModeFilter = 'all' | 'express' | 'standard';
 
 const inferMode = (serviceName: string, deliveryModes?: { express: boolean; standard: boolean }): string => {
   const name = serviceName.toLowerCase();
-  if (deliveryModes?.express || name.includes('express') || name.includes('air')) return 'Air';
-  if (name.includes('surface') || name.includes('ground')) return 'Surface';
-  if (name.includes('standard')) return 'Standard';
+  if (deliveryModes?.express || name.includes('express') || name.includes('air')) return 'Express';
   return 'Standard';
 };
 
@@ -145,8 +143,6 @@ const PartnerComparisonTable = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Modes</SelectItem>
-            <SelectItem value="surface">Surface</SelectItem>
-            <SelectItem value="air">Air</SelectItem>
             <SelectItem value="express">Express</SelectItem>
             <SelectItem value="standard">Standard</SelectItem>
           </SelectContent>
