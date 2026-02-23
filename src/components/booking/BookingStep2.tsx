@@ -40,6 +40,7 @@ interface BookingStep2Props {
   onPricingCalculated?: (pricing: PricingData) => void;
   onServiceabilityData?: (data: any) => void;
   onLocationData?: (pickupCity: string, pickupState: string, deliveryCity: string, deliveryState: string) => void;
+  onWeightUnitChange?: (unit: 'kg' | 'g') => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -59,6 +60,7 @@ const BookingStep2 = ({
   onPricingCalculated,
   onServiceabilityData,
   onLocationData,
+  onWeightUnitChange,
   onNext, 
   onBack 
 }: BookingStep2Props) => {
@@ -448,7 +450,7 @@ const BookingStep2 = ({
               <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                 <button
                   type="button"
-                  onClick={() => setWeightUnit('kg')}
+                  onClick={() => { setWeightUnit('kg'); onWeightUnitChange?.('kg'); }}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     weightUnit === 'kg' 
                       ? 'bg-primary text-primary-foreground' 
@@ -459,7 +461,7 @@ const BookingStep2 = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setWeightUnit('g')}
+                  onClick={() => { setWeightUnit('g'); onWeightUnitChange?.('g'); }}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     weightUnit === 'g' 
                       ? 'bg-primary text-primary-foreground' 

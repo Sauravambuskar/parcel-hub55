@@ -276,8 +276,8 @@ const OrderDetails = () => {
                   <tr>
                     <td>${shipmentData.items?.[0]?.name || 'Package'} ${shipmentData.items?.[0]?.description ? `- ${shipmentData.items[0].description}` : ''}</td>
                     <td>${shipmentData.dimensions ? `${shipmentData.dimensions.length} × ${shipmentData.dimensions.width} × ${shipmentData.dimensions.height} cm` : 'N/A'}</td>
-                    <td>${shipmentData.physicalWeight !== undefined ? `${shipmentData.physicalWeight} g` : 'N/A'}</td>
-                    <td>${shipmentData.volumetricWeight !== undefined ? `${shipmentData.volumetricWeight.toFixed(2)} g` : 'N/A'}</td>
+                    <td>${shipmentData.physicalWeight !== undefined ? `${shipmentData.physicalWeight} kg` : 'N/A'}</td>
+                    <td>${shipmentData.volumetricWeight !== undefined ? `${shipmentData.volumetricWeight.toFixed(2)} kg` : 'N/A'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -519,7 +519,7 @@ const OrderDetails = () => {
                     <Weight className="h-4 w-4" />
                     <span className="text-xs">Weight</span>
                   </div>
-                  <p className="text-sm font-medium">{shipment.physicalWeight} g</p>
+                  <p className="text-sm font-medium">{shipment.physicalWeight} kg</p>
                 </div>
               )}
               {shipment.volumetricWeight !== undefined && (
@@ -528,7 +528,7 @@ const OrderDetails = () => {
                     <Weight className="h-4 w-4" />
                     <span className="text-xs">Volumetric</span>
                   </div>
-                  <p className="text-sm font-medium">{shipment.volumetricWeight.toFixed(2)} g</p>
+                  <p className="text-sm font-medium">{shipment.volumetricWeight.toFixed(2)} kg</p>
                 </div>
               )}
               <div className="space-y-1">
