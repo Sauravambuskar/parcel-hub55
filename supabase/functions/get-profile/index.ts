@@ -34,6 +34,14 @@ serve(async (req) => {
 
     if (error) throw error;
 
+    // Mask sensitive document number before returning
+    if (profile?.doc_number) {
+      const doc = profile.doc_number;
+      profile.doc_number = doc.length <= 4
+        ? 'X'.repeat(doc.length)
+        : 'X'.repeat(doc.length - 4) + doc.slice(-4);
+    }
+
     return new Response(
       JSON.stringify({ profile }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
