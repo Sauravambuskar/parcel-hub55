@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
@@ -85,9 +85,15 @@ const History = () => {
   const { toast } = useToast();
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState<any>(null);
 
   useEffect(() => {
     fetchOrders();
+    // Check for draft
+    try {
+      const d = localStorage.getItem('booking_draft');
+      if (d) setDraft(JSON.parse(d));
+    } catch {}
   }, []);
 
   const fetchOrders = async () => {
@@ -200,7 +206,31 @@ const History = () => {
       </header>
 
       <div className="p-4 max-w-4xl mx-auto space-y-4 relative z-10">
-        {orders.length === 0 ? (
+        {/* Draft Resume Card */}
+        {draft && (
+          <Card className="p-4 bg-amber-500/10 backdrop-blur-xl border-amber-500/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Edit className="h-4 w-4 text-amber-400" />
+                  <h3 className="font-semibold text-white">Draft Booking</h3>
+                  <Badge className="bg-amber-500/30 text-amber-200 border-0 text-xs">Incomplete</Badge>
+                </div>
+                <p className="text-sm text-white/60">
+                  {draft.pickupPincode && draft.deliveryPincode 
+                    ? `${draft.pickupPincode} → ${draft.deliveryPincode}` 
+                    : 'Started booking'}
+                  {draft.savedAt && ` • ${new Date(draft.savedAt).toLocaleDateString()}`}
+                </p>
+              </div>
+              <Button size="sm" onClick={() => navigate('/booking')}>
+                Resume
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {orders.length === 0 && !draft ? (
           <Card className="p-8 text-center bg-white/10 backdrop-blur-xl border-white/20">
             <EmptyBoxIllustration className="mb-6" />
             <h2 className="text-xl font-semibold mb-2 text-white">No orders yet</h2>
@@ -308,11 +338,49 @@ const History = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`${showLabelButton ? "flex-1" : "w-full"} bg-white/10 border-white/30 text-white hover:bg-white/20`}
+                    className="bg-white/10 border-white/30 text-white hover:bg-white/20"
                     onClick={() => navigate(`/order/${order.orderId}`)}
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
+                    <Eye className="h-4 w-4 mr-1" />
+                    Details
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    onClick={() => {
+                      const pickup = order.addresses?.find(a => a.type === 'PICKUP');
+                      const delivery = order.addresses?.find(a => a.type === 'DELIVERY');
+                      navigate('/booking', {
+                        state: {
+                          cloneData: {
+                            senderData: {
+                              name: pickup?.name || '',
+                              phone: pickup?.phone || '',
+                              flatNo: '',
+                              address: pickup?.street || '',
+                              city: pickup?.city || '',
+                              state: pickup?.state || '',
+                              pincode: pickup?.zip || '',
+                            },
+                            receiverData: {
+                              name: delivery?.name || '',
+                              phone: delivery?.phone || '',
+                              flatNo: '',
+                              address: delivery?.street || '',
+                              city: delivery?.city || '',
+                              state: delivery?.state || '',
+                              pincode: delivery?.zip || '',
+                            },
+                            pickupPincode: pickup?.zip || '',
+                            deliveryPincode: delivery?.zip || '',
+                          }
+                        }
+                      });
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Repeat
                   </Button>
                 </div>
               </Card>

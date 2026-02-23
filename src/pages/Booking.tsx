@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
@@ -73,6 +73,7 @@ const Booking = () => {
     pincode: ""
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     toast
   } = useToast();
@@ -97,18 +98,62 @@ const Booking = () => {
       const authData = JSON.parse(prayogAuth);
       if (authData.user_id) {
         setUserId(authData.user_id);
-        return;
       }
+    } else {
+      // Generate a guest user ID for non-authenticated users
+      let guestId = localStorage.getItem("guest_user_id");
+      if (!guestId) {
+        guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("guest_user_id", guestId);
+      }
+      setUserId(guestId);
     }
 
-    // Generate a guest user ID for non-authenticated users
-    let guestId = localStorage.getItem("guest_user_id");
-    if (!guestId) {
-      guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem("guest_user_id", guestId);
+    // Check for clone data from History page
+    const cloneData = (location.state as any)?.cloneData;
+    if (cloneData) {
+      setSenderData(cloneData.senderData || senderData);
+      setReceiverData(cloneData.receiverData || receiverData);
+      setPickupPincode(cloneData.pickupPincode || '');
+      setDeliveryPincode(cloneData.deliveryPincode || '');
+      setGoodsType(cloneData.goodsType || '');
+      setPackageWeight(cloneData.packageWeight || '');
+      setDimensions(cloneData.dimensions || { length: '', width: '', height: '' });
+      setShipmentValue(cloneData.shipmentValue || '');
+      setCurrentStep(2);
+      return;
     }
-    setUserId(guestId);
+
+    // Check for draft in localStorage
+    try {
+      const draft = localStorage.getItem('booking_draft');
+      if (draft) {
+        const d = JSON.parse(draft);
+        if (d.currentStep) setCurrentStep(d.currentStep);
+        if (d.senderData) setSenderData(d.senderData);
+        if (d.receiverData) setReceiverData(d.receiverData);
+        if (d.pickupPincode) setPickupPincode(d.pickupPincode);
+        if (d.deliveryPincode) setDeliveryPincode(d.deliveryPincode);
+        if (d.goodsType) setGoodsType(d.goodsType);
+        if (d.packageWeight) setPackageWeight(d.packageWeight);
+        if (d.dimensions) setDimensions(d.dimensions);
+        if (d.shipmentValue) setShipmentValue(d.shipmentValue);
+        if (d.urgency) setUrgency(d.urgency);
+      }
+    } catch {}
   }, []);
+
+  // Save draft on state changes
+  useEffect(() => {
+    if (currentStep > 1) {
+      const draft = {
+        currentStep, senderData, receiverData, pickupPincode, deliveryPincode,
+        goodsType, packageWeight, dimensions, shipmentValue, urgency,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('booking_draft', JSON.stringify(draft));
+    }
+  }, [currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
 
   // Auto-populate pincodes from serviceability check - always sync from step 2 values
   useEffect(() => {
@@ -444,10 +489,11 @@ const Booking = () => {
       }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
       const orderId = timestamp + randomPart;
 
-      // Calculate volumetric weight
-      const length = parseFloat(dimensions?.length) || 10;
-      const width = parseFloat(dimensions?.width) || 10;
-      const height = parseFloat(dimensions?.height) || 10;
+      // Calculate volumetric weight (use defaults for documents)
+      const isDocuments = goodsType === 'documents';
+      const length = parseFloat(dimensions?.length) || (isDocuments ? 30 : 10);
+      const width = parseFloat(dimensions?.width) || (isDocuments ? 22 : 10);
+      const height = parseFloat(dimensions?.height) || (isDocuments ? 2 : 10);
       const volumetricWeight = length * width * height / 5000;
       const physicalWeight = parseFloat(packageWeight) || 1;
       const baseAmount = selectedService?.rate?.price?.amount || 0;
@@ -656,6 +702,8 @@ const Booking = () => {
         courierName: selectedCourierData?.name || selectedService?.partner_code || "",
         trackingId: trackingId
       });
+      // Clear draft on successful booking
+      localStorage.removeItem('booking_draft');
       setShowPaymentModal(false);
       setShowConfirmationDialog(true);
     } catch (error: any) {
