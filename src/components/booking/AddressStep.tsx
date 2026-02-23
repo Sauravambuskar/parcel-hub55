@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Package, User, Users } from "lucide-react";
+import { AlertTriangle, Package, User, Users, BookmarkPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import SavedAddressPicker, { useSaveAddress } from "./SavedAddressPicker";
 
 // Validate 10-digit phone number (digits only, no country code)
 const validatePhone = (phone: string): boolean => {
@@ -74,6 +76,9 @@ const AddressStep = ({
   const [receiverPincodeMismatch, setReceiverPincodeMismatch] = useState<PincodeMismatch | null>(null);
   const [bookingFor, setBookingFor] = useState<'self' | 'other'>('other');
   const [submitted, setSubmitted] = useState(false);
+  const [saveSender, setSaveSender] = useState(false);
+  const [saveReceiver, setSaveReceiver] = useState(false);
+  const { saveAddress } = useSaveAddress();
 
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
@@ -156,6 +161,13 @@ const AddressStep = ({
       });
       return;
     }
+    // Save addresses if checked
+    if (saveSender) {
+      saveAddress({ ...senderData, label: 'Sender' });
+    }
+    if (saveReceiver) {
+      saveAddress({ ...receiverData, label: 'Receiver' });
+    }
     onNext();
   };
 
@@ -235,7 +247,17 @@ const AddressStep = ({
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Sender Details</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Sender Details</h2>
+          <SavedAddressPicker type="sender" onSelect={(addr) => {
+            onSenderChange('name', addr.name);
+            onSenderChange('phone', addr.phone);
+            onSenderChange('flatNo', addr.flatNo);
+            onSenderChange('address', addr.address);
+            onSenderChange('city', addr.city);
+            onSenderChange('state', addr.state);
+          }} />
+        </div>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -344,11 +366,25 @@ const AddressStep = ({
               />
             </div>
           </div>
+          <div className="flex items-center gap-2 mt-3">
+            <Checkbox id="save-sender" checked={saveSender} onCheckedChange={(v) => setSaveSender(!!v)} />
+            <Label htmlFor="save-sender" className="text-sm text-muted-foreground cursor-pointer">Save this address</Label>
+          </div>
         </div>
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Receiver Details</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Receiver Details</h2>
+          <SavedAddressPicker type="receiver" onSelect={(addr) => {
+            onReceiverChange('name', addr.name);
+            onReceiverChange('phone', addr.phone);
+            onReceiverChange('flatNo', addr.flatNo);
+            onReceiverChange('address', addr.address);
+            onReceiverChange('city', addr.city);
+            onReceiverChange('state', addr.state);
+          }} />
+        </div>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -454,6 +490,10 @@ const AddressStep = ({
                 className="bg-muted cursor-not-allowed"
               />
             </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+            <Checkbox id="save-receiver" checked={saveReceiver} onCheckedChange={(v) => setSaveReceiver(!!v)} />
+            <Label htmlFor="save-receiver" className="text-sm text-muted-foreground cursor-pointer">Save this address</Label>
           </div>
         </div>
       </Card>
