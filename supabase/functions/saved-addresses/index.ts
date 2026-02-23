@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-prayog-auth, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -11,20 +11,37 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authenticate using Prayog auth from header
+    const prayogAuthHeader = req.headers.get('x-prayog-auth');
+    if (!prayogAuthHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let authenticatedUserId: string;
+    try {
+      const prayogAuth = JSON.parse(prayogAuthHeader);
+      authenticatedUserId = prayogAuth.user_id;
+      if (!authenticatedUserId) {
+        throw new Error('Missing user_id');
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Use the authenticated user_id, never trust client-supplied user_id
+    const userId = authenticatedUserId;
+
     const url = new URL(req.url);
     const body = req.method !== 'GET' ? await req.json() : null;
-    const userId = body?.user_id || url.searchParams.get('user_id');
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'user_id is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     if (req.method === 'GET') {
       const { data, error } = await supabase
@@ -83,7 +100,7 @@ Deno.serve(async (req) => {
       status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookmarkPlus, Bookmark, Trash2, Loader2 } from "lucide-react";
+import { Bookmark, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,44 +30,33 @@ interface SavedAddressPickerProps {
   type: 'sender' | 'receiver';
 }
 
+const getPrayogAuth = () => {
+  try {
+    const auth = localStorage.getItem('prayog_auth');
+    if (auth) return JSON.parse(auth);
+  } catch {}
+  return null;
+};
+
 const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const getUserId = () => {
-    try {
-      const auth = localStorage.getItem('prayog_auth');
-      if (auth) return JSON.parse(auth).user_id;
-    } catch {}
-    return null;
-  };
-
   const fetchAddresses = async () => {
-    const userId = getUserId();
-    if (!userId) return;
+    const auth = getPrayogAuth();
+    if (!auth?.user_id) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('saved-addresses', {
         method: 'GET',
-        body: undefined,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'x-prayog-auth': JSON.stringify(auth),
+        },
       });
-      // Edge function GET needs query params but invoke doesn't support them well
-      // Use POST-style with a custom action
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/saved-addresses?user_id=${userId}`,
-        {
-          method: 'GET',
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const result = await res.json();
-      setAddresses(result.addresses || []);
+      if (error) throw error;
+      setAddresses(data?.addresses || []);
     } catch (err) {
       console.error('Failed to fetch saved addresses:', err);
     } finally {
@@ -76,12 +65,15 @@ const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
   };
 
   const deleteAddress = async (addressId: string) => {
-    const userId = getUserId();
-    if (!userId) return;
+    const auth = getPrayogAuth();
+    if (!auth?.user_id) return;
     try {
       await supabase.functions.invoke('saved-addresses', {
-        body: { user_id: userId, address_id: addressId },
+        body: { address_id: addressId },
         method: 'DELETE' as any,
+        headers: {
+          'x-prayog-auth': JSON.stringify(auth),
+        },
       });
       setAddresses(prev => prev.filter(a => a.id !== addressId));
       toast({ title: "Address deleted" });
@@ -176,15 +168,12 @@ export const useSaveAddress = () => {
     pincode: string;
     label?: string;
   }) => {
-    const auth = localStorage.getItem('prayog_auth');
-    if (!auth) return;
-    const userId = JSON.parse(auth).user_id;
-    if (!userId) return;
+    const auth = getPrayogAuth();
+    if (!auth?.user_id) return;
 
     try {
       await supabase.functions.invoke('saved-addresses', {
         body: {
-          user_id: userId,
           label: data.label || 'Home',
           name: data.name,
           phone: data.phone,
@@ -193,6 +182,9 @@ export const useSaveAddress = () => {
           city: data.city,
           state: data.state,
           pincode: data.pincode,
+        },
+        headers: {
+          'x-prayog-auth': JSON.stringify(auth),
         },
       });
       toast({ title: "Address saved!" });
