@@ -63,6 +63,10 @@ serve(async (req) => {
     const billingAddress = deliveryAddress;
     const returnAddress = pickupAddress;
 
+    // Helper to combine flatNo + address
+    const buildStreet = (addr: any) => 
+      [addr.flatNo, addr.address].filter(Boolean).join(', ');
+
     // Prepare Prayog API payload
     const prayogPayload = {
       referenceId: orderId,
@@ -83,56 +87,56 @@ serve(async (req) => {
           zip: pickupAddress.pincode,
           name: pickupAddress.name,
           phone: pickupAddress.phone,
-          street: pickupAddress.address,
+          street: buildStreet(pickupAddress),
           landmark: null,
           city: pickupAddress.city,
           state: pickupAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: pickupAddress.address
+          addressName: buildStreet(pickupAddress)
         },
         {
           type: "DELIVERY",
           zip: deliveryAddress.pincode,
           name: deliveryAddress.name,
           phone: deliveryAddress.phone,
-          street: deliveryAddress.address,
+          street: buildStreet(deliveryAddress),
           landmark: null,
           city: deliveryAddress.city,
           state: deliveryAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: deliveryAddress.address
+          addressName: buildStreet(deliveryAddress)
         },
         {
           type: "BILLING",
           zip: billingAddress.pincode,
           name: billingAddress.name,
           phone: billingAddress.phone,
-          street: billingAddress.address,
+          street: buildStreet(billingAddress),
           landmark: null,
           city: billingAddress.city,
           state: billingAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: billingAddress.address
+          addressName: buildStreet(billingAddress)
         },
         {
           type: "RETURN",
           zip: returnAddress.pincode,
           name: returnAddress.name,
           phone: returnAddress.phone,
-          street: returnAddress.address,
+          street: buildStreet(returnAddress),
           landmark: null,
           city: returnAddress.city,
           state: returnAddress.state,
           country: "India",
           latitude: 0,
           longitude: 0,
-          addressName: returnAddress.address
+          addressName: buildStreet(returnAddress)
         }
       ],
       shipments: [

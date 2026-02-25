@@ -8,6 +8,7 @@ interface BookingReviewStepProps {
   senderData: {
     name: string;
     phone: string;
+    flatNo?: string;
     address: string;
     city: string;
     state: string;
@@ -16,6 +17,7 @@ interface BookingReviewStepProps {
   receiverData: {
     name: string;
     phone: string;
+    flatNo?: string;
     address: string;
     city: string;
     state: string;
@@ -71,7 +73,7 @@ const BookingReviewStep = ({
             <p className="font-medium">{senderData.name}</p>
             <p className="text-muted-foreground">{senderData.phone}</p>
             <p className="text-muted-foreground">
-              {senderData.address}, {senderData.city}, {senderData.state} - {senderData.pincode}
+              {[senderData.flatNo, senderData.address].filter(Boolean).join(', ')}, {senderData.city}, {senderData.state} - {senderData.pincode}
             </p>
           </div>
         </div>
@@ -88,7 +90,7 @@ const BookingReviewStep = ({
             <p className="font-medium">{receiverData.name}</p>
             <p className="text-muted-foreground">{receiverData.phone}</p>
             <p className="text-muted-foreground">
-              {receiverData.address}, {receiverData.city}, {receiverData.state} - {receiverData.pincode}
+              {[receiverData.flatNo, receiverData.address].filter(Boolean).join(', ')}, {receiverData.city}, {receiverData.state} - {receiverData.pincode}
             </p>
           </div>
         </div>
