@@ -36,13 +36,21 @@ interface PrayogOrder {
   orderStatus: string;
   carrierName?: string;
   carrierId?: string;
+  parcelCategory?: string;
   shipments?: Array<{
     awbNumber: string;
     partnerName: string;
     shipmentStatus: string;
+    physicalWeight?: number;
+    volumetricWeight?: number;
+    dimensions?: { length: number; width: number; height: number };
+    items?: Array<{ name?: string; description?: string; declaredValue?: number }>;
     documents?: ShipmentDocument[];
   }>;
   addresses?: OrderAddress[];
+  payment?: {
+    finalAmount?: number;
+  };
 }
 
 const OrderCardSkeleton = () => (
@@ -353,7 +361,7 @@ const History = () => {
                       const delivery = order.addresses?.find(a => a.type === 'DELIVERY');
                       navigate('/booking', {
                         state: {
-                          cloneData: {
+                           cloneData: {
                             senderData: {
                               name: pickup?.name || '',
                               phone: pickup?.phone || '',
@@ -374,6 +382,14 @@ const History = () => {
                             },
                             pickupPincode: pickup?.zip || '',
                             deliveryPincode: delivery?.zip || '',
+                            goodsType: order.shipments?.[0]?.items?.[0]?.name || '',
+                            packageWeight: order.shipments?.[0]?.physicalWeight ? String(order.shipments[0].physicalWeight) : '',
+                            dimensions: order.shipments?.[0]?.dimensions ? {
+                              length: String(order.shipments[0].dimensions.length || ''),
+                              width: String(order.shipments[0].dimensions.width || ''),
+                              height: String(order.shipments[0].dimensions.height || ''),
+                            } : { length: '', width: '', height: '' },
+                            shipmentValue: order.shipments?.[0]?.items?.[0]?.declaredValue ? String(order.shipments[0].items[0].declaredValue) : '',
                           }
                         }
                       });
