@@ -60,8 +60,14 @@ serve(async (req) => {
       headers['x-user-id'] = userId;
     }
 
-    // Add authorization header
+    // Add authorization headers
     headers['api-key'] = prayogConfig.tenantId || '';
+    
+    // Forward Bearer token if provided
+    const authHeader = req.headers.get('authorization');
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
 
     const response = await fetch(`${prayogConfig.apiBaseUrl}/gateway/serviceability/v3/check`, {
       method: 'POST',

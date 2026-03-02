@@ -178,6 +178,7 @@ const BookingStep2 = ({
       const userId = authData?.user_id || 'guest';
 
       // Call Prayog serviceability v3 API via gateway
+      const bearerToken = authData?.id_token || authData?.token || '';
       const response = await fetch(`${PRAYOG_CONFIG.SERVICEABILITY_BASE_URL}/gateway/serviceability/v3/check`, {
         method: 'POST',
         headers: {
@@ -185,6 +186,7 @@ const BookingStep2 = ({
           'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
           'x-user-id': userId,
           'api-key': PRAYOG_CONFIG.TENANT_ID,
+          ...(bearerToken && { 'Authorization': `Bearer ${bearerToken}` }),
         },
         body: JSON.stringify({
           source_location: {
