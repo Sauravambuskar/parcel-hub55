@@ -52,7 +52,7 @@ export function getPrayogConfig(env: Environment) {
   const config = PRAYOG_CONFIG[env];
   return {
     apiBaseUrl: config.apiBaseUrl,
-    serviceabilityBaseUrl: config.serviceabilityBaseUrl || config.apiBaseUrl,
+    serviceabilityBaseUrl: config.apiBaseUrl, // Now uses gateway on main API URL
     tenantId: Deno.env.get(config.tenantIdEnvVar),
     apiKey: Deno.env.get(config.apiKeyEnvVar),
   };

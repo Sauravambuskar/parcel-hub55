@@ -177,13 +177,14 @@ const BookingStep2 = ({
       const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
       const userId = authData?.user_id || 'guest';
 
-      // Call Prayog serviceability v3 API directly
-      const response = await fetch(`${PRAYOG_CONFIG.SERVICEABILITY_BASE_URL}/serviceability/v3/check`, {
+      // Call Prayog serviceability v3 API via gateway
+      const response = await fetch(`${PRAYOG_CONFIG.SERVICEABILITY_BASE_URL}/gateway/serviceability/v3/check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
           'x-user-id': userId,
+          'api-key': PRAYOG_CONFIG.TENANT_ID,
         },
         body: JSON.stringify({
           source_location: {
