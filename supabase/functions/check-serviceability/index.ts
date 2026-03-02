@@ -60,7 +60,10 @@ serve(async (req) => {
       headers['x-user-id'] = userId;
     }
 
-    const response = await fetch(`${prayogConfig.serviceabilityBaseUrl}/serviceability/v3/check`, {
+    // Add authorization header
+    headers['api-key'] = prayogConfig.tenantId || '';
+
+    const response = await fetch(`${prayogConfig.apiBaseUrl}/gateway/serviceability/v3/check`, {
       method: 'POST',
       headers,
       body: JSON.stringify(prayogPayload),

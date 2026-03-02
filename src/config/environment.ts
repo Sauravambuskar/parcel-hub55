@@ -58,7 +58,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
   production: {
     prayog: {
       apiBaseUrl: "https://apis.prayog.io", // Production Prayog URL
-      serviceabilityBaseUrl: "https://prod-apis.prayog.io", // Serviceability uses different URL
+      // Serviceability now uses the gateway endpoint on the main API URL
     },
     razorpay: {
       keyIdSecret: "RAZORPAY_PROD_KEY_ID",
@@ -101,7 +101,7 @@ const API_KEYS: Record<Environment, string> = {
 // Backward compatibility - PRAYOG_CONFIG for existing imports
 export const PRAYOG_CONFIG = {
   API_BASE_URL: getConfig().prayog.apiBaseUrl,
-  SERVICEABILITY_BASE_URL: getConfig().prayog.serviceabilityBaseUrl || getConfig().prayog.apiBaseUrl,
+  SERVICEABILITY_BASE_URL: getConfig().prayog.apiBaseUrl,
   TENANT_ID: TENANT_IDS[CURRENT_ENV],
   API_KEY: API_KEYS[CURRENT_ENV],
 };
