@@ -53,7 +53,7 @@ serve(async (req) => {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
+      'x-tenant-id': prayogConfig.tenantId || '',
     };
     
     if (userId) {
