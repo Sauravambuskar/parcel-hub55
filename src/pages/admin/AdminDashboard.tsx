@@ -380,13 +380,25 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => navigate('/admin/orders')}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => navigate('/admin/orders')}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {booking.tracking_id && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => navigate(`/admin/tracking?id=${booking.tracking_id}`)}
+                              title="Track package"
+                            >
+                              <MapPin className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

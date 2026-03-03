@@ -656,15 +656,15 @@ const OrderMonitoring = () => {
               </div>
 
               {/* Actions */}
-              {selectedBooking.tracking_id && (
+              {(selectedBooking.tracking_id || selectedBooking.prayog_awb) && (
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => window.open(`/tracking?id=${selectedBooking.tracking_id}`, '_blank')}
+                    onClick={() => window.open(`/admin/tracking?id=${selectedBooking.prayog_awb || selectedBooking.tracking_id}`, '_self')}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Track Order
+                    Track in Admin
                   </Button>
                 </div>
               )}
