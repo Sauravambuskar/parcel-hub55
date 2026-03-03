@@ -60,10 +60,7 @@ serve(async (req) => {
       headers['x-user-id'] = userId;
     }
 
-    // Add authorization headers
-    headers['api-key'] = prayogConfig.tenantId || '';
-    
-    // Forward Bearer token if provided
+    // Forward Bearer token for authorization
     const authHeader = req.headers.get('authorization');
     if (authHeader) {
       headers['Authorization'] = authHeader;

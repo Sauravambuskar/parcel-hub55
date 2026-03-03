@@ -183,9 +183,7 @@ const BookingStep2 = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
           'x-user-id': userId,
-          'api-key': PRAYOG_CONFIG.TENANT_ID,
           ...(bearerToken && { 'Authorization': `Bearer ${bearerToken}` }),
         },
         body: JSON.stringify({
