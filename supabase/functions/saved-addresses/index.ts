@@ -37,13 +37,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Use the authenticated user_id, never trust client-supplied user_id
     const userId = authenticatedUserId;
+    const body = await req.json().catch(() => ({}));
+    const action = body.action || 'list';
 
-    const url = new URL(req.url);
-    const body = req.method !== 'GET' ? await req.json() : null;
-
-    if (req.method === 'GET') {
+    if (action === 'list') {
       const { data, error } = await supabase
         .from('saved_addresses')
         .select('*')
@@ -56,7 +54,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === 'POST') {
+    if (action === 'save') {
       const { label, name, phone, flat_no, address, city, state, pincode } = body;
       if (!name || !phone || !address || !city || !state || !pincode) {
         return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -76,8 +74,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === 'DELETE') {
-      const addressId = body?.address_id;
+    if (action === 'delete') {
+      const addressId = body.address_id;
       if (!addressId) {
         return new Response(JSON.stringify({ error: 'address_id is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -96,10 +94,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: 'Unknown action' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
+    console.error('saved-addresses error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
