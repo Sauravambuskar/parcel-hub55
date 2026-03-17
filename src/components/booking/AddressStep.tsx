@@ -20,6 +20,45 @@ const formatPhoneDisplay = (phone: string): string => {
   // Remove any non-digit characters except for display
   return phone.replace(/[^\d]/g, '').slice(0, 10);
 };
+
+const parseJwtPayload = (token?: string): Record<string, any> | null => {
+  if (!token) return null;
+
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+const getSelfAutofillSource = () => {
+  try {
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (!prayogAuth) return null;
+
+    const auth = JSON.parse(prayogAuth);
+    const tokenPayload = parseJwtPayload(auth.id_token || auth.token);
+    const rawPhone = auth.phone || auth.phone_number || tokenPayload?.phone_number || '';
+    const nameFromAuth = [auth.userName, auth.full_name, auth.name]
+      .find((value): value is string => typeof value === 'string' && value.trim().length > 0) || '';
+
+    return {
+      auth,
+      userId: auth.user_id || auth.customer_id || tokenPayload?.sub || '',
+      phone: formatPhoneDisplay(String(rawPhone).replace(/^\+91/, '')),
+      nameFromAuth: nameFromAuth.trim(),
+    };
+  } catch (error) {
+    console.error('Failed to parse Prayog auth for self autofill:', error);
+    return null;
+  }
+};
+
 import AddressAutocomplete from "./AddressAutocomplete";
 
 interface PincodeMismatch {
@@ -83,36 +122,51 @@ const AddressStep = ({
 
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
-    if (bookingFor === 'self') {
-      const fillSelfDetails = async () => {
-        try {
-          const prayogAuth = localStorage.getItem('prayog_auth');
-          if (!prayogAuth) return;
-          const auth = JSON.parse(prayogAuth);
-          
-          // Phone always comes from login credentials
-          const loginPhone = (auth.phone || '').replace(/^\+91/, '');
-          if (loginPhone) onSenderChange('phone', formatPhoneDisplay(loginPhone));
+    if (bookingFor !== 'self') return;
 
-          // Fetch profile for name
-          let name = '';
-          if (auth.user_id) {
-            const { data } = await supabase.functions.invoke('get-profile', {
-              body: { user_id: auth.user_id }
-            });
-            if (data?.profile?.full_name) {
-              name = data.profile.full_name;
-            }
-          }
-          // Fallback to auth userName
-          if (!name) {
-            name = auth.userName || auth.name || auth.full_name || '';
-          }
-          if (name) onSenderChange('name', name);
-        } catch {}
-      };
-      fillSelfDetails();
-    }
+    let isActive = true;
+
+    const fillSelfDetails = async () => {
+      const autofillSource = getSelfAutofillSource();
+      if (!autofillSource) return;
+
+      if (autofillSource.phone) {
+        onSenderChange('phone', autofillSource.phone);
+      }
+
+      if (autofillSource.nameFromAuth) {
+        onSenderChange('name', autofillSource.nameFromAuth);
+      }
+
+      if (!autofillSource.userId) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('get-profile', {
+          body: { user_id: autofillSource.userId }
+        });
+
+        if (error) throw error;
+        if (!isActive) return;
+
+        const profileName = data?.profile?.full_name?.trim();
+        if (!profileName) return;
+
+        onSenderChange('name', profileName);
+        localStorage.setItem('prayog_auth', JSON.stringify({
+          ...autofillSource.auth,
+          userName: profileName,
+          full_name: profileName,
+        }));
+      } catch (error) {
+        console.error('Failed to fetch profile for self autofill:', error);
+      }
+    };
+
+    void fillSelfDetails();
+
+    return () => {
+      isActive = false;
+    };
   }, [bookingFor]);
 
   const isSenderPhoneValid = validatePhone(senderData.phone);
