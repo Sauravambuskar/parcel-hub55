@@ -20,6 +20,45 @@ const formatPhoneDisplay = (phone: string): string => {
   // Remove any non-digit characters except for display
   return phone.replace(/[^\d]/g, '').slice(0, 10);
 };
+
+const parseJwtPayload = (token?: string): Record<string, any> | null => {
+  if (!token) return null;
+
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+const getSelfAutofillSource = () => {
+  try {
+    const prayogAuth = localStorage.getItem('prayog_auth');
+    if (!prayogAuth) return null;
+
+    const auth = JSON.parse(prayogAuth);
+    const tokenPayload = parseJwtPayload(auth.id_token || auth.token);
+    const rawPhone = auth.phone || auth.phone_number || tokenPayload?.phone_number || '';
+    const nameFromAuth = [auth.userName, auth.full_name, auth.name]
+      .find((value): value is string => typeof value === 'string' && value.trim().length > 0) || '';
+
+    return {
+      auth,
+      userId: auth.user_id || auth.customer_id || tokenPayload?.sub || '',
+      phone: formatPhoneDisplay(String(rawPhone).replace(/^\+91/, '')),
+      nameFromAuth: nameFromAuth.trim(),
+    };
+  } catch (error) {
+    console.error('Failed to parse Prayog auth for self autofill:', error);
+    return null;
+  }
+};
+
 import AddressAutocomplete from "./AddressAutocomplete";
 
 interface PincodeMismatch {
