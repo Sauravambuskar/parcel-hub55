@@ -122,36 +122,51 @@ const AddressStep = ({
 
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
-    if (bookingFor === 'self') {
-      const fillSelfDetails = async () => {
-        try {
-          const prayogAuth = localStorage.getItem('prayog_auth');
-          if (!prayogAuth) return;
-          const auth = JSON.parse(prayogAuth);
-          
-          // Phone always comes from login credentials
-          const loginPhone = (auth.phone || '').replace(/^\+91/, '');
-          if (loginPhone) onSenderChange('phone', formatPhoneDisplay(loginPhone));
+    if (bookingFor !== 'self') return;
 
-          // Fetch profile for name
-          let name = '';
-          if (auth.user_id) {
-            const { data } = await supabase.functions.invoke('get-profile', {
-              body: { user_id: auth.user_id }
-            });
-            if (data?.profile?.full_name) {
-              name = data.profile.full_name;
-            }
-          }
-          // Fallback to auth userName
-          if (!name) {
-            name = auth.userName || auth.name || auth.full_name || '';
-          }
-          if (name) onSenderChange('name', name);
-        } catch {}
-      };
-      fillSelfDetails();
-    }
+    let isActive = true;
+
+    const fillSelfDetails = async () => {
+      const autofillSource = getSelfAutofillSource();
+      if (!autofillSource) return;
+
+      if (autofillSource.phone) {
+        onSenderChange('phone', autofillSource.phone);
+      }
+
+      if (autofillSource.nameFromAuth) {
+        onSenderChange('name', autofillSource.nameFromAuth);
+      }
+
+      if (!autofillSource.userId) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('get-profile', {
+          body: { user_id: autofillSource.userId }
+        });
+
+        if (error) throw error;
+        if (!isActive) return;
+
+        const profileName = data?.profile?.full_name?.trim();
+        if (!profileName) return;
+
+        onSenderChange('name', profileName);
+        localStorage.setItem('prayog_auth', JSON.stringify({
+          ...autofillSource.auth,
+          userName: profileName,
+          full_name: profileName,
+        }));
+      } catch (error) {
+        console.error('Failed to fetch profile for self autofill:', error);
+      }
+    };
+
+    void fillSelfDetails();
+
+    return () => {
+      isActive = false;
+    };
   }, [bookingFor]);
 
   const isSenderPhoneValid = validatePhone(senderData.phone);
