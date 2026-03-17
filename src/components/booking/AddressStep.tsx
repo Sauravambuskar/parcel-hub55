@@ -8,6 +8,7 @@ import { AlertTriangle, Package, User, Users, BookmarkPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import SavedAddressPicker, { useSaveAddress } from "./SavedAddressPicker";
+import { supabase } from "@/integrations/supabase/client";
 
 // Validate 10-digit phone number (digits only, no country code)
 const validatePhone = (phone: string): boolean => {
