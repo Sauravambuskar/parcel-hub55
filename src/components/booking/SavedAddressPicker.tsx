@@ -50,7 +50,7 @@ const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('saved-addresses', {
-        method: 'GET',
+        body: { action: 'list' },
         headers: {
           'x-prayog-auth': JSON.stringify(auth),
         },
@@ -69,8 +69,7 @@ const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
     if (!auth?.user_id) return;
     try {
       await supabase.functions.invoke('saved-addresses', {
-        body: { address_id: addressId },
-        method: 'DELETE' as any,
+        body: { action: 'delete', address_id: addressId },
         headers: {
           'x-prayog-auth': JSON.stringify(auth),
         },
@@ -174,6 +173,7 @@ export const useSaveAddress = () => {
     try {
       await supabase.functions.invoke('saved-addresses', {
         body: {
+          action: 'save',
           label: data.label || 'Home',
           name: data.name,
           phone: data.phone,
