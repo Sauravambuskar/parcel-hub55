@@ -84,24 +84,34 @@ const AddressStep = ({
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
     if (bookingFor === 'self') {
-      try {
-        const prayogAuth = localStorage.getItem('prayog_auth');
-        const profileData = localStorage.getItem('user_profile');
-        let name = '';
-        let phone = '';
-        if (profileData) {
-          const profile = JSON.parse(profileData);
-          name = profile.full_name || '';
-          phone = profile.phone || '';
-        }
-        if (!name && prayogAuth) {
+      const fillSelfDetails = async () => {
+        try {
+          const prayogAuth = localStorage.getItem('prayog_auth');
+          if (!prayogAuth) return;
           const auth = JSON.parse(prayogAuth);
-          name = auth.name || auth.full_name || '';
-          phone = phone || auth.phone || '';
-        }
-        if (name) onSenderChange('name', name);
-        if (phone) onSenderChange('phone', formatPhoneDisplay(phone));
-      } catch {}
+          
+          // Phone always comes from login credentials
+          const loginPhone = (auth.phone || '').replace(/^\+91/, '');
+          if (loginPhone) onSenderChange('phone', formatPhoneDisplay(loginPhone));
+
+          // Fetch profile for name
+          let name = '';
+          if (auth.user_id) {
+            const { data } = await supabase.functions.invoke('get-profile', {
+              body: { user_id: auth.user_id }
+            });
+            if (data?.profile?.full_name) {
+              name = data.profile.full_name;
+            }
+          }
+          // Fallback to auth userName
+          if (!name) {
+            name = auth.userName || auth.name || auth.full_name || '';
+          }
+          if (name) onSenderChange('name', name);
+        } catch {}
+      };
+      fillSelfDetails();
     }
   }, [bookingFor]);
 
