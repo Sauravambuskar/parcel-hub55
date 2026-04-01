@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrderAddress {
   type: string;
@@ -83,12 +84,39 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [downloadingLabel, setDownloadingLabel] = useState(false);
+  const [refundInfo, setRefundInfo] = useState<{
+    status: string | null;
+    payment_status: string | null;
+    payment_id: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
+      fetchRefundStatus();
     }
   }, [orderId]);
+
+  const fetchRefundStatus = async () => {
+    try {
+      // Look up this order in our bookings table for refund info
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('status, payment_status, payment_id, prayog_order_id')
+        .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
+        .maybeSingle();
+
+      if (!error && data && (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED')) {
+        setRefundInfo({
+          status: data.status,
+          payment_status: data.payment_status,
+          payment_id: data.payment_id,
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching refund status:', err);
+    }
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -448,6 +476,54 @@ const OrderDetails = () => {
             </span>
           </div>
         </Card>
+
+        {/* Refund Status Indicator */}
+        {refundInfo && (
+          <Card className={`p-4 border-l-4 ${
+            refundInfo.payment_status === 'refunded' 
+              ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20' 
+              : refundInfo.payment_status === 'refund_failed' 
+                ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20' 
+                : 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
+          }`}>
+            <div className="flex items-start gap-3">
+              {refundInfo.payment_status === 'refunded' ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              ) : refundInfo.payment_status === 'refund_failed' ? (
+                <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              )}
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm flex items-center gap-2">
+                  {refundInfo.payment_status === 'refunded' && 'Payment Refunded'}
+                  {refundInfo.payment_status === 'refund_failed' && 'Refund Failed'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'Order Failed'}
+                  <Badge variant="outline" className={`text-xs ${
+                    refundInfo.payment_status === 'refunded' 
+                      ? 'border-green-500 text-green-700' 
+                      : refundInfo.payment_status === 'refund_failed' 
+                        ? 'border-red-500 text-red-700' 
+                        : 'border-yellow-500 text-yellow-700'
+                  }`}>
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    {refundInfo.payment_status === 'refunded' ? 'Refunded' : refundInfo.payment_status === 'refund_failed' ? 'Action Required' : refundInfo.status}
+                  </Badge>
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {refundInfo.payment_status === 'refunded' && 'Your payment has been automatically refunded. It may take 5-7 business days to reflect in your account.'}
+                  {refundInfo.payment_status === 'refund_failed' && 'The automatic refund could not be processed. Please contact support with your Payment ID for assistance.'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'This order could not be completed.'}
+                </p>
+                {refundInfo.payment_id && (
+                  <p className="text-xs text-muted-foreground mt-2 font-mono">
+                    Payment ID: {refundInfo.payment_id}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Addresses */}
         <Card className="p-4">
