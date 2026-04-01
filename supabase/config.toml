@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.saved-addresses]
 verify_jwt = false
+
+[functions.razorpay-refund]
+verify_jwt = false
