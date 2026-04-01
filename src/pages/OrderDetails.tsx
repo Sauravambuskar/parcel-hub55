@@ -477,6 +477,54 @@ const OrderDetails = () => {
           </div>
         </Card>
 
+        {/* Refund Status Indicator */}
+        {refundInfo && (
+          <Card className={`p-4 border-l-4 ${
+            refundInfo.payment_status === 'refunded' 
+              ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20' 
+              : refundInfo.payment_status === 'refund_failed' 
+                ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20' 
+                : 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
+          }`}>
+            <div className="flex items-start gap-3">
+              {refundInfo.payment_status === 'refunded' ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              ) : refundInfo.payment_status === 'refund_failed' ? (
+                <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              )}
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm flex items-center gap-2">
+                  {refundInfo.payment_status === 'refunded' && 'Payment Refunded'}
+                  {refundInfo.payment_status === 'refund_failed' && 'Refund Failed'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'Order Failed'}
+                  <Badge variant="outline" className={`text-xs ${
+                    refundInfo.payment_status === 'refunded' 
+                      ? 'border-green-500 text-green-700' 
+                      : refundInfo.payment_status === 'refund_failed' 
+                        ? 'border-red-500 text-red-700' 
+                        : 'border-yellow-500 text-yellow-700'
+                  }`}>
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    {refundInfo.payment_status === 'refunded' ? 'Refunded' : refundInfo.payment_status === 'refund_failed' ? 'Action Required' : refundInfo.status}
+                  </Badge>
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {refundInfo.payment_status === 'refunded' && 'Your payment has been automatically refunded. It may take 5-7 business days to reflect in your account.'}
+                  {refundInfo.payment_status === 'refund_failed' && 'The automatic refund could not be processed. Please contact support with your Payment ID for assistance.'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'This order could not be completed.'}
+                </p>
+                {refundInfo.payment_id && (
+                  <p className="text-xs text-muted-foreground mt-2 font-mono">
+                    Payment ID: {refundInfo.payment_id}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Addresses */}
         <Card className="p-4">
           <h3 className="font-semibold mb-4">Addresses</h3>
