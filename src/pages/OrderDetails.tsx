@@ -84,12 +84,39 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [downloadingLabel, setDownloadingLabel] = useState(false);
+  const [refundInfo, setRefundInfo] = useState<{
+    status: string | null;
+    payment_status: string | null;
+    payment_id: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
+      fetchRefundStatus();
     }
   }, [orderId]);
+
+  const fetchRefundStatus = async () => {
+    try {
+      // Look up this order in our bookings table for refund info
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('status, payment_status, payment_id, prayog_order_id')
+        .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
+        .maybeSingle();
+
+      if (!error && data && (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED')) {
+        setRefundInfo({
+          status: data.status,
+          payment_status: data.payment_status,
+          payment_id: data.payment_id,
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching refund status:', err);
+    }
+  };
 
   const fetchOrderDetails = async () => {
     try {
