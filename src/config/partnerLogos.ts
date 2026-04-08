@@ -1,6 +1,8 @@
 // Partner logo mapping for courier selection
 // Uses publicly available courier company logos
 
+import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
   'dharmendra': 'https://ui-avatars.com/api/?name=Dharmendra&background=6366f1&color=fff&size=100',
