@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
+import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
 interface TrackingStatus {
   trackingId: string;
@@ -65,6 +67,15 @@ const Tracking = () => {
   const [loading, setLoading] = useState(false);
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
+  const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string } | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setShowCancelDialog(false);
+      if (currentAwb) fetchTrackingData(currentAwb);
+    },
+  });
 
   useEffect(() => {
     if (initialAwbNumber) {
@@ -94,11 +105,23 @@ const Tracking = () => {
       // Check if this AWB belongs to a Shadowfax booking
       const { data: booking } = await supabase
         .from('bookings')
-        .select('booking_source, prayog_order_id')
+        .select('id, booking_source, prayog_order_id, status')
         .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
         .maybeSingle();
 
-      const isShadowfax = (booking as any)?.booking_source === 'shadowfax_direct';
+      const bSource = (booking as any)?.booking_source || 'prayog';
+      const isShadowfax = bSource === 'shadowfax_direct';
+
+      if (booking) {
+        setBookingMeta({
+          id: (booking as any).id,
+          booking_source: bSource,
+          status: (booking as any).status || '',
+          orderId: (booking as any).prayog_order_id || awb,
+        });
+      } else {
+        setBookingMeta(null);
+      }
 
       if (isShadowfax) {
         // Use Shadowfax tracking edge function
@@ -456,6 +479,16 @@ const Tracking = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
+          {bookingMeta && isCancellable(latestStatus?.category || bookingMeta.status) && (
+            <Button
+              variant="outline"
+              className="w-full col-span-2 bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20"
+              onClick={() => setShowCancelDialog(true)}
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              Cancel Order
+            </Button>
+          )}
           <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/support')}>
             Get Help
           </Button>
@@ -464,6 +497,21 @@ const Tracking = () => {
           </Button>
         </div>
       </div>
+
+      <CancelOrderDialog
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+        onConfirm={async (reason) => {
+          if (!bookingMeta) return;
+          await cancelOrder({
+            orderId: bookingMeta.orderId,
+            bookingSource: bookingMeta.booking_source,
+            bookingId: bookingMeta.id,
+            reason,
+          });
+        }}
+        cancelling={cancelling}
+      />
     </div>
   );
 };

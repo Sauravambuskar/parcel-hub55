@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.shadowfax-tracking]
 verify_jwt = false
+
+[functions.shadowfax-cancel-order]
+verify_jwt = false
+
+[functions.prayog-cancel-order]
+verify_jwt = false

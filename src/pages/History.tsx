@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy, Ban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
+import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
 interface OrderAddress {
   type: string;
@@ -94,6 +97,15 @@ const History = () => {
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
+  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string }>>({});
+  const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string } | null>(null);
+
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setCancelTarget(null);
+      fetchOrders();
+    },
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -139,6 +151,25 @@ const History = () => {
       const result = await response.json();
       const ordersList = Array.isArray(result) ? result : (result?.orders || result?.data || []);
       setOrders(ordersList);
+
+      // Fetch booking metadata for cancel capability
+      const orderIds = ordersList.map((o: PrayogOrder) => o.orderId).filter(Boolean);
+      if (orderIds.length > 0) {
+        const { data: bookings } = await supabase
+          .from('bookings')
+          .select('id, prayog_order_id, booking_source, status')
+          .in('prayog_order_id', orderIds);
+
+        if (bookings) {
+          const map: Record<string, { id: string; booking_source: string; status: string }> = {};
+          bookings.forEach((b: any) => {
+            if (b.prayog_order_id) {
+              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '' };
+            }
+          });
+          setBookingsMap(map);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching orders:", error);
       toast({
@@ -331,7 +362,7 @@ const History = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {showLabelButton && (
                     <Button
                       variant="outline"
@@ -398,12 +429,49 @@ const History = () => {
                     <Copy className="h-4 w-4 mr-1" />
                     Repeat
                   </Button>
+                  {/* Cancel button */}
+                  {(() => {
+                    const bm = bookingsMap[order.orderId];
+                    if (bm && isCancellable(order.orderStatus || bm.status)) {
+                      return (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
+                          onClick={() => setCancelTarget({
+                            orderId: order.orderId,
+                            bookingId: bm.id,
+                            bookingSource: bm.booking_source,
+                          })}
+                        >
+                          <Ban className="h-4 w-4 mr-1" />
+                          Cancel
+                        </Button>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </Card>
             );
           })
         )}
       </div>
+
+      <CancelOrderDialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => { if (!open) setCancelTarget(null); }}
+        onConfirm={async (reason) => {
+          if (!cancelTarget) return;
+          await cancelOrder({
+            orderId: cancelTarget.orderId,
+            bookingSource: cancelTarget.bookingSource,
+            bookingId: cancelTarget.bookingId,
+            reason,
+          });
+        }}
+        cancelling={cancelling}
+      />
     </div>
   );
 };
