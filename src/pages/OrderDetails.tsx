@@ -508,6 +508,19 @@ const OrderDetails = () => {
               {order.deliveryPromise || 'Standard'}
             </span>
           </div>
+
+          {/* Cancel button */}
+          {bookingMeta && isCancellable(order.orderStatus || bookingMeta.status) && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="mt-3"
+              onClick={() => setShowCancelDialog(true)}
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              Cancel Order
+            </Button>
+          )}
         </Card>
 
         {/* Refund Status Indicator */}
