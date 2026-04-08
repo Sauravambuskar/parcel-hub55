@@ -479,6 +479,16 @@ const Tracking = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
+          {bookingMeta && isCancellable(latestStatus?.category || bookingMeta.status) && (
+            <Button
+              variant="outline"
+              className="w-full col-span-2 bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20"
+              onClick={() => setShowCancelDialog(true)}
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              Cancel Order
+            </Button>
+          )}
           <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/support')}>
             Get Help
           </Button>
@@ -487,6 +497,21 @@ const Tracking = () => {
           </Button>
         </div>
       </div>
+
+      <CancelOrderDialog
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+        onConfirm={async (reason) => {
+          if (!bookingMeta) return;
+          await cancelOrder({
+            orderId: bookingMeta.orderId,
+            bookingSource: bookingMeta.booking_source,
+            bookingId: bookingMeta.id,
+            reason,
+          });
+        }}
+        cancelling={cancelling}
+      />
     </div>
   );
 };
