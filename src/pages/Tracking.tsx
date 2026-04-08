@@ -91,38 +91,62 @@ const Tracking = () => {
     setTrackingData(null);
     
     try {
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      
-      if (!prayogAuth) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to track your order",
-          variant: "destructive",
+      // Check if this AWB belongs to a Shadowfax booking
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('booking_source, prayog_order_id')
+        .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
+        .maybeSingle();
+
+      const isShadowfax = (booking as any)?.booking_source === 'shadowfax_direct';
+
+      if (isShadowfax) {
+        // Use Shadowfax tracking edge function
+        const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
+          body: { order_id: (booking as any)?.prayog_order_id || awb },
+          headers: { 'x-environment': CURRENT_ENV },
         });
-        navigate('/login');
-        return;
-      }
 
-      const authData = JSON.parse(prayogAuth);
-
-      const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awb}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authData.id_token}`,
-            "tenantId": PRAYOG_CONFIG.TENANT_ID,
-          },
+        if (sfxError || !sfxData) {
+          throw new Error('Failed to fetch Shadowfax tracking');
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tracking: ${response.status}`);
+        setTrackingData(sfxData);
+      } else {
+        // Use existing Prayog tracking
+        const prayogAuth = localStorage.getItem('prayog_auth');
+        
+        if (!prayogAuth) {
+          toast({
+            title: "Authentication required",
+            description: "Please sign in to track your order",
+            variant: "destructive",
+          });
+          navigate('/login');
+          return;
+        }
+
+        const authData = JSON.parse(prayogAuth);
+
+        const response = await fetch(
+          `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awb}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authData.id_token}`,
+              "tenantId": PRAYOG_CONFIG.TENANT_ID,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch tracking: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setTrackingData(result);
       }
-
-      const result = await response.json();
-      setTrackingData(result);
     } catch (error: any) {
       console.error("Error fetching tracking:", error);
       toast({
