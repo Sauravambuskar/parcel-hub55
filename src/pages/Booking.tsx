@@ -772,17 +772,9 @@ const Booking = () => {
         const labelDocument = prayogResult.shipments?.[0]?.documents?.find((doc: { type: string; url?: string; }) => doc.type === "label");
         labelUrl = labelDocument?.url || null;
       }
-      const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
-      const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
-
-      // Extract shipping label URL from documents array (type: "label")
-      const labelDocument = prayogResult.shipments?.[0]?.documents?.find((doc: {
-        type: string;
-        url?: string;
-      }) => doc.type === "label");
-      const labelUrl = labelDocument?.url || null;
 
       // Save booking to Supabase for admin dashboard and order history
+      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : 'prayog';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
@@ -810,7 +802,14 @@ const Booking = () => {
         courier_price: totalAmount,
         delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
         tracking_id: trackingId,
-        prayog_order_id: prayogResult.orderId || orderId,
+        prayog_order_id: prayogOrderId,
+        prayog_awb: awbNumber,
+        label_url: labelUrl,
+        status: "CREATED",
+        payment_id: paymentDetails?.razorpay_payment_id || null,
+        payment_status: "paid",
+        base_fare: baseFare,
+        platform_fee: platformFee,
         prayog_awb: awbNumber,
         label_url: labelUrl,
         status: "CREATED",
