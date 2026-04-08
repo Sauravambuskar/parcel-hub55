@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy, Ban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
+import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
 interface OrderAddress {
   type: string;
@@ -94,6 +97,15 @@ const History = () => {
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
+  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string }>>({});
+  const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string } | null>(null);
+
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setCancelTarget(null);
+      fetchOrders();
+    },
+  });
 
   useEffect(() => {
     fetchOrders();

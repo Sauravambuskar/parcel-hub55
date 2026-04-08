@@ -878,6 +878,13 @@ const OrderDetails = () => {
           </Button>
         </div>
       </div>
+
+      <CancelOrderDialog
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+        onConfirm={handleCancelConfirm}
+        cancelling={cancelling}
+      />
     </div>
   );
 };
