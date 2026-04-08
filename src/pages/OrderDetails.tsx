@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PRAYOG_CONFIG } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
+import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
 interface OrderAddress {
   type: string;
@@ -89,6 +91,20 @@ const OrderDetails = () => {
     payment_status: string | null;
     payment_id: string | null;
   } | null>(null);
+  const [bookingMeta, setBookingMeta] = useState<{
+    id: string;
+    booking_source: string;
+    status: string;
+  } | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setShowCancelDialog(false);
+      fetchOrderDetails();
+      fetchRefundStatus();
+    },
+  });
 
   useEffect(() => {
     if (orderId) {
@@ -99,23 +115,40 @@ const OrderDetails = () => {
 
   const fetchRefundStatus = async () => {
     try {
-      // Look up this order in our bookings table for refund info
       const { data, error } = await supabase
         .from('bookings')
-        .select('status, payment_status, payment_id, prayog_order_id')
+        .select('id, status, payment_status, payment_id, prayog_order_id, booking_source')
         .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
         .maybeSingle();
 
-      if (!error && data && (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED')) {
-        setRefundInfo({
-          status: data.status,
-          payment_status: data.payment_status,
-          payment_id: data.payment_id,
+      if (!error && data) {
+        setBookingMeta({
+          id: data.id,
+          booking_source: data.booking_source || 'prayog',
+          status: data.status || '',
         });
+
+        if (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED') {
+          setRefundInfo({
+            status: data.status,
+            payment_status: data.payment_status,
+            payment_id: data.payment_id,
+          });
+        }
       }
     } catch (err) {
       console.error('Error fetching refund status:', err);
     }
+  };
+
+  const handleCancelConfirm = async (reason: CancelReason) => {
+    if (!bookingMeta) return;
+    await cancelOrder({
+      orderId: orderId!,
+      bookingSource: bookingMeta.booking_source,
+      bookingId: bookingMeta.id,
+      reason,
+    });
   };
 
   const fetchOrderDetails = async () => {
