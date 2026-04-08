@@ -623,109 +623,154 @@ const Booking = () => {
         vendorcode: "VIAS"
       };
 
-      // Get auth token from localStorage
-      const prayogAuth = localStorage.getItem("prayog_auth");
-      const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const idToken = authData?.id_token || "";
+      let trackingId = '';
+      let awbNumber: string | null = null;
+      let labelUrl: string | null = null;
+      let prayogOrderId = orderId;
 
-      // Call Prayog API directly
-      const prayogResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          tenantId: PRAYOG_CONFIG.TENANT_ID,
-          authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify(prayogPayload)
-      });
-      const prayogResult = await prayogResponse.json();
-      if (!prayogResponse.ok) {
-        // Auto-refund if payment was already collected
-        if (paymentDetails?.razorpay_payment_id) {
-          console.log('[Booking] Prayog order failed after payment, initiating auto-refund for:', paymentDetails.razorpay_payment_id);
-          try {
-            const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
-              body: {
-                payment_id: paymentDetails.razorpay_payment_id,
-                notes: {
-                  reason: 'auto_refund_booking_failed',
-                  prayog_error: String(prayogResult?.message || prayogResponse.status).slice(0, 200),
+      if (isShadowfaxDirect) {
+        // ─── Shadowfax Direct Booking ───
+        console.log('[Booking] Using Shadowfax direct booking');
+        const { data: sfxResult, error: sfxError } = await supabase.functions.invoke('shadowfax-booking', {
+          body: {
+            order_id: orderId,
+            sender_name: senderData.name,
+            sender_phone: senderData.phone,
+            sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+            sender_pincode: senderData.pincode,
+            sender_city: senderData.city,
+            sender_state: senderData.state,
+            receiver_name: receiverData.name,
+            receiver_phone: receiverData.phone,
+            receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+            receiver_pincode: receiverData.pincode,
+            receiver_city: receiverData.city,
+            receiver_state: receiverData.state,
+            package_weight: physicalWeight,
+            goods_type: goodsType || 'Package',
+            shipment_value: shipmentValue ? parseFloat(shipmentValue) : 0,
+            length: length,
+            width: width,
+            height: height,
+          },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (sfxError || !sfxResult?.success) {
+          // Auto-refund if payment was already collected
+          if (paymentDetails?.razorpay_payment_id) {
+            try {
+              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
+                body: {
+                  payment_id: paymentDetails.razorpay_payment_id,
+                  notes: { reason: 'auto_refund_shadowfax_failed', error: String(sfxResult?.error || sfxError).slice(0, 200) },
                 },
-              },
-              headers: { 'x-environment': CURRENT_ENV },
-            });
-            if (refundError) {
-              console.error('[Booking] Auto-refund failed:', refundError);
-              // Save failed booking with refund_failed status
-              await supabase.from("bookings").insert({
-                user_id: userId,
-                sender_name: senderData.name,
-                sender_phone: senderData.phone,
-                sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
-                sender_city: senderData.city,
-                sender_state: senderData.state,
-                sender_pincode: senderData.pincode,
-                receiver_name: receiverData.name,
-                receiver_phone: receiverData.phone,
-                receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
-                receiver_city: receiverData.city,
-                receiver_state: receiverData.state,
-                receiver_pincode: receiverData.pincode,
-                goods_type: goodsType || "Package",
-                package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
-                urgency: urgency || "standard",
-                courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
-                courier_price: totalAmount,
-                delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                status: "FAILED",
-                payment_id: paymentDetails.razorpay_payment_id,
-                payment_status: "refund_failed",
-                base_fare: baseFare,
-                platform_fee: platformFee,
-                gst: gstAmount,
+                headers: { 'x-environment': CURRENT_ENV },
               });
-              throw new Error(`Booking failed and auto-refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
-            } else {
-              console.log('[Booking] Auto-refund processed:', refundData);
-              // Save failed booking with refunded status
-              await supabase.from("bookings").insert({
-                user_id: userId,
-                sender_name: senderData.name,
-                sender_phone: senderData.phone,
-                sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
-                sender_city: senderData.city,
-                sender_state: senderData.state,
-                sender_pincode: senderData.pincode,
-                receiver_name: receiverData.name,
-                receiver_phone: receiverData.phone,
-                receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
-                receiver_city: receiverData.city,
-                receiver_state: receiverData.state,
-                receiver_pincode: receiverData.pincode,
-                goods_type: goodsType || "Package",
-                package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
-                urgency: urgency || "standard",
-                courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
-                courier_price: totalAmount,
-                delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                status: "FAILED",
-                payment_id: paymentDetails.razorpay_payment_id,
-                payment_status: "refunded",
-                base_fare: baseFare,
-                platform_fee: platformFee,
-                gst: gstAmount,
-              });
-              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData?.refund_id || 'processing'}`);
+              if (!refundError && refundData) {
+                throw new Error(`Shadowfax booking failed. Your payment of ₹${totalAmount} has been refunded automatically.`);
+              }
+            } catch (refundErr: any) {
+              if (refundErr.message.includes('refunded')) throw refundErr;
             }
-          } catch (refundErr: any) {
-            if (refundErr.message.includes('refunded') || refundErr.message.includes('refund')) {
-              throw refundErr; // Re-throw our custom messages
-            }
-            console.error('[Booking] Refund process error:', refundErr);
-            throw new Error(`Booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support for refund.`);
+            throw new Error(`Shadowfax booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
           }
+          throw new Error(`Shadowfax booking failed: ${sfxResult?.error || sfxError || 'Unknown error'}`);
         }
-        throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
+
+        trackingId = sfxResult.awbNumber || sfxResult.orderId || orderId;
+        awbNumber = sfxResult.awbNumber || null;
+        prayogOrderId = sfxResult.orderId || orderId;
+
+      } else {
+        // ─── Prayog Booking (existing flow) ───
+        const prayogAuth = localStorage.getItem("prayog_auth");
+        const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
+        const idToken = authData?.id_token || "";
+
+        const prayogResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            tenantId: PRAYOG_CONFIG.TENANT_ID,
+            authorization: `Bearer ${idToken}`
+          },
+          body: JSON.stringify(prayogPayload)
+        });
+        const prayogResult = await prayogResponse.json();
+        if (!prayogResponse.ok) {
+          // Auto-refund if payment was already collected
+          if (paymentDetails?.razorpay_payment_id) {
+            console.log('[Booking] Prayog order failed after payment, initiating auto-refund for:', paymentDetails.razorpay_payment_id);
+            try {
+              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
+                body: {
+                  payment_id: paymentDetails.razorpay_payment_id,
+                  notes: {
+                    reason: 'auto_refund_booking_failed',
+                    prayog_error: String(prayogResult?.message || prayogResponse.status).slice(0, 200),
+                  },
+                },
+                headers: { 'x-environment': CURRENT_ENV },
+              });
+              if (refundError) {
+                console.error('[Booking] Auto-refund failed:', refundError);
+                await supabase.from("bookings").insert({
+                  user_id: userId,
+                  sender_name: senderData.name, sender_phone: senderData.phone,
+                  sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+                  sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+                  receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+                  receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+                  receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+                  goods_type: goodsType || "Package",
+                  package_weight: String(physicalWeight),
+                  urgency: urgency || "standard",
+                  courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
+                  courier_price: totalAmount,
+                  delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+                  status: "FAILED", payment_id: paymentDetails.razorpay_payment_id, payment_status: "refund_failed",
+                  base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+                });
+                throw new Error(`Booking failed and auto-refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+              } else {
+                console.log('[Booking] Auto-refund processed:', refundData);
+                await supabase.from("bookings").insert({
+                  user_id: userId,
+                  sender_name: senderData.name, sender_phone: senderData.phone,
+                  sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+                  sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+                  receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+                  receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+                  receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+                  goods_type: goodsType || "Package",
+                  package_weight: String(physicalWeight),
+                  urgency: urgency || "standard",
+                  courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
+                  courier_price: totalAmount,
+                  delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+                  status: "FAILED", payment_id: paymentDetails.razorpay_payment_id, payment_status: "refunded",
+                  base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+                });
+                throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData?.refund_id || 'processing'}`);
+              }
+            } catch (refundErr: any) {
+              if (refundErr.message.includes('refunded') || refundErr.message.includes('refund')) {
+                throw refundErr;
+              }
+              console.error('[Booking] Refund process error:', refundErr);
+              throw new Error(`Booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support for refund.`);
+            }
+          }
+          throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
+        }
+        trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
+        awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
+        prayogOrderId = prayogResult.orderId || orderId;
+
+        // Extract shipping label URL from documents array (type: "label")
+        const labelDocument = prayogResult.shipments?.[0]?.documents?.find((doc: { type: string; url?: string; }) => doc.type === "label");
+        labelUrl = labelDocument?.url || null;
       }
       const trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
       const awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
