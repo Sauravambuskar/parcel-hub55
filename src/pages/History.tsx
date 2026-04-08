@@ -151,6 +151,25 @@ const History = () => {
       const result = await response.json();
       const ordersList = Array.isArray(result) ? result : (result?.orders || result?.data || []);
       setOrders(ordersList);
+
+      // Fetch booking metadata for cancel capability
+      const orderIds = ordersList.map((o: PrayogOrder) => o.orderId).filter(Boolean);
+      if (orderIds.length > 0) {
+        const { data: bookings } = await supabase
+          .from('bookings')
+          .select('id, prayog_order_id, booking_source, status')
+          .in('prayog_order_id', orderIds);
+
+        if (bookings) {
+          const map: Record<string, { id: string; booking_source: string; status: string }> = {};
+          bookings.forEach((b: any) => {
+            if (b.prayog_order_id) {
+              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '' };
+            }
+          });
+          setBookingsMap(map);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching orders:", error);
       toast({
