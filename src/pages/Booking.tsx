@@ -810,17 +810,10 @@ const Booking = () => {
         payment_status: "paid",
         base_fare: baseFare,
         platform_fee: platformFee,
-        prayog_awb: awbNumber,
-        label_url: labelUrl,
-        status: "CREATED",
-        payment_id: paymentDetails?.razorpay_payment_id || null,
-        payment_status: "paid",
-        base_fare: baseFare,
-        platform_fee: platformFee,
-        // Store platform fee for internal tracking
         gst: gstAmount,
-        prayog_commission: Math.round(baseAmount * 0.05)
-      };
+        prayog_commission: isShadowfaxDirect ? 0 : Math.round(baseAmount * 0.05),
+        booking_source: bookingSource,
+      } as any;
       const {
         error: dbError
       } = await supabase.from("bookings").insert(bookingData);
