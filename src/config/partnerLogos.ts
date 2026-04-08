@@ -1,6 +1,8 @@
 // Partner logo mapping for courier selection
 // Uses publicly available courier company logos
 
+import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
   'dharmendra': 'https://ui-avatars.com/api/?name=Dharmendra&background=6366f1&color=fff&size=100',
@@ -13,8 +15,8 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'dtdc': 'https://logo.clearbit.com/dtdc.in',
   'ecom_express': 'https://logo.clearbit.com/ecomexpress.in',
   'xpressbees': 'https://logo.clearbit.com/xpressbees.com',
-  'shadowfax': 'https://logo.clearbit.com/shadowfax.in',
-  'shadowfax_direct': 'https://logo.clearbit.com/shadowfax.in',
+  'shadowfax': shadowfaxLogo,
+  'shadowfax_direct': shadowfaxLogo,
   'ekart': 'https://logo.clearbit.com/ekartlogistics.com',
   'amazon_shipping': 'https://logo.clearbit.com/amazon.in',
   'fedex': 'https://logo.clearbit.com/fedex.com',
