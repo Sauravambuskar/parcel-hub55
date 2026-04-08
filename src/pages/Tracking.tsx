@@ -67,6 +67,15 @@ const Tracking = () => {
   const [loading, setLoading] = useState(false);
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
+  const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string } | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setShowCancelDialog(false);
+      if (currentAwb) fetchTrackingData(currentAwb);
+    },
+  });
 
   useEffect(() => {
     if (initialAwbNumber) {
@@ -96,11 +105,23 @@ const Tracking = () => {
       // Check if this AWB belongs to a Shadowfax booking
       const { data: booking } = await supabase
         .from('bookings')
-        .select('booking_source, prayog_order_id')
+        .select('id, booking_source, prayog_order_id, status')
         .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
         .maybeSingle();
 
-      const isShadowfax = (booking as any)?.booking_source === 'shadowfax_direct';
+      const bSource = (booking as any)?.booking_source || 'prayog';
+      const isShadowfax = bSource === 'shadowfax_direct';
+
+      if (booking) {
+        setBookingMeta({
+          id: (booking as any).id,
+          booking_source: bSource,
+          status: (booking as any).status || '',
+          orderId: (booking as any).prayog_order_id || awb,
+        });
+      } else {
+        setBookingMeta(null);
+      }
 
       if (isShadowfax) {
         // Use Shadowfax tracking edge function
