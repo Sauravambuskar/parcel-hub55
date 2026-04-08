@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.razorpay-refund]
 verify_jwt = false
+
+[functions.shadowfax-serviceability]
+verify_jwt = false
+
+[functions.shadowfax-booking]
+verify_jwt = false
+
+[functions.shadowfax-tracking]
+verify_jwt = false
