@@ -230,8 +230,18 @@ const BookingStep2 = ({
       // Call Shadowfax serviceability in parallel (non-blocking)
       let shadowfaxPartner = null;
       try {
+        const weightKg = weightUnit === 'g' 
+          ? (parseFloat(packageWeight) || 1000) / 1000 
+          : parseFloat(packageWeight) || 1.0;
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-serviceability', {
-          body: { pickup_pincode: pickupPincode, delivery_pincode: deliveryPincode }
+          body: { 
+            pickup_pincode: pickupPincode, 
+            delivery_pincode: deliveryPincode,
+            weight_kg: weightKg,
+            length_cm: parseFloat(dimensions.length) || 10,
+            width_cm: parseFloat(dimensions.width) || 10,
+            height_cm: parseFloat(dimensions.height) || 10,
+          }
         });
         if (!sfxError && sfxData?.is_serviceable && sfxData?.partner) {
           shadowfaxPartner = sfxData.partner;
