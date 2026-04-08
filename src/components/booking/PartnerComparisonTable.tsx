@@ -158,7 +158,7 @@ const PartnerComparisonTable = ({
             <TableHead>Mode</TableHead>
             <TableHead className="text-center">Rating</TableHead>
             <TableHead className="text-center">Delivery</TableHead>
-            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">Price <span className="text-[10px] font-normal text-muted-foreground">(excl. GST)</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
