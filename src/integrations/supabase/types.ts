@@ -47,6 +47,7 @@ export type Database = {
       bookings: {
         Row: {
           base_fare: number | null
+          booking_source: string | null
           courier_name: string
           courier_price: number
           created_at: string
@@ -90,6 +91,7 @@ export type Database = {
         }
         Insert: {
           base_fare?: number | null
+          booking_source?: string | null
           courier_name: string
           courier_price: number
           created_at?: string
@@ -133,6 +135,7 @@ export type Database = {
         }
         Update: {
           base_fare?: number | null
+          booking_source?: string | null
           courier_name?: string
           courier_price?: number
           created_at?: string
@@ -323,6 +326,42 @@ export type Database = {
           state?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      shadowfax_pincodes: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          hub: string | null
+          id: string
+          is_active: boolean | null
+          pincode: string
+          pod: string | null
+          region: string | null
+          state: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          hub?: string | null
+          id?: string
+          is_active?: boolean | null
+          pincode: string
+          pod?: string | null
+          region?: string | null
+          state?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          hub?: string | null
+          id?: string
+          is_active?: boolean | null
+          pincode?: string
+          pod?: string | null
+          region?: string | null
+          state?: string | null
         }
         Relationships: []
       }

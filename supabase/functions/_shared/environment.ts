@@ -65,3 +65,27 @@ export function getRazorpayConfig(env: Environment) {
     keySecret: Deno.env.get(config.keySecretEnvVar),
   };
 }
+
+interface ShadowfaxConfig {
+  apiBaseUrl: string;
+  tokenEnvVar: string;
+}
+
+export const SHADOWFAX_CONFIG: Record<Environment, ShadowfaxConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://dale.staging.shadowfax.in',
+    tokenEnvVar: 'SHADOWFAX_STAGING_TOKEN',
+  },
+  production: {
+    apiBaseUrl: 'https://dale.shadowfax.in',
+    tokenEnvVar: 'SHADOWFAX_PROD_TOKEN',
+  },
+};
+
+export function getShadowfaxConfig(env: Environment) {
+  const config = SHADOWFAX_CONFIG[env];
+  return {
+    apiBaseUrl: config.apiBaseUrl,
+    token: Deno.env.get(config.tokenEnvVar),
+  };
+}

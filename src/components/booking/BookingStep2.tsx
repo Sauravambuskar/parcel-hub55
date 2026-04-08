@@ -227,7 +227,21 @@ const BookingStep2 = ({
 
       console.log('Serviceability response:', data);
 
-      if (data.success === false || data.metadata?.serviceable_count === 0) {
+      // Call Shadowfax serviceability in parallel (non-blocking)
+      let shadowfaxPartner = null;
+      try {
+        const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-serviceability', {
+          body: { pickup_pincode: pickupPincode, delivery_pincode: deliveryPincode }
+        });
+        if (!sfxError && sfxData?.is_serviceable && sfxData?.partner) {
+          shadowfaxPartner = sfxData.partner;
+          console.log('Shadowfax is serviceable:', shadowfaxPartner);
+        }
+      } catch (sfxErr) {
+        console.warn('Shadowfax serviceability check failed (non-blocking):', sfxErr);
+      }
+
+      if (data.success === false || (data.metadata?.serviceable_count === 0 && !shadowfaxPartner)) {
         setIsServiceable(false);
         toast({
           title: "Service Unavailable",
@@ -235,7 +249,7 @@ const BookingStep2 = ({
           variant: "destructive"
         });
         return;
-      } else if (data.success === true && data.metadata?.serviceable_count > 0) {
+      } else if ((data.success === true && data.metadata?.serviceable_count > 0) || shadowfaxPartner) {
         // Fetch city names using Google Geocoding API
         try {
           const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-geocode-pincode', {
@@ -261,6 +275,20 @@ const BookingStep2 = ({
           }
         } catch (geocodeErr) {
           console.error('Geocoding error:', geocodeErr);
+        }
+
+        // Merge Shadowfax partner into Prayog data
+        if (shadowfaxPartner) {
+          if (!data.partners) {
+            data.partners = [];
+          }
+          data.partners.push(shadowfaxPartner);
+          // Update metadata count
+          if (data.metadata) {
+            data.metadata.serviceable_count = (data.metadata.serviceable_count || 0) + 1;
+          }
+          // Ensure success flag is true if Shadowfax is serviceable
+          data.success = true;
         }
         
         extractPricingFromResponse(data);

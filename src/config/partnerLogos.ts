@@ -14,6 +14,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'ecom_express': 'https://logo.clearbit.com/ecomexpress.in',
   'xpressbees': 'https://logo.clearbit.com/xpressbees.com',
   'shadowfax': 'https://logo.clearbit.com/shadowfax.in',
+  'shadowfax_direct': 'https://logo.clearbit.com/shadowfax.in',
   'ekart': 'https://logo.clearbit.com/ekartlogistics.com',
   'amazon_shipping': 'https://logo.clearbit.com/amazon.in',
   'fedex': 'https://logo.clearbit.com/fedex.com',
