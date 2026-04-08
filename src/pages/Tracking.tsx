@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG } from "@/config/environment";
+import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
 
