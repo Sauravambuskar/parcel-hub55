@@ -465,9 +465,13 @@ const Booking = () => {
     try {
       // Find the selected service from serviceability data
       let selectedService = null;
+      let isShadowfaxDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
+            if (partner.partner_id === 'shadowfax_direct') {
+              isShadowfaxDirect = true;
+            }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
               selectedService = {
