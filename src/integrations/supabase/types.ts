@@ -179,6 +179,36 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_scores: {
+        Row: {
+          avg_delay_days: number | null
+          courier_id: string
+          courier_name: string
+          id: string
+          reliability_score: number | null
+          total_ratings: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_delay_days?: number | null
+          courier_id: string
+          courier_name: string
+          id?: string
+          reliability_score?: number | null
+          total_ratings?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_delay_days?: number | null
+          courier_id?: string
+          courier_name?: string
+          id?: string
+          reliability_score?: number | null
+          total_ratings?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       partner_ratings: {
         Row: {
           badges: string[] | null
@@ -289,42 +319,54 @@ export type Database = {
           address: string
           city: string
           created_at: string | null
+          district: string | null
           flat_no: string | null
           id: string
           label: string | null
+          lat: number | null
+          lng: number | null
           name: string
           phone: string
           pincode: string
           state: string
           updated_at: string | null
+          use_count: number | null
           user_id: string
         }
         Insert: {
           address: string
           city: string
           created_at?: string | null
+          district?: string | null
           flat_no?: string | null
           id?: string
           label?: string | null
+          lat?: number | null
+          lng?: number | null
           name: string
           phone: string
           pincode: string
           state: string
           updated_at?: string | null
+          use_count?: number | null
           user_id: string
         }
         Update: {
           address?: string
           city?: string
           created_at?: string | null
+          district?: string | null
           flat_no?: string | null
           id?: string
           label?: string | null
+          lat?: number | null
+          lng?: number | null
           name?: string
           phone?: string
           pincode?: string
           state?: string
           updated_at?: string | null
+          use_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -362,6 +404,54 @@ export type Database = {
           pod?: string | null
           region?: string | null
           state?: string | null
+        }
+        Relationships: []
+      }
+      shipment_history: {
+        Row: {
+          actual_days: number | null
+          booking_date: string | null
+          courier_id: string
+          created_at: string | null
+          delivered_date: string | null
+          destination_pincode: string
+          id: string
+          origin_pincode: string
+          predicted_confidence: number | null
+          predicted_days: number | null
+          price_paid: number | null
+          user_id: string | null
+          weight_kg: number | null
+        }
+        Insert: {
+          actual_days?: number | null
+          booking_date?: string | null
+          courier_id: string
+          created_at?: string | null
+          delivered_date?: string | null
+          destination_pincode: string
+          id?: string
+          origin_pincode: string
+          predicted_confidence?: number | null
+          predicted_days?: number | null
+          price_paid?: number | null
+          user_id?: string | null
+          weight_kg?: number | null
+        }
+        Update: {
+          actual_days?: number | null
+          booking_date?: string | null
+          courier_id?: string
+          created_at?: string | null
+          delivered_date?: string | null
+          destination_pincode?: string
+          id?: string
+          origin_pincode?: string
+          predicted_confidence?: number | null
+          predicted_days?: number | null
+          price_paid?: number | null
+          user_id?: string | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
