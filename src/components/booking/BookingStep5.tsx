@@ -8,7 +8,7 @@ import { Loader2, Truck } from "lucide-react";
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays } from "@/lib/tat-utils";
-import warehouseBg from "@/assets/warehouse-bg.jpg";
+
 
 interface Partner {
   partner_id: string;
@@ -230,15 +230,12 @@ const BookingStep5 = ({
   });
 
   return (
-    <div className="relative space-y-6">
-      {/* Subtle background image */}
-      <div
-        className="absolute inset-0 -m-4 rounded-2xl overflow-hidden opacity-[0.06] pointer-events-none"
-        style={{ backgroundImage: `url(${warehouseBg})`, backgroundSize: "cover", backgroundPosition: "center" }}
-      />
-
-      <div className="relative text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-primary-glow">Courier Partners</h2>
+    <div className="space-y-4">
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-semibold">Courier Partners</h2>
+        <p className="text-sm text-muted-foreground">
+          {serviceablePartners.length} partner{serviceablePartners.length !== 1 ? "s" : ""} • {sortedRows.length} service{sortedRows.length !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {/* AI-Powered Smart Ranking */}
@@ -249,53 +246,48 @@ const BookingStep5 = ({
       {/* Sort Toggle Bar */}
       <ETASortBar activeSort={sortMode} onSortChange={setSortMode} isLoading={etaLoading} />
 
-      {/* ETA Cards */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          {serviceablePartners.length} partner{serviceablePartners.length !== 1 ? "s" : ""} available
-        </h3>
+      {/* Stacked ETA Cards */}
+      {sortedRows.length > 0 ? (
+        <div className="space-y-2">
+          {sortedRows.map(({ partner, service, serviceId, price, etaKey }, index) => {
+            const eta = etaResults.get(etaKey);
+            const isLoadingEta = etaLoading && !eta;
 
-        {sortedRows.length > 0 ? (
-          <div className="grid gap-3">
-            {sortedRows.map(({ partner, service, serviceId, price, etaKey }) => {
-              const eta = etaResults.get(etaKey);
-              const isLoadingEta = etaLoading && !eta;
+            if (isLoadingEta) {
+              return <ETACardSkeleton key={serviceId} />;
+            }
 
-              if (isLoadingEta) {
-                return <ETACardSkeleton key={serviceId} />;
-              }
-
-              return (
-                <ETACard
-                  key={serviceId}
-                  courierData={{
-                    partner_id: partner.partner_id,
-                    partner_code: partner.partner_code,
-                    partner_name: partner.partner_name,
-                    logo_url: partner.logo_url,
-                    service_code: service.service_code,
-                    service_name: service.service_name,
-                    price: service.rate?.price?.amount || 0,
-                    tat_days: normalizeTatDays(service.tat_days, service.service_name),
-                    is_cod: service.is_cod,
-                    insurance: service.insurance,
-                    delivery_modes: service.delivery_modes,
-                    rate_id: service.rate?.rate_id,
-                  }}
-                  etaData={eta || null}
-                  isSelected={selectedServiceId === serviceId}
-                  onSelect={() => onServiceSelect(partner.partner_id, service.service_code, service.rate?.rate_id)}
-                  platformFee={platformFee}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-xl border border-dashed">
-            No courier partners available for this route.
-          </div>
-        )}
-      </div>
+            return (
+              <ETACard
+                key={serviceId}
+                courierData={{
+                  partner_id: partner.partner_id,
+                  partner_code: partner.partner_code,
+                  partner_name: partner.partner_name,
+                  logo_url: partner.logo_url,
+                  service_code: service.service_code,
+                  service_name: service.service_name,
+                  price: service.rate?.price?.amount || 0,
+                  tat_days: normalizeTatDays(service.tat_days, service.service_name),
+                  is_cod: service.is_cod,
+                  insurance: service.insurance,
+                  delivery_modes: service.delivery_modes,
+                  rate_id: service.rate?.rate_id,
+                }}
+                etaData={eta || null}
+                isSelected={selectedServiceId === serviceId}
+                onSelect={() => onServiceSelect(partner.partner_id, service.service_code, service.rate?.rate_id)}
+                platformFee={platformFee}
+                rank={index + 1}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-xl border border-dashed">
+          No courier partners available for this route.
+        </div>
+      )}
 
       {/* Toggle for Non-Serviceable Partners */}
       {nonServiceablePartners.length > 0 && (
