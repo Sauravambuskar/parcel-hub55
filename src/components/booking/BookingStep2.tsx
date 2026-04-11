@@ -173,15 +173,6 @@ const BookingStep2 = ({
       let deliveryCity = '';
       let deliveryState = '';
 
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      let prayogUserId = 'viasetu-web';
-
-      try {
-        const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-        prayogUserId = authData?.user_id || authData?.customer_id || authData?.phone || prayogUserId;
-      } catch (parseError) {
-        console.warn('Unable to parse prayog_auth for serviceability:', parseError);
-      }
 
       const weightKg = weightUnit === 'g'
         ? (parseFloat(packageWeight) || 1000) / 1000
