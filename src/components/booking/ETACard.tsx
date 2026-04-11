@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Truck, Clock, Check, Zap, Shield, Package as PackageIcon, AlertTriangle } from "lucide-react";
+import { Truck, Clock, Check, Zap } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { useState } from "react";
 
@@ -58,7 +58,7 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
-  const totalPrice = courierData.price + platformFee;
+  const totalPrice = Math.round(courierData.price + platformFee);
 
   const days = etaData?.adjusted_days ?? courierData.tat_days;
   const confidenceScore = etaData?.confidence_score;
@@ -114,18 +114,6 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
           <span className="capitalize">{courierData.service_name.replace(/_/g, " ")}</span>
-          {courierData.insurance && (
-            <>
-              <span>•</span>
-              <span className="flex items-center gap-0.5"><Shield className="h-2.5 w-2.5" />Insured</span>
-            </>
-          )}
-          {courierData.is_cod && (
-            <>
-              <span>•</span>
-              <span>COD</span>
-            </>
-          )}
         </div>
       </div>
 
