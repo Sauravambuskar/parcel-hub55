@@ -6,7 +6,7 @@ import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, M
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PRAYOG_CONFIG } from "@/config/environment";
+
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
