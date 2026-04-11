@@ -61,7 +61,7 @@ serve(async (req) => {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'api-key': prayogConfig.tenantId || '',
+      'api-key': prayogConfig.apiKey || '',
     };
 
     const response = await fetch(`${prayogConfig.apiBaseUrl}/gateway/serviceability/v3/check`, {
