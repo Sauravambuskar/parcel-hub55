@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import SmartRanking from "./SmartRanking";
 import CourierAssistant from "./CourierAssistant";
-import ETACard, { ETACardSkeleton } from "./ETACard";
+import ETACard, { ETACardSkeleton, ETACardHeader } from "./ETACard";
 import ETASortBar from "./ETASortBar";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
 import { Loader2, Truck } from "lucide-react";

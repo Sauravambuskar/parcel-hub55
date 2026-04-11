@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Truck, Clock, Check, Zap } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Truck, Clock, Check, Zap, Star, Info } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { useState } from "react";
 
@@ -39,7 +40,39 @@ interface ETACardProps {
   onSelect: () => void;
   platformFee?: number;
   rank?: number;
+  rating?: number | null;
 }
+
+/** Column header row rendered once above the list */
+export const ETACardHeader = () => (
+  <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground select-none">
+    {/* spacer for radio + logo */}
+    <div className="w-5 shrink-0" />
+    <div className="w-9 shrink-0" />
+    {/* Partner */}
+    <div className="flex-1 min-w-0">Partner</div>
+    {/* Rating */}
+    <div className="w-[52px] text-center shrink-0">Rating</div>
+    {/* ETA */}
+    <div className="w-[56px] text-center shrink-0">ETA</div>
+    {/* Confidence */}
+    <div className="w-[62px] text-center shrink-0 flex items-center justify-center gap-0.5">
+      <span>Reliability</span>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-2.5 w-2.5 text-muted-foreground/60 cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[200px] text-xs">
+            AI-predicted on-time delivery probability based on route history, weather &amp; courier performance.
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+    {/* Price */}
+    <div className="w-[68px] text-right shrink-0">Price</div>
+  </div>
+);
 
 export const ETACardSkeleton = () => (
   <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card animate-pulse">
@@ -49,12 +82,14 @@ export const ETACardSkeleton = () => (
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-3 w-16" />
     </div>
+    <Skeleton className="h-4 w-10" />
+    <Skeleton className="h-4 w-14" />
     <Skeleton className="h-4 w-14" />
     <Skeleton className="h-6 w-16 rounded" />
   </div>
 );
 
-const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank }: ETACardProps) => {
+const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating }: ETACardProps) => {
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
@@ -104,7 +139,7 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
         )}
       </div>
 
-      {/* Info */}
+      {/* Partner info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-semibold text-sm truncate">{courierData.partner_name}</p>
@@ -112,35 +147,53 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
             <Zap className="h-3 w-3 text-warning shrink-0" />
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <span className="capitalize">{courierData.service_name.replace(/_/g, " ")}</span>
-        </div>
+        <p className="text-xs text-muted-foreground mt-0.5 capitalize truncate">
+          {courierData.service_name.replace(/_/g, " ")}
+        </p>
+      </div>
+
+      {/* Rating */}
+      <div className="w-[52px] text-center shrink-0">
+        {rating != null ? (
+          <div className="flex items-center justify-center gap-0.5">
+            <Star className="h-3 w-3 text-warning fill-warning" />
+            <span className="text-xs font-medium">{rating.toFixed(1)}</span>
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground">—</span>
+        )}
       </div>
 
       {/* ETA */}
-      <div className="text-center shrink-0 min-w-[56px]">
+      <div className="w-[56px] text-center shrink-0">
         <div className="flex items-center justify-center gap-1 text-sm font-medium text-foreground">
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span>{days}d</span>
         </div>
-        {confidenceScore !== null && confidenceScore !== undefined && (
-          <div className="mt-0.5">
-            <div className="w-10 h-1 rounded-full bg-muted mx-auto overflow-hidden">
+      </div>
+
+      {/* Confidence / Reliability */}
+      <div className="w-[62px] text-center shrink-0">
+        {confidenceScore !== null && confidenceScore !== undefined ? (
+          <div>
+            <div className="w-10 h-1.5 rounded-full bg-muted mx-auto overflow-hidden">
               <div
-                className="h-full rounded-full"
+                className="h-full rounded-full transition-all"
                 style={{
                   width: `${confidenceScore}%`,
                   backgroundColor: etaData?.confidence_color || "hsl(var(--primary))",
                 }}
               />
             </div>
-            <p className="text-[9px] text-muted-foreground mt-0.5">{confidenceScore}%</p>
+            <p className="text-[10px] font-medium mt-0.5">{confidenceScore}%</p>
           </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground">—</span>
         )}
       </div>
 
       {/* Price */}
-      <div className="shrink-0 text-right">
+      <div className="w-[68px] shrink-0 text-right">
         <span className="text-sm font-bold bg-foreground text-background px-2 py-0.5 rounded">
           ₹{totalPrice}
         </span>
