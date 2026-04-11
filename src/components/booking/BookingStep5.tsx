@@ -164,9 +164,14 @@ const BookingStep5 = ({
     setEtaLoading(false);
   }, [serviceRows, shipmentSummary]);
 
+  const etaFetchedRef = useRef(false);
+
   useEffect(() => {
-    fetchETAs();
-  }, [fetchETAs]);
+    if (!etaFetchedRef.current && serviceRows.length > 0) {
+      etaFetchedRef.current = true;
+      fetchETAs();
+    }
+  }, [fetchETAs, serviceRows.length]);
 
   // Sort logic
   const sortedRows = useMemo(() => {
