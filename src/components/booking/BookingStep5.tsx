@@ -5,7 +5,7 @@ import ETACard, { ETACardSkeleton } from "./ETACard";
 import ETASortBar from "./ETASortBar";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
 import { Loader2, Truck } from "lucide-react";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays } from "@/lib/tat-utils";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
