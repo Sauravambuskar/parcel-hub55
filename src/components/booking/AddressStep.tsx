@@ -59,7 +59,7 @@ const getSelfAutofillSource = () => {
   }
 };
 
-import AddressAutocomplete from "./AddressAutocomplete";
+import AddressInput from "./AddressInput";
 
 interface PincodeMismatch {
   expected: string;
