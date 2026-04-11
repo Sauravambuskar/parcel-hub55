@@ -50,7 +50,7 @@ export const ETACardHeader = () => (
     <div className="w-5 shrink-0" />
     <div className="w-9 shrink-0" />
     {/* Partner */}
-    <div className="flex-1 min-w-0">Partner</div>
+    <div className="flex-1 min-w-0 text-left text-sm">Courier Partner</div>
     {/* Rating */}
     <div className="w-[52px] text-center shrink-0">Rating</div>
     {/* ETA */}
