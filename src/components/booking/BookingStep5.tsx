@@ -8,7 +8,7 @@ import { Loader2, Truck } from "lucide-react";
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays } from "@/lib/tat-utils";
-import warehouseBg from "@/assets/warehouse-bg.jpg";
+
 
 interface Partner {
   partner_id: string;
