@@ -28,9 +28,6 @@ serve(async (req) => {
     
     console.log(`Using ${env} environment for Prayog`);
 
-    const API_KEY = prayogConfig.tenantId || Deno.env.get('PRAYOG_API_KEY') || 'prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad';
-    const userId = req.headers.get('x-user-id') || '';
-    
     console.log('Checking serviceability v3:', { source_location, destination_location, env });
 
     // Build the request payload for Prayog API v3
@@ -54,17 +51,8 @@ serve(async (req) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-tenant-id': prayogConfig.tenantId || '',
+      'x-api-key': prayogConfig.apiKey || '',
     };
-    
-    if (userId) {
-      headers['x-user-id'] = userId;
-    }
-
-    // Forward Bearer token for authorization
-    const authHeader = req.headers.get('authorization');
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
 
     const response = await fetch(`${prayogConfig.apiBaseUrl}/gateway/serviceability/v3/check`, {
       method: 'POST',
