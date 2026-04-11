@@ -172,149 +172,164 @@ const BookingStep2 = ({
       let deliveryCity = '';
       let deliveryState = '';
 
-      // Call serviceability via Edge Function (server-side API key auth)
-      const { data, error: sfError } = await supabase.functions.invoke('check-serviceability', {
-        body: {
-          source_location: {
-            postal_code: pickupPincode,
-            country_code: 'IN'
-          },
-          destination_location: {
-            postal_code: deliveryPincode,
-            country_code: 'IN'
-          },
-          packages: [{
-            weight: { 
-              value: weightUnit === 'g' 
-                ? (parseFloat(packageWeight) || 1000) / 1000 
-                : parseFloat(packageWeight) || 1.0, 
-              unit: 'kg' 
-            },
-            dimensions: { 
-              length: parseFloat(dimensions.length) || 10.0, 
-              width: parseFloat(dimensions.width) || 10.0,
-              height: parseFloat(dimensions.height) || 10.0, 
-              unit: 'cm' 
-            }
-          }]
-        },
-        headers: {
-          'x-environment': localStorage.getItem('app_environment') || 'production',
-        }
-      });
+      const prayogAuth = localStorage.getItem('prayog_auth');
+      let prayogUserId = 'viasetu-web';
 
-      if (sfError || data?.error) {
-        console.error('Serviceability error:', sfError || data);
-        toast({
-          title: "Error",
-          description: data?.error || sfError?.message || "Failed to check serviceability. Please try again.",
-          variant: "destructive"
-        });
-        return;
+      try {
+        const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
+        prayogUserId = authData?.user_id || authData?.customer_id || authData?.phone || prayogUserId;
+      } catch (parseError) {
+        console.warn('Unable to parse prayog_auth for serviceability:', parseError);
       }
 
-      console.log('Serviceability response:', data);
+      const weightKg = weightUnit === 'g'
+        ? (parseFloat(packageWeight) || 1000) / 1000
+        : parseFloat(packageWeight) || 1.0;
 
-      // Call Shadowfax serviceability in parallel (non-blocking)
-      let shadowfaxPartner = null;
-      try {
-        const weightKg = weightUnit === 'g' 
-          ? (parseFloat(packageWeight) || 1000) / 1000 
-          : parseFloat(packageWeight) || 1.0;
-        const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-serviceability', {
-          body: { 
-            pickup_pincode: pickupPincode, 
-            delivery_pincode: deliveryPincode,
-            weight_kg: weightKg,
-            length_cm: parseFloat(dimensions.length) || 10,
-            width_cm: parseFloat(dimensions.width) || 10,
-            height_cm: parseFloat(dimensions.height) || 10,
+      const prayogPayload = {
+        source_location: {
+          postal_code: pickupPincode,
+          country_code: 'IN'
+        },
+        destination_location: {
+          postal_code: deliveryPincode,
+          country_code: 'IN'
+        },
+        packages: [{
+          weight: {
+            value: weightKg,
+            unit: 'kg'
+          },
+          dimensions: {
+            length: parseFloat(dimensions.length) || 10.0,
+            width: parseFloat(dimensions.width) || 10.0,
+            height: parseFloat(dimensions.height) || 10.0,
+            unit: 'cm'
           }
-        });
+        }]
+      };
+
+      const shadowfaxPayload = {
+        pickup_pincode: pickupPincode,
+        delivery_pincode: deliveryPincode,
+        weight_kg: weightKg,
+        length_cm: parseFloat(dimensions.length) || 10,
+        width_cm: parseFloat(dimensions.width) || 10,
+        height_cm: parseFloat(dimensions.height) || 10,
+      };
+
+      const [prayogResult, shadowfaxResult] = await Promise.allSettled([
+        supabase.functions.invoke('check-serviceability', {
+          body: prayogPayload,
+          headers: {
+            'x-environment': localStorage.getItem('app_environment') || 'production',
+            'x-user-id': prayogUserId,
+          }
+        }),
+        supabase.functions.invoke('shadowfax-serviceability', {
+          body: shadowfaxPayload,
+        }),
+      ]);
+
+      let prayogErrorMessage = '';
+      const prayogData = prayogResult.status === 'fulfilled' ? prayogResult.value.data : null;
+      const prayogInvokeError = prayogResult.status === 'fulfilled' ? prayogResult.value.error : prayogResult.reason;
+
+      if (prayogInvokeError || prayogData?.error) {
+        prayogErrorMessage = prayogData?.error || prayogData?.details?.message || prayogInvokeError?.message || 'Failed to check Prayog serviceability.';
+        console.warn('Prayog serviceability failed:', prayogInvokeError || prayogData);
+      } else if (prayogData) {
+        console.log('Prayog serviceability response:', prayogData);
+      }
+
+      let shadowfaxPartner = null;
+      if (shadowfaxResult.status === 'fulfilled') {
+        const { data: sfxData, error: sfxError } = shadowfaxResult.value;
         if (!sfxError && sfxData?.is_serviceable && sfxData?.partner) {
           shadowfaxPartner = sfxData.partner;
           console.log('Shadowfax is serviceable:', shadowfaxPartner);
+        } else if (sfxError || sfxData?.error) {
+          console.warn('Shadowfax serviceability check failed (non-blocking):', sfxError || sfxData);
         }
-      } catch (sfxErr) {
-        console.warn('Shadowfax serviceability check failed (non-blocking):', sfxErr);
+      } else {
+        console.warn('Shadowfax serviceability check failed (non-blocking):', shadowfaxResult.reason);
       }
 
-      if (data.success === false || (data.metadata?.serviceable_count === 0 && !shadowfaxPartner)) {
+      const serviceabilityData = prayogData && typeof prayogData === 'object'
+        ? {
+            ...prayogData,
+            partners: [...(prayogData.partners || [])],
+            metadata: { ...(prayogData.metadata || {}) },
+          }
+        : {
+            success: false,
+            partners: [],
+            metadata: { serviceable_count: 0 },
+          };
+
+      const prayogServiceable = serviceabilityData.success === true && (serviceabilityData.metadata?.serviceable_count || 0) > 0;
+
+      if (shadowfaxPartner) {
+        serviceabilityData.partners.push(shadowfaxPartner);
+        serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
+        serviceabilityData.success = true;
+      }
+
+      if (!prayogServiceable && !shadowfaxPartner) {
         setIsServiceable(false);
         toast({
           title: "Service Unavailable",
-          description: "Delivery is not available for this route. Please try different pincodes.",
+          description: prayogErrorMessage || "Delivery is not available for this route. Please try different pincodes.",
           variant: "destructive"
         });
         return;
-      } else if ((data.success === true && data.metadata?.serviceable_count > 0) || shadowfaxPartner) {
-        // Fetch city names using Google Geocoding API
-        try {
-          const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-geocode-pincode', {
-            body: { pincodes: [pickupPincode, deliveryPincode] }
-          });
-
-          if (!geocodeError && geocodeData?.results) {
-            const pickupResult = geocodeData.results.find((r: any) => r.pincode === pickupPincode);
-            const deliveryResult = geocodeData.results.find((r: any) => r.pincode === deliveryPincode);
-            
-            if (pickupResult) {
-              pickupCity = pickupResult.city || '';
-              pickupState = pickupResult.state || '';
-            }
-            if (deliveryResult) {
-              deliveryCity = deliveryResult.city || '';
-              deliveryState = deliveryResult.state || '';
-            }
-            
-            console.log('Geocode results:', { pickupCity, pickupState, deliveryCity, deliveryState });
-          } else {
-            console.warn('Geocoding failed:', geocodeError);
-          }
-        } catch (geocodeErr) {
-          console.error('Geocoding error:', geocodeErr);
-        }
-
-        // Merge Shadowfax partner into Prayog data
-        if (shadowfaxPartner) {
-          if (!data.partners) {
-            data.partners = [];
-          }
-          data.partners.push(shadowfaxPartner);
-          // Update metadata count
-          if (data.metadata) {
-            data.metadata.serviceable_count = (data.metadata.serviceable_count || 0) + 1;
-          }
-          // Ensure success flag is true if Shadowfax is serviceable
-          data.success = true;
-        }
-        
-        extractPricingFromResponse(data);
-        
-        if (onServiceabilityData) {
-          onServiceabilityData(data);
-        }
-        
-        if (onLocationData) {
-          onLocationData(pickupCity, pickupState, deliveryCity, deliveryState);
-        }
-        
-        setIsServiceable(true);
-        
-        toast({
-          title: "Service Available ✓",
-          description: "Great! Delivery is available for this route.",
-        });
-        
-        onNext();
-      } else {
-        setIsServiceable(false);
-        toast({
-          title: "Service Unavailable",
-          description: "Unable to check serviceability. Please try again.",
-          variant: "destructive"
-        });
       }
+
+      // Fetch city names using Google Geocoding API
+      try {
+        const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-geocode-pincode', {
+          body: { pincodes: [pickupPincode, deliveryPincode] }
+        });
+
+        if (!geocodeError && geocodeData?.results) {
+          const pickupResult = geocodeData.results.find((r: any) => r.pincode === pickupPincode);
+          const deliveryResult = geocodeData.results.find((r: any) => r.pincode === deliveryPincode);
+          
+          if (pickupResult) {
+            pickupCity = pickupResult.city || '';
+            pickupState = pickupResult.state || '';
+          }
+          if (deliveryResult) {
+            deliveryCity = deliveryResult.city || '';
+            deliveryState = deliveryResult.state || '';
+          }
+          
+          console.log('Geocode results:', { pickupCity, pickupState, deliveryCity, deliveryState });
+        } else {
+          console.warn('Geocoding failed:', geocodeError);
+        }
+      } catch (geocodeErr) {
+        console.error('Geocoding error:', geocodeErr);
+      }
+      
+      extractPricingFromResponse(serviceabilityData);
+      
+      if (onServiceabilityData) {
+        onServiceabilityData(serviceabilityData);
+      }
+      
+      if (onLocationData) {
+        onLocationData(pickupCity, pickupState, deliveryCity, deliveryState);
+      }
+      
+      setIsServiceable(true);
+      
+      toast({
+        title: "Service Available ✓",
+        description: "Great! Delivery is available for this route.",
+      });
+      
+      onNext();
     } catch (error: any) {
       console.error('Serviceability check error:', error);
       toast({

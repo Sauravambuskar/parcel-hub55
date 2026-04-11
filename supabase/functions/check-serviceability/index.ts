@@ -25,12 +25,23 @@ serve(async (req) => {
     // Get environment-specific Prayog config
     const env = getEnvironmentFromRequest(req);
     const prayogConfig = getPrayogConfig(env);
+    const userId = req.headers.get('x-user-id')?.trim() || 'viasetu-web';
+
+    if (!prayogConfig.tenantId || !prayogConfig.apiKey) {
+      return new Response(
+        JSON.stringify({ error: `Prayog credentials are not configured for ${env}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     console.log(`Using ${env} environment for Prayog`);
+    console.log('Checking serviceability v3:', {
+      source_location,
+      destination_location,
+      env,
+      hasUserId: Boolean(userId),
+    });
 
-    console.log('Checking serviceability v3:', { source_location, destination_location, env });
-
-    // Build the request payload for Prayog API v3
     const prayogPayload = {
       source_location: {
         postal_code: source_location.postal_code,
@@ -50,7 +61,9 @@ serve(async (req) => {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'api-key': prayogConfig.tenantId || '',
+      'X-TENANT-ID': prayogConfig.tenantId,
+      'X-USER-ID': userId,
+      'Authorization': `Bearer ${prayogConfig.apiKey}`,
     };
 
     const response = await fetch(`${prayogConfig.apiBaseUrl}/gateway/serviceability/v3/check`, {
