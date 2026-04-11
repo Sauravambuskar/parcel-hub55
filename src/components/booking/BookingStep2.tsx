@@ -172,22 +172,9 @@ const BookingStep2 = ({
       let deliveryCity = '';
       let deliveryState = '';
 
-      // Get auth token for API calls
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-      const userId = authData?.user_id || 'guest';
-
-      // Call Prayog serviceability v3 API via gateway
-      const bearerToken = authData?.id_token || authData?.token || '';
-      const response = await fetch(`${PRAYOG_CONFIG.SERVICEABILITY_BASE_URL}/gateway/serviceability/v3/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-tenant-id': PRAYOG_CONFIG.TENANT_ID,
-          'x-user-id': userId,
-          ...(bearerToken && { 'Authorization': `Bearer ${bearerToken}` }),
-        },
-        body: JSON.stringify({
+      // Call serviceability via Edge Function (server-side API key auth)
+      const { data, error: sfError } = await supabase.functions.invoke('check-serviceability', {
+        body: {
           source_location: {
             postal_code: pickupPincode,
             country_code: 'IN'
@@ -210,16 +197,17 @@ const BookingStep2 = ({
               unit: 'cm' 
             }
           }]
-        }),
+        },
+        headers: {
+          'x-environment': localStorage.getItem('app_environment') || 'production',
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('Prayog API error:', data);
+      if (sfError || data?.error) {
+        console.error('Serviceability error:', sfError || data);
         toast({
           title: "Error",
-          description: data.message || "Failed to check serviceability. Please try again.",
+          description: data?.error || sfError?.message || "Failed to check serviceability. Please try again.",
           variant: "destructive"
         });
         return;
