@@ -219,26 +219,34 @@ const BookingStep2 = ({
         height_cm: parseFloat(dimensions.height) || 10,
       };
 
+      // Call Prayog API directly
+      const prayogFetch = fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/serviceability/v3/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify(prayogPayload),
+      }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Prayog serviceability failed');
+        return data;
+      });
+
       const [prayogResult, shadowfaxResult] = await Promise.allSettled([
-        supabase.functions.invoke('check-serviceability', {
-          body: prayogPayload,
-          headers: {
-            'x-environment': localStorage.getItem('app_environment') || 'production',
-            'x-user-id': prayogUserId,
-          }
-        }),
+        prayogFetch,
         supabase.functions.invoke('shadowfax-serviceability', {
           body: shadowfaxPayload,
         }),
       ]);
 
       let prayogErrorMessage = '';
-      const prayogData = prayogResult.status === 'fulfilled' ? prayogResult.value.data : null;
-      const prayogInvokeError = prayogResult.status === 'fulfilled' ? prayogResult.value.error : prayogResult.reason;
+      const prayogData = prayogResult.status === 'fulfilled' ? prayogResult.value : null;
+      const prayogError = prayogResult.status === 'rejected' ? prayogResult.reason : null;
 
-      if (prayogInvokeError || prayogData?.error) {
-        prayogErrorMessage = prayogData?.error || prayogData?.details?.message || prayogInvokeError?.message || 'Failed to check Prayog serviceability.';
-        console.warn('Prayog serviceability failed:', prayogInvokeError || prayogData);
+      if (prayogError) {
+        prayogErrorMessage = prayogError?.message || 'Failed to check Prayog serviceability.';
+        console.warn('Prayog serviceability failed:', prayogError);
       } else if (prayogData) {
         console.log('Prayog serviceability response:', prayogData);
       }
