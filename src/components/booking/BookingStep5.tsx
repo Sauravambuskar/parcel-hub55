@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import SmartRanking from "./SmartRanking";
 import CourierAssistant from "./CourierAssistant";
-import ETACard, { ETACardSkeleton } from "./ETACard";
+import ETACard, { ETACardSkeleton, ETACardHeader } from "./ETACard";
 import ETASortBar from "./ETASortBar";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
 import { Loader2, Truck } from "lucide-react";
@@ -248,10 +248,12 @@ const BookingStep5 = ({
 
       {/* Stacked ETA Cards */}
       {sortedRows.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
+          <ETACardHeader />
           {sortedRows.map(({ partner, service, serviceId, price, etaKey }, index) => {
             const eta = etaResults.get(etaKey);
             const isLoadingEta = etaLoading && !eta;
+            const partnerRating = ratings.get(partner.partner_code);
 
             if (isLoadingEta) {
               return <ETACardSkeleton key={serviceId} />;
@@ -279,6 +281,7 @@ const BookingStep5 = ({
                 onSelect={() => onServiceSelect(partner.partner_id, service.service_code, service.rate?.rate_id)}
                 platformFee={platformFee}
                 rank={index + 1}
+                rating={partnerRating?.rating ?? null}
               />
             );
           })}
