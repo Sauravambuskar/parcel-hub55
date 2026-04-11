@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.prayog-cancel-order]
 verify_jwt = false
+
+[functions.fix-address]
+verify_jwt = false
+
+[functions.predict-eta]
+verify_jwt = false
