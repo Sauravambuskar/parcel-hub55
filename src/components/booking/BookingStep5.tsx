@@ -309,7 +309,11 @@ const BookingStep5 = ({
                   <Truck className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">{partner.partner_name}</p>
-                    <p className="text-xs text-destructive">{partner.error || "Not serviceable for this route"}</p>
+                    <p className="text-xs text-destructive">
+                      {partner.error || (partner.is_serviceable && (!partner.services || partner.services.length === 0)
+                        ? "No rates available for this route"
+                        : "Not serviceable for this route")}
+                    </p>
                   </div>
                 </div>
               ))}
