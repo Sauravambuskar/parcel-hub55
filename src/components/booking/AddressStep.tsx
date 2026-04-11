@@ -369,13 +369,12 @@ const AddressStep = ({
             {submitted && !senderData.flatNo && <p className="text-xs text-destructive mt-1">Required</p>}
           </div>
 
-          <AddressAutocomplete
+          <AddressInput
             id="sender-address"
             label="Complete Address *"
             value={senderData.address}
             onChange={(value) => {
               onSenderChange("address", value);
-              // Clear mismatch when user manually types
               setSenderPincodeMismatch(null);
             }}
             onAddressSelect={handleSenderAddressSelect}
@@ -494,13 +493,12 @@ const AddressStep = ({
             {submitted && !receiverData.flatNo && <p className="text-xs text-destructive mt-1">Required</p>}
           </div>
 
-          <AddressAutocomplete
+          <AddressInput
             id="receiver-address"
             label="Complete Address *"
             value={receiverData.address}
             onChange={(value) => {
               onReceiverChange("address", value);
-              // Clear mismatch when user manually types
               setReceiverPincodeMismatch(null);
             }}
             onAddressSelect={handleReceiverAddressSelect}
