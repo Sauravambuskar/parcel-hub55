@@ -7,6 +7,7 @@ import { Package, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PRAYOG_CONFIG } from "@/config/environment";
 import PageBackground from "@/components/PageBackground";
 
 const Login = () => {
@@ -28,7 +29,6 @@ const Login = () => {
     }
   }, [navigate]);
 
-  // Resend timer countdown
   useEffect(() => {
     if (resendTimer > 0) {
       const interval = setInterval(() => setResendTimer(t => t - 1), 1000);
@@ -45,12 +45,26 @@ const Login = () => {
     setLoading(true);
     try {
       const phoneWithCountryCode = `+91${phoneNumber}`;
-      const { data, error } = await supabase.functions.invoke('prayog-send-otp', {
-        body: { name: 'User', phone: phoneWithCountryCode }
+
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/auth/signup-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
+          'api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify({
+          name: 'User',
+          username: phoneWithCountryCode,
+          signupType: 'MOBILE',
+          role: 'USER',
+        }),
       });
 
-      if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || 'Failed to send OTP');
+      const data = await response.json();
+
+      if (!response.ok || !data.session) {
+        throw new Error(data.message || 'Failed to send OTP');
       }
 
       setSession(data.session);
@@ -74,12 +88,25 @@ const Login = () => {
     setLoading(true);
     try {
       const phoneWithCountryCode = `+91${phoneNumber}`;
-      const { data, error } = await supabase.functions.invoke('prayog-verify-otp', {
-        body: { phone: phoneWithCountryCode, session, otp }
+
+      const response = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/auth/verify-mfa`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TENANT-ID': PRAYOG_CONFIG.TENANT_ID,
+          'api-key': PRAYOG_CONFIG.API_KEY,
+        },
+        body: JSON.stringify({
+          username: phoneWithCountryCode,
+          session: session,
+          confirmationCode: otp,
+        }),
       });
 
-      if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || 'Invalid OTP');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid OTP');
       }
 
       // Generate deterministic user_id from phone
@@ -92,7 +119,6 @@ const Login = () => {
       const existingProfile = profileResponse.data?.profile;
 
       if (existingProfile?.full_name) {
-        // Returning user
         const authData = {
           phone: phoneWithCountryCode,
           user_id: oderId,
@@ -105,7 +131,6 @@ const Login = () => {
         toast({ title: "Welcome back!", description: `Good to see you again, ${existingProfile.full_name}` });
         navigate("/home");
       } else {
-        // New user — ask for name
         setUserId(oderId);
         setStep('name');
       }
@@ -172,7 +197,7 @@ const Login = () => {
                   {step === 'phone' ? 'Enter Mobile Number' : step === 'otp' ? 'Verify OTP' : 'Almost there!'}
                 </CardTitle>
                 <p className="text-sm text-white/70 mt-1">
-                  {step === 'phone' ? 'We\'ll send you a verification code' : step === 'otp' ? `Enter the code sent to +91 ${phoneNumber}` : 'What should we call you?'}
+                  {step === 'phone' ? "We'll send you a verification code" : step === 'otp' ? `Enter the code sent to +91 ${phoneNumber}` : 'What should we call you?'}
                 </p>
               </div>
             </div>
