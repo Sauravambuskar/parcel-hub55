@@ -45,10 +45,8 @@ interface ETACardProps {
 
 /** Column header row rendered once above the list */
 export const ETACardHeader = () => (
-  <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground select-none">
+  <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-foreground bg-background rounded-lg border border-border select-none hover:bg-accent/50 transition-colors">
     {/* Partner — spans radio + logo + name area */}
-    <div className="w-5 shrink-0" />
-    <div className="w-9 shrink-0" />
     <div className="flex-1 min-w-0 text-left text-xs">Courier Partner</div>
     {/* Rating */}
     <div className="w-[52px] text-center shrink-0">Rating</div>
