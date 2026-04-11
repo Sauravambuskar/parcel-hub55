@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { supabase } from "@/integrations/supabase/client";
+import { PRAYOG_CONFIG } from "@/config/environment";
 import { cn } from "@/lib/utils";
 
 const goodsTypes = [
