@@ -93,6 +93,7 @@ export function getShadowfaxConfig(env: Environment) {
 interface DelhiveryConfig {
   apiBaseUrl: string;
   tokenEnvVar: string;
+  warehouseEnvVar: string;
 }
 
 // Note: user has only a live token. We point sandbox at the staging URL but
@@ -102,23 +103,30 @@ export const DELHIVERY_CONFIG: Record<Environment, DelhiveryConfig> = {
   sandbox: {
     apiBaseUrl: 'https://staging-express.delhivery.com',
     tokenEnvVar: 'DELHIVERY_STAGING_TOKEN',
+    warehouseEnvVar: 'DELHIVERY_CLIENT_WAREHOUSE_NAME',
   },
   production: {
     apiBaseUrl: 'https://track.delhivery.com',
     tokenEnvVar: 'DELHIVERY_PROD_TOKEN',
+    warehouseEnvVar: 'DELHIVERY_PROD_CLIENT_WAREHOUSE_NAME',
   },
 };
 
 export function getDelhiveryConfig(env: Environment) {
   const config = DELHIVERY_CONFIG[env];
   const primary = Deno.env.get(config.tokenEnvVar);
+  const warehouse =
+    Deno.env.get(config.warehouseEnvVar) ||
+    Deno.env.get('DELHIVERY_PROD_CLIENT_WAREHOUSE_NAME') ||
+    Deno.env.get('DELHIVERY_CLIENT_WAREHOUSE_NAME');
   if (primary) {
-    return { apiBaseUrl: config.apiBaseUrl, token: primary };
+    return { apiBaseUrl: config.apiBaseUrl, token: primary, warehouse };
   }
   // Fallback: use prod token + prod URL if env-specific token not configured
   const fallback = Deno.env.get('DELHIVERY_PROD_TOKEN');
   return {
     apiBaseUrl: DELHIVERY_CONFIG.production.apiBaseUrl,
     token: fallback,
+    warehouse,
   };
 }
