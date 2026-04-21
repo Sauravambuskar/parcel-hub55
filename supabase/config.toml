@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.get-user-orders]
 verify_jwt = false
+
+[functions.delhivery-serviceability]
+verify_jwt = false

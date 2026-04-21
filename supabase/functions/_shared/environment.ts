@@ -89,3 +89,33 @@ export function getShadowfaxConfig(env: Environment) {
     token: Deno.env.get(config.tokenEnvVar),
   };
 }
+
+interface DelhiveryConfig {
+  apiBaseUrl: string;
+  tokenEnvVar: string;
+}
+
+// Note: user has only a live token. We point sandbox at the staging URL but
+// fall back to the prod token if the staging secret is not set, so the function
+// works in both environments without two separate credentials.
+export const DELHIVERY_CONFIG: Record<Environment, DelhiveryConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://staging-express.delhivery.com',
+    tokenEnvVar: 'DELHIVERY_STAGING_TOKEN',
+  },
+  production: {
+    apiBaseUrl: 'https://track.delhivery.com',
+    tokenEnvVar: 'DELHIVERY_PROD_TOKEN',
+  },
+};
+
+export function getDelhiveryConfig(env: Environment) {
+  const config = DELHIVERY_CONFIG[env];
+  const primary = Deno.env.get(config.tokenEnvVar);
+  // Fallback to prod token in sandbox if staging token not configured
+  const token = primary || Deno.env.get('DELHIVERY_PROD_TOKEN');
+  return {
+    apiBaseUrl: config.apiBaseUrl,
+    token,
+  };
+}
