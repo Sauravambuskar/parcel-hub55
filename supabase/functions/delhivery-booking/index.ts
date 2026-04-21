@@ -111,41 +111,33 @@ Deno.serve(async (req) => {
       phone: sender_phone,
       order: order_id,
       payment_mode: "Pickup", // Prepaid RVP -> Pickup mode
+      // RVP delivery destination = receiver. Per Delhivery docs, when return_*
+      // keys are present, the shipment is delivered to the return address.
+      return_name: receiver_name,
+      return_add: receiver_address,
       return_pin: receiver_pincode,
       return_city: receiver_city,
-      return_phone: receiver_phone,
-      return_add: receiver_address,
       return_state: receiver_state,
       return_country: "India",
-      return_name: receiver_name,
-      // Delhivery's current reverse-order docs describe the return drop address
-      // using return_address/return_pincode-style keys. Send both the legacy
-      // cmu aliases above and the canonical names below so the portal/UI and
-      // downstream systems resolve the correct delivery address consistently.
-      return_address: receiver_address,
-      return_pincode: receiver_pincode,
-      return_contact: receiver_phone,
+      return_phone: receiver_phone,
       products_desc: goods_type || "Package",
       hsn_code: "",
       cod_amount: "0",
       order_date: new Date().toISOString(),
       total_amount: String(shipment_value || 0),
-      // Keep seller_* aligned with the receiver too because older Delhivery UI
-      // surfaces these fields in the address card for manifested reverse orders.
-      seller_name: receiver_name,
-      seller_add: receiver_address,
-      seller_pin: receiver_pincode,
-      seller_city: receiver_city,
-      seller_state: receiver_state,
-      seller_country: "India",
+      // seller_* are GST/invoice fields for the contracting entity (ViaSetu),
+      // NOT address-rendering fields. Keep blank so the portal's "Seller / Sold
+      // By" card does not get polluted with the warehouse name or receiver.
+      seller_name: "",
+      seller_add: "",
       seller_inv: "",
+      seller_gst_tin: "",
       quantity: "1",
       waybill: "",
       shipment_width: String(width),
       shipment_height: String(height),
       shipment_length: String(length),
       weight: String(weightG),
-      seller_gst_tin: "",
       shipping_mode: shipmentMode,
       address_type: "home",
     };
