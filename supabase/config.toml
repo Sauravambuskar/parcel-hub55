@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.predict-eta]
 verify_jwt = false
+
+[functions.get-user-orders]
+verify_jwt = false
