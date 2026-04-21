@@ -2,6 +2,7 @@
 // Uses publicly available courier company logos
 
 import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+import delhiveryLogo from "@/assets/delhivery-logo.jpg";
 
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
@@ -11,8 +12,9 @@ export const PARTNER_LOGOS: Record<string, string> = {
   
   // Common courier partners
   'bluedart': 'https://logo.clearbit.com/bluedart.com',
-  'delhivery': 'https://logo.clearbit.com/delhivery.com',
-  'delhivery_direct': 'https://logo.clearbit.com/delhivery.com',
+  'delhivery': delhiveryLogo,
+  'delhivery_direct': delhiveryLogo,
+  'dlv': delhiveryLogo,
   'dtdc': 'https://logo.clearbit.com/dtdc.in',
   'ecom_express': 'https://logo.clearbit.com/ecomexpress.in',
   'xpressbees': 'https://logo.clearbit.com/xpressbees.com',
