@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getEnvironmentFromRequest, getRazorpayConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
@@ -13,7 +12,7 @@ interface RefundRequest {
   reason?: string; // Optional reason for the refund
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
