@@ -75,6 +75,8 @@ export type Database = {
           receiver_phone: string
           receiver_pincode: string
           receiver_state: string
+          refund_id: string | null
+          refund_reason: string | null
           sender_address: string
           sender_city: string
           sender_name: string
@@ -119,6 +121,8 @@ export type Database = {
           receiver_phone: string
           receiver_pincode: string
           receiver_state: string
+          refund_id?: string | null
+          refund_reason?: string | null
           sender_address: string
           sender_city: string
           sender_name: string
@@ -163,6 +167,8 @@ export type Database = {
           receiver_phone?: string
           receiver_pincode?: string
           receiver_state?: string
+          refund_id?: string | null
+          refund_reason?: string | null
           sender_address?: string
           sender_city?: string
           sender_name?: string
