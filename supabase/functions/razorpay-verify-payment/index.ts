@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
+import { createHmac } from "node:crypto";
 import { getEnvironmentFromRequest, getRazorpayConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
