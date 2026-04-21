@@ -244,7 +244,15 @@ const AddressStep = ({
       });
       return;
     }
-    // Save addresses if checked
+    // Defensive submit-time pincode guard
+    if (senderData.pincode !== pickupPincode || receiverData.pincode !== deliveryPincode) {
+      toast({
+        title: "Pincode Mismatch",
+        description: "Address pincodes don't match Step 2. Please go back and re-check.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (saveSender) {
       saveAddress({ ...senderData, label: 'Sender' });
     }
@@ -265,39 +273,41 @@ const AddressStep = ({
   };
 
   const handleSenderAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    // If pincode mismatch — block apply, open modal
+    if (components.pincode && components.pincode !== pickupPincode) {
+      setMismatchDialog({
+        type: 'sender',
+        expected: pickupPincode,
+        actual: components.pincode,
+        apply: () => {
+          // User chose "Update pincode and go back to Step 2" — go to step 2 with new pincode
+          onGoToStep?.(2);
+        },
+      });
+      return; // do NOT apply address/city/state from a mismatched suggestion
+    }
     onSenderChange("address", components.address);
     if (components.city) onSenderChange("city", components.city);
     if (components.state) onSenderChange("state", components.state);
-    
-    // Check pincode mismatch
-    if (components.pincode) {
-      if (components.pincode !== pickupPincode) {
-        setSenderPincodeMismatch({
-          expected: pickupPincode,
-          actual: components.pincode,
-        });
-      } else {
-        setSenderPincodeMismatch(null);
-      }
-    }
+    setSenderPincodeMismatch(null);
   };
 
   const handleReceiverAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    if (components.pincode && components.pincode !== deliveryPincode) {
+      setMismatchDialog({
+        type: 'receiver',
+        expected: deliveryPincode,
+        actual: components.pincode,
+        apply: () => {
+          onGoToStep?.(2);
+        },
+      });
+      return;
+    }
     onReceiverChange("address", components.address);
     if (components.city) onReceiverChange("city", components.city);
     if (components.state) onReceiverChange("state", components.state);
-    
-    // Check pincode mismatch
-    if (components.pincode) {
-      if (components.pincode !== deliveryPincode) {
-        setReceiverPincodeMismatch({
-          expected: deliveryPincode,
-          actual: components.pincode,
-        });
-      } else {
-        setReceiverPincodeMismatch(null);
-      }
-    }
+    setReceiverPincodeMismatch(null);
   };
 
   const fieldError = (condition: boolean) => submitted && condition ? "border-destructive" : "";
