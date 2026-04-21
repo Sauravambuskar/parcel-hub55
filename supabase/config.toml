@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.save-booking]
 verify_jwt = false
+
+[functions.confirm-booking-or-refund]
+verify_jwt = false
