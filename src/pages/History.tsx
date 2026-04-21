@@ -97,8 +97,8 @@ const History = () => {
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
-  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string }>>({});
-  const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string } | null>(null);
+  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null }>>({});
+  const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string; awb?: string | null } | null>(null);
   const [partialFailure, setPartialFailure] = useState<string | null>(null);
 
   const { cancelOrder, cancelling } = useCancelOrder({
@@ -202,13 +202,13 @@ const History = () => {
       if (missingIds.length > 0) {
         const { data: bookings } = await supabase
           .from('bookings')
-          .select('id, prayog_order_id, booking_source, status')
+          .select('id, prayog_order_id, prayog_awb, booking_source, status')
           .in('prayog_order_id', missingIds);
 
         if (bookings) {
           bookings.forEach((b: any) => {
             if (b.prayog_order_id) {
-              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '' };
+              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null };
             }
           });
         }
@@ -507,6 +507,7 @@ const History = () => {
                             orderId: order.orderId,
                             bookingId: bm.id,
                             bookingSource: bm.booking_source,
+                            awb: bm.awb,
                           })}
                         >
                           <Ban className="h-4 w-4 mr-1" />
@@ -533,6 +534,7 @@ const History = () => {
             bookingSource: cancelTarget.bookingSource,
             bookingId: cancelTarget.bookingId,
             reason,
+            awb: cancelTarget.awb,
           });
         }}
         cancelling={cancelling}
