@@ -99,6 +99,7 @@ const History = () => {
   const [draft, setDraft] = useState<any>(null);
   const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string }>>({});
   const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string } | null>(null);
+  const [partialFailure, setPartialFailure] = useState<string | null>(null);
 
   const { cancelOrder, cancelling } = useCancelOrder({
     onSuccess: () => {
@@ -109,7 +110,6 @@ const History = () => {
 
   useEffect(() => {
     fetchOrders();
-    // Check for draft
     try {
       const d = localStorage.getItem('booking_draft');
       if (d) setDraft(JSON.parse(d));
@@ -119,7 +119,7 @@ const History = () => {
   const fetchOrders = async () => {
     try {
       const prayogAuth = localStorage.getItem('prayog_auth');
-      
+
       if (!prayogAuth) {
         toast({
           title: "Authentication required",
@@ -132,43 +132,103 @@ const History = () => {
 
       const authData = JSON.parse(prayogAuth);
 
-      const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders?filterByCurrentUser=true`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authData.id_token}`,
-            "tenantId": PRAYOG_CONFIG.TENANT_ID,
-          },
-        }
-      );
+      const [prayogResult, localResult] = await Promise.allSettled([
+        fetch(
+          `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders?filterByCurrentUser=true`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authData.id_token}`,
+              "tenantId": PRAYOG_CONFIG.TENANT_ID,
+            },
+          }
+        ).then(async (r) => {
+          if (!r.ok) throw new Error(`Prayog ${r.status}`);
+          return r.json();
+        }),
+        supabase.functions.invoke('get-user-orders', {
+          headers: { 'x-prayog-auth': JSON.stringify(authData) },
+        }),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch orders: ${response.status}`);
+      const prayogOrders: PrayogOrder[] = [];
+      const localOrders: any[] = [];
+      const failures: string[] = [];
+
+      if (prayogResult.status === 'fulfilled') {
+        const result = prayogResult.value;
+        const list = Array.isArray(result) ? result : (result?.orders || result?.data || []);
+        prayogOrders.push(...list);
+      } else {
+        console.error('Prayog orders fetch failed:', prayogResult.reason);
+        failures.push('Prayog');
       }
 
-      const result = await response.json();
-      const ordersList = Array.isArray(result) ? result : (result?.orders || result?.data || []);
-      setOrders(ordersList);
+      if (localResult.status === 'fulfilled' && !localResult.value.error) {
+        localOrders.push(...((localResult.value.data as any)?.orders || []));
+      } else {
+        console.error('Local orders fetch failed:', localResult.status === 'rejected' ? localResult.reason : localResult.value.error);
+        failures.push('local');
+      }
 
-      // Fetch booking metadata for cancel capability
-      const orderIds = ordersList.map((o: PrayogOrder) => o.orderId).filter(Boolean);
-      if (orderIds.length > 0) {
+      const prayogIds = new Set(prayogOrders.map((o) => o.orderId).filter(Boolean));
+      const merged: PrayogOrder[] = [
+        ...prayogOrders,
+        ...localOrders.filter((o) => !prayogIds.has(o.orderId)),
+      ];
+
+      merged.sort((a, b) => {
+        const da = new Date(a.orderDate || 0).getTime();
+        const db = new Date(b.orderDate || 0).getTime();
+        return db - da;
+      });
+
+      setOrders(merged);
+
+      const map: Record<string, { id: string; booking_source: string; status: string }> = {};
+      localOrders.forEach((o: any) => {
+        if (o._booking) {
+          const key = o._booking.prayog_order_id || o._booking.id;
+          map[key] = {
+            id: o._booking.id,
+            booking_source: o._booking.booking_source || 'prayog',
+            status: o._booking.status || '',
+          };
+        }
+      });
+
+      const missingIds = prayogOrders.map((o) => o.orderId).filter((id) => id && !map[id]);
+      if (missingIds.length > 0) {
         const { data: bookings } = await supabase
           .from('bookings')
           .select('id, prayog_order_id, booking_source, status')
-          .in('prayog_order_id', orderIds);
+          .in('prayog_order_id', missingIds);
 
         if (bookings) {
-          const map: Record<string, { id: string; booking_source: string; status: string }> = {};
           bookings.forEach((b: any) => {
             if (b.prayog_order_id) {
               map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '' };
             }
           });
-          setBookingsMap(map);
         }
+      }
+      setBookingsMap(map);
+
+      if (failures.length === 1) {
+        setPartialFailure(
+          failures[0] === 'Prayog'
+            ? "Couldn't reach Prayog right now — showing only direct bookings."
+            : "Couldn't load direct bookings right now — showing Prayog orders only."
+        );
+      } else if (failures.length === 2) {
+        toast({
+          title: "Error",
+          description: "Failed to load orders from both sources",
+          variant: "destructive",
+        });
+      } else {
+        setPartialFailure(null);
       }
     } catch (error: any) {
       console.error("Error fetching orders:", error);
@@ -245,6 +305,11 @@ const History = () => {
       </header>
 
       <div className="p-4 max-w-4xl mx-auto space-y-4 relative z-10">
+        {partialFailure && (
+          <Card className="p-3 bg-amber-500/10 backdrop-blur-xl border-amber-500/30">
+            <p className="text-sm text-amber-200">{partialFailure}</p>
+          </Card>
+        )}
         {/* Draft Resume Card */}
         {draft && (
           <Card className="p-4 bg-amber-500/10 backdrop-blur-xl border-amber-500/30">

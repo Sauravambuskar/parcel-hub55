@@ -4,6 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AlertTriangle, Package, User, Users, BookmarkPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -120,6 +130,14 @@ const AddressStep = ({
   const [saveReceiver, setSaveReceiver] = useState(false);
   const { saveAddress } = useSaveAddress();
 
+  // Modal mismatch dialog — used by autocomplete + saved-address picker
+  const [mismatchDialog, setMismatchDialog] = useState<{
+    type: 'sender' | 'receiver';
+    expected: string;
+    actual: string;
+    apply: () => void;
+  } | null>(null);
+
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
     if (bookingFor !== 'self') return;
@@ -226,7 +244,15 @@ const AddressStep = ({
       });
       return;
     }
-    // Save addresses if checked
+    // Defensive submit-time pincode guard
+    if (senderData.pincode !== pickupPincode || receiverData.pincode !== deliveryPincode) {
+      toast({
+        title: "Pincode Mismatch",
+        description: "Address pincodes don't match Step 2. Please go back and re-check.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (saveSender) {
       saveAddress({ ...senderData, label: 'Sender' });
     }
@@ -247,39 +273,41 @@ const AddressStep = ({
   };
 
   const handleSenderAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    // If pincode mismatch — block apply, open modal
+    if (components.pincode && components.pincode !== pickupPincode) {
+      setMismatchDialog({
+        type: 'sender',
+        expected: pickupPincode,
+        actual: components.pincode,
+        apply: () => {
+          // User chose "Update pincode and go back to Step 2" — go to step 2 with new pincode
+          onGoToStep?.(2);
+        },
+      });
+      return; // do NOT apply address/city/state from a mismatched suggestion
+    }
     onSenderChange("address", components.address);
     if (components.city) onSenderChange("city", components.city);
     if (components.state) onSenderChange("state", components.state);
-    
-    // Check pincode mismatch
-    if (components.pincode) {
-      if (components.pincode !== pickupPincode) {
-        setSenderPincodeMismatch({
-          expected: pickupPincode,
-          actual: components.pincode,
-        });
-      } else {
-        setSenderPincodeMismatch(null);
-      }
-    }
+    setSenderPincodeMismatch(null);
   };
 
   const handleReceiverAddressSelect = (components: { address: string; city?: string; state?: string; pincode?: string }) => {
+    if (components.pincode && components.pincode !== deliveryPincode) {
+      setMismatchDialog({
+        type: 'receiver',
+        expected: deliveryPincode,
+        actual: components.pincode,
+        apply: () => {
+          onGoToStep?.(2);
+        },
+      });
+      return;
+    }
     onReceiverChange("address", components.address);
     if (components.city) onReceiverChange("city", components.city);
     if (components.state) onReceiverChange("state", components.state);
-    
-    // Check pincode mismatch
-    if (components.pincode) {
-      if (components.pincode !== deliveryPincode) {
-        setReceiverPincodeMismatch({
-          expected: deliveryPincode,
-          actual: components.pincode,
-        });
-      } else {
-        setReceiverPincodeMismatch(null);
-      }
-    }
+    setReceiverPincodeMismatch(null);
   };
 
   const fieldError = (condition: boolean) => submitted && condition ? "border-destructive" : "";
@@ -315,6 +343,16 @@ const AddressStep = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
+            // Pincode mismatch — block apply, open dialog
+            if (addr.pincode && addr.pincode !== pickupPincode) {
+              setMismatchDialog({
+                type: 'sender',
+                expected: pickupPincode,
+                actual: addr.pincode,
+                apply: () => onGoToStep?.(2),
+              });
+              return;
+            }
             onSenderChange('name', addr.name);
             onSenderChange('phone', addr.phone);
             onSenderChange('flatNo', addr.flatNo);
@@ -441,6 +479,15 @@ const AddressStep = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
+            if (addr.pincode && addr.pincode !== deliveryPincode) {
+              setMismatchDialog({
+                type: 'receiver',
+                expected: deliveryPincode,
+                actual: addr.pincode,
+                apply: () => onGoToStep?.(2),
+              });
+              return;
+            }
             onReceiverChange('name', addr.name);
             onReceiverChange('phone', addr.phone);
             onReceiverChange('flatNo', addr.flatNo);
@@ -606,6 +653,45 @@ const AddressStep = ({
           Continue
         </Button>
       </div>
+
+      <AlertDialog open={!!mismatchDialog} onOpenChange={(open) => { if (!open) setMismatchDialog(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Pincode Mismatch
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 pt-2">
+                <p>
+                  The address you selected belongs to pincode{' '}
+                  <strong className="text-foreground">{mismatchDialog?.actual}</strong>, but you entered{' '}
+                  <strong className="text-foreground">{mismatchDialog?.expected}</strong> for{' '}
+                  {mismatchDialog?.type === 'sender' ? 'pickup' : 'delivery'} in Step 2.
+                </p>
+                <p className="text-sm">
+                  To keep rates &amp; serviceability accurate, please pick a different address within{' '}
+                  {mismatchDialog?.expected}, or update Step 2 to use {mismatchDialog?.actual}.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setMismatchDialog(null)}>
+              Keep my Step-2 pincode
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const cb = mismatchDialog?.apply;
+                setMismatchDialog(null);
+                cb?.();
+              }}
+            >
+              Update pincode &amp; go to Step 2
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
