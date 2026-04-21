@@ -45,14 +45,9 @@ async function checkPincodes(
   const records: any[] = json?.delivery_codes || [];
 
   const findOk = (pin: string) => {
-    const rec = records.find((r) => {
-      const pc = r?.postal_code || r?.postal_code?.pin || r;
-      const codeFromObj = r?.postal_code?.pin || r?.postal_code;
-      return String(codeFromObj) === pin;
-    });
+    const rec = records.find((r) => String(r?.postal_code?.pin) === String(pin));
     if (!rec) return false;
-    const pc = rec?.postal_code || {};
-    return String(pc?.pre_paid || "").toUpperCase() === "Y";
+    return String(rec.postal_code?.pre_paid || "").toUpperCase() === "Y";
   };
 
   return { pickupOk: findOk(pickup), deliveryOk: findOk(delivery) };
