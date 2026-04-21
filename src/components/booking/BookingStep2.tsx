@@ -224,9 +224,17 @@ const BookingStep2 = ({
         return data;
       });
 
-      const [prayogResult, shadowfaxResult] = await Promise.allSettled([
+      // Phase 1: Delhivery wired into the parallel fan-out so the function gets
+      // exercised in real bookings, but the partner row is hidden behind this flag.
+      // Flip to true in Phase 2 once booking/tracking/cancel are implemented.
+      const DELHIVERY_DIRECT_ENABLED = false;
+
+      const [prayogResult, shadowfaxResult, delhiveryResult] = await Promise.allSettled([
         prayogFetch,
         supabase.functions.invoke('shadowfax-serviceability', {
+          body: shadowfaxPayload,
+        }),
+        supabase.functions.invoke('delhivery-serviceability', {
           body: shadowfaxPayload,
         }),
       ]);
@@ -255,6 +263,19 @@ const BookingStep2 = ({
         console.warn('Shadowfax serviceability check failed (non-blocking):', shadowfaxResult.reason);
       }
 
+      let delhiveryPartner = null;
+      if (delhiveryResult.status === 'fulfilled') {
+        const { data: dlvData, error: dlvError } = delhiveryResult.value;
+        if (!dlvError && dlvData?.is_serviceable && dlvData?.partner) {
+          delhiveryPartner = dlvData.partner;
+          console.log('Delhivery is serviceable (Phase 1, hidden):', delhiveryPartner);
+        } else if (dlvError || dlvData?.error) {
+          console.warn('Delhivery serviceability check failed (non-blocking):', dlvError || dlvData);
+        }
+      } else {
+        console.warn('Delhivery serviceability check failed (non-blocking):', delhiveryResult.reason);
+      }
+
       const serviceabilityData = prayogData && typeof prayogData === 'object'
         ? {
             ...prayogData,
@@ -271,6 +292,12 @@ const BookingStep2 = ({
 
       if (shadowfaxPartner) {
         serviceabilityData.partners.push(shadowfaxPartner);
+        serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
+        serviceabilityData.success = true;
+      }
+
+      if (DELHIVERY_DIRECT_ENABLED && delhiveryPartner) {
+        serviceabilityData.partners.push(delhiveryPartner);
         serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
         serviceabilityData.success = true;
       }
