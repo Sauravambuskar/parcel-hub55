@@ -1,47 +1,82 @@
 
 
-## Fix: Delhivery delivery address shows "VIASETUPRIVATELIMIT C2C"
+## Fix: Align Delhivery payload with the official `cmu/create.json` spec
 
-### Root cause
+### What I verified against the official docs
 
-Delhivery's dashboard "Delivery Address" panel renders the `seller_*` fields from the shipment payload, not the `return_*` fields. Our current `delhivery-booking` function sends `seller_name: warehouse` ("VIASETUPRIVATELIMIT C2C") and an empty `seller_add`, which is exactly what shows up on the portal screenshot.
+Sources: `delhivery-express-api-doc.readme.io/reference/order-creation-api` and `/reverse-pickups`, plus the Delhivery One help center.
 
-The `return_*` fields (which already carry the correct receiver address) drive RVP routing/billing but not the address card displayed in the Delhivery UI.
+Authoritative rules for `POST /api/cmu/create.json`:
 
-### Change
+1. **RVP convention** (verbatim from docs):
+   - `payment_mode = "Pickup"`
+   - Shipment-level `name / add / pin / city / state / phone` = **end customer** (pickup point)
+   - `return_name / return_add / return_pin / return_city / return_state / return_phone` = **delivery destination** (where the package goes)
+   - "If you are passing the return keys then shipment will be delivered to return address."
+2. **`pickup_location.name`** = a registered warehouse, **case-sensitive exact match** — billing/account anchor only.
+3. **`seller_*` fields are GST/invoice fields**, not address rendering fields. Documented seller keys: `seller_name`, `seller_add`, `seller_inv`, `seller_gst_tin`. They represent the **contracting seller entity** (us, ViaSetu) — not the consignee.
+4. **Undocumented keys we invented**: `return_address`, `return_pincode`, `return_contact`. These are not part of the cmu spec and are silently ignored.
 
-Single-file edit in `supabase/functions/delhivery-booking/index.ts`:
+### What's wrong in our current payload
 
-Replace the seller block in the shipment payload so it carries the **receiver** (end-delivery) details:
+In `supabase/functions/delhivery-booking/index.ts`:
 
-```text
-seller_name    →  receiver_name
-seller_add     →  receiver_address
-seller_pin     →  receiver_pincode      (new key)
-seller_city    →  receiver_city         (new key)
-seller_state   →  receiver_state        (new key)
-seller_country →  "India"               (new key)
-seller_gst_tin →  ""                    (unchanged)
-seller_inv     →  ""                    (unchanged)
-```
+- `seller_name`, `seller_add`, `seller_pin`, `seller_city`, `seller_state` are set to the **receiver** (delivery) address. This pollutes the seller/GST identity on the shipment record. The Delhivery portal's address cards read these for the "Seller / Sold By" section, which is exactly why the screenshot shows the receiver address mislabeled, and earlier showed the warehouse name.
+- `return_address`, `return_pincode`, `return_contact` are non-spec keys that do nothing.
+- The previous "warehouse showing" issue happened because seller fields had been set to the warehouse string. We over-corrected by stuffing the receiver in there. **Both extremes are wrong** — `seller_*` should be the ViaSetu contracting entity (or empty), and the receiver should live exclusively in `return_*`.
 
-`pickup_location.name` stays as the registered warehouse — required for RVP billing/account routing. The `return_*` block also stays unchanged. Only the seller card (which Delhivery surfaces as "Delivery Address" in the portal) is corrected.
-
-Update the file's header comment to document the corrected convention so future edits don't regress this.
-
-### Files changed
+### The correct payload
 
 ```text
-EDIT  supabase/functions/delhivery-booking/index.ts   (seller_* now carry receiver address)
+shipments[0]:
+  // PICKUP point = end customer
+  name, add, pin, city, state, country, phone   <-  sender_*  (end customer)
+  payment_mode: "Pickup"
+
+  // DELIVERY point = receiver (canonical RVP spec)
+  return_name, return_add, return_pin,
+  return_city, return_state, return_country,
+  return_phone                                  <-  receiver_*
+
+  // Seller (GST / contracting entity) — leave blank or set to ViaSetu
+  seller_name: ""        (or "ViaSetu")
+  seller_add:  ""
+  seller_inv:  ""
+  seller_gst_tin: ""
+  // Drop seller_pin / seller_city / seller_state / seller_country entirely —
+  // they are not part of the documented seller block.
+
+  // Drop the invented return_address / return_pincode / return_contact keys.
+
+  hsn_code, products_desc, weight, dimensions, etc.  (unchanged)
+
+pickup_location:
+  name: <registered warehouse, exact case>      (unchanged)
 ```
 
-No frontend changes, no DB changes, no new secrets.
+### Edit
 
-### Expected result
+Single-file change in `supabase/functions/delhivery-booking/index.ts`:
 
-New Delhivery bookings will show the actual end-customer name + address in the Delhivery portal's "Delivery Address" panel instead of "VIASETUPRIVATELIMIT C2C". Existing bookings already created cannot be re-rendered — only new ones are affected.
+1. Remove `return_address`, `return_pincode`, `return_contact` (non-spec).
+2. Set `seller_name = ""`, `seller_add = ""`, drop `seller_pin / seller_city / seller_state / seller_country`. Keep `seller_inv: ""` and `seller_gst_tin: ""` as documented blanks.
+3. Keep all `name/add/pin/city/state/phone` as sender (end customer) and all `return_*` as receiver — these are already correct.
+4. Update the file's header comment to reflect the spec-correct convention so this doesn't regress.
+
+No other files, no DB changes, no new secrets, no frontend changes.
+
+### Expected portal behaviour after fix
+
+- "Pickup Address" card → end-customer details (correct).
+- "Delivery / Return Address" card → receiver details (correct, driven by `return_*`).
+- "Seller / Sold By" card → blank (or ViaSetu), no longer leaking the receiver or warehouse name.
 
 ### Verification
 
-After deploy, place a fresh test booking via Delhivery and confirm the portal's Delivery Address card shows the receiver's name, street, pincode, city, state. We'll also tail the `delhivery-booking` edge function logs to confirm the outgoing payload contains the receiver in the `seller_*` keys.
+After redeploy, place one fresh test booking via Delhivery and confirm in the Delhivery One portal:
+- Pickup card shows the customer
+- Return/Delivery card shows the receiver
+- Seller card is blank/ViaSetu, not the warehouse and not the receiver
+
+We'll also tail `delhivery-booking` edge logs to confirm the outgoing JSON matches the spec above.
 
