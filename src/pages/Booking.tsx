@@ -934,6 +934,54 @@ const Booking = () => {
       setShowConfirmationDialog(true);
     } catch (error: any) {
       console.error("Booking error:", error);
+      // Outer safety-net: if a payment was captured but our flow threw before
+      // a refund could be triggered (network blip, JS crash, unexpected partner
+      // SDK shape), fire a last-resort server-side refund.
+      const alreadyRefunded = /refund/i.test(error?.message || "");
+      if (paymentDetails?.razorpay_payment_id && !alreadyRefunded) {
+        try {
+          const prayogAuthRawFallback = localStorage.getItem('prayog_auth');
+          const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+            body: {
+              payment_id: paymentDetails.razorpay_payment_id,
+              reason: 'unexpected_error',
+              error_detail: String(error?.message || error).slice(0, 250),
+              booking_row: {
+                sender_name: senderData.name, sender_phone: senderData.phone,
+                sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+                sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+                receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+                receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+                receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+                goods_type: goodsType || "Package",
+                package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
+                urgency: urgency || "standard",
+                courier_name: selectedCourierData?.name || "",
+                courier_price: totalAmount,
+                delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+                base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              },
+            },
+            headers: { ...(prayogAuthRawFallback ? { 'x-prayog-auth': prayogAuthRawFallback } : {}), 'x-environment': CURRENT_ENV },
+          });
+          if (refundData?.refunded) {
+            toast({
+              title: "Payment Refunded",
+              description: `Booking failed. ₹${totalAmount} refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`,
+              variant: "destructive",
+            });
+            return;
+          }
+          toast({
+            title: "Booking Failed — Refund Pending",
+            description: `Payment ID: ${paymentDetails.razorpay_payment_id}. Our team will process your refund shortly.`,
+            variant: "destructive",
+          });
+          return;
+        } catch (fallbackErr) {
+          console.error('Outer safety-net refund threw:', fallbackErr);
+        }
+      }
       toast({
         title: "Booking Failed",
         description: error.message || "Failed to create booking. Please try again.",
