@@ -305,6 +305,11 @@ const History = () => {
       </header>
 
       <div className="p-4 max-w-4xl mx-auto space-y-4 relative z-10">
+        {partialFailure && (
+          <Card className="p-3 bg-amber-500/10 backdrop-blur-xl border-amber-500/30">
+            <p className="text-sm text-amber-200">{partialFailure}</p>
+          </Card>
+        )}
         {/* Draft Resume Card */}
         {draft && (
           <Card className="p-4 bg-amber-500/10 backdrop-blur-xl border-amber-500/30">
