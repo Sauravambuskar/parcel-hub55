@@ -112,10 +112,13 @@ export const DELHIVERY_CONFIG: Record<Environment, DelhiveryConfig> = {
 export function getDelhiveryConfig(env: Environment) {
   const config = DELHIVERY_CONFIG[env];
   const primary = Deno.env.get(config.tokenEnvVar);
-  // Fallback to prod token in sandbox if staging token not configured
-  const token = primary || Deno.env.get('DELHIVERY_PROD_TOKEN');
+  if (primary) {
+    return { apiBaseUrl: config.apiBaseUrl, token: primary };
+  }
+  // Fallback: use prod token + prod URL if env-specific token not configured
+  const fallback = Deno.env.get('DELHIVERY_PROD_TOKEN');
   return {
-    apiBaseUrl: config.apiBaseUrl,
-    token,
+    apiBaseUrl: DELHIVERY_CONFIG.production.apiBaseUrl,
+    token: fallback,
   };
 }
