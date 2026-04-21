@@ -1,111 +1,107 @@
 
 
-# Delhivery Direct — Phase 1 (Reverse Pickup, Correct Direction)
+## Auto-Refund Safety Net — Plan
 
-Clarification baked in: **Reverse Pickup (RVP) means the package travels FROM the end-customer TO the seller/business.** In our app:
-- "Sender" (Step-3 sender block) = end-customer where the courier picks up the package = **physical origin**
-- "Receiver" (Step-3 receiver block) = seller/business where the package is delivered = **physical destination**
+Goal: guarantee that **every payment captured by Razorpay either results in a confirmed booking OR is refunded automatically**, with a database audit trail in every case.
 
-This matches `shadowfax-booking/index.ts` (lines 56-72): `customer_*` (Shadowfax's pickup point) is mapped from our `sender_*`, and `seller_*` (Shadowfax's delivery point) is mapped from our `receiver_*`. We'll do the exact same mapping for Delhivery.
+### Current state (gaps)
 
-The previous plan flipped origin/destination on the rate call, which would have priced the wrong leg. Correcting that here.
+The codebase already calls `razorpay-refund` in three places (Shadowfax, Delhivery, Prayog branches) when the partner booking API rejects the order. But there are **five failure paths today where money is captured and no refund fires**:
 
-## Phase 1 Scope
+1. PaymentModal signature verification fails → payment captured, user told "contact support", no refund.
+2. Shadowfax / Delhivery branches refund but never write a `FAILED / refunded` row to `bookings` (only Prayog branch does this).
+3. Any thrown error in `handlePaymentSuccess` after payment but before/after the partner call (network blip, JS crash, user closes tab) → no refund.
+4. `save-booking` edge function failure after a successful partner booking is silently logged — booking exists with the courier but not in our DB; no compensating action.
+5. Refund logic lives only in the browser. If the user closes the tab during the partner API call, refund never runs.
 
-In: serviceability check + live rate quote (Express + Surface) so Delhivery shows up in Step 2 partner comparison.
-Out (Phase 2): booking, tracking, cancel.
+### What we will build
 
-**Visibility**: Hidden behind `DELHIVERY_DIRECT_ENABLED = false` flag in Phase 1. Function ships and is testable via curl. Flip in Phase 2 with booking.
+#### 1. New centralized edge function: `confirm-booking-or-refund`
 
-## Required Secrets (you'll add before deploy)
+Single server-side function the client calls **once** right after Razorpay verification succeeds. Responsibilities:
 
-| Secret | Source |
-|---|---|
-| `DELHIVERY_STAGING_TOKEN` | Delhivery One staging API key |
-| `DELHIVERY_PROD_TOKEN` | Delhivery One production API key |
+- Accept `{ payment_id, order_id, booking_payload, partner_payload, partner_route }`.
+- Call the partner booking API (Shadowfax / Delhivery / Prayog) server-side.
+- On success: insert the `bookings` row with `payment_status = 'paid'` and return AWB/label.
+- On any failure (partner API error, network error, exception): immediately call Razorpay refund API, then insert `bookings` row with `status = 'FAILED'` and `payment_status = 'refunded'` (or `refund_failed`).
+- Refund call is wrapped in retry (3 attempts, exponential backoff).
 
-Warehouse name not needed in Phase 1.
+This makes the booking + refund atomic from the client's perspective and removes dependence on the browser staying open.
 
-## Reverse Pickup — Correct Direction
+#### 2. PaymentModal verification-failure refund
 
-The package physically moves **sender → receiver** (customer → seller). Delhivery's rate API parameters:
+Update `src/components/PaymentModal.tsx`: when `razorpay-verify-payment` returns `verified=false` or errors, immediately invoke `razorpay-refund` for that `payment_id` before showing the error toast. Surface a refund-confirmation message to the user.
 
-```text
-o_pin = sender_pincode    (origin = physical pickup = end-customer)
-d_pin = receiver_pincode  (destination = physical delivery = seller/business)
-ss    = Delivered
-md    = E (Express) or S (Surface)
-cgm   = chargeable weight in grams
-pt    = Pre-paid
-rt    = R                 ← reverse-pickup flag (tells Delhivery this is RVP, not forward)
+#### 3. Booking-row audit trail in every branch
+
+Update `src/pages/Booking.tsx` Shadowfax and Delhivery branches to mirror the Prayog branch: write a `FAILED` booking row with `payment_status = 'refunded' | 'refund_failed'` whenever auto-refund is triggered. Ensures History page reflects the refunded transaction.
+
+#### 4. Outer safety net in `handlePaymentSuccess`
+
+Wrap the entire `handlePaymentSuccess` body in a guarded try/catch that, in the `catch`, checks if `paymentDetails?.razorpay_payment_id` is set and no successful booking row exists yet — if so, fire a last-resort refund + write a `FAILED` row. Catches JS errors, network failures, and unexpected partner SDK responses.
+
+#### 5. Idempotency + booking-side reconciliation
+
+- Add a `payment_id` uniqueness check in `save-booking`: if a row with that `payment_id` already exists, return it (prevents duplicate refunds if retry happens).
+- The `razorpay-refund` function already returns refund_id; we'll persist it into `bookings` as a new column `refund_id` (text).
+
+#### 6. Refund visibility (already partially built)
+
+The Order Details page already shows refund status. We'll make sure the new `FAILED + refunded` rows render with a clear "Payment refunded — booking could not be created" card.
+
+### Database changes
+
+Single migration:
+
+```sql
+ALTER TABLE bookings 
+  ADD COLUMN IF NOT EXISTS refund_id text,
+  ADD COLUMN IF NOT EXISTS refund_reason text;
+
+CREATE INDEX IF NOT EXISTS bookings_payment_id_idx ON bookings (payment_id);
 ```
 
-The `rt=R` flag tells Delhivery the **shipment type** is reverse (so it's billed/handled as RVP), but origin/destination still describe the actual physical movement. Same convention will apply in Phase 2's `/api/cmu/create.json` payload.
+`payment_status` already supports the values `paid | refunded | refund_failed | pending` (used elsewhere) — no enum change needed.
 
-## Architecture
+### Files to create / edit
 
 ```text
-BookingStep2 (parallel fan-out)
- ├─ Prayog /serviceability/v3/check
- ├─ shadowfax-serviceability   (RVP, customer→seller)
- └─ delhivery-serviceability   ← NEW (RVP, sender→receiver)
-       ├─ GET /c/api/pin-codes/json/?filter_codes={sender},{receiver}
-       │     → both must return pre_paid: "Y"
-       └─ Parallel:
-           GET /api/kinko/v1/invoice/charges/.json?md=E&rt=R&o_pin={sender}&d_pin={receiver}&...
-           GET /api/kinko/v1/invoice/charges/.json?md=S&rt=R&o_pin={sender}&d_pin={receiver}&...
+NEW   supabase/functions/confirm-booking-or-refund/index.ts
+EDIT  supabase/config.toml                      (verify_jwt = false for new fn)
+EDIT  src/components/PaymentModal.tsx           (refund on verify failure)
+EDIT  src/pages/Booking.tsx                     (write FAILED rows in SFX/DLV branches; outer safety-net refund; call new fn optional)
+NEW   migration                                 (refund_id, refund_reason, index)
 ```
 
-## Edge Function: `delhivery-serviceability/index.ts`
+### Flow diagram
 
-Input (matches `shadowfax-serviceability` shape — `pickup_pincode` is the sender, `delivery_pincode` is the receiver):
 ```text
-{ pickup_pincode, delivery_pincode, weight_kg, length_cm, width_cm, height_cm }
+ Razorpay capture ──► verify-payment
+                          │
+                ┌─────────┴─────────┐
+              verified            failed
+                │                    │
+                ▼                    ▼
+       partner booking call    razorpay-refund  ──► toast "Refunded"
+                │
+        ┌───────┴───────┐
+      success         failure / exception / network
+        │                    │
+        ▼                    ▼
+  save booking         razorpay-refund (3x retry)
+  payment_status=paid        │
+                      ┌──────┴──────┐
+                   refunded     refund_failed
+                      │              │
+                      ▼              ▼
+              save FAILED row   save FAILED row
+              + refund_id       + manual support flag
 ```
 
-Logic:
-1. Read `x-environment` header → pick token + base URL via `_shared/environment.ts` (extend with `DELHIVERY_CONFIG` + `getDelhiveryConfig()`).
-2. **Pincode check**: `GET /c/api/pin-codes/json/?filter_codes={pickup_pincode},{delivery_pincode}`. Both must return `pre_paid: "Y"`. Either fails → `{ is_serviceable: false }`.
-3. **Chargeable weight** = `max(weight_kg * 1000, (L * W * H) / 5000 * 1000)` grams.
-4. **Two parallel rate calls** (correct direction):
-   - `o_pin = pickup_pincode` (sender), `d_pin = delivery_pincode` (receiver), `rt=R`, `pt=Pre-paid`, `ss=Delivered`, `cgm={weight}`, `md=E` (Express)
-   - Same again with `md=S` (Surface)
-5. Normalize to existing partner shape:
-   ```text
-   partner_id: "delhivery_direct"
-   partner_code: "delhivery"
-   partner_name: "Delhivery"
-   services: [
-     { service_code: "delhivery_express", tat_days: 2,
-       rate: { price: { amount: <total_amount>, currency: "INR" } } },
-     { service_code: "delhivery_surface", tat_days: 4,
-       rate: { price: { amount: <total_amount>, currency: "INR" } } }
-   ]
-   ```
-   `total_amount` from Delhivery already includes fuel surcharge & freight. TAT defaults (Express 2d, Surface 4d) — Phase 2 may refine via `predict-eta`.
-6. **Graceful failure**: one mode fails → return the other; both fail → `{ is_serviceable: false }` + log warning so the parallel fan-out keeps Prayog/Shadowfax working.
+### User-facing behaviour after this change
 
-## Frontend Wiring (Hidden in Phase 1)
-
-In `BookingStep2.tsx`'s `Promise.allSettled` array, add the new function call. Gate the merge into `partners[]` behind:
-```text
-const DELHIVERY_DIRECT_ENABLED = false; // flip in Phase 2
-```
-Logs run, function exercised in real usage, row hidden from users.
-
-`src/config/partnerLogos.ts` gets a `'delhivery_direct'` entry (uses existing Delhivery logo URL) — ready for Phase 2.
-
-## Phase 2 Preview (separate PR)
-
-`delhivery-booking` (RVP via `/api/cmu/create.json` — pickup_location = sender, consignee = receiver, `payment_mode = "Prepaid"`, `rt=R`/RVP-flagged shipment), `delhivery-tracking` (`/api/v1/packages/json/`), `delhivery-cancel-order` (edit API with `cancellation: true`), `isDelhiveryDirect` branches in `Booking.tsx` + `Tracking.tsx` + `useCancelOrder.ts`, persist with `booking_source = 'delhivery_direct'`, flip `DELHIVERY_DIRECT_ENABLED = true`. Will need `DELHIVERY_CLIENT_WAREHOUSE_NAME` + `DELHIVERY_PROD_CLIENT_WAREHOUSE_NAME` secrets.
-
-## Files Modified / Created
-
-| File | Change |
-|---|---|
-| **New** `supabase/functions/delhivery-serviceability/index.ts` | Pincode check + parallel Express/Surface RVP rate calls (sender=origin, receiver=destination), normalized response |
-| `supabase/functions/_shared/environment.ts` | Add `DELHIVERY_CONFIG` + `getDelhiveryConfig()` |
-| `supabase/config.toml` | Add `[functions.delhivery-serviceability] verify_jwt = false` |
-| `src/config/partnerLogos.ts` | Add `'delhivery_direct'` entry |
-| `src/components/booking/BookingStep2.tsx` | Add 3rd entry in parallel fan-out; merge gated behind `DELHIVERY_DIRECT_ENABLED = false` |
+- Payment captured + booking succeeds → confirmation dialog (unchanged).
+- Payment captured + booking fails → toast: "Booking could not be created. Your payment of ₹X has been refunded automatically. Refund ID: rfnd_XXXX". History shows a "Refunded" badge on that order.
+- Payment captured + refund also fails (rare) → toast with payment ID + support instruction. History shows "Refund pending — contact support" so admin team can reconcile.
+- Verification failure → automatic refund instead of "contact support".
 
