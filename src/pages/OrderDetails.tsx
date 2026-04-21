@@ -95,6 +95,7 @@ const OrderDetails = () => {
     id: string;
     booking_source: string;
     status: string;
+    awb?: string | null;
   } | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -117,7 +118,7 @@ const OrderDetails = () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, status, payment_status, payment_id, prayog_order_id, booking_source')
+        .select('id, status, payment_status, payment_id, prayog_order_id, prayog_awb, booking_source')
         .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
         .maybeSingle();
 
@@ -126,6 +127,7 @@ const OrderDetails = () => {
           id: data.id,
           booking_source: data.booking_source || 'prayog',
           status: data.status || '',
+          awb: (data as any).prayog_awb || null,
         });
 
         if (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED') {
@@ -148,6 +150,7 @@ const OrderDetails = () => {
       bookingSource: bookingMeta.booking_source,
       bookingId: bookingMeta.id,
       reason,
+      awb: bookingMeta.awb,
     });
   };
 

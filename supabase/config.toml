@@ -56,3 +56,12 @@ verify_jwt = false
 
 [functions.delhivery-serviceability]
 verify_jwt = false
+
+[functions.delhivery-booking]
+verify_jwt = false
+
+[functions.delhivery-tracking]
+verify_jwt = false
+
+[functions.delhivery-cancel-order]
+verify_jwt = false

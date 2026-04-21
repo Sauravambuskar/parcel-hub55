@@ -34,11 +34,13 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
     bookingSource,
     bookingId,
     reason,
+    awb,
   }: {
     orderId: string;
     bookingSource: string;
     bookingId?: string;
     reason: CancelReason;
+    awb?: string | null;
   }) => {
     setCancelling(true);
     try {
@@ -46,6 +48,22 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         const { data, error } = await supabase.functions.invoke("shadowfax-cancel-order", {
           body: {
             client_order_id: orderId,
+            cancel_remarks: reason,
+            booking_id: bookingId,
+          },
+          headers: { "x-environment": CURRENT_ENV },
+        });
+
+        if (error || !data?.success) {
+          throw new Error(data?.error || error?.message || "Failed to cancel order");
+        }
+      } else if (bookingSource === "delhivery_direct") {
+        if (!awb) {
+          throw new Error("AWB number required to cancel a Delhivery shipment");
+        }
+        const { data, error } = await supabase.functions.invoke("delhivery-cancel-order", {
+          body: {
+            waybill: awb,
             cancel_remarks: reason,
             booking_id: bookingId,
           },

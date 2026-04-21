@@ -224,10 +224,8 @@ const BookingStep2 = ({
         return data;
       });
 
-      // Phase 1: Delhivery wired into the parallel fan-out so the function gets
-      // exercised in real bookings, but the partner row is hidden behind this flag.
-      // Flip to true in Phase 2 once booking/tracking/cancel are implemented.
-      const DELHIVERY_DIRECT_ENABLED = false;
+      // Phase 2: Delhivery Direct fully integrated (booking, tracking, cancel).
+      const DELHIVERY_DIRECT_ENABLED = true;
 
       const [prayogResult, shadowfaxResult, delhiveryResult] = await Promise.allSettled([
         prayogFetch,

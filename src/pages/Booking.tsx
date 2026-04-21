@@ -466,11 +466,15 @@ const Booking = () => {
       // Find the selected service from serviceability data
       let selectedService = null;
       let isShadowfaxDirect = false;
+      let isDelhiveryDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
             if (partner.partner_id === 'shadowfax_direct') {
               isShadowfaxDirect = true;
+            }
+            if (partner.partner_id === 'delhivery_direct') {
+              isDelhiveryDirect = true;
             }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
@@ -682,6 +686,58 @@ const Booking = () => {
         awbNumber = sfxResult.awbNumber || null;
         prayogOrderId = sfxResult.orderId || orderId;
 
+      } else if (isDelhiveryDirect) {
+        // ─── Delhivery Direct Booking (RVP) ───
+        console.log('[Booking] Using Delhivery direct booking');
+        const { data: dlvResult, error: dlvError } = await supabase.functions.invoke('delhivery-booking', {
+          body: {
+            order_id: orderId,
+            sender_name: senderData.name,
+            sender_phone: senderData.phone,
+            sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+            sender_pincode: senderData.pincode,
+            sender_city: senderData.city,
+            sender_state: senderData.state,
+            receiver_name: receiverData.name,
+            receiver_phone: receiverData.phone,
+            receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+            receiver_pincode: receiverData.pincode,
+            receiver_city: receiverData.city,
+            receiver_state: receiverData.state,
+            package_weight: physicalWeight,
+            goods_type: goodsType || 'Package',
+            shipment_value: shipmentValue ? parseFloat(shipmentValue) : 0,
+            length, width, height,
+            service_code: selectedService?.service_code || 'delhivery_express',
+          },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (dlvError || !dlvResult?.success) {
+          if (paymentDetails?.razorpay_payment_id) {
+            try {
+              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
+                body: {
+                  payment_id: paymentDetails.razorpay_payment_id,
+                  notes: { reason: 'auto_refund_delhivery_failed', error: String(dlvResult?.error || dlvError).slice(0, 200) },
+                },
+                headers: { 'x-environment': CURRENT_ENV },
+              });
+              if (!refundError && refundData) {
+                throw new Error(`Delhivery booking failed. Your payment of ₹${totalAmount} has been refunded automatically.`);
+              }
+            } catch (refundErr: any) {
+              if (refundErr.message.includes('refunded')) throw refundErr;
+            }
+            throw new Error(`Delhivery booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+          }
+          throw new Error(`Delhivery booking failed: ${dlvResult?.error || dlvError?.message || 'Unknown error'}`);
+        }
+
+        trackingId = dlvResult.awbNumber || dlvResult.orderId || orderId;
+        awbNumber = dlvResult.awbNumber || null;
+        prayogOrderId = dlvResult.orderId || orderId;
+
       } else {
         // ─── Prayog Booking (existing flow) ───
         const prayogAuth = localStorage.getItem("prayog_auth");
@@ -774,7 +830,7 @@ const Booking = () => {
       }
 
       // Save booking to Supabase for admin dashboard and order history
-      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : 'prayog';
+      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : isDelhiveryDirect ? 'delhivery_direct' : 'prayog';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
@@ -811,7 +867,7 @@ const Booking = () => {
         base_fare: baseFare,
         platform_fee: platformFee,
         gst: gstAmount,
-        prayog_commission: isShadowfaxDirect ? 0 : Math.round(baseAmount * 0.05),
+        prayog_commission: (isShadowfaxDirect || isDelhiveryDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
       } as any;
       const {
