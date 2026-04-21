@@ -870,9 +870,12 @@ const Booking = () => {
         prayog_commission: (isShadowfaxDirect || isDelhiveryDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
       } as any;
-      const {
-        error: dbError
-      } = await supabase.from("bookings").insert(bookingData);
+      // Persist via edge function (RLS-safe; Prayog auth doesn't set auth.uid()).
+      const prayogAuthRaw = localStorage.getItem('prayog_auth');
+      const { error: dbError } = await supabase.functions.invoke('save-booking', {
+        body: bookingData,
+        headers: prayogAuthRaw ? { 'x-prayog-auth': prayogAuthRaw } : {},
+      });
       if (dbError) {
         console.error("Failed to save booking to database:", dbError);
         // Don't block the flow, just log the error
