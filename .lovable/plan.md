@@ -1,82 +1,88 @@
 
 
-## Fix: Align Delhivery payload with the official `cmu/create.json` spec
+## Delhivery C2C Forward Order — Full 7-Step Integration
 
-### What I verified against the official docs
+Implement the complete C2C flow where the **sender's address** is dynamically registered as the pickup location for each booking, so Delhivery picks up from the customer (not your warehouse) and delivers to the receiver.
 
-Sources: `delhivery-express-api-doc.readme.io/reference/order-creation-api` and `/reverse-pickups`, plus the Delhivery One help center.
-
-Authoritative rules for `POST /api/cmu/create.json`:
-
-1. **RVP convention** (verbatim from docs):
-   - `payment_mode = "Pickup"`
-   - Shipment-level `name / add / pin / city / state / phone` = **end customer** (pickup point)
-   - `return_name / return_add / return_pin / return_city / return_state / return_phone` = **delivery destination** (where the package goes)
-   - "If you are passing the return keys then shipment will be delivered to return address."
-2. **`pickup_location.name`** = a registered warehouse, **case-sensitive exact match** — billing/account anchor only.
-3. **`seller_*` fields are GST/invoice fields**, not address rendering fields. Documented seller keys: `seller_name`, `seller_add`, `seller_inv`, `seller_gst_tin`. They represent the **contracting seller entity** (us, ViaSetu) — not the consignee.
-4. **Undocumented keys we invented**: `return_address`, `return_pincode`, `return_contact`. These are not part of the cmu spec and are silently ignored.
-
-### What's wrong in our current payload
-
-In `supabase/functions/delhivery-booking/index.ts`:
-
-- `seller_name`, `seller_add`, `seller_pin`, `seller_city`, `seller_state` are set to the **receiver** (delivery) address. This pollutes the seller/GST identity on the shipment record. The Delhivery portal's address cards read these for the "Seller / Sold By" section, which is exactly why the screenshot shows the receiver address mislabeled, and earlier showed the warehouse name.
-- `return_address`, `return_pincode`, `return_contact` are non-spec keys that do nothing.
-- The previous "warehouse showing" issue happened because seller fields had been set to the warehouse string. We over-corrected by stuffing the receiver in there. **Both extremes are wrong** — `seller_*` should be the ViaSetu contracting entity (or empty), and the receiver should live exclusively in `return_*`.
-
-### The correct payload
+### Flow
 
 ```text
-shipments[0]:
-  // PICKUP point = end customer
-  name, add, pin, city, state, country, phone   <-  sender_*  (end customer)
-  payment_mode: "Pickup"
-
-  // DELIVERY point = receiver (canonical RVP spec)
-  return_name, return_add, return_pin,
-  return_city, return_state, return_country,
-  return_phone                                  <-  receiver_*
-
-  // Seller (GST / contracting entity) — leave blank or set to ViaSetu
-  seller_name: ""        (or "ViaSetu")
-  seller_add:  ""
-  seller_inv:  ""
-  seller_gst_tin: ""
-  // Drop seller_pin / seller_city / seller_state / seller_country entirely —
-  // they are not part of the documented seller block.
-
-  // Drop the invented return_address / return_pincode / return_contact keys.
-
-  hsn_code, products_desc, weight, dimensions, etc.  (unchanged)
-
-pickup_location:
-  name: <registered warehouse, exact case>      (unchanged)
+1. Serviceability check  (sender + receiver pincodes)
+2. Create pickup location (sender's address)        ← NEW
+3. Fetch waybill (AWB)                              ← NEW
+4. Create shipment (with sender as pickup, receiver as consignee)
+5. Generate shipping label                          ← NEW (fetch URL)
+6. Create pickup request                            ← NEW
+7. Track shipment
 ```
 
-### Edit
+### Files to change / create
 
-Single-file change in `supabase/functions/delhivery-booking/index.ts`:
+**1. `supabase/functions/delhivery-warehouse-create/index.ts`** (new)
+- POST `/api/backend/clientwarehouse/create/`
+- Body: sender name, address, pincode, city, phone, return address (same as sender for C2C).
+- Returns warehouse `name` (we'll use sender phone + timestamp as the unique name, e.g. `VS_<phone>_<ts>`).
+- Handles "warehouse already exists" gracefully — reuses existing name.
 
-1. Remove `return_address`, `return_pincode`, `return_contact` (non-spec).
-2. Set `seller_name = ""`, `seller_add = ""`, drop `seller_pin / seller_city / seller_state / seller_country`. Keep `seller_inv: ""` and `seller_gst_tin: ""` as documented blanks.
-3. Keep all `name/add/pin/city/state/phone` as sender (end customer) and all `return_*` as receiver — these are already correct.
-4. Update the file's header comment to reflect the spec-correct convention so this doesn't regress.
+**2. `supabase/functions/delhivery-fetch-waybill/index.ts`** (new)
+- GET `/waybill/api/bulk/json/?count=1&cl=<client_name>`
+- Returns single AWB string.
+- `client_name` from new env var `DELHIVERY_PROD_CLIENT_NAME`.
 
-No other files, no DB changes, no new secrets, no frontend changes.
+**3. `supabase/functions/delhivery-pickup-request/index.ts`** (new)
+- POST `/fm/request/new/`
+- Body: `pickup_location` (the warehouse name from step 2), `pickup_date`, `pickup_time`, `expected_package_count`.
+- Schedules courier pickup from sender's address.
 
-### Expected portal behaviour after fix
+**4. `supabase/functions/delhivery-booking/index.ts`** (rewrite)
+- Orchestrates steps 2 → 3 → 4 → 6 in sequence:
+  1. Call `delhivery-warehouse-create` with sender details → get pickup_location name.
+  2. Call `delhivery-fetch-waybill` → get AWB.
+  3. POST `/api/cmu/create.json` with:
+     - Top-level `name/add/pin/city/state/phone` = **receiver** (consignee/destination).
+     - `waybill` = AWB from step 3.
+     - `payment_mode: "Prepaid"`.
+     - `pickup_location.name` = warehouse from step 2.
+     - No `return_*` keys.
+     - `seller_*` blank.
+  4. Call `delhivery-pickup-request` with pickup_location name + tomorrow's date.
+- Returns AWB, pickup_id, label fetch URL.
 
-- "Pickup Address" card → end-customer details (correct).
-- "Delivery / Return Address" card → receiver details (correct, driven by `return_*`).
-- "Seller / Sold By" card → blank (or ViaSetu), no longer leaking the receiver or warehouse name.
+**5. `supabase/functions/delhivery-label/index.ts`** (new)
+- GET `/api/p/packing_slip?wbns=<AWB>&pdf=true`
+- Returns Delhivery's hosted label URL/PDF link.
+- Called on demand from the order details page (same pattern as Shadowfax).
 
-### Verification
+**6. `supabase/functions/delhivery-serviceability/index.ts`** (already exists, no change needed for forward — already removed `rt=R` per prior plan).
 
-After redeploy, place one fresh test booking via Delhivery and confirm in the Delhivery One portal:
-- Pickup card shows the customer
-- Return/Delivery card shows the receiver
-- Seller card is blank/ViaSetu, not the warehouse and not the receiver
+**7. `supabase/functions/delhivery-tracking/index.ts`** (small fix)
+- Change `type: "REVERSE"` → `"FORWARD"`.
+- `sourceLocation` ← sender pickup point, `destinationLocation` ← consignee.
 
-We'll also tail `delhivery-booking` edge logs to confirm the outgoing JSON matches the spec above.
+**8. `supabase/config.toml`** — register the four new functions with `verify_jwt = false`.
+
+**9. `src/pages/Booking.tsx` / booking handler** — when Delhivery is selected, the orchestration is fully server-side; no frontend changes beyond the existing `delhivery-booking` invocation. Label download button on order details page calls the new `delhivery-label` function (mirrors Shadowfax label flow).
+
+### New secret required
+
+- `DELHIVERY_PROD_CLIENT_NAME` — your Delhivery account's client name (different from warehouse name; needed for the waybill-fetch API). I'll request this from you after plan approval.
+
+All other Delhivery secrets already exist (`DELHIVERY_PROD_TOKEN`, `DELHIVERY_PROD_CLIENT_WAREHOUSE_NAME` — the latter becomes a fallback only).
+
+### Idempotency & error handling
+
+- Warehouse-create: if Delhivery returns "already exists" for the generated name, treat as success and reuse it. Use `VS_<sender_phone>` (no timestamp) so the same customer's repeat bookings reuse the same registered pickup location.
+- Each step logs its full request/response for debugging via `delhivery-booking` logs.
+- If any step (2–4, 6) fails, return a structured error with which step failed; the existing `confirm-booking-or-refund` flow then triggers a Razorpay refund (no DB changes needed — current refund logic already handles booking failures).
+
+### Verification after deploy
+
+1. Place one fresh test booking via Delhivery in the app.
+2. In Delhivery One portal:
+   - **Pickup card** → sender's name + address (the customer's address, registered live).
+   - **Delivery card** → receiver's name + address.
+   - **Seller card** → blank.
+3. A pickup request appears in the Delhivery portal scheduled for tomorrow at the sender's address.
+4. Label download button on order details returns a valid PDF.
+5. Tracking page shows direction = forward, source = sender, destination = receiver.
 
