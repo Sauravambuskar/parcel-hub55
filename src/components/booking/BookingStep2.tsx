@@ -296,6 +296,12 @@ const BookingStep2 = ({
         serviceabilityData.success = true;
       }
 
+      if (DELHIVERY_DIRECT_ENABLED && delhiveryPartner) {
+        serviceabilityData.partners.push(delhiveryPartner);
+        serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
+        serviceabilityData.success = true;
+      }
+
       if (!prayogServiceable && !shadowfaxPartner) {
         setIsServiceable(false);
         toast({
