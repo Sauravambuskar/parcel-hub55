@@ -1,10 +1,17 @@
 // Delhivery Direct Reverse Pickup booking via /api/cmu/create.json
-// RVP convention:
-//   pickup_location.name        = our registered warehouse (billing anchor, MUST match Delhivery client warehouse)
-//   shipments[].name/add/...    = end-customer pickup point (sender in our app)
-//   shipments[].return_*        = seller/business drop point (receiver in our app)
-//   shipments[].return_address* = canonical aliases documented in Delhivery One's newer reverse-order docs
-//   shipments[].seller_*        = kept aligned with receiver details for backward compatibility in portal rendering
+// Spec-correct RVP convention (per delhivery-express-api-doc.readme.io):
+//   pickup_location.name           = our registered warehouse (billing/account anchor only,
+//                                    MUST match Delhivery client warehouse, case-sensitive)
+//   shipments[].name/add/pin/...   = END CUSTOMER (physical pickup point for the RVP)
+//   shipments[].return_name/_add/  = DELIVERY DESTINATION (receiver in our app). Per docs:
+//     _pin/_city/_state/_phone       "If you are passing the return keys then shipment will
+//                                    be delivered to return address."
+//   shipments[].seller_*           = GST / contracting entity fields (ViaSetu). NOT address-
+//                                    rendering fields. Keep blank to avoid polluting the
+//                                    portal's "Seller / Sold By" card with warehouse or
+//                                    receiver data. Documented keys: seller_name, seller_add,
+//                                    seller_inv, seller_gst_tin.
+//   payment_mode                   = "Pickup" for prepaid RVP.
 
 import { getDelhiveryConfig, getEnvironmentFromRequest } from "../_shared/environment.ts";
 
