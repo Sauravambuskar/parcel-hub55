@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { input } = await req.json();
-    
+    const { input, pincode } = await req.json();
+
     if (!input) {
       return new Response(
         JSON.stringify({ error: 'Input is required' }),
@@ -28,6 +28,12 @@ serve(async (req) => {
       );
     }
 
+    // Bias search toward the user's Step-2 pincode by appending it to the input.
+    // Google's autocomplete weights results by the query text strongly, so this
+    // heavily prefers addresses inside that pincode area.
+    const validPincode = typeof pincode === 'string' && /^\d{6}$/.test(pincode) ? pincode : null;
+    const biasedInput = validPincode ? `${input} ${validPincode}` : input;
+
     // Using the new Places API (New)
     const response = await fetch(
       'https://places.googleapis.com/v1/places:autocomplete',
@@ -38,7 +44,7 @@ serve(async (req) => {
           'X-Goog-Api-Key': apiKey,
         },
         body: JSON.stringify({
-          input,
+          input: biasedInput,
           includedRegionCodes: ['in'], // Restrict to India
           languageCode: 'en',
         }),
@@ -49,7 +55,7 @@ serve(async (req) => {
     console.log('Places API response:', JSON.stringify(data));
 
     // Transform the new API response to match our expected format
-    const predictions = data.suggestions?.map((suggestion: any) => ({
+    let predictions = data.suggestions?.map((suggestion: any) => ({
       place_id: suggestion.placePrediction?.placeId,
       description: suggestion.placePrediction?.text?.text,
       structured_formatting: {
@@ -57,6 +63,20 @@ serve(async (req) => {
         secondary_text: suggestion.placePrediction?.structuredFormat?.secondaryText?.text || '',
       },
     })).filter((p: any) => p.place_id) || [];
+
+    // Hard-filter: when a pincode is provided, prefer suggestions whose text
+    // contains that pincode. If at least one match exists, keep only matches.
+    // Otherwise fall back to the full list (so the user still sees something
+    // and the client-side mismatch dialog can warn them).
+    if (validPincode && predictions.length > 0) {
+      const matching = predictions.filter((p: any) =>
+        (p.description || '').includes(validPincode) ||
+        (p.structured_formatting?.secondary_text || '').includes(validPincode)
+      );
+      if (matching.length > 0) {
+        predictions = matching;
+      }
+    }
 
     return new Response(
       JSON.stringify({ predictions, status: 'OK' }),

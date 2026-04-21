@@ -30,6 +30,8 @@ interface AddressInputProps {
   onChange: (value: string) => void;
   onAddressSelect?: (components: AddressComponents) => void;
   disabled?: boolean;
+  /** Step-2 pincode used to bias autocomplete results to the same PIN area */
+  restrictToPincode?: string;
 }
 
 interface PincodeValidation {
@@ -55,6 +57,7 @@ const AddressInput = ({
   onChange,
   onAddressSelect,
   disabled = false,
+  restrictToPincode,
 }: AddressInputProps) => {
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -158,7 +161,7 @@ const AddressInput = ({
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-places-autocomplete", {
-        body: { input, types: "address" },
+        body: { input, types: "address", pincode: restrictToPincode },
       });
       if (error) throw error;
       if (data?.predictions) {
@@ -272,7 +275,11 @@ const AddressInput = ({
   return (
     <div ref={containerRef} className="relative space-y-1">
       <Label htmlFor={id}>{label}</Label>
-
+      {restrictToPincode && (
+        <p className="text-[11px] text-muted-foreground">
+          Showing addresses within pincode <strong className="text-foreground">{restrictToPincode}</strong>
+        </p>
+      )}
       <div className="relative">
         <Textarea
           id={id}
