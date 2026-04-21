@@ -140,12 +140,42 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
             });
 
             if (verifyError || !verifyData?.verified) {
-              console.error('Payment verification failed:', verifyError || verifyData);
-              toast({
-                title: "Payment Verification Failed",
-                description: "Please contact support if amount was deducted.",
-                variant: "destructive",
-              });
+              console.error('Payment verification failed, triggering auto-refund:', verifyError || verifyData);
+              // Auto-refund: payment was captured but signature verification failed.
+              try {
+                const prayogAuthRaw = localStorage.getItem('prayog_auth');
+                const { data: refundData, error: refundError } = await supabase.functions.invoke(
+                  'confirm-booking-or-refund',
+                  {
+                    body: {
+                      payment_id: response.razorpay_payment_id,
+                      reason: 'verification_failed',
+                      error_detail: String(verifyError?.message || verifyData?.error || 'signature mismatch'),
+                    },
+                    headers: prayogAuthRaw ? { 'x-prayog-auth': prayogAuthRaw } : {},
+                  }
+                );
+
+                if (!refundError && refundData?.refunded) {
+                  toast({
+                    title: "Payment Refunded",
+                    description: `Verification failed. ₹${totalAmount} refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`,
+                  });
+                } else {
+                  toast({
+                    title: "Verification Failed",
+                    description: `Refund could not be processed. Payment ID: ${response.razorpay_payment_id}. Please contact support.`,
+                    variant: "destructive",
+                  });
+                }
+              } catch (refundErr) {
+                console.error('Auto-refund after verification failure errored:', refundErr);
+                toast({
+                  title: "Verification Failed",
+                  description: `Payment ID: ${response.razorpay_payment_id}. Please contact support for refund.`,
+                  variant: "destructive",
+                });
+              }
               setIsProcessing(false);
               return;
             }

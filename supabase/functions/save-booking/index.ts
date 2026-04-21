@@ -1,5 +1,8 @@
 // Persists a booking row using the service role, bypassing RLS.
 // Auth is verified via the x-prayog-auth header (external Prayog OTP system).
+// Idempotent on payment_id: if a row with the same payment_id already exists,
+// returns the existing row instead of creating a duplicate. This prevents
+// duplicate refunds when the client retries after a transient failure.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -49,6 +52,25 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Idempotency: if a row with this payment_id already exists for this user,
+    // return it instead of inserting a duplicate.
+    const paymentId = bookingRow.payment_id;
+    if (paymentId) {
+      const { data: existing } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("payment_id", paymentId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existing) {
+        console.log("[save-booking] idempotent hit for payment_id:", paymentId);
+        return new Response(JSON.stringify({ booking: existing, idempotent: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const { data, error } = await supabase
       .from("bookings")
