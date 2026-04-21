@@ -343,6 +343,16 @@ const AddressStep = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
+            // Pincode mismatch — block apply, open dialog
+            if (addr.pincode && addr.pincode !== pickupPincode) {
+              setMismatchDialog({
+                type: 'sender',
+                expected: pickupPincode,
+                actual: addr.pincode,
+                apply: () => onGoToStep?.(2),
+              });
+              return;
+            }
             onSenderChange('name', addr.name);
             onSenderChange('phone', addr.phone);
             onSenderChange('flatNo', addr.flatNo);
@@ -469,6 +479,15 @@ const AddressStep = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
+            if (addr.pincode && addr.pincode !== deliveryPincode) {
+              setMismatchDialog({
+                type: 'receiver',
+                expected: deliveryPincode,
+                actual: addr.pincode,
+                apply: () => onGoToStep?.(2),
+              });
+              return;
+            }
             onReceiverChange('name', addr.name);
             onReceiverChange('phone', addr.phone);
             onReceiverChange('flatNo', addr.flatNo);
