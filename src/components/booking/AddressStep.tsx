@@ -653,6 +653,45 @@ const AddressStep = ({
           Continue
         </Button>
       </div>
+
+      <AlertDialog open={!!mismatchDialog} onOpenChange={(open) => { if (!open) setMismatchDialog(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Pincode Mismatch
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 pt-2">
+                <p>
+                  The address you selected belongs to pincode{' '}
+                  <strong className="text-foreground">{mismatchDialog?.actual}</strong>, but you entered{' '}
+                  <strong className="text-foreground">{mismatchDialog?.expected}</strong> for{' '}
+                  {mismatchDialog?.type === 'sender' ? 'pickup' : 'delivery'} in Step 2.
+                </p>
+                <p className="text-sm">
+                  To keep rates &amp; serviceability accurate, please pick a different address within{' '}
+                  {mismatchDialog?.expected}, or update Step 2 to use {mismatchDialog?.actual}.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setMismatchDialog(null)}>
+              Keep my Step-2 pincode
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const cb = mismatchDialog?.apply;
+                setMismatchDialog(null);
+                cb?.();
+              }}
+            >
+              Update pincode &amp; go to Step 2
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
