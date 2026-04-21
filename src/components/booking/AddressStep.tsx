@@ -130,6 +130,14 @@ const AddressStep = ({
   const [saveReceiver, setSaveReceiver] = useState(false);
   const { saveAddress } = useSaveAddress();
 
+  // Modal mismatch dialog — used by autocomplete + saved-address picker
+  const [mismatchDialog, setMismatchDialog] = useState<{
+    type: 'sender' | 'receiver';
+    expected: string;
+    actual: string;
+    apply: () => void;
+  } | null>(null);
+
   // Auto-fill sender from profile when "Self" is selected
   useEffect(() => {
     if (bookingFor !== 'self') return;
