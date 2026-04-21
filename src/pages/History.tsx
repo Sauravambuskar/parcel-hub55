@@ -186,7 +186,7 @@ const History = () => {
 
       setOrders(merged);
 
-      const map: Record<string, { id: string; booking_source: string; status: string }> = {};
+      const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null }> = {};
       localOrders.forEach((o: any) => {
         if (o._booking) {
           const key = o._booking.prayog_order_id || o._booking.id;
@@ -194,6 +194,7 @@ const History = () => {
             id: o._booking.id,
             booking_source: o._booking.booking_source || 'prayog',
             status: o._booking.status || '',
+            awb: o._booking.prayog_awb || null,
           };
         }
       });
