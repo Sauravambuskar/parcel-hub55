@@ -1,11 +1,10 @@
 // Delhivery Direct Reverse Pickup booking via /api/cmu/create.json
 // RVP convention:
-//   pickup_location.name  = our registered warehouse (billing anchor, MUST match Delhivery client warehouse)
-//   shipments[].consignee = end-customer (sender in our app, physical pickup point)
-//   shipments[].return_*  = seller/business (receiver in our app, physical delivery point — used for RVP routing)
-//   shipments[].seller_*  = renders as "Delivery Address" card in the Delhivery portal UI.
-//                           We populate these with RECEIVER details so the portal shows the
-//                           correct end-delivery address (not our warehouse name).
+//   pickup_location.name        = our registered warehouse (billing anchor, MUST match Delhivery client warehouse)
+//   shipments[].name/add/...    = end-customer pickup point (sender in our app)
+//   shipments[].return_*        = seller/business drop point (receiver in our app)
+//   shipments[].return_address* = canonical aliases documented in Delhivery One's newer reverse-order docs
+//   shipments[].seller_*        = kept aligned with receiver details for backward compatibility in portal rendering
 
 import { getDelhiveryConfig, getEnvironmentFromRequest } from "../_shared/environment.ts";
 
@@ -112,15 +111,20 @@ Deno.serve(async (req) => {
       return_state: receiver_state,
       return_country: "India",
       return_name: receiver_name,
+      // Delhivery's current reverse-order docs describe the return drop address
+      // using return_address/return_pincode-style keys. Send both the legacy
+      // cmu aliases above and the canonical names below so the portal/UI and
+      // downstream systems resolve the correct delivery address consistently.
+      return_address: receiver_address,
+      return_pincode: receiver_pincode,
+      return_contact: receiver_phone,
       products_desc: goods_type || "Package",
       hsn_code: "",
       cod_amount: "0",
       order_date: new Date().toISOString(),
       total_amount: String(shipment_value || 0),
-      // seller_* fields render as the "Delivery Address" card in the Delhivery portal.
-      // Populate with RECEIVER (end-delivery) details so the portal displays the correct
-      // consignee address instead of our warehouse name. RVP billing/routing is anchored
-      // by pickup_location.name (warehouse) and return_* fields above.
+      // Keep seller_* aligned with the receiver too because older Delhivery UI
+      // surfaces these fields in the address card for manifested reverse orders.
       seller_name: receiver_name,
       seller_add: receiver_address,
       seller_pin: receiver_pincode,
