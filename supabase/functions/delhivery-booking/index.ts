@@ -6,10 +6,8 @@
 //   shipments[].return_name/_add/  = DELIVERY DESTINATION (receiver in our app). Per docs:
 //     _pin/_city/_state/_phone       "If you are passing the return keys then shipment will
 //                                    be delivered to return address."
-//   shipments[].seller_*           = Delhivery One currently renders these in the visible
-//                                    Delivery Address card for RVP shipments, so mirror the
-//                                    receiver here while keeping return_* as the canonical
-//                                    delivery destination.
+//   shipments[].seller_*           = GST / contracting entity fields (ViaSetu). Optional;
+//                                    NOT address-rendering fields.
 //   payment_mode                   = "Pickup" for prepaid RVP.
 
 import { getDelhiveryConfig, getEnvironmentFromRequest } from "../_shared/environment.ts";
@@ -109,8 +107,7 @@ Deno.serve(async (req) => {
       country: "India",
       phone: sender_phone,
       order: order_id,
-      client: warehouse,
-      payment_mode: "Pickup", // Prepaid RVP -> Pickup mode
+      payment_mode: "Prepaid", // Per Delhivery C2C reverse-order spec
       // RVP delivery destination = receiver. Per Delhivery docs, when return_*
       // keys are present, the shipment is delivered to the return address.
       return_name: receiver_name,
@@ -120,24 +117,13 @@ Deno.serve(async (req) => {
       return_state: receiver_state,
       return_country: "India",
       return_phone: receiver_phone,
-      // Delhivery One/B2C aliases used by the dashboard renderer.
-      return_address: receiver_address,
-      return_pincode: receiver_pincode,
-      return_contact: receiver_phone,
       products_desc: goods_type || "Package",
       hsn_code: "",
       cod_amount: "0",
       order_date: new Date().toISOString(),
       total_amount: String(shipment_value || 0),
-      // Delhivery One renders seller_* in the visible Delivery Address panel for
-      // reverse pickups, so mirror the receiver to prevent fallback to warehouse.
-      seller_name: receiver_name,
-      seller_add: receiver_address,
-      seller_pin: receiver_pincode,
-      seller_city: receiver_city,
-      seller_state: receiver_state,
-      seller_country: "India",
-      seller_phone: receiver_phone,
+      seller_name: "",
+      seller_add: "",
       seller_inv: "",
       seller_gst_tin: "",
       quantity: "1",
