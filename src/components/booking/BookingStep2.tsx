@@ -274,11 +274,26 @@ const BookingStep2 = ({
         console.warn('Delhivery serviceability check failed (non-blocking):', delhiveryResult.reason);
       }
 
+      // Filter out partners that we integrate directly (Shadowfax, Delhivery)
+      // to avoid duplicate listings from Prayog's aggregated response.
+      const DIRECT_PARTNER_CODES = ['shadowfax', 'sfx', 'delhivery', 'dlv'];
+      const isDirectPartner = (p: any) => {
+        const code = String(p?.partner_code || '').toLowerCase();
+        const name = String(p?.partner_name || '').toLowerCase();
+        return DIRECT_PARTNER_CODES.some((c) => code.includes(c) || name.includes(c));
+      };
+
+      const prayogPartnersFiltered = (prayogData?.partners || []).filter((p: any) => !isDirectPartner(p));
+      const removedCount = (prayogData?.partners?.length || 0) - prayogPartnersFiltered.length;
+
       const serviceabilityData = prayogData && typeof prayogData === 'object'
         ? {
             ...prayogData,
-            partners: [...(prayogData.partners || [])],
-            metadata: { ...(prayogData.metadata || {}) },
+            partners: prayogPartnersFiltered,
+            metadata: {
+              ...(prayogData.metadata || {}),
+              serviceable_count: Math.max(0, (prayogData.metadata?.serviceable_count || 0) - removedCount),
+            },
           }
         : {
             success: false,
