@@ -102,15 +102,16 @@ const Tracking = () => {
     setTrackingData(null);
     
     try {
-      // Check if this AWB belongs to a Shadowfax booking
+      // Lookup booking by AWB to determine source
       const { data: booking } = await supabase
         .from('bookings')
-        .select('id, booking_source, prayog_order_id, status')
+        .select('id, booking_source, prayog_order_id, prayog_awb, status')
         .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
         .maybeSingle();
 
       const bSource = (booking as any)?.booking_source || 'prayog';
       const isShadowfax = bSource === 'shadowfax_direct';
+      const isDelhiveryDirect = bSource === 'delhivery_direct';
 
       if (booking) {
         setBookingMeta({
@@ -124,7 +125,6 @@ const Tracking = () => {
       }
 
       if (isShadowfax) {
-        // Use Shadowfax tracking edge function
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
           body: { order_id: (booking as any)?.prayog_order_id || awb },
           headers: { 'x-environment': CURRENT_ENV },
@@ -135,6 +135,18 @@ const Tracking = () => {
         }
 
         setTrackingData(sfxData);
+      } else if (isDelhiveryDirect) {
+        const trackAwb = (booking as any)?.prayog_awb || awb;
+        const { data: dlvData, error: dlvError } = await supabase.functions.invoke('delhivery-tracking', {
+          body: { waybill: trackAwb },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (dlvError || !dlvData || dlvData.error) {
+          throw new Error('Failed to fetch Delhivery tracking');
+        }
+
+        setTrackingData(dlvData);
       } else {
         // Use existing Prayog tracking
         const prayogAuth = localStorage.getItem('prayog_auth');
