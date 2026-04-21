@@ -830,7 +830,7 @@ const Booking = () => {
       }
 
       // Save booking to Supabase for admin dashboard and order history
-      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : 'prayog';
+      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : isDelhiveryDirect ? 'delhivery_direct' : 'prayog';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
@@ -867,7 +867,7 @@ const Booking = () => {
         base_fare: baseFare,
         platform_fee: platformFee,
         gst: gstAmount,
-        prayog_commission: isShadowfaxDirect ? 0 : Math.round(baseAmount * 0.05),
+        prayog_commission: (isShadowfaxDirect || isDelhiveryDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
       } as any;
       const {
