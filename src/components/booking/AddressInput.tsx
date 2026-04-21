@@ -275,7 +275,11 @@ const AddressInput = ({
   return (
     <div ref={containerRef} className="relative space-y-1">
       <Label htmlFor={id}>{label}</Label>
-
+      {restrictToPincode && (
+        <p className="text-[11px] text-muted-foreground">
+          Showing addresses within pincode <strong className="text-foreground">{restrictToPincode}</strong>
+        </p>
+      )}
       <div className="relative">
         <Textarea
           id={id}

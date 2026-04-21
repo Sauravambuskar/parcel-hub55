@@ -417,6 +417,7 @@ const AddressStep = ({
             }}
             onAddressSelect={handleSenderAddressSelect}
             placeholder="Start typing address..."
+            restrictToPincode={pickupPincode}
           />
 
           {senderPincodeMismatch && (
@@ -550,6 +551,7 @@ const AddressStep = ({
             }}
             onAddressSelect={handleReceiverAddressSelect}
             placeholder="Start typing address..."
+            restrictToPincode={deliveryPincode}
           />
 
           {receiverPincodeMismatch && (
