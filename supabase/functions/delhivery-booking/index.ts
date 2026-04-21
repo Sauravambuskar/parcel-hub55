@@ -1,8 +1,11 @@
 // Delhivery Direct Reverse Pickup booking via /api/cmu/create.json
 // RVP convention:
-//   pickup_location.name  = our registered warehouse (billing anchor)
-//   shipments[].consignee = end-customer (sender in our app, physical pickup)
-//   shipments[].return_*  = seller/business (receiver in our app, physical delivery)
+//   pickup_location.name  = our registered warehouse (billing anchor, MUST match Delhivery client warehouse)
+//   shipments[].consignee = end-customer (sender in our app, physical pickup point)
+//   shipments[].return_*  = seller/business (receiver in our app, physical delivery point — used for RVP routing)
+//   shipments[].seller_*  = renders as "Delivery Address" card in the Delhivery portal UI.
+//                           We populate these with RECEIVER details so the portal shows the
+//                           correct end-delivery address (not our warehouse name).
 
 import { getDelhiveryConfig, getEnvironmentFromRequest } from "../_shared/environment.ts";
 
@@ -114,10 +117,16 @@ Deno.serve(async (req) => {
       cod_amount: "0",
       order_date: new Date().toISOString(),
       total_amount: String(shipment_value || 0),
-      // seller_* = registered seller (our warehouse), NOT the delivery address.
-      // Delivery address for RVP comes from return_* fields above.
-      seller_add: "",
-      seller_name: warehouse,
+      // seller_* fields render as the "Delivery Address" card in the Delhivery portal.
+      // Populate with RECEIVER (end-delivery) details so the portal displays the correct
+      // consignee address instead of our warehouse name. RVP billing/routing is anchored
+      // by pickup_location.name (warehouse) and return_* fields above.
+      seller_name: receiver_name,
+      seller_add: receiver_address,
+      seller_pin: receiver_pincode,
+      seller_city: receiver_city,
+      seller_state: receiver_state,
+      seller_country: "India",
       seller_inv: "",
       quantity: "1",
       waybill: "",
