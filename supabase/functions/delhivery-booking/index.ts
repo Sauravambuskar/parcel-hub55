@@ -114,8 +114,10 @@ Deno.serve(async (req) => {
       cod_amount: "0",
       order_date: new Date().toISOString(),
       total_amount: String(shipment_value || 0),
-      seller_add: receiver_address,
-      seller_name: receiver_name,
+      // seller_* = registered seller (our warehouse), NOT the delivery address.
+      // Delivery address for RVP comes from return_* fields above.
+      seller_add: "",
+      seller_name: warehouse,
       seller_inv: "",
       quantity: "1",
       waybill: "",
