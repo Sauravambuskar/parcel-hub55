@@ -661,23 +661,39 @@ const Booking = () => {
         });
 
         if (sfxError || !sfxResult?.success) {
-          // Auto-refund if payment was already collected
+          // Auto-refund + audit row via centralized edge function.
           if (paymentDetails?.razorpay_payment_id) {
-            try {
-              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
-                body: {
-                  payment_id: paymentDetails.razorpay_payment_id,
-                  notes: { reason: 'auto_refund_shadowfax_failed', error: String(sfxResult?.error || sfxError).slice(0, 200) },
-                },
-                headers: { 'x-environment': CURRENT_ENV },
-              });
-              if (!refundError && refundData) {
-                throw new Error(`Shadowfax booking failed. Your payment of ₹${totalAmount} has been refunded automatically.`);
-              }
-            } catch (refundErr: any) {
-              if (refundErr.message.includes('refunded')) throw refundErr;
+            const prayogAuthRawSfx = localStorage.getItem('prayog_auth');
+            const failedBookingRow = {
+              sender_name: senderData.name, sender_phone: senderData.phone,
+              sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+              sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+              receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+              receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+              receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+              goods_type: goodsType || "Package",
+              package_weight: String(physicalWeight),
+              urgency: urgency || "standard",
+              courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shadowfax",
+              courier_price: totalAmount,
+              delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              booking_source: 'shadowfax_direct',
+            };
+            const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+              body: {
+                payment_id: paymentDetails.razorpay_payment_id,
+                reason: 'shadowfax_booking_failed',
+                error_detail: String(sfxResult?.error || sfxError?.message || 'unknown'),
+                booking_row: failedBookingRow,
+              },
+              headers: { ...(prayogAuthRawSfx ? { 'x-prayog-auth': prayogAuthRawSfx } : {}), 'x-environment': CURRENT_ENV },
+            });
+            localStorage.removeItem('booking_draft');
+            if (refundData?.refunded) {
+              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`);
             }
-            throw new Error(`Shadowfax booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+            throw new Error(`Shadowfax booking failed and refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
           }
           throw new Error(`Shadowfax booking failed: ${sfxResult?.error || sfxError || 'Unknown error'}`);
         }
@@ -715,21 +731,37 @@ const Booking = () => {
 
         if (dlvError || !dlvResult?.success) {
           if (paymentDetails?.razorpay_payment_id) {
-            try {
-              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
-                body: {
-                  payment_id: paymentDetails.razorpay_payment_id,
-                  notes: { reason: 'auto_refund_delhivery_failed', error: String(dlvResult?.error || dlvError).slice(0, 200) },
-                },
-                headers: { 'x-environment': CURRENT_ENV },
-              });
-              if (!refundError && refundData) {
-                throw new Error(`Delhivery booking failed. Your payment of ₹${totalAmount} has been refunded automatically.`);
-              }
-            } catch (refundErr: any) {
-              if (refundErr.message.includes('refunded')) throw refundErr;
+            const prayogAuthRawDlv = localStorage.getItem('prayog_auth');
+            const failedBookingRow = {
+              sender_name: senderData.name, sender_phone: senderData.phone,
+              sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+              sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+              receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+              receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+              receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+              goods_type: goodsType || "Package",
+              package_weight: String(physicalWeight),
+              urgency: urgency || "standard",
+              courier_name: selectedService?.partner_code || selectedCourierData?.name || "Delhivery",
+              courier_price: totalAmount,
+              delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              booking_source: 'delhivery_direct',
+            };
+            const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+              body: {
+                payment_id: paymentDetails.razorpay_payment_id,
+                reason: 'delhivery_booking_failed',
+                error_detail: String(dlvResult?.error || dlvError?.message || 'unknown'),
+                booking_row: failedBookingRow,
+              },
+              headers: { ...(prayogAuthRawDlv ? { 'x-prayog-auth': prayogAuthRawDlv } : {}), 'x-environment': CURRENT_ENV },
+            });
+            localStorage.removeItem('booking_draft');
+            if (refundData?.refunded) {
+              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`);
             }
-            throw new Error(`Delhivery booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+            throw new Error(`Delhivery booking failed and refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
           }
           throw new Error(`Delhivery booking failed: ${dlvResult?.error || dlvError?.message || 'Unknown error'}`);
         }
