@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.delhivery-cancel-order]
 verify_jwt = false
+
+[functions.save-booking]
+verify_jwt = false
