@@ -6,10 +6,8 @@
 //   shipments[].return_name/_add/  = DELIVERY DESTINATION (receiver in our app). Per docs:
 //     _pin/_city/_state/_phone       "If you are passing the return keys then shipment will
 //                                    be delivered to return address."
-//   shipments[].seller_*           = Delhivery One currently renders these in the visible
-//                                    Delivery Address card for RVP shipments, so mirror the
-//                                    receiver here while keeping return_* as the canonical
-//                                    delivery destination.
+//   shipments[].seller_*           = GST / contracting entity fields (ViaSetu). Optional;
+//                                    NOT address-rendering fields.
 //   payment_mode                   = "Pickup" for prepaid RVP.
 
 import { getDelhiveryConfig, getEnvironmentFromRequest } from "../_shared/environment.ts";
