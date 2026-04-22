@@ -97,7 +97,7 @@ const History = () => {
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
-  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null }>>({});
+  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }>>({});
   const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string; awb?: string | null } | null>(null);
   const [partialFailure, setPartialFailure] = useState<string | null>(null);
 
