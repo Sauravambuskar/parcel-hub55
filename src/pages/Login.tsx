@@ -83,7 +83,7 @@ const Login = () => {
     setLoading(true);
     try {
       const phoneWithCountryCode = `+91${phoneNumber}`;
-      const userId = deriveUserId(phoneNumber);
+      const userId = await deriveUserId(phoneNumber);
       const trimmedName = userName.trim();
 
       // Look up existing profile by deterministic user_id
