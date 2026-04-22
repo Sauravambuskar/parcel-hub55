@@ -299,9 +299,14 @@ const OrderMonitoring = () => {
                             ₹{booking.courier_price?.toLocaleString()}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(booking.status)}>
-                              {getStatusLabel(booking.status)}
-                            </Badge>
+                            <div className="flex flex-col gap-1 items-start">
+                              <Badge variant={getStatusColor(booking.status)}>
+                                {getStatusLabel(booking.status)}
+                              </Badge>
+                              {booking.payment_status === 'cop_pending' && (
+                                <Badge className="bg-yellow-500 text-yellow-950 text-xs">💵 COP</Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Button 
