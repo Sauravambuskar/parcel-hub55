@@ -97,7 +97,7 @@ const History = () => {
   const [orders, setOrders] = useState<PrayogOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
-  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null }>>({});
+  const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }>>({});
   const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string; awb?: string | null } | null>(null);
   const [partialFailure, setPartialFailure] = useState<string | null>(null);
 
@@ -186,7 +186,7 @@ const History = () => {
 
       setOrders(merged);
 
-      const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null }> = {};
+      const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }> = {};
       localOrders.forEach((o: any) => {
         if (o._booking) {
           const key = o._booking.prayog_order_id || o._booking.id;
@@ -195,6 +195,7 @@ const History = () => {
             booking_source: o._booking.booking_source || 'prayog',
             status: o._booking.status || '',
             awb: o._booking.prayog_awb || null,
+            payment_status: o._booking.payment_status || null,
           };
         }
       });
@@ -203,13 +204,13 @@ const History = () => {
       if (missingIds.length > 0) {
         const { data: bookings } = await supabase
           .from('bookings')
-          .select('id, prayog_order_id, prayog_awb, booking_source, status')
+          .select('id, prayog_order_id, prayog_awb, booking_source, status, payment_status')
           .in('prayog_order_id', missingIds);
 
         if (bookings) {
           bookings.forEach((b: any) => {
             if (b.prayog_order_id) {
-              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null };
+              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null, payment_status: b.payment_status || null };
             }
           });
         }
@@ -366,13 +367,18 @@ const History = () => {
               <Card key={order.orderId} className="p-4 bg-white/10 backdrop-blur-xl border-white/20">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-semibold text-lg text-white">
                         {order.shipments?.[0]?.awbNumber || order.orderId}
                       </h3>
                       <Badge className={getStatusColor(order.orderStatus)}>
                         {order.orderStatus || 'Unknown'}
                       </Badge>
+                      {bookingsMap[order.orderId]?.payment_status === 'cop_pending' && (
+                        <Badge className="bg-yellow-500/90 text-yellow-950 border-0 text-xs">
+                          💵 COP Pending
+                        </Badge>
+                      )}
                     </div>
                     {order.carrierName && (
                       <p className="text-sm text-white/70 flex items-center gap-1">

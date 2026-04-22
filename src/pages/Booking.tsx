@@ -456,10 +456,16 @@ const Booking = () => {
   const handleProceedToPayment = () => {
     setShowPaymentModal(true);
   };
+  // Cash-on-Pickup: skip Razorpay entirely. TEMPORARY — see memory note
+  // payments/no-cash-on-delivery-policy. Booking is created as Prepaid with the
+  // courier; we settle internally and mark payment_status='cop_pending'.
+  const handleCashOnPickup = async () => {
+    await handlePaymentSuccess('cop', undefined, true);
+  };
   const handlePaymentSuccess = async (paymentMethod: string, paymentDetails?: {
     razorpay_payment_id: string;
     razorpay_order_id: string;
-  }) => {
+  }, isCop: boolean = false) => {
     if (!userId) return;
     const selectedCourierData = getSelectedServiceDetails();
     try {
@@ -904,7 +910,7 @@ const Booking = () => {
         label_url: labelUrl,
         status: "CREATED",
         payment_id: paymentDetails?.razorpay_payment_id || null,
-        payment_status: "paid",
+        payment_status: isCop ? "cop_pending" : "paid",
         base_fare: baseFare,
         platform_fee: platformFee,
         gst: gstAmount,
@@ -1035,7 +1041,7 @@ const Booking = () => {
           baseFare: baseFare,
           // This already includes platform fee (merged into displayed price)
           deliveryTime: selectedCourierData?.deliveryTime || ""
-        }} selectedDate={selectedDate} onConfirm={handleProceedToPayment} onBack={handlePrevStep} />;
+        }} selectedDate={selectedDate} onConfirm={handleProceedToPayment} onCashOnPickup={handleCashOnPickup} onBack={handlePrevStep} />;
       default:
         return null;
     }

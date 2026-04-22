@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
           booking_source: b.booking_source || 'prayog',
           status: b.status || 'CREATED',
           prayog_order_id: b.prayog_order_id,
+          payment_status: b.payment_status || null,
         },
       };
     });

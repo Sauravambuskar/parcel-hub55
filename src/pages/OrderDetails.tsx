@@ -130,7 +130,12 @@ const OrderDetails = () => {
           awb: (data as any).prayog_awb || null,
         });
 
-        if (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED') {
+        if (
+          data.payment_status === 'refunded' ||
+          data.payment_status === 'refund_failed' ||
+          data.payment_status === 'cop_pending' ||
+          data.status === 'FAILED'
+        ) {
           setRefundInfo({
             status: data.status,
             payment_status: data.payment_status,
@@ -529,11 +534,13 @@ const OrderDetails = () => {
         {/* Refund Status Indicator */}
         {refundInfo && (
           <Card className={`p-4 border-l-4 ${
-            refundInfo.payment_status === 'refunded' 
-              ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20' 
-              : refundInfo.payment_status === 'refund_failed' 
-                ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20' 
-                : 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
+            refundInfo.payment_status === 'refunded'
+              ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20'
+              : refundInfo.payment_status === 'refund_failed'
+                ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20'
+                : refundInfo.payment_status === 'cop_pending'
+                  ? 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
+                  : 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
           }`}>
             <div className="flex items-start gap-3">
               {refundInfo.payment_status === 'refunded' ? (
@@ -547,22 +554,30 @@ const OrderDetails = () => {
                 <h3 className="font-semibold text-sm flex items-center gap-2">
                   {refundInfo.payment_status === 'refunded' && 'Payment Refunded'}
                   {refundInfo.payment_status === 'refund_failed' && 'Refund Failed'}
-                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'Order Failed'}
+                  {refundInfo.payment_status === 'cop_pending' && 'Cash on Pickup — Pending'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && refundInfo.payment_status !== 'cop_pending' && 'Order Failed'}
                   <Badge variant="outline" className={`text-xs ${
-                    refundInfo.payment_status === 'refunded' 
-                      ? 'border-green-500 text-green-700' 
-                      : refundInfo.payment_status === 'refund_failed' 
-                        ? 'border-red-500 text-red-700' 
+                    refundInfo.payment_status === 'refunded'
+                      ? 'border-green-500 text-green-700'
+                      : refundInfo.payment_status === 'refund_failed'
+                        ? 'border-red-500 text-red-700'
                         : 'border-yellow-500 text-yellow-700'
                   }`}>
                     <RefreshCw className="h-3 w-3 mr-1" />
-                    {refundInfo.payment_status === 'refunded' ? 'Refunded' : refundInfo.payment_status === 'refund_failed' ? 'Action Required' : refundInfo.status}
+                    {refundInfo.payment_status === 'refunded'
+                      ? 'Refunded'
+                      : refundInfo.payment_status === 'refund_failed'
+                        ? 'Action Required'
+                        : refundInfo.payment_status === 'cop_pending'
+                          ? 'COP Pending'
+                          : refundInfo.status}
                   </Badge>
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {refundInfo.payment_status === 'refunded' && 'Your payment has been automatically refunded. It may take 5-7 business days to reflect in your account.'}
                   {refundInfo.payment_status === 'refund_failed' && 'The automatic refund could not be processed. Please contact support with your Payment ID for assistance.'}
-                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && 'This order could not be completed.'}
+                  {refundInfo.payment_status === 'cop_pending' && 'Please pay the total amount in cash to the courier executive at the time of pickup. Keep the exact amount ready.'}
+                  {refundInfo.payment_status !== 'refunded' && refundInfo.payment_status !== 'refund_failed' && refundInfo.payment_status !== 'cop_pending' && 'This order could not be completed.'}
                 </p>
                 {refundInfo.payment_id && (
                   <p className="text-xs text-muted-foreground mt-2 font-mono">

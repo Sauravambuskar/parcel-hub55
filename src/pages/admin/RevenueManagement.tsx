@@ -83,41 +83,46 @@ const RevenueManagement = () => {
 
   const filteredBookings = getFilteredBookings();
 
-  // Calculate revenue stats
-  const totalRevenue = filteredBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+  // COP bookings haven't been collected yet — track separately
+  const copBookings = filteredBookings.filter(b => b.payment_status === 'cop_pending');
+  const collectedBookings = filteredBookings.filter(b => b.payment_status !== 'cop_pending');
+
+  // Calculate revenue stats (Total Collections excludes COP-pending)
+  const totalRevenue = collectedBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+  const copPendingTotal = copBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
   const platformCommission = Math.round(totalRevenue * 0.1); // 10% platform fee
   const prayogCommission = Math.round(totalRevenue * 0.05); // 5% Prayog commission
   const gstCollected = Math.round(totalRevenue * 0.18 / 1.18); // GST from total
   const netRevenue = platformCommission; // Your actual earnings
 
   const revenueStats = [
-    { 
-      title: "Total Collections", 
-      value: `₹${totalRevenue.toLocaleString()}`, 
-      change: `${filteredBookings.length} orders`, 
-      icon: IndianRupee, 
-      color: "text-green-600" 
+    {
+      title: "Total Collections",
+      value: `₹${totalRevenue.toLocaleString()}`,
+      change: `${collectedBookings.length} paid orders`,
+      icon: IndianRupee,
+      color: "text-green-600"
     },
-    { 
-      title: "Platform Commission (10%)", 
-      value: `₹${platformCommission.toLocaleString()}`, 
-      change: "Your earnings", 
-      icon: Percent, 
-      color: "text-blue-600" 
+    {
+      title: "Pending COP Collection",
+      value: `₹${copPendingTotal.toLocaleString()}`,
+      change: `${copBookings.length} cash-on-pickup orders`,
+      icon: IndianRupee,
+      color: "text-yellow-600"
     },
-    { 
-      title: "Prayog Commission (5%)", 
-      value: `₹${prayogCommission.toLocaleString()}`, 
-      change: "Partner share", 
-      icon: CreditCard, 
-      color: "text-purple-600" 
+    {
+      title: "Platform Commission (10%)",
+      value: `₹${platformCommission.toLocaleString()}`,
+      change: "Your earnings",
+      icon: Percent,
+      color: "text-blue-600"
     },
-    { 
-      title: "GST Collected", 
-      value: `₹${gstCollected.toLocaleString()}`, 
-      change: "18% GST", 
-      icon: TrendingUp, 
-      color: "text-orange-600" 
+    {
+      title: "GST Collected",
+      value: `₹${gstCollected.toLocaleString()}`,
+      change: "18% GST",
+      icon: TrendingUp,
+      color: "text-orange-600"
     },
   ];
 

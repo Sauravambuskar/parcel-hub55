@@ -116,6 +116,7 @@ const OrderMonitoring = () => {
     if (selectedFilter === "pending") return matchesSearch && booking.status === "pending";
     if (selectedFilter === "in_transit") return matchesSearch && (booking.status === "in_transit" || booking.status === "in transit");
     if (selectedFilter === "delivered") return matchesSearch && booking.status === "delivered";
+    if (selectedFilter === "cop_pending") return matchesSearch && booking.payment_status === "cop_pending";
     return matchesSearch;
   });
 
@@ -214,6 +215,7 @@ const OrderMonitoring = () => {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="in_transit">In Transit</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="cop_pending">💵 COP Pending</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={fetchBookings}>
@@ -297,9 +299,14 @@ const OrderMonitoring = () => {
                             ₹{booking.courier_price?.toLocaleString()}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(booking.status)}>
-                              {getStatusLabel(booking.status)}
-                            </Badge>
+                            <div className="flex flex-col gap-1 items-start">
+                              <Badge variant={getStatusColor(booking.status)}>
+                                {getStatusLabel(booking.status)}
+                              </Badge>
+                              {booking.payment_status === 'cop_pending' && (
+                                <Badge className="bg-yellow-500 text-yellow-950 text-xs">💵 COP</Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Button 
@@ -357,9 +364,14 @@ const OrderMonitoring = () => {
                           <TableCell>{booking.delivery_time}</TableCell>
                           <TableCell className="font-medium">₹{booking.courier_price}</TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(booking.status)}>
-                              {getStatusLabel(booking.status)}
-                            </Badge>
+                            <div className="flex flex-col gap-1 items-start">
+                              <Badge variant={getStatusColor(booking.status)}>
+                                {getStatusLabel(booking.status)}
+                              </Badge>
+                              {booking.payment_status === 'cop_pending' && (
+                                <Badge className="bg-yellow-500 text-yellow-950 text-xs">💵 COP</Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Button 
