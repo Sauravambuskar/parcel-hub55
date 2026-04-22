@@ -215,6 +215,7 @@ const OrderMonitoring = () => {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="in_transit">In Transit</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="cop_pending">💵 COP Pending</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={fetchBookings}>
