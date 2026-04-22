@@ -45,7 +45,7 @@ const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
   const { toast } = useToast();
 
   const fetchAddresses = async () => {
-    const auth = getPrayogAuth();
+    const auth = getAuthData();
     if (!auth?.user_id) return;
     setLoading(true);
     try {
@@ -65,7 +65,7 @@ const SavedAddressPicker = ({ onSelect, type }: SavedAddressPickerProps) => {
   };
 
   const deleteAddress = async (addressId: string) => {
-    const auth = getPrayogAuth();
+    const auth = getAuthData();
     if (!auth?.user_id) return;
     try {
       await supabase.functions.invoke('saved-addresses', {
@@ -167,7 +167,7 @@ export const useSaveAddress = () => {
     pincode: string;
     label?: string;
   }) => {
-    const auth = getPrayogAuth();
+    const auth = getAuthData();
     if (!auth?.user_id) return;
 
     try {
