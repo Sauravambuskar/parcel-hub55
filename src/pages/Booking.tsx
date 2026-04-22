@@ -769,6 +769,7 @@ const Booking = () => {
         trackingId = dlvResult.awbNumber || dlvResult.orderId || orderId;
         awbNumber = dlvResult.awbNumber || null;
         prayogOrderId = dlvResult.orderId || orderId;
+        labelUrl = dlvResult.label_url || null;
 
       } else {
         // ─── Prayog Booking (existing flow) ───

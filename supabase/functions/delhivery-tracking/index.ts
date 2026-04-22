@@ -112,42 +112,39 @@ Deno.serve(async (req) => {
     // Sort newest first
     statuses.sort((a, b) => b.statusTimestamp - a.statusTimestamp);
 
-    // Origin = consignee (RVP physical pickup = end-customer = our sender)
-    // Destination = return address (RVP physical delivery = seller = our receiver)
+    // Forward order: Source = sender pickup location, Destination = consignee (receiver)
     const consignee = ship.Consignee || {};
-    const ret = ship.ReturnedDate ? {} : (ship.PickUpDate ? {} : {});
-    // Fields naming varies; safely fall back
     const trackingData = {
       orderInformation: {
         trackingId: trackId,
         cAwbNumber: ship.AWB || trackId,
         orderId: ship.ReferenceNo || trackId,
         sourceLocation: {
+          address: ship.PickedUpFrom || ship.OriginCenter || "",
+          city: ship.OriginCity || "",
+          landmark: "",
+          pincode: "",
+          state: "",
+        },
+        destinationLocation: {
           address: consignee.Address1 || consignee.Address || "",
           city: consignee.City || "",
           landmark: "",
           pincode: String(consignee.PinCode || ""),
           state: consignee.State || "",
         },
-        destinationLocation: {
-          address: ship.PickedUpFrom || "",
-          city: "",
-          landmark: "",
-          pincode: String(ship.OriginRecieveDate ? "" : ""),
-          state: "",
-        },
         senderDetails: {
-          sender_mobile: String(consignee.Telephone1 || consignee.Mobile || ""),
-          sender_name: consignee.Name || "",
+          sender_mobile: "",
+          sender_name: ship.PickedUpFrom || "",
         },
         receiverDetails: {
-          receiver_mobile: "",
-          receiver_name: "",
+          receiver_mobile: String(consignee.Telephone1 || consignee.Mobile || ""),
+          receiver_name: consignee.Name || "",
         },
         travelType: ship.PickUpMode || "surface",
-        serviceType: ship.ChargedWeight ? "standard" : "standard",
+        serviceType: "standard",
         bookingDate: ship.PickUpDate || ship.OrderDate || new Date().toISOString(),
-        type: "REVERSE",
+        type: "FORWARD",
       },
       statuses,
     };
