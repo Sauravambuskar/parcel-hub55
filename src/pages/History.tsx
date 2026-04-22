@@ -186,7 +186,7 @@ const History = () => {
 
       setOrders(merged);
 
-      const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null }> = {};
+      const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }> = {};
       localOrders.forEach((o: any) => {
         if (o._booking) {
           const key = o._booking.prayog_order_id || o._booking.id;
@@ -195,6 +195,7 @@ const History = () => {
             booking_source: o._booking.booking_source || 'prayog',
             status: o._booking.status || '',
             awb: o._booking.prayog_awb || null,
+            payment_status: o._booking.payment_status || null,
           };
         }
       });
@@ -203,13 +204,13 @@ const History = () => {
       if (missingIds.length > 0) {
         const { data: bookings } = await supabase
           .from('bookings')
-          .select('id, prayog_order_id, prayog_awb, booking_source, status')
+          .select('id, prayog_order_id, prayog_awb, booking_source, status, payment_status')
           .in('prayog_order_id', missingIds);
 
         if (bookings) {
           bookings.forEach((b: any) => {
             if (b.prayog_order_id) {
-              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null };
+              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null, payment_status: b.payment_status || null };
             }
           });
         }
