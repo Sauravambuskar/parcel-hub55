@@ -1,89 +1,134 @@
 
+## Fix order history actions for direct bookings
 
-## Remove Prayog Completely — Phone+Name Login & Direct-Partner-Only Serviceability
+Restore all three actions for newly placed direct-partner orders in History:
+- View details
+- Download/view shipping label
+- Cancel order
+- Keep track order working from the same data path
 
-Strip out all Prayog dependencies (OTP auth, aggregator, booking, tracking, label, orders fetch) and keep the app running on **Shadowfax + Delhivery direct integrations** with a clean architecture for adding more direct partners later.
+### Root causes found
+1. **Cancel from History breaks** because `get-user-orders` does not return the AWB inside `_booking`, so Delhivery cancellation is being called with `awb=undefined`.
+2. **Order Details says “order not found”** because `OrderDetails.tsx` still queries `bookings` directly from the browser. With the new phone+name login, there is no Supabase auth session, so RLS blocks that read.
+3. **Tracking/meta lookups are still partly client-side** for the same reason, so direct-order actions are reading the right row in History but not in Details/Tracking.
+4. **Label download is not partner-aware enough**: it only works if `label_url` was already saved on the row. For Delhivery, it should also fetch on demand via `delhivery-label` when missing/expired.
 
-### Part 1 — New Login (no OTP)
+### What to build
 
-**`src/pages/Login.tsx`** — replace OTP flow with single-screen phone + name form:
-1. User enters 10-digit phone + name → click "Continue".
-2. Generate same deterministic `user_id`: `btoa('+91' + phone).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)` — preserves existing accounts.
-3. Call `get-profile` with that ID:
-   - If profile exists with a different name → soft-confirm dialog: "An account exists as '<existing>'. Continue as '<existing>' or update name to '<new>'?"
-   - If profile exists with same name → instant login.
-   - If no profile → call `update-profile` to create one.
-4. Save to localStorage as `auth_session` (rename from `prayog_auth` but keep backward-compat read so existing logged-in users aren't kicked out):
-   ```ts
-   { phone: '+91xxx', user_id, customer_id, userName, authenticated_at }
-   ```
-   (No `id_token`, no `prayog_token`.)
-5. Navigate to `/home`.
+#### 1) Fix the History payload
+Update `supabase/functions/get-user-orders/index.ts` so each returned order includes complete booking action metadata:
+- `id`
+- `booking_source`
+- `status`
+- `payment_status`
+- `prayog_awb`
+- `tracking_id`
+- `prayog_order_id`
+- `label_url`
 
-### Part 2 — Replace `prayog_auth` reads everywhere
+This lets History pass the correct AWB for cancellation and use a stable local booking reference for details/labels.
 
-Touched files (rename key, drop token usage):
-- `Landing.tsx`, `Index.tsx`, `History.tsx`, `OrderDetails.tsx`, `Tracking.tsx`, `Settings.tsx`, `Booking.tsx`, `AddressStep.tsx`, `PaymentModal.tsx`, `admin/RealTimeTracking.tsx`, `useCancelOrder.ts`, etc.
-- Keep a small helper `src/lib/auth.ts` that reads either `auth_session` (new) or `prayog_auth` (legacy) for one transition.
+#### 2) Stop reading `bookings` directly from the browser
+Add a dedicated edge function for a **single booking lookup** scoped by the custom session (`x-prayog-auth`), for example:
+- input: `booking_id` or `order_id`
+- output: normalized booking row + partner/action metadata
 
-### Part 3 — Serviceability: direct-only, pluggable
+Then update:
+- `src/pages/OrderDetails.tsx`
+- `src/pages/Tracking.tsx`
 
-**`src/components/booking/BookingStep2.tsx`** — remove the Prayog `fetch()` call entirely. Keep `Promise.allSettled` over a registry of direct-partner edge functions:
-```ts
-const DIRECT_PARTNERS = [
-  { code: 'shadowfax', fn: 'shadowfax-serviceability' },
-  { code: 'delhivery', fn: 'delhivery-serviceability' },
-  // future: { code: 'dtdc', fn: 'dtdc-serviceability' }, ...
-];
+to use that edge function instead of `supabase.from('bookings')...`.
+
+This removes the RLS mismatch caused by the non-Supabase login system.
+
+#### 3) Use booking UUID for the Details route
+Update `src/pages/History.tsx` so the Details button navigates with the local booking id (already available as `_localBookingId`) instead of the external order id string.
+
+Then update `OrderDetails.tsx` to load by booking id through the new edge function. This makes the details page deterministic and avoids ambiguous lookups.
+
+#### 4) Fix cancel order end-to-end
+Update:
+- `supabase/functions/get-user-orders/index.ts`
+- `src/pages/History.tsx`
+- `src/pages/OrderDetails.tsx`
+
+so cancellation always receives:
+- `booking_id`
+- `booking_source`
+- `awb` = `prayog_awb || tracking_id`
+
+That will fix Delhivery cancellation immediately. Shadowfax will continue using `client_order_id`.
+
+#### 5) Add partner-aware label fetching
+Create a small edge function for **label retrieval** scoped to the current user, for example:
+- lookup booking by `booking_id`
+- detect `booking_source`
+- if `label_url` already exists, return it
+- if `booking_source === 'delhivery_direct'`, invoke `delhivery-label` with AWB, persist `label_url` back to `bookings`, return it
+- if `booking_source === 'shadowfax_direct'`, return stored `label_url` if present; if no direct label API is available in the current integration, return a clear “label unavailable for this courier” response instead of a dead button
+
+Then wire both:
+- History label button
+- Order Details label button
+
+to use this function instead of only trusting the cached `label_url`.
+
+#### 6) Keep tracking routed through partner APIs
+Update `src/pages/Tracking.tsx` to:
+- use route state first when coming from History/Details
+- otherwise fetch booking meta through the new booking-detail lookup edge function
+- invoke `shadowfax-tracking` or `delhivery-tracking` based on `booking_source`
+
+That keeps tracking aligned with the same row that History is showing.
+
+#### 7) Finish the last auth cleanup in these flows
+Replace remaining raw `localStorage.getItem('prayog_auth')` usage in booking/payment/history action paths with the shared auth helper so these flows no longer depend on the legacy key surviving forever.
+
+### Files likely touched
+- `src/pages/History.tsx`
+- `src/pages/OrderDetails.tsx`
+- `src/pages/Tracking.tsx`
+- `src/pages/Booking.tsx`
+- `src/components/PaymentModal.tsx`
+- `src/lib/auth.ts` or a shared request helper
+- `supabase/functions/get-user-orders/index.ts`
+- new edge function for single-booking lookup
+- new edge function for partner-aware label retrieval
+
+### Technical details
+```text
+History list
+  -> get-user-orders
+     -> returns display data + booking action meta
+
+Details page
+  -> get-user-booking-detail(booking_id)
+     -> normalized booking row
+     -> load cancel/track/label actions from same source
+
+Label button
+  -> get-booking-label(booking_id)
+     -> stored label_url OR fetch from partner API OR clear unsupported response
+
+Cancel button
+  -> useCancelOrder
+     -> Shadowfax: client_order_id
+     -> Delhivery: waybill from prayog_awb/tracking_id
 ```
-Each partner returns a normalized `partner` object; merge into `serviceabilityData.partners`. Drop the `DIRECT_PARTNER_CODES` filter (no longer needed since Prayog is gone). If zero partners are serviceable → "Service Unavailable" toast.
-
-Also drop the `check-serviceability` edge function (Prayog wrapper) — no longer used.
-
-### Part 4 — Booking, tracking, label, cancel — direct-only
-
-- **`Booking.tsx`** — currently routes by partner code: Shadowfax → `shadowfax-booking`, Delhivery → `delhivery-booking`, anything else → `prayog-create-booking`. Change the fallback to **error toast** ("This partner is no longer supported") since Prayog partners won't appear anymore. Default new bookings' `booking_source` to the actual direct partner code (no more `'prayog'`).
-- **`History.tsx`** — remove the Prayog `fetch(...orders)` call; rely solely on `get-user-orders` (Supabase `bookings` table). Drop `prayog` from the `Promise.allSettled`.
-- **`OrderDetails.tsx`** — remove the Prayog order GET. Build the page entirely from the `bookings` row + the appropriate direct tracking function (`shadowfax-tracking` / `delhivery-tracking`) based on `booking_source`. Label download already uses direct functions for SFX/Delhivery; remove the Prayog label fallback.
-- **`Tracking.tsx`** — remove Prayog tracking branch; route only to `shadowfax-tracking` / `delhivery-tracking`. If `booking_source` is unknown, show "Tracking unavailable for this order."
-- **`useCancelOrder.ts`** — drop `prayog-cancel-order` branch.
-- **`admin/RealTimeTracking.tsx`** — replace Prayog tracking call with `shadowfax-tracking` / `delhivery-tracking` (admin enters AWB + selects courier).
-
-### Part 5 — Edge functions to delete
-
-Delete (`supabase--delete_edge_functions`):
-- `prayog-send-otp`
-- `prayog-verify-otp`
-- `prayog-create-booking`
-- `prayog-cancel-order`
-- `check-serviceability`
-
-Also remove their entries from `supabase/config.toml`.
-
-### Part 6 — Database (no migration needed now)
-
-Existing columns `prayog_awb`, `prayog_order_id`, `prayog_commission`, `booking_source` remain — they hold historical data. New bookings will populate `prayog_awb` with the direct AWB and `booking_source` with `shadowfax_direct` / `delhivery_direct` (already the convention). A future cleanup migration can rename these, out of scope.
-
-### Part 7 — Config & memory cleanup
-
-- **`src/config/environment.ts`** — delete `PRAYOG_CONFIG` export, `TENANT_IDS`, `API_KEYS`, and `prayog` block from `EnvironmentConfig`. Keep environment toggle for Razorpay only.
-- Optionally request user delete unused secrets later: `PRAYOG_TENANT_ID`, `PRAYOG_API_KEY`, `PRAYOG_PROD_TENANT_ID`, `PRAYOG_PROD_API_KEY` (I'll list them in a note; user clears manually in dashboard).
-- Update memory: invalidate `mem://auth/prayog-otp-authentication`, `mem://technical/prayog-api-endpoints-updated-v2`, `mem://features/tracking-api-integration` (Prayog v2 → direct only). Add new memory: `mem://auth/phone-name-login` and `mem://logistics/direct-partners-only`.
-
-### Adding a new direct partner later (the pattern)
-
-1. Create `supabase/functions/<partner>-serviceability/index.ts` returning `{ is_serviceable, partner: { partner_code, partner_name, services: [...], capabilities, is_serviceable } }`.
-2. Add entry to `DIRECT_PARTNERS` array in `BookingStep2.tsx`.
-3. Create `<partner>-booking`, `<partner>-tracking`, `<partner>-cancel-order`, `<partner>-label` functions following the Shadowfax/Delhivery shape.
-4. Add a new `case` in the booking dispatcher and tracking dispatcher.
 
 ### Verification
-
-1. Fresh login: enter a brand-new phone + name → goes straight to `/home`, no OTP prompt.
-2. Existing user (already in `profiles`): enter same phone → sees soft-confirm if name differs, instant login otherwise; their old order history is visible.
-3. Booking flow shows only Shadowfax and Delhivery on serviceability.
-4. Place a Shadowfax test booking → AWB + label work via direct functions.
-5. Place a Delhivery test booking → end-to-end works via direct functions.
-6. History page loads from `bookings` table only (no Prayog 401s in console).
-7. Old logged-in user (legacy `prayog_auth` key) still loads correctly until they re-login.
-
+1. Place a new Delhivery booking.
+2. Open History:
+   - order appears
+   - Details opens successfully
+   - Cancel opens and succeeds
+   - Label downloads successfully
+   - Track opens the correct shipment
+3. Refresh History:
+   - label button still works from persisted `label_url`
+   - cancelled status is reflected
+4. Repeat with Shadowfax:
+   - Details works
+   - Cancel works
+   - Track works
+   - Label either works from stored URL or shows a clean unsupported state instead of failing
