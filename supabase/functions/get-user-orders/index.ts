@@ -105,13 +105,17 @@ Deno.serve(async (req) => {
         payment: {
           finalAmount: Number(b.courier_price || 0) + Number(b.gst || 0) + Number(b.packaging_amount || 0) + Number(b.insurance_amount || 0),
         },
-        // Booking metadata used by Cancel button (avoids a second roundtrip)
+        // Booking metadata used by Cancel/Label/Details buttons (avoids a second roundtrip)
         _booking: {
           id: b.id,
           booking_source: b.booking_source || 'prayog',
           status: b.status || 'CREATED',
-          prayog_order_id: b.prayog_order_id,
           payment_status: b.payment_status || null,
+          prayog_order_id: b.prayog_order_id || null,
+          prayog_awb: b.prayog_awb || null,
+          tracking_id: b.tracking_id || null,
+          label_url: b.label_url || null,
+          awb: b.prayog_awb || b.tracking_id || null,
         },
       };
     });

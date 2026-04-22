@@ -153,7 +153,7 @@ const History = () => {
             id: o._booking.id,
             booking_source: o._booking.booking_source || '',
             status: o._booking.status || '',
-            awb: o._booking.prayog_awb || null,
+            awb: o._booking.awb || o._booking.prayog_awb || o._booking.tracking_id || null,
             payment_status: o._booking.payment_status || null,
           };
         }
@@ -363,22 +363,56 @@ const History = () => {
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
-                  {showLabelButton && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20"
-                      onClick={() => window.open(labelUrl, '_blank')}
-                    >
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Download Label
-                    </Button>
-                  )}
+                  {(() => {
+                    const bm = bookingsMap[order.orderId];
+                    const bookingId = (order as any)._localBookingId || bm?.id;
+                    const canFetchLabel = bm?.booking_source === 'delhivery_direct' || !!labelUrl;
+                    if (!canFetchLabel || isShreeMaruti) return null;
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                        onClick={async () => {
+                          if (labelUrl) {
+                            window.open(labelUrl, '_blank');
+                            return;
+                          }
+                          try {
+                            const auth = getAuthSession();
+                            const { data, error } = await supabase.functions.invoke('get-booking-label', {
+                              body: { booking_id: bookingId },
+                              headers: { 'x-prayog-auth': JSON.stringify(auth) },
+                            });
+                            if (error) throw error;
+                            if (data?.success && data?.label_url) {
+                              window.open(data.label_url, '_blank');
+                              fetchOrders();
+                            } else {
+                              toast({
+                                title: 'Label Unavailable',
+                                description: data?.error || 'Label could not be retrieved.',
+                                variant: 'destructive',
+                              });
+                            }
+                          } catch (e: any) {
+                            toast({ title: 'Error', description: e.message || 'Failed to fetch label', variant: 'destructive' });
+                          }
+                        }}
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Download Label
+                      </Button>
+                    );
+                  })()}
                   <Button
                     variant="outline"
                     size="sm"
                     className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                    onClick={() => navigate(`/order/${order.orderId}`)}
+                    onClick={() => {
+                      const bookingId = (order as any)._localBookingId;
+                      navigate(`/order/${bookingId || order.orderId}`);
+                    }}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Details

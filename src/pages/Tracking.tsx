@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthSession } from "@/lib/auth";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
@@ -100,53 +101,51 @@ const Tracking = () => {
   const fetchTrackingData = async (awb: string) => {
     setLoading(true);
     setTrackingData(null);
-    
-    try {
-      // Lookup booking by AWB to determine source
-      const { data: booking } = await supabase
-        .from('bookings')
-        .select('id, booking_source, prayog_order_id, prayog_awb, status')
-        .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
-        .maybeSingle();
 
-      const bSource = (booking as any)?.booking_source || '';
+    try {
+      // Lookup booking via authenticated edge function (no client-side RLS issues)
+      const auth = getAuthSession();
+      let bSource = '';
+      let bookingRow: any = null;
+      if (auth) {
+        const { data: detail } = await supabase.functions.invoke('get-booking-detail', {
+          body: { order_id: awb },
+          headers: { 'x-prayog-auth': JSON.stringify(auth) },
+        });
+        bookingRow = detail?.order?._booking || null;
+        bSource = bookingRow?.booking_source || '';
+        if (bookingRow) {
+          setBookingMeta({
+            id: bookingRow.id,
+            booking_source: bSource,
+            status: bookingRow.status || '',
+            orderId: bookingRow.prayog_order_id || awb,
+            awb: bookingRow.awb || bookingRow.prayog_awb || bookingRow.tracking_id || null,
+          });
+        } else {
+          setBookingMeta(null);
+        }
+      }
+
       const isShadowfax = bSource === 'shadowfax_direct';
       const isDelhiveryDirect = bSource === 'delhivery_direct';
 
-      if (booking) {
-        setBookingMeta({
-          id: (booking as any).id,
-          booking_source: bSource,
-          status: (booking as any).status || '',
-          orderId: (booking as any).prayog_order_id || awb,
-          awb: (booking as any).prayog_awb || null,
-        });
-      } else {
-        setBookingMeta(null);
-      }
-
       if (isShadowfax) {
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
-          body: { order_id: (booking as any)?.prayog_order_id || awb },
+          body: { order_id: bookingRow?.prayog_order_id || awb },
           headers: { 'x-environment': CURRENT_ENV },
         });
 
-        if (sfxError || !sfxData) {
-          throw new Error('Failed to fetch Shadowfax tracking');
-        }
-
+        if (sfxError || !sfxData) throw new Error('Failed to fetch Shadowfax tracking');
         setTrackingData(sfxData);
       } else if (isDelhiveryDirect) {
-        const trackAwb = (booking as any)?.prayog_awb || awb;
+        const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
         const { data: dlvData, error: dlvError } = await supabase.functions.invoke('delhivery-tracking', {
           body: { waybill: trackAwb },
           headers: { 'x-environment': CURRENT_ENV },
         });
 
-        if (dlvError || !dlvData || dlvData.error) {
-          throw new Error('Failed to fetch Delhivery tracking');
-        }
-
+        if (dlvError || !dlvData || dlvData.error) throw new Error('Failed to fetch Delhivery tracking');
         setTrackingData(dlvData);
       } else {
         toast({
