@@ -30,9 +30,9 @@ interface SavedAddressPickerProps {
   type: 'sender' | 'receiver';
 }
 
-const getPrayogAuth = () => {
+const getAuthData = () => {
   try {
-    const auth = localStorage.getItem('prayog_auth');
+    const auth = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
     if (auth) return JSON.parse(auth);
   } catch {}
   return null;

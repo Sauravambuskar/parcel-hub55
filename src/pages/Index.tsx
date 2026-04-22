@@ -25,14 +25,13 @@ const Index = () => {
   }, []);
 
   const checkUser = async () => {
-    const prayogAuth = localStorage.getItem('prayog_auth');
-    if (prayogAuth) {
-      const authData = JSON.parse(prayogAuth);
-      setUser({
-        phone: authData.phone,
-        user_id: authData.user_id
-      });
-      fetchProfile(authData.user_id);
+    const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+    if (authRaw) {
+      try {
+        const authData = JSON.parse(authRaw);
+        setUser({ phone: authData.phone, user_id: authData.user_id });
+        fetchProfile(authData.user_id);
+      } catch {}
     }
   };
 
@@ -46,6 +45,7 @@ const Index = () => {
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('auth_session');
     localStorage.removeItem('prayog_auth');
     setUser(null);
     setProfile(null);
