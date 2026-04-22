@@ -751,23 +751,45 @@ const OrderDetails = () => {
           {/* Download Label */}
           {(() => {
             const labelDoc = shipment?.documents?.find(doc => doc.type === 'label');
-            const isSmileEcomm = order.carrierId === 'smile_ecomm' || order.carrierName?.toLowerCase().includes('smile');
-            
-            // If label exists in documents, show direct download
-            if (labelDoc?.url) {
-              return (
-                <Button 
-                  variant="default" 
-                  className="w-full" 
-                  onClick={() => window.open(labelDoc.url, '_blank')}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Download Shipping Label
-                </Button>
-              );
-            }
-            
-            return null;
+            const canFetchFresh = bookingMeta?.booking_source === 'delhivery_direct';
+            if (!labelDoc?.url && !canFetchFresh) return null;
+
+            const handleLabel = async () => {
+              if (labelDoc?.url) {
+                window.open(labelDoc.url, '_blank');
+                return;
+              }
+              setDownloadingLabel(true);
+              try {
+                const auth = getAuthSession();
+                const { data, error } = await supabase.functions.invoke('get-booking-label', {
+                  body: { booking_id: bookingMeta?.id },
+                  headers: { 'x-prayog-auth': JSON.stringify(auth), 'x-environment': CURRENT_ENV },
+                });
+                if (error) throw error;
+                if (data?.success && data?.label_url) {
+                  window.open(data.label_url, '_blank');
+                  fetchOrderDetails();
+                } else {
+                  toast({
+                    title: 'Label Unavailable',
+                    description: data?.error || 'Could not retrieve label.',
+                    variant: 'destructive',
+                  });
+                }
+              } catch (e: any) {
+                toast({ title: 'Error', description: e.message || 'Failed', variant: 'destructive' });
+              } finally {
+                setDownloadingLabel(false);
+              }
+            };
+
+            return (
+              <Button variant="default" className="w-full" onClick={handleLabel} disabled={downloadingLabel}>
+                <FileText className="h-4 w-4 mr-2" />
+                {downloadingLabel ? 'Fetching label...' : 'Download Shipping Label'}
+              </Button>
+            );
           })()}
 
           {/* Download Invoice */}
