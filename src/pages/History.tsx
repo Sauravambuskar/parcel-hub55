@@ -367,13 +367,18 @@ const History = () => {
               <Card key={order.orderId} className="p-4 bg-white/10 backdrop-blur-xl border-white/20">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-semibold text-lg text-white">
                         {order.shipments?.[0]?.awbNumber || order.orderId}
                       </h3>
                       <Badge className={getStatusColor(order.orderStatus)}>
                         {order.orderStatus || 'Unknown'}
                       </Badge>
+                      {bookingsMap[order.orderId]?.payment_status === 'cop_pending' && (
+                        <Badge className="bg-yellow-500/90 text-yellow-950 border-0 text-xs">
+                          💵 COP Pending
+                        </Badge>
+                      )}
                     </div>
                     {order.carrierName && (
                       <p className="text-sm text-white/70 flex items-center gap-1">
