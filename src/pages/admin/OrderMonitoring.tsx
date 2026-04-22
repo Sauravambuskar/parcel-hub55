@@ -116,6 +116,7 @@ const OrderMonitoring = () => {
     if (selectedFilter === "pending") return matchesSearch && booking.status === "pending";
     if (selectedFilter === "in_transit") return matchesSearch && (booking.status === "in_transit" || booking.status === "in transit");
     if (selectedFilter === "delivered") return matchesSearch && booking.status === "delivered";
+    if (selectedFilter === "cop_pending") return matchesSearch && booking.payment_status === "cop_pending";
     return matchesSearch;
   });
 
