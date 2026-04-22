@@ -74,26 +74,9 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
           throw new Error(data?.error || error?.message || "Failed to cancel order");
         }
       } else {
-        // Prayog cancellation
-        const prayogAuth = localStorage.getItem("prayog_auth");
-        const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-
-        if (!authData?.id_token) {
-          throw new Error("Authentication required");
-        }
-
-        const { data, error } = await supabase.functions.invoke("prayog-cancel-order", {
-          body: {
-            order_id: orderId,
-            auth_token: authData.id_token,
-            booking_id: bookingId,
-          },
-          headers: { "x-environment": CURRENT_ENV },
-        });
-
-        if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
-        }
+        throw new Error(
+          "This order was placed with a partner that is no longer supported. Please contact support."
+        );
       }
 
       toast({

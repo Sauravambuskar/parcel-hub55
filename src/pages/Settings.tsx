@@ -65,13 +65,13 @@ const Settings = () => {
   }, []);
 
   const fetchProfile = async () => {
-    const prayogAuth = localStorage.getItem('prayog_auth');
-    if (!prayogAuth) {
+    const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+    if (!authRaw) {
       navigate('/login');
       return;
     }
 
-    const authData = JSON.parse(prayogAuth);
+    const authData = JSON.parse(authRaw);
     const { data } = await supabase.functions.invoke('get-profile', {
       body: { user_id: authData.user_id }
     });
@@ -95,10 +95,10 @@ const Settings = () => {
   const updateProfile = async (updates: Record<string, any>) => {
     setSaving(true);
     try {
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      if (!prayogAuth) return;
+      const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+      if (!authRaw) return;
 
-      const authData = JSON.parse(prayogAuth);
+      const authData = JSON.parse(authRaw);
       await supabase.functions.invoke('update-profile', {
         body: { user_id: authData.user_id, ...updates }
       });
@@ -147,6 +147,7 @@ const Settings = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('auth_session');
     localStorage.removeItem('prayog_auth');
     toast({
       title: t('settings.logout'),

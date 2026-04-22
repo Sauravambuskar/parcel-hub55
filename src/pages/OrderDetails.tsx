@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG } from "@/config/environment";
+import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
@@ -125,7 +125,7 @@ const OrderDetails = () => {
       if (!error && data) {
         setBookingMeta({
           id: data.id,
-          booking_source: data.booking_source || 'prayog',
+          booking_source: data.booking_source || '',
           status: data.status || '',
           awb: (data as any).prayog_awb || null,
         });
@@ -161,38 +161,66 @@ const OrderDetails = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      const prayogAuth = localStorage.getItem('prayog_auth');
-      
-      if (!prayogAuth) {
+      // Build the order page entirely from the local `bookings` row.
+      const { data: booking, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
+        .maybeSingle();
+
+      if (error || !booking) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to view order details",
+          title: "Order not found",
+          description: "We couldn't find this order. It may belong to a different account.",
           variant: "destructive",
         });
-        navigate('/login');
         return;
       }
 
-      const authData = JSON.parse(prayogAuth);
-
-      const response = await fetch(
-        `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders/${orderId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authData.id_token}`,
-            "tenantId": PRAYOG_CONFIG.TENANT_ID,
+      const b: any = booking;
+      const normalized: OrderDetails = {
+        orderId: b.prayog_order_id || b.id,
+        orderDate: b.created_at,
+        orderStatus: b.status || 'CREATED',
+        deliveryPromise: b.delivery_time || 'Standard',
+        carrierName: b.courier_name,
+        carrierId: b.booking_source || '',
+        addresses: [
+          { type: 'PICKUP', name: b.sender_name, phone: b.sender_phone, street: b.sender_address, city: b.sender_city, state: b.sender_state, zip: b.sender_pincode, country: 'India' },
+          { type: 'DELIVERY', name: b.receiver_name, phone: b.receiver_phone, street: b.receiver_address, city: b.receiver_city, state: b.receiver_state, zip: b.receiver_pincode, country: 'India' },
+        ],
+        shipments: [{
+          awbNumber: b.prayog_awb || b.tracking_id || '',
+          shipmentStatus: b.status || 'CREATED',
+          dimensions: (b.length || b.width || b.height) ? {
+            length: Number(b.length) || 0,
+            width: Number(b.width) || 0,
+            height: Number(b.height) || 0,
+          } : undefined,
+          physicalWeight: b.package_weight ? Number(b.package_weight) : undefined,
+          items: [{ name: b.goods_type, description: b.goods_type }],
+          documents: b.label_url ? [{ type: 'label', url: b.label_url }] : [],
+        }],
+        payment: {
+          finalAmount: Number(b.courier_price || 0) + Number(b.gst || 0),
+          type: b.payment_status === 'cop_pending' ? 'COP' : 'PREPAID',
+          breakdown: {
+            otherCharges: [
+              { name: 'Base Fare', chargedAmount: Number(b.base_fare || 0) },
+              { name: 'GST (18%)', chargedAmount: Number(b.gst || 0) },
+            ],
           },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch order details: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setOrder(result?.data || result);
+        },
+        metadata: {
+          razorpay_payment_id: b.payment_id || undefined,
+          source: b.booking_source || undefined,
+          baseFare: Number(b.base_fare || 0),
+          gstAmount: Number(b.gst || 0),
+          totalAmount: Number(b.courier_price || 0),
+          platformFee: Number(b.platform_fee || 0),
+        },
+      };
+      setOrder(normalized);
     } catch (error: any) {
       console.error("Error fetching order details:", error);
       toast({

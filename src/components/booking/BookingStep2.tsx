@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { supabase } from "@/integrations/supabase/client";
-import { PRAYOG_CONFIG } from "@/config/environment";
+import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
 
 const goodsTypes = [
@@ -46,6 +46,15 @@ interface BookingStep2Props {
   onBack: () => void;
 }
 
+// Registry of direct courier partners. Add a new entry here (and a matching
+// edge function) to enable a new partner. Each function should respond with
+// `{ is_serviceable, partner: { partner_code, partner_name, services, ... } }`.
+const DIRECT_PARTNERS: { code: string; fn: string }[] = [
+  { code: 'shadowfax', fn: 'shadowfax-serviceability' },
+  { code: 'delhivery', fn: 'delhivery-serviceability' },
+  // Future: { code: 'dtdc', fn: 'dtdc-serviceability' },
+];
+
 const BookingStep2 = ({ 
   pickupPincode,
   deliveryPincode,
@@ -74,16 +83,11 @@ const BookingStep2 = ({
   const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg');
   const [customGoodsType, setCustomGoodsType] = useState('');
   
-  // Refs to track previous pincode values for debouncing
   const pickupDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const deliveryDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced city lookup for pickup pincode
   useEffect(() => {
-    if (pickupDebounceRef.current) {
-      clearTimeout(pickupDebounceRef.current);
-    }
-
+    if (pickupDebounceRef.current) clearTimeout(pickupDebounceRef.current);
     if (pickupPincode.length === 6) {
       setIsLoadingPickupCity(true);
       pickupDebounceRef.current = setTimeout(async () => {
@@ -91,11 +95,9 @@ const BookingStep2 = ({
           const { data, error } = await supabase.functions.invoke('google-geocode-pincode', {
             body: { pincodes: [pickupPincode] }
           });
-
           if (!error && data?.results?.[0]) {
             const result = data.results[0];
             if (onLocationData && result.city) {
-              // Only update pickup city, preserve delivery city
               onLocationData(result.city, result.state || '', deliveryCity || '', '');
             }
           }
@@ -106,20 +108,13 @@ const BookingStep2 = ({
         }
       }, 500);
     }
-
     return () => {
-      if (pickupDebounceRef.current) {
-        clearTimeout(pickupDebounceRef.current);
-      }
+      if (pickupDebounceRef.current) clearTimeout(pickupDebounceRef.current);
     };
   }, [pickupPincode]);
 
-  // Debounced city lookup for delivery pincode
   useEffect(() => {
-    if (deliveryDebounceRef.current) {
-      clearTimeout(deliveryDebounceRef.current);
-    }
-
+    if (deliveryDebounceRef.current) clearTimeout(deliveryDebounceRef.current);
     if (deliveryPincode.length === 6) {
       setIsLoadingDeliveryCity(true);
       deliveryDebounceRef.current = setTimeout(async () => {
@@ -127,11 +122,9 @@ const BookingStep2 = ({
           const { data, error } = await supabase.functions.invoke('google-geocode-pincode', {
             body: { pincodes: [deliveryPincode] }
           });
-
           if (!error && data?.results?.[0]) {
             const result = data.results[0];
             if (onLocationData && result.city) {
-              // Only update delivery city, preserve pickup city
               onLocationData(pickupCity || '', '', result.city, result.state || '');
             }
           }
@@ -142,11 +135,8 @@ const BookingStep2 = ({
         }
       }, 500);
     }
-
     return () => {
-      if (deliveryDebounceRef.current) {
-        clearTimeout(deliveryDebounceRef.current);
-      }
+      if (deliveryDebounceRef.current) clearTimeout(deliveryDebounceRef.current);
     };
   }, [deliveryPincode]);
   
@@ -168,40 +158,16 @@ const BookingStep2 = ({
     setIsCheckingServiceability(true);
 
     try {
-      let pickupCity = '';
+      let pickupCityLocal = '';
       let pickupState = '';
-      let deliveryCity = '';
+      let deliveryCityLocal = '';
       let deliveryState = '';
-
 
       const weightKg = weightUnit === 'g'
         ? (parseFloat(packageWeight) || 1000) / 1000
         : parseFloat(packageWeight) || 1.0;
 
-      const prayogPayload = {
-        source_location: {
-          postal_code: pickupPincode,
-          country_code: 'IN'
-        },
-        destination_location: {
-          postal_code: deliveryPincode,
-          country_code: 'IN'
-        },
-        packages: [{
-          weight: {
-            value: weightKg,
-            unit: 'kg'
-          },
-          dimensions: {
-            length: parseFloat(dimensions.length) || 10.0,
-            width: parseFloat(dimensions.width) || 10.0,
-            height: parseFloat(dimensions.height) || 10.0,
-            unit: 'cm'
-          }
-        }]
-      };
-
-      const shadowfaxPayload = {
+      const partnerPayload = {
         pickup_pincode: pickupPincode,
         delivery_pincode: deliveryPincode,
         weight_kg: weightKg,
@@ -210,116 +176,43 @@ const BookingStep2 = ({
         height_cm: parseFloat(dimensions.height) || 10,
       };
 
-      // Call Prayog API directly
-      const prayogFetch = fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/serviceability/v3/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': PRAYOG_CONFIG.API_KEY,
-        },
-        body: JSON.stringify(prayogPayload),
-      }).then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Prayog serviceability failed');
-        return data;
+      // Run serviceability checks for all direct partners in parallel.
+      const results = await Promise.allSettled(
+        DIRECT_PARTNERS.map((p) =>
+          supabase.functions.invoke(p.fn, {
+            body: partnerPayload,
+            headers: { 'x-environment': CURRENT_ENV },
+          }).then((res) => ({ ...res, _partnerCode: p.code }))
+        )
+      );
+
+      const partners: any[] = [];
+      results.forEach((result, idx) => {
+        const partnerCode = DIRECT_PARTNERS[idx].code;
+        if (result.status === 'fulfilled') {
+          const { data, error } = result.value as any;
+          if (!error && data?.is_serviceable && data?.partner) {
+            partners.push(data.partner);
+            console.log(`${partnerCode} is serviceable:`, data.partner);
+          } else if (error || data?.error) {
+            console.warn(`${partnerCode} serviceability failed (non-blocking):`, error || data);
+          }
+        } else {
+          console.warn(`${partnerCode} serviceability rejected (non-blocking):`, result.reason);
+        }
       });
 
-      // Phase 2: Delhivery Direct fully integrated (booking, tracking, cancel).
-      const DELHIVERY_DIRECT_ENABLED = true;
-
-      const [prayogResult, shadowfaxResult, delhiveryResult] = await Promise.allSettled([
-        prayogFetch,
-        supabase.functions.invoke('shadowfax-serviceability', {
-          body: shadowfaxPayload,
-        }),
-        supabase.functions.invoke('delhivery-serviceability', {
-          body: shadowfaxPayload,
-        }),
-      ]);
-
-      let prayogErrorMessage = '';
-      const prayogData = prayogResult.status === 'fulfilled' ? prayogResult.value : null;
-      const prayogError = prayogResult.status === 'rejected' ? prayogResult.reason : null;
-
-      if (prayogError) {
-        prayogErrorMessage = prayogError?.message || 'Failed to check Prayog serviceability.';
-        console.warn('Prayog serviceability failed:', prayogError);
-      } else if (prayogData) {
-        console.log('Prayog serviceability response:', prayogData);
-      }
-
-      let shadowfaxPartner = null;
-      if (shadowfaxResult.status === 'fulfilled') {
-        const { data: sfxData, error: sfxError } = shadowfaxResult.value;
-        if (!sfxError && sfxData?.is_serviceable && sfxData?.partner) {
-          shadowfaxPartner = sfxData.partner;
-          console.log('Shadowfax is serviceable:', shadowfaxPartner);
-        } else if (sfxError || sfxData?.error) {
-          console.warn('Shadowfax serviceability check failed (non-blocking):', sfxError || sfxData);
-        }
-      } else {
-        console.warn('Shadowfax serviceability check failed (non-blocking):', shadowfaxResult.reason);
-      }
-
-      let delhiveryPartner = null;
-      if (delhiveryResult.status === 'fulfilled') {
-        const { data: dlvData, error: dlvError } = delhiveryResult.value;
-        if (!dlvError && dlvData?.is_serviceable && dlvData?.partner) {
-          delhiveryPartner = dlvData.partner;
-          console.log('Delhivery is serviceable (Phase 1, hidden):', delhiveryPartner);
-        } else if (dlvError || dlvData?.error) {
-          console.warn('Delhivery serviceability check failed (non-blocking):', dlvError || dlvData);
-        }
-      } else {
-        console.warn('Delhivery serviceability check failed (non-blocking):', delhiveryResult.reason);
-      }
-
-      // Filter out partners that we integrate directly (Shadowfax, Delhivery)
-      // to avoid duplicate listings from Prayog's aggregated response.
-      const DIRECT_PARTNER_CODES = ['shadowfax', 'sfx', 'delhivery', 'dlv'];
-      const isDirectPartner = (p: any) => {
-        const code = String(p?.partner_code || '').toLowerCase();
-        const name = String(p?.partner_name || '').toLowerCase();
-        return DIRECT_PARTNER_CODES.some((c) => code.includes(c) || name.includes(c));
+      const serviceabilityData = {
+        success: partners.length > 0,
+        partners,
+        metadata: { serviceable_count: partners.length },
       };
 
-      const prayogPartnersFiltered = (prayogData?.partners || []).filter((p: any) => !isDirectPartner(p));
-      const removedCount = (prayogData?.partners?.length || 0) - prayogPartnersFiltered.length;
-
-      const serviceabilityData = prayogData && typeof prayogData === 'object'
-        ? {
-            ...prayogData,
-            partners: prayogPartnersFiltered,
-            metadata: {
-              ...(prayogData.metadata || {}),
-              serviceable_count: Math.max(0, (prayogData.metadata?.serviceable_count || 0) - removedCount),
-            },
-          }
-        : {
-            success: false,
-            partners: [],
-            metadata: { serviceable_count: 0 },
-          };
-
-      const prayogServiceable = serviceabilityData.success === true && (serviceabilityData.metadata?.serviceable_count || 0) > 0;
-
-      if (shadowfaxPartner) {
-        serviceabilityData.partners.push(shadowfaxPartner);
-        serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
-        serviceabilityData.success = true;
-      }
-
-      if (DELHIVERY_DIRECT_ENABLED && delhiveryPartner) {
-        serviceabilityData.partners.push(delhiveryPartner);
-        serviceabilityData.metadata.serviceable_count = (serviceabilityData.metadata.serviceable_count || 0) + 1;
-        serviceabilityData.success = true;
-      }
-
-      if (!prayogServiceable && !shadowfaxPartner) {
+      if (partners.length === 0) {
         setIsServiceable(false);
         toast({
           title: "Service Unavailable",
-          description: prayogErrorMessage || "Delivery is not available for this route. Please try different pincodes.",
+          description: "No courier partner serves this route right now. Please try different pincodes.",
           variant: "destructive"
         });
         return;
@@ -334,17 +227,14 @@ const BookingStep2 = ({
         if (!geocodeError && geocodeData?.results) {
           const pickupResult = geocodeData.results.find((r: any) => r.pincode === pickupPincode);
           const deliveryResult = geocodeData.results.find((r: any) => r.pincode === deliveryPincode);
-          
           if (pickupResult) {
-            pickupCity = pickupResult.city || '';
+            pickupCityLocal = pickupResult.city || '';
             pickupState = pickupResult.state || '';
           }
           if (deliveryResult) {
-            deliveryCity = deliveryResult.city || '';
+            deliveryCityLocal = deliveryResult.city || '';
             deliveryState = deliveryResult.state || '';
           }
-          
-          console.log('Geocode results:', { pickupCity, pickupState, deliveryCity, deliveryState });
         } else {
           console.warn('Geocoding failed:', geocodeError);
         }
@@ -359,7 +249,7 @@ const BookingStep2 = ({
       }
       
       if (onLocationData) {
-        onLocationData(pickupCity, pickupState, deliveryCity, deliveryState);
+        onLocationData(pickupCityLocal, pickupState, deliveryCityLocal, deliveryState);
       }
       
       setIsServiceable(true);
@@ -391,7 +281,7 @@ const BookingStep2 = ({
       if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
         const service = serviceablePartner.services[0];
         const apiPrice = Math.round(service.rate?.price?.amount || 0);
-        const platformFee = 50; // Platform fee added to base price
+        const platformFee = 50;
         const basePrice = apiPrice + platformFee;
         const convenienceFee = 0;
         const totalPrice = basePrice;
@@ -409,8 +299,6 @@ const BookingStep2 = ({
         if (onPricingCalculated) {
           onPricingCalculated(pricing);
         }
-
-        console.log('Extracted pricing from Prayog API:', pricing);
       }
     } catch (error) {
       console.error('Error extracting pricing:', error);
@@ -487,7 +375,6 @@ const BookingStep2 = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Type of Good - Icon Selector */}
           <div className="space-y-3">
             <Label>Type of Good *</Label>
             <div className="grid grid-cols-3 gap-2">
@@ -575,36 +462,15 @@ const BookingStep2 = ({
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="length" className="text-xs text-muted-foreground">Length</Label>
-                  <Input
-                    id="length"
-                    type="number"
-                    value={dimensions.length}
-                    onChange={(e) => onDimensionChange('length', e.target.value)}
-                    placeholder="L"
-                    min="1"
-                  />
+                  <Input id="length" type="number" value={dimensions.length} onChange={(e) => onDimensionChange('length', e.target.value)} placeholder="L" min="1" />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="width" className="text-xs text-muted-foreground">Breadth</Label>
-                  <Input
-                    id="width"
-                    type="number"
-                    value={dimensions.width}
-                    onChange={(e) => onDimensionChange('width', e.target.value)}
-                    placeholder="B"
-                    min="1"
-                  />
+                  <Input id="width" type="number" value={dimensions.width} onChange={(e) => onDimensionChange('width', e.target.value)} placeholder="B" min="1" />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="height" className="text-xs text-muted-foreground">Height</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={dimensions.height}
-                    onChange={(e) => onDimensionChange('height', e.target.value)}
-                    placeholder="H"
-                    min="1"
-                  />
+                  <Input id="height" type="number" value={dimensions.height} onChange={(e) => onDimensionChange('height', e.target.value)} placeholder="H" min="1" />
                 </div>
               </div>
             </div>

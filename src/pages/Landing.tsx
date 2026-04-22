@@ -9,9 +9,8 @@ const Landing = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect authenticated users to home
-    const prayogAuth = localStorage.getItem('prayog_auth');
-    if (prayogAuth) {
+    const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+    if (authRaw) {
       navigate("/home");
     }
   }, [navigate]);

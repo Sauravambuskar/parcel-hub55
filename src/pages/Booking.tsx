@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
+import { CURRENT_ENV } from "@/config/environment";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays, formatTatRange } from "@/lib/tat-utils";
@@ -93,15 +93,16 @@ const Booking = () => {
   });
   const totalSteps = 6;
   useEffect(() => {
-    // Check for Prayog auth first
-    const prayogAuth = localStorage.getItem("prayog_auth");
-    if (prayogAuth) {
-      const authData = JSON.parse(prayogAuth);
-      if (authData.user_id) {
-        setUserId(authData.user_id);
-      }
+    // Use unified auth session (with legacy prayog_auth fallback).
+    const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+    if (authRaw) {
+      try {
+        const authData = JSON.parse(authRaw);
+        if (authData.user_id) {
+          setUserId(authData.user_id);
+        }
+      } catch {}
     } else {
-      // Generate a guest user ID for non-authenticated users
       let guestId = localStorage.getItem("guest_user_id");
       if (!guestId) {
         guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -778,106 +779,14 @@ const Booking = () => {
         labelUrl = dlvResult.label_url || null;
 
       } else {
-        // ─── Prayog Booking (existing flow) ───
-        const prayogAuth = localStorage.getItem("prayog_auth");
-        const authData = prayogAuth ? JSON.parse(prayogAuth) : null;
-        const idToken = authData?.id_token || "";
-
-        const prayogResponse = await fetch(`${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            tenantId: PRAYOG_CONFIG.TENANT_ID,
-            authorization: `Bearer ${idToken}`
-          },
-          body: JSON.stringify(prayogPayload)
-        });
-        const prayogResult = await prayogResponse.json();
-        if (!prayogResponse.ok) {
-          // Auto-refund if payment was already collected
-          if (paymentDetails?.razorpay_payment_id) {
-            console.log('[Booking] Prayog order failed after payment, initiating auto-refund for:', paymentDetails.razorpay_payment_id);
-            try {
-              const { data: refundData, error: refundError } = await supabase.functions.invoke('razorpay-refund', {
-                body: {
-                  payment_id: paymentDetails.razorpay_payment_id,
-                  notes: {
-                    reason: 'auto_refund_booking_failed',
-                    prayog_error: String(prayogResult?.message || prayogResponse.status).slice(0, 200),
-                  },
-                },
-                headers: { 'x-environment': CURRENT_ENV },
-              });
-              const prayogAuthRawRefund = localStorage.getItem('prayog_auth');
-              const refundAuthHeaders = prayogAuthRawRefund ? { 'x-prayog-auth': prayogAuthRawRefund } : {};
-              if (refundError) {
-                console.error('[Booking] Auto-refund failed:', refundError);
-                await supabase.functions.invoke('save-booking', {
-                  headers: refundAuthHeaders,
-                  body: {
-                    user_id: userId,
-                    sender_name: senderData.name, sender_phone: senderData.phone,
-                    sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
-                    sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
-                    receiver_name: receiverData.name, receiver_phone: receiverData.phone,
-                    receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
-                    receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
-                    goods_type: goodsType || "Package",
-                    package_weight: String(physicalWeight),
-                    urgency: urgency || "standard",
-                    courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
-                    courier_price: totalAmount,
-                    delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                    status: "FAILED", payment_id: paymentDetails.razorpay_payment_id, payment_status: "refund_failed",
-                    base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
-                  },
-                });
-                throw new Error(`Booking failed and auto-refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
-              } else {
-                console.log('[Booking] Auto-refund processed:', refundData);
-                await supabase.functions.invoke('save-booking', {
-                  headers: refundAuthHeaders,
-                  body: {
-                    user_id: userId,
-                    sender_name: senderData.name, sender_phone: senderData.phone,
-                    sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
-                    sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
-                    receiver_name: receiverData.name, receiver_phone: receiverData.phone,
-                    receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
-                    receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
-                    goods_type: goodsType || "Package",
-                    package_weight: String(physicalWeight),
-                    urgency: urgency || "standard",
-                    courier_name: selectedService?.partner_code || selectedCourierData?.name || "",
-                    courier_price: totalAmount,
-                    delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                    status: "FAILED", payment_id: paymentDetails.razorpay_payment_id, payment_status: "refunded",
-                    base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
-                  },
-                });
-                throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData?.refund_id || 'processing'}`);
-              }
-            } catch (refundErr: any) {
-              if (refundErr.message.includes('refunded') || refundErr.message.includes('refund')) {
-                throw refundErr;
-              }
-              console.error('[Booking] Refund process error:', refundErr);
-              throw new Error(`Booking failed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support for refund.`);
-            }
-          }
-          throw new Error(`Prayog API error: ${prayogResponse.status} - ${JSON.stringify(prayogResult)}`);
-        }
-        trackingId = prayogResult.shipments?.[0]?.awbNumber || prayogResult.orderId || orderId;
-        awbNumber = prayogResult.shipments?.[0]?.awbNumber || null;
-        prayogOrderId = prayogResult.orderId || orderId;
-
-        // Extract shipping label URL from documents array (type: "label")
-        const labelDocument = prayogResult.shipments?.[0]?.documents?.find((doc: { type: string; url?: string; }) => doc.type === "label");
-        labelUrl = labelDocument?.url || null;
+        // Unsupported partner — Prayog and other aggregators have been removed.
+        throw new Error(
+          "This courier partner is no longer supported. Please pick a different partner."
+        );
       }
 
       // Save booking to Supabase for admin dashboard and order history
-      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : isDelhiveryDirect ? 'delhivery_direct' : 'prayog';
+      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : isDelhiveryDirect ? 'delhivery_direct' : 'unknown';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
