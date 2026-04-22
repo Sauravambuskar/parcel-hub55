@@ -910,7 +910,7 @@ const Booking = () => {
         label_url: labelUrl,
         status: "CREATED",
         payment_id: paymentDetails?.razorpay_payment_id || null,
-        payment_status: "paid",
+        payment_status: isCop ? "cop_pending" : "paid",
         base_fare: baseFare,
         platform_fee: platformFee,
         gst: gstAmount,
