@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG, CURRENT_ENV } from "@/config/environment";
+import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
@@ -109,7 +109,7 @@ const Tracking = () => {
         .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
         .maybeSingle();
 
-      const bSource = (booking as any)?.booking_source || 'prayog';
+      const bSource = (booking as any)?.booking_source || '';
       const isShadowfax = bSource === 'shadowfax_direct';
       const isDelhiveryDirect = bSource === 'delhivery_direct';
 
@@ -149,39 +149,12 @@ const Tracking = () => {
 
         setTrackingData(dlvData);
       } else {
-        // Use existing Prayog tracking
-        const prayogAuth = localStorage.getItem('prayog_auth');
-        
-        if (!prayogAuth) {
-          toast({
-            title: "Authentication required",
-            description: "Please sign in to track your order",
-            variant: "destructive",
-          });
-          navigate('/login');
-          return;
-        }
-
-        const authData = JSON.parse(prayogAuth);
-
-        const response = await fetch(
-          `${PRAYOG_CONFIG.API_BASE_URL}/gateway/tracking/v2/${awb}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${authData.id_token}`,
-              "tenantId": PRAYOG_CONFIG.TENANT_ID,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch tracking: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setTrackingData(result);
+        toast({
+          title: "Tracking Unavailable",
+          description: "Tracking is not available for this order. Please contact support.",
+          variant: "destructive",
+        });
+        return;
       }
     } catch (error: any) {
       console.error("Error fetching tracking:", error);

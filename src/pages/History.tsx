@@ -6,8 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy, Ban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { PRAYOG_CONFIG } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthSession } from "@/lib/auth";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
@@ -118,9 +118,9 @@ const History = () => {
 
   const fetchOrders = async () => {
     try {
-      const prayogAuth = localStorage.getItem('prayog_auth');
+      const auth = getAuthSession();
 
-      if (!prayogAuth) {
+      if (!auth) {
         toast({
           title: "Authentication required",
           description: "Please sign in to view your orders",
@@ -130,61 +130,20 @@ const History = () => {
         return;
       }
 
-      const authData = JSON.parse(prayogAuth);
+      const { data, error } = await supabase.functions.invoke('get-user-orders', {
+        headers: { 'x-prayog-auth': JSON.stringify(auth) },
+      });
 
-      const [prayogResult, localResult] = await Promise.allSettled([
-        fetch(
-          `${PRAYOG_CONFIG.API_BASE_URL}/gateway/booking-service/orders?filterByCurrentUser=true`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${authData.id_token}`,
-              "tenantId": PRAYOG_CONFIG.TENANT_ID,
-            },
-          }
-        ).then(async (r) => {
-          if (!r.ok) throw new Error(`Prayog ${r.status}`);
-          return r.json();
-        }),
-        supabase.functions.invoke('get-user-orders', {
-          headers: { 'x-prayog-auth': JSON.stringify(authData) },
-        }),
-      ]);
+      if (error) throw error;
 
-      const prayogOrders: PrayogOrder[] = [];
-      const localOrders: any[] = [];
-      const failures: string[] = [];
-
-      if (prayogResult.status === 'fulfilled') {
-        const result = prayogResult.value;
-        const list = Array.isArray(result) ? result : (result?.orders || result?.data || []);
-        prayogOrders.push(...list);
-      } else {
-        console.error('Prayog orders fetch failed:', prayogResult.reason);
-        failures.push('Prayog');
-      }
-
-      if (localResult.status === 'fulfilled' && !localResult.value.error) {
-        localOrders.push(...((localResult.value.data as any)?.orders || []));
-      } else {
-        console.error('Local orders fetch failed:', localResult.status === 'rejected' ? localResult.reason : localResult.value.error);
-        failures.push('local');
-      }
-
-      const prayogIds = new Set(prayogOrders.map((o) => o.orderId).filter(Boolean));
-      const merged: PrayogOrder[] = [
-        ...prayogOrders,
-        ...localOrders.filter((o) => !prayogIds.has(o.orderId)),
-      ];
-
-      merged.sort((a, b) => {
+      const localOrders = (data as any)?.orders || [];
+      localOrders.sort((a: any, b: any) => {
         const da = new Date(a.orderDate || 0).getTime();
         const db = new Date(b.orderDate || 0).getTime();
         return db - da;
       });
 
-      setOrders(merged);
+      setOrders(localOrders);
 
       const map: Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }> = {};
       localOrders.forEach((o: any) => {
@@ -192,46 +151,15 @@ const History = () => {
           const key = o._booking.prayog_order_id || o._booking.id;
           map[key] = {
             id: o._booking.id,
-            booking_source: o._booking.booking_source || 'prayog',
+            booking_source: o._booking.booking_source || '',
             status: o._booking.status || '',
             awb: o._booking.prayog_awb || null,
             payment_status: o._booking.payment_status || null,
           };
         }
       });
-
-      const missingIds = prayogOrders.map((o) => o.orderId).filter((id) => id && !map[id]);
-      if (missingIds.length > 0) {
-        const { data: bookings } = await supabase
-          .from('bookings')
-          .select('id, prayog_order_id, prayog_awb, booking_source, status, payment_status')
-          .in('prayog_order_id', missingIds);
-
-        if (bookings) {
-          bookings.forEach((b: any) => {
-            if (b.prayog_order_id) {
-              map[b.prayog_order_id] = { id: b.id, booking_source: b.booking_source || 'prayog', status: b.status || '', awb: b.prayog_awb || null, payment_status: b.payment_status || null };
-            }
-          });
-        }
-      }
       setBookingsMap(map);
-
-      if (failures.length === 1) {
-        setPartialFailure(
-          failures[0] === 'Prayog'
-            ? "Couldn't reach Prayog right now — showing only direct bookings."
-            : "Couldn't load direct bookings right now — showing Prayog orders only."
-        );
-      } else if (failures.length === 2) {
-        toast({
-          title: "Error",
-          description: "Failed to load orders from both sources",
-          variant: "destructive",
-        });
-      } else {
-        setPartialFailure(null);
-      }
+      setPartialFailure(null);
     } catch (error: any) {
       console.error("Error fetching orders:", error);
       toast({
