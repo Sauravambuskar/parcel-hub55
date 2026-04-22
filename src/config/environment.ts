@@ -25,14 +25,9 @@ export const setEnvironment = (env: Environment): void => {
 export const CURRENT_ENV: Environment = getCurrentEnv();
 
 interface EnvironmentConfig {
-  prayog: {
-    apiBaseUrl: string;
-    serviceabilityBaseUrl?: string; // Optional - only used in production
-  };
   razorpay: {
-    // Keys are stored in Supabase secrets with environment prefix
-    keyIdSecret: string; // Secret name in Supabase
-    keySecretName: string; // Secret name in Supabase
+    keyIdSecret: string;
+    keySecretName: string;
   };
   supabase: {
     url: string;
@@ -42,9 +37,6 @@ interface EnvironmentConfig {
 
 const configs: Record<Environment, EnvironmentConfig> = {
   sandbox: {
-    prayog: {
-      apiBaseUrl: "https://sandbox-apis.prayog.io",
-    },
     razorpay: {
       keyIdSecret: "RAZORPAY_KEY_ID",
       keySecretName: "RAZORPAY_KEY_SECRET",
@@ -56,10 +48,6 @@ const configs: Record<Environment, EnvironmentConfig> = {
     },
   },
   production: {
-    prayog: {
-      apiBaseUrl: "https://apis.prayog.io", // Production Prayog URL
-      // Serviceability now uses the gateway endpoint on the main API URL
-    },
     razorpay: {
       keyIdSecret: "RAZORPAY_PROD_KEY_ID",
       keySecretName: "RAZORPAY_PROD_KEY_SECRET",
@@ -78,30 +66,8 @@ export const isProd = (): boolean => CURRENT_ENV === "production";
 export const isSandbox = (): boolean => CURRENT_ENV === "sandbox";
 
 // Check if running on Lovable preview (not the published live app)
-// Preview URLs contain "-preview--" in the hostname
-// Published URL is viasetu.lovable.app or custom domains
 export const isLovablePreview = (): boolean => {
   if (typeof window === 'undefined') return false;
   const hostname = window.location.hostname;
   return hostname.includes('-preview--') || hostname === 'localhost' || hostname === '127.0.0.1';
-};
-
-// Environment-specific Prayog tenant IDs (for frontend API calls)
-const TENANT_IDS: Record<Environment, string> = {
-  sandbox: "6901d6e05021c666ba4bef43",
-  production: "6955190688051e07be389dc5",
-};
-
-// Environment-specific Prayog API keys (for frontend API calls)
-const API_KEYS: Record<Environment, string> = {
-  sandbox: "prayog_live_zYRTOk3AEUTqFsfFTBb0lQ5p27RzCIBv_259a6dad",
-  production: "prayog_live_dqflUSIZs7LcnyIKfF1pc9YAaEF5L9Y9_c265003d",
-};
-
-// Backward compatibility - PRAYOG_CONFIG for existing imports
-export const PRAYOG_CONFIG = {
-  API_BASE_URL: getConfig().prayog.apiBaseUrl,
-  SERVICEABILITY_BASE_URL: getConfig().prayog.apiBaseUrl,
-  TENANT_ID: TENANT_IDS[CURRENT_ENV],
-  API_KEY: API_KEYS[CURRENT_ENV],
 };
