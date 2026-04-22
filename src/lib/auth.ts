@@ -15,12 +15,21 @@ export interface AuthSession {
 const NEW_KEY = 'auth_session';
 const LEGACY_KEY = 'prayog_auth';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const getAuthSession = (): AuthSession | null => {
   try {
     const raw = localStorage.getItem(NEW_KEY) || localStorage.getItem(LEGACY_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.user_id) return null;
+    // Invalidate stale sessions whose user_id is the old Base64 string
+    // (incompatible with Postgres uuid columns). Force re-login.
+    if (!UUID_REGEX.test(parsed.user_id)) {
+      localStorage.removeItem(NEW_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+      return null;
+    }
     return parsed as AuthSession;
   } catch {
     return null;
@@ -41,9 +50,42 @@ export const clearAuthSession = () => {
 
 export const isAuthenticated = (): boolean => Boolean(getAuthSession());
 
-// Generate the deterministic user_id used since the Prayog era so existing
-// accounts (and their bookings/profiles) are preserved.
-export const deriveUserId = (phoneDigits: string): string => {
+// Generate a deterministic UUID v5-style user_id from the phone number.
+// This is required because the `bookings.user_id` and `profiles.user_id`
+// columns are typed as `uuid` in Postgres. Using a stable UUID derived from
+// the phone keeps the "same phone = same account" guarantee while staying
+// schema-compatible.
+//
+// Namespace: a fixed UUID for the ViaSetu phone-login system.
+const VIASETU_PHONE_NAMESPACE = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+
+const hexToBytes = (hex: string): Uint8Array => {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(hex.substr(i * 2, 2), 16);
+  }
+  return out;
+};
+
+const bytesToUuid = (bytes: Uint8Array): string => {
+  const hex = Array.from(bytes.slice(0, 16))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+};
+
+export const deriveUserId = async (phoneDigits: string): Promise<string> => {
   const phoneWithCountryCode = `+91${phoneDigits}`;
-  return btoa(phoneWithCountryCode).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+  const namespaceBytes = hexToBytes(VIASETU_PHONE_NAMESPACE.replace(/-/g, ''));
+  const nameBytes = new TextEncoder().encode(phoneWithCountryCode);
+  const combined = new Uint8Array(namespaceBytes.length + nameBytes.length);
+  combined.set(namespaceBytes, 0);
+  combined.set(nameBytes, namespaceBytes.length);
+
+  const hashBuffer = await crypto.subtle.digest('SHA-1', combined);
+  const hashBytes = new Uint8Array(hashBuffer).slice(0, 16);
+  // Set UUID v5 version + variant bits
+  hashBytes[6] = (hashBytes[6] & 0x0f) | 0x50;
+  hashBytes[8] = (hashBytes[8] & 0x3f) | 0x80;
+  return bytesToUuid(hashBytes);
 };
