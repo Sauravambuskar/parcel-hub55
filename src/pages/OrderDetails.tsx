@@ -130,7 +130,12 @@ const OrderDetails = () => {
           awb: (data as any).prayog_awb || null,
         });
 
-        if (data.payment_status === 'refunded' || data.payment_status === 'refund_failed' || data.status === 'FAILED') {
+        if (
+          data.payment_status === 'refunded' ||
+          data.payment_status === 'refund_failed' ||
+          data.payment_status === 'cop_pending' ||
+          data.status === 'FAILED'
+        ) {
           setRefundInfo({
             status: data.status,
             payment_status: data.payment_status,
