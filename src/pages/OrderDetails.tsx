@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthSession } from "@/lib/auth";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
@@ -110,48 +111,13 @@ const OrderDetails = () => {
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
-      fetchRefundStatus();
     }
   }, [orderId]);
-
-  const fetchRefundStatus = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('id, status, payment_status, payment_id, prayog_order_id, prayog_awb, booking_source')
-        .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
-        .maybeSingle();
-
-      if (!error && data) {
-        setBookingMeta({
-          id: data.id,
-          booking_source: data.booking_source || '',
-          status: data.status || '',
-          awb: (data as any).prayog_awb || null,
-        });
-
-        if (
-          data.payment_status === 'refunded' ||
-          data.payment_status === 'refund_failed' ||
-          data.payment_status === 'cop_pending' ||
-          data.status === 'FAILED'
-        ) {
-          setRefundInfo({
-            status: data.status,
-            payment_status: data.payment_status,
-            payment_id: data.payment_id,
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching refund status:', err);
-    }
-  };
 
   const handleCancelConfirm = async (reason: CancelReason) => {
     if (!bookingMeta) return;
     await cancelOrder({
-      orderId: orderId!,
+      orderId: bookingMeta.id,
       bookingSource: bookingMeta.booking_source,
       bookingId: bookingMeta.id,
       reason,
@@ -160,15 +126,23 @@ const OrderDetails = () => {
   };
 
   const fetchOrderDetails = async () => {
+    setLoading(true);
     try {
-      // Build the order page entirely from the local `bookings` row.
-      const { data: booking, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .or(`prayog_order_id.eq.${orderId},tracking_id.eq.${orderId}`)
-        .maybeSingle();
+      const auth = getAuthSession();
+      if (!auth) {
+        toast({ title: "Authentication required", description: "Please sign in", variant: "destructive" });
+        navigate('/login');
+        return;
+      }
 
-      if (error || !booking) {
+      // Try as a local booking UUID first; the edge function falls back to order_id lookup.
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId || '');
+      const { data, error } = await supabase.functions.invoke('get-booking-detail', {
+        body: isUuid ? { booking_id: orderId } : { order_id: orderId },
+        headers: { 'x-prayog-auth': JSON.stringify(auth) },
+      });
+
+      if (error || !data?.order) {
         toast({
           title: "Order not found",
           description: "We couldn't find this order. It may belong to a different account.",
@@ -177,50 +151,29 @@ const OrderDetails = () => {
         return;
       }
 
-      const b: any = booking;
-      const normalized: OrderDetails = {
-        orderId: b.prayog_order_id || b.id,
-        orderDate: b.created_at,
-        orderStatus: b.status || 'CREATED',
-        deliveryPromise: b.delivery_time || 'Standard',
-        carrierName: b.courier_name,
-        carrierId: b.booking_source || '',
-        addresses: [
-          { type: 'PICKUP', name: b.sender_name, phone: b.sender_phone, street: b.sender_address, city: b.sender_city, state: b.sender_state, zip: b.sender_pincode, country: 'India' },
-          { type: 'DELIVERY', name: b.receiver_name, phone: b.receiver_phone, street: b.receiver_address, city: b.receiver_city, state: b.receiver_state, zip: b.receiver_pincode, country: 'India' },
-        ],
-        shipments: [{
-          awbNumber: b.prayog_awb || b.tracking_id || '',
-          shipmentStatus: b.status || 'CREATED',
-          dimensions: (b.length || b.width || b.height) ? {
-            length: Number(b.length) || 0,
-            width: Number(b.width) || 0,
-            height: Number(b.height) || 0,
-          } : undefined,
-          physicalWeight: b.package_weight ? Number(b.package_weight) : undefined,
-          items: [{ name: b.goods_type, description: b.goods_type }],
-          documents: b.label_url ? [{ type: 'label', url: b.label_url }] : [],
-        }],
-        payment: {
-          finalAmount: Number(b.courier_price || 0) + Number(b.gst || 0),
-          type: b.payment_status === 'cop_pending' ? 'COP' : 'PREPAID',
-          breakdown: {
-            otherCharges: [
-              { name: 'Base Fare', chargedAmount: Number(b.base_fare || 0) },
-              { name: 'GST (18%)', chargedAmount: Number(b.gst || 0) },
-            ],
-          },
-        },
-        metadata: {
-          razorpay_payment_id: b.payment_id || undefined,
-          source: b.booking_source || undefined,
-          baseFare: Number(b.base_fare || 0),
-          gstAmount: Number(b.gst || 0),
-          totalAmount: Number(b.courier_price || 0),
-          platformFee: Number(b.platform_fee || 0),
-        },
-      };
-      setOrder(normalized);
+      const o = data.order;
+      setOrder(o);
+      const b = o._booking;
+      if (b) {
+        setBookingMeta({
+          id: b.id,
+          booking_source: b.booking_source || '',
+          status: b.status || '',
+          awb: b.awb || b.prayog_awb || b.tracking_id || null,
+        });
+        if (
+          b.payment_status === 'refunded' ||
+          b.payment_status === 'refund_failed' ||
+          b.payment_status === 'cop_pending' ||
+          b.status === 'FAILED'
+        ) {
+          setRefundInfo({
+            status: b.status,
+            payment_status: b.payment_status,
+            payment_id: o.metadata?.razorpay_payment_id || null,
+          });
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching order details:", error);
       toast({
