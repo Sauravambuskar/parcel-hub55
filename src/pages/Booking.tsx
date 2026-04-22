@@ -456,10 +456,16 @@ const Booking = () => {
   const handleProceedToPayment = () => {
     setShowPaymentModal(true);
   };
+  // Cash-on-Pickup: skip Razorpay entirely. TEMPORARY — see memory note
+  // payments/no-cash-on-delivery-policy. Booking is created as Prepaid with the
+  // courier; we settle internally and mark payment_status='cop_pending'.
+  const handleCashOnPickup = async () => {
+    await handlePaymentSuccess('cop', undefined, true);
+  };
   const handlePaymentSuccess = async (paymentMethod: string, paymentDetails?: {
     razorpay_payment_id: string;
     razorpay_order_id: string;
-  }) => {
+  }, isCop: boolean = false) => {
     if (!userId) return;
     const selectedCourierData = getSelectedServiceDetails();
     try {
