@@ -15,12 +15,21 @@ export interface AuthSession {
 const NEW_KEY = 'auth_session';
 const LEGACY_KEY = 'prayog_auth';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const getAuthSession = (): AuthSession | null => {
   try {
     const raw = localStorage.getItem(NEW_KEY) || localStorage.getItem(LEGACY_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.user_id) return null;
+    // Invalidate stale sessions whose user_id is the old Base64 string
+    // (incompatible with Postgres uuid columns). Force re-login.
+    if (!UUID_REGEX.test(parsed.user_id)) {
+      localStorage.removeItem(NEW_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+      return null;
+    }
     return parsed as AuthSession;
   } catch {
     return null;
