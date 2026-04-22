@@ -104,7 +104,6 @@ const OrderDetails = () => {
     onSuccess: () => {
       setShowCancelDialog(false);
       fetchOrderDetails();
-      fetchRefundStatus();
     },
   });
 
