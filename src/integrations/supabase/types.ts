@@ -579,6 +579,42 @@ export type Database = {
           },
         ]
       }
+      xpressbees_pincodes: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_cod: boolean | null
+          is_prepaid: boolean | null
+          pincode: string
+          state: string | null
+          zone: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_cod?: boolean | null
+          is_prepaid?: boolean | null
+          pincode: string
+          state?: string | null
+          zone?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_cod?: boolean | null
+          is_prepaid?: boolean | null
+          pincode?: string
+          state?: string | null
+          zone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_safe: {
