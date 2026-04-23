@@ -24,9 +24,25 @@ interface CachedToken {
 const tokenCache = new Map<string, CachedToken>(); // key = `${env}:${host}`
 
 async function loginAt(host: Host, env: Environment): Promise<string> {
-  const { email, password } = getXpressbeesConfig(env);
+  // The shipment realm uses a different login than the franchise realm and
+  // typically requires a separate set of credentials. Prefer host-specific
+  // credentials when available, otherwise fall back to the franchise creds.
+  let email: string | undefined;
+  let password: string | undefined;
+  if (host === "shipment") {
+    email = Deno.env.get("XPRESSBEES_SHIPMENT_EMAIL") || undefined;
+    password = Deno.env.get("XPRESSBEES_SHIPMENT_PASSWORD") || undefined;
+  }
   if (!email || !password) {
-    throw new Error("XpressBees credentials not configured (XPRESSBEES_PROD_EMAIL / XPRESSBEES_PROD_PASSWORD)");
+    const cfg = getXpressbeesConfig(env);
+    email = email || cfg.email;
+    password = password || cfg.password;
+  }
+  if (!email || !password) {
+    throw new Error(
+      `XpressBees credentials not configured for host "${host}" ` +
+        `(set XPRESSBEES_SHIPMENT_EMAIL/PASSWORD for shipment, or XPRESSBEES_PROD_EMAIL/PASSWORD for franchise)`,
+    );
   }
   const normalizedEmail = email.trim();
   const normalizedPassword = password.trim();
