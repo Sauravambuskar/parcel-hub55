@@ -1,23 +1,51 @@
 // Urbanebolt webhook receiver — public endpoint registered in Urbanebolt panel.
 // Accepts status update payloads and updates the matching booking row by AWB.
+//
+// Sample payload (from Urbanebolt support):
+// [{
+//   "awb":"10003078293", "edd":"2023-09-22 08:21:32", "lat":0, "lng":0,
+//   "pieces":1, "weight":"0.2", "pod_url":"", "remarks":"", "customer":"CS100001",
+//   "isReturn":false, "event_date":"2023-09-22 08:17:37", "reason_code":"",
+//   "status_code":"DDL", "order_number":"404133513", "otp_verified":"No",
+//   "product_type":"PPD", "reference_awb":"", "event_location":"ADHR",
+//   "status_description":"Delivered"
+// }]
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function normalizeStatus(s: string): string {
-  const v = (s || "").toLowerCase();
+// Map Urbanebolt status_code (primary) and fall back to status_description.
+// Codes per Urbanebolt convention: PKD/OFP picked, INT in-transit, OFD out-for-delivery,
+// DDL delivered, RTO/RAD return, CNL cancel, MNF/BKD manifested.
+function normalizeStatus(code: string, desc: string): string {
+  const c = (code || "").toUpperCase().trim();
+  switch (c) {
+    case "DDL": return "DELIVERED";
+    case "OFD": return "OUT_FOR_DELIVERY";
+    case "PKD":
+    case "OFP":
+    case "INT":
+    case "RAD": return "IN_TRANSIT";
+    case "RTO":
+    case "RTD":
+    case "RTO_DELIVERED": return "RTO";
+    case "CNL":
+    case "CAN": return "CANCELLED";
+    case "MNF":
+    case "BKD": return "ORDER_CONFIRMED";
+  }
+  const v = (desc || "").toLowerCase();
   if (v.includes("delivered")) return "DELIVERED";
-  if (v.includes("out for delivery") || v.includes("ofd")) return "OUT_FOR_DELIVERY";
+  if (v.includes("out for delivery")) return "OUT_FOR_DELIVERY";
   if (v.includes("picked") || v.includes("transit") || v.includes("dispatched") || v.includes("hub")) return "IN_TRANSIT";
   if (v.includes("rto") || v.includes("return")) return "RTO";
   if (v.includes("cancel")) return "CANCELLED";
   if (v.includes("manifest") || v.includes("booked") || v.includes("created")) return "ORDER_CONFIRMED";
-  return s || "UPDATED";
+  return desc || "UPDATED";
 }
 
 Deno.serve(async (req) => {
@@ -25,16 +53,18 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    console.log("[urbanebolt-webhook] payload:", JSON.stringify(body).slice(0, 1500));
+    console.log("[urbanebolt-webhook] payload:", JSON.stringify(body).slice(0, 2000));
 
-    // Accept multiple shapes: { awb, status }, { data: {...} }, { shipments: [{...}] }
+    // Urbanebolt sends an array of events. Also tolerate { data | shipments | events: [...] } and single object.
     const items: any[] = Array.isArray(body)
       ? body
-      : Array.isArray(body?.shipments)
-        ? body.shipments
-        : Array.isArray(body?.data)
-          ? body.data
-          : [body?.data || body];
+      : Array.isArray(body?.events)
+        ? body.events
+        : Array.isArray(body?.shipments)
+          ? body.shipments
+          : Array.isArray(body?.data)
+            ? body.data
+            : [body?.data || body];
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -45,14 +75,17 @@ Deno.serve(async (req) => {
       if (!item) continue;
       const awb: string | null =
         item.awb || item.awb_no || item.waybill || item.tracking_id || null;
-      const rawStatus: string =
-        item.status || item.current_status || item.event || item.activity || "";
       if (!awb) continue;
 
-      const status = normalizeStatus(rawStatus);
+      const status = normalizeStatus(item.status_code, item.status_description || item.status || item.event);
+      const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+
+      // Persist label / POD when available.
+      if (item.pod_url) update.label_url = item.pod_url;
+
       const { error } = await supabase
         .from("bookings")
-        .update({ status, updated_at: new Date().toISOString() })
+        .update(update)
         .or(`prayog_awb.eq.${awb},tracking_id.eq.${awb}`)
         .eq("booking_source", "urbanebolt_direct");
       if (error) {
