@@ -130,3 +130,38 @@ export function getDelhiveryConfig(env: Environment) {
     warehouse,
   };
 }
+
+interface UrbaneboltConfig {
+  apiBaseUrl: string;
+  usernameEnvVar: string;
+  passwordEnvVar: string;
+}
+
+// User has only PROD credentials. Sandbox env falls back to PROD creds against
+// the UAT base URL so testing still works without separate UAT credentials.
+export const URBANEBOLT_CONFIG: Record<Environment, UrbaneboltConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://uat.urbanebolt.in',
+    usernameEnvVar: 'URBANEBOLT_UAT_USERNAME',
+    passwordEnvVar: 'URBANEBOLT_UAT_PASSWORD',
+  },
+  production: {
+    apiBaseUrl: 'https://api.urbanebolt.in',
+    usernameEnvVar: 'URBANEBOLT_PROD_USERNAME',
+    passwordEnvVar: 'URBANEBOLT_PROD_PASSWORD',
+  },
+};
+
+export function getUrbaneboltConfig(env: Environment) {
+  const config = URBANEBOLT_CONFIG[env];
+  const username =
+    Deno.env.get(config.usernameEnvVar) || Deno.env.get('URBANEBOLT_PROD_USERNAME');
+  const password =
+    Deno.env.get(config.passwordEnvVar) || Deno.env.get('URBANEBOLT_PROD_PASSWORD');
+  return {
+    apiBaseUrl: config.apiBaseUrl,
+    username,
+    password,
+    customerCode: Deno.env.get('URBANEBOLT_CUSTOMER_CODE'),
+  };
+}
