@@ -129,6 +129,7 @@ const Tracking = () => {
 
       const isShadowfax = bSource === 'shadowfax_direct';
       const isDelhiveryDirect = bSource === 'delhivery_direct';
+      const isUrbanebolt = bSource === 'urbanebolt_direct';
 
       if (isShadowfax) {
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
@@ -147,6 +148,15 @@ const Tracking = () => {
 
         if (dlvError || !dlvData || dlvData.error) throw new Error('Failed to fetch Delhivery tracking');
         setTrackingData(dlvData);
+      } else if (isUrbanebolt) {
+        const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
+        const { data: ubData, error: ubError } = await supabase.functions.invoke('urbanebolt-tracking', {
+          body: { waybill: trackAwb },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (ubError || !ubData || ubData.error) throw new Error('Failed to fetch Urbanebolt tracking');
+        setTrackingData(ubData);
       } else {
         toast({
           title: "Tracking Unavailable",

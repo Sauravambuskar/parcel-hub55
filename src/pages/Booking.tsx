@@ -474,6 +474,7 @@ const Booking = () => {
       let selectedService = null;
       let isShadowfaxDirect = false;
       let isDelhiveryDirect = false;
+      let isUrbaneboltDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
@@ -482,6 +483,9 @@ const Booking = () => {
             }
             if (partner.partner_id === 'delhivery_direct') {
               isDelhiveryDirect = true;
+            }
+            if (partner.partner_id === 'urbanebolt_direct') {
+              isUrbaneboltDirect = true;
             }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
@@ -778,6 +782,75 @@ const Booking = () => {
         prayogOrderId = dlvResult.orderId || orderId;
         labelUrl = dlvResult.label_url || null;
 
+      } else if (isUrbaneboltDirect) {
+        // ─── Urbanebolt Direct Booking ───
+        console.log('[Booking] Using Urbanebolt direct booking');
+        const { data: ubResult, error: ubError } = await supabase.functions.invoke('urbanebolt-booking', {
+          body: {
+            order_id: orderId,
+            sender_name: senderData.name,
+            sender_phone: senderData.phone,
+            sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+            sender_pincode: senderData.pincode,
+            sender_city: senderData.city,
+            sender_state: senderData.state,
+            receiver_name: receiverData.name,
+            receiver_phone: receiverData.phone,
+            receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+            receiver_pincode: receiverData.pincode,
+            receiver_city: receiverData.city,
+            receiver_state: receiverData.state,
+            package_weight: physicalWeight,
+            goods_type: goodsType || 'Package',
+            shipment_value: shipmentValue ? parseFloat(shipmentValue) : 0,
+            length, width, height,
+            service_code: selectedService?.service_code || 'ub_intercity',
+          },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (ubError || !ubResult?.success) {
+          if (paymentDetails?.razorpay_payment_id) {
+            const prayogAuthRawUb = localStorage.getItem('prayog_auth');
+            const failedBookingRow = {
+              sender_name: senderData.name, sender_phone: senderData.phone,
+              sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+              sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+              receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+              receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+              receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+              goods_type: goodsType || "Package",
+              package_weight: String(physicalWeight),
+              urgency: urgency || "standard",
+              courier_name: selectedService?.partner_code || selectedCourierData?.name || "Urbanebolt",
+              courier_price: totalAmount,
+              delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
+              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              booking_source: 'urbanebolt_direct',
+            };
+            const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+              body: {
+                payment_id: paymentDetails.razorpay_payment_id,
+                reason: 'urbanebolt_booking_failed',
+                error_detail: String(ubResult?.error || ubError?.message || 'unknown'),
+                booking_row: failedBookingRow,
+              },
+              headers: { ...(prayogAuthRawUb ? { 'x-prayog-auth': prayogAuthRawUb } : {}), 'x-environment': CURRENT_ENV },
+            });
+            localStorage.removeItem('booking_draft');
+            if (refundData?.refunded) {
+              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`);
+            }
+            throw new Error(`Urbanebolt booking failed and refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+          }
+          throw new Error(`Urbanebolt booking failed: ${ubResult?.error || ubError?.message || 'Unknown error'}`);
+        }
+
+        trackingId = ubResult.awbNumber || ubResult.orderId || orderId;
+        awbNumber = ubResult.awbNumber || null;
+        prayogOrderId = ubResult.orderId || orderId;
+        labelUrl = ubResult.label_url || null;
+
       } else {
         // Unsupported partner — Prayog and other aggregators have been removed.
         throw new Error(
@@ -786,7 +859,13 @@ const Booking = () => {
       }
 
       // Save booking to Supabase for admin dashboard and order history
-      const bookingSource = isShadowfaxDirect ? 'shadowfax_direct' : isDelhiveryDirect ? 'delhivery_direct' : 'unknown';
+      const bookingSource = isShadowfaxDirect
+        ? 'shadowfax_direct'
+        : isDelhiveryDirect
+          ? 'delhivery_direct'
+          : isUrbaneboltDirect
+            ? 'urbanebolt_direct'
+            : 'unknown';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
@@ -823,7 +902,7 @@ const Booking = () => {
         base_fare: baseFare,
         platform_fee: platformFee,
         gst: gstAmount,
-        prayog_commission: (isShadowfaxDirect || isDelhiveryDirect) ? 0 : Math.round(baseAmount * 0.05),
+        prayog_commission: (isShadowfaxDirect || isDelhiveryDirect || isUrbaneboltDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
       } as any;
       // Persist via edge function (RLS-safe; Prayog auth doesn't set auth.uid()).
