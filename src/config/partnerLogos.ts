@@ -19,6 +19,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'dtdc': 'https://logo.clearbit.com/dtdc.in',
   'ecom_express': 'https://logo.clearbit.com/ecomexpress.in',
   'xpressbees': 'https://logo.clearbit.com/xpressbees.com',
+  'xpressbees_direct': 'https://logo.clearbit.com/xpressbees.com',
   'shadowfax': shadowfaxLogo,
   'shadowfax_direct': shadowfaxLogo,
   'urbanebolt': urbaneboltLogo,

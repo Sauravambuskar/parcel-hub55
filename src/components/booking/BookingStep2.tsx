@@ -53,6 +53,7 @@ const DIRECT_PARTNERS: { code: string; fn: string }[] = [
   { code: 'shadowfax', fn: 'shadowfax-serviceability' },
   { code: 'delhivery', fn: 'delhivery-serviceability' },
   { code: 'urbanebolt', fn: 'urbanebolt-serviceability' },
+  { code: 'xpressbees', fn: 'xpressbees-serviceability' },
   // Future: { code: 'dtdc', fn: 'dtdc-serviceability' },
 ];
 
