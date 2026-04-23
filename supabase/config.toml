@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.urbanebolt-webhook]
 verify_jwt = false
+
+[functions.urbanebolt-debug]
+verify_jwt = false
