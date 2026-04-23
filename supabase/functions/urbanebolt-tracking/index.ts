@@ -10,16 +10,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-function mapStatus(status: string): { category: string; subcategory: string } {
-  const s = (status || "").toLowerCase();
-  if (s.includes("delivered")) return { category: "DELIVERED", subcategory: status };
-  if (s.includes("out for delivery") || s.includes("ofd")) return { category: "OUT_FOR_DELIVERY", subcategory: status };
-  if (s.includes("picked")) return { category: "IN_TRANSIT", subcategory: status };
-  if (s.includes("transit") || s.includes("dispatched") || s.includes("hub")) return { category: "IN_TRANSIT", subcategory: status };
-  if (s.includes("manifest") || s.includes("booked") || s.includes("created")) return { category: "ORDER_CONFIRMED", subcategory: status };
-  if (s.includes("rto") || s.includes("return")) return { category: "RTO", subcategory: status };
-  if (s.includes("cancel")) return { category: "CANCELLED", subcategory: status };
-  return { category: "IN_TRANSIT", subcategory: status || "Update" };
+// Map Urbanebolt status_code (primary) and fall back to description text.
+// Codes: PKD/OFP picked, INT in-transit, OFD out-for-delivery, DDL delivered,
+// RTO return, CNL cancel, MNF/BKD manifested.
+function mapStatus(code: string, desc: string): { category: string; subcategory: string } {
+  const c = (code || "").toUpperCase().trim();
+  const sub = desc || code || "Update";
+  switch (c) {
+    case "DDL": return { category: "DELIVERED", subcategory: sub };
+    case "OFD": return { category: "OUT_FOR_DELIVERY", subcategory: sub };
+    case "PKD":
+    case "OFP":
+    case "INT":
+    case "RAD": return { category: "IN_TRANSIT", subcategory: sub };
+    case "RTO":
+    case "RTD": return { category: "RTO", subcategory: sub };
+    case "CNL":
+    case "CAN": return { category: "CANCELLED", subcategory: sub };
+    case "MNF":
+    case "BKD": return { category: "ORDER_CONFIRMED", subcategory: sub };
+  }
+  const v = (desc || "").toLowerCase();
+  if (v.includes("delivered")) return { category: "DELIVERED", subcategory: sub };
+  if (v.includes("out for delivery")) return { category: "OUT_FOR_DELIVERY", subcategory: sub };
+  if (v.includes("picked")) return { category: "IN_TRANSIT", subcategory: sub };
+  if (v.includes("transit") || v.includes("dispatched") || v.includes("hub")) return { category: "IN_TRANSIT", subcategory: sub };
+  if (v.includes("manifest") || v.includes("booked") || v.includes("created")) return { category: "ORDER_CONFIRMED", subcategory: sub };
+  if (v.includes("rto") || v.includes("return")) return { category: "RTO", subcategory: sub };
+  if (v.includes("cancel")) return { category: "CANCELLED", subcategory: sub };
+  return { category: "IN_TRANSIT", subcategory: sub };
 }
 
 Deno.serve(async (req) => {
@@ -48,31 +67,49 @@ Deno.serve(async (req) => {
     let data: any;
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    // Common shapes: { data: { awb, status, history: [...] } } or array
-    const root = data?.data || data?.result || data?.shipment || data;
-    const scans: any[] =
-      root?.history || root?.scans || root?.tracking || root?.events || data?.history || [];
+    // Urbanebolt commonly returns a flat array of events (per provided sample) or { data: [...] }.
+    const events: any[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.data) ? data.data
+      : Array.isArray(data?.events) ? data.events
+      : Array.isArray(data?.history) ? data.history
+      : [];
 
-    const statuses = scans.map((entry: any) => {
-      const ts = entry?.timestamp || entry?.scan_time || entry?.event_time || entry?.created_at || new Date().toISOString();
-      const statusStr = entry?.status || entry?.event || entry?.activity || entry?.remarks || "Update";
-      const m = mapStatus(statusStr);
+    // Pull header info from the most recent event.
+    const head = events[0] || data?.data || data || {};
+    const podUrl = events.find((e) => e?.pod_url)?.pod_url || "";
+    const edd = head?.edd || "";
+    const orderNo = head?.order_number || head?.order_no || trackId;
+
+    const statuses = events.map((entry: any) => {
+      const ts = entry?.event_date || entry?.timestamp || entry?.scan_time || new Date().toISOString();
+      const code = entry?.status_code || "";
+      const desc = entry?.status_description || entry?.status || entry?.event || entry?.remarks || "Update";
+      const m = mapStatus(code, desc);
+      // event_date is "YYYY-MM-DD HH:mm:ss" (no TZ) — treat as IST.
+      const tsMs = typeof ts === "string"
+        ? Date.parse(ts.replace(" ", "T") + (ts.includes("T") ? "" : "+05:30"))
+        : new Date(ts).getTime();
       return {
         trackingId: trackId,
-        status: statusStr,
-        location: entry?.location || entry?.city || entry?.hub || "",
+        status: desc,
+        location: entry?.event_location || entry?.location || entry?.city || entry?.hub || "",
         deliveryPartnerName: "Urbanebolt",
-        statusTimestamp: new Date(ts).getTime(),
-        event: statusStr,
+        statusTimestamp: isNaN(tsMs) ? Date.now() : tsMs,
+        event: desc,
         category: m.category,
         subcategory: m.subcategory,
         createdAt: typeof ts === "string" ? ts : new Date(ts).toISOString(),
+        statusCode: code,
+        reasonCode: entry?.reason_code || "",
+        podUrl: entry?.pod_url || "",
+        otpVerified: entry?.otp_verified || "",
       };
     });
 
     if (statuses.length === 0) {
-      const cur = root?.status || root?.current_status || "Manifested";
-      const m = mapStatus(cur);
+      const cur = head?.status_description || head?.status || "Manifested";
+      const m = mapStatus(head?.status_code || "", cur);
       statuses.push({
         trackingId: trackId,
         status: cur,
@@ -83,43 +120,31 @@ Deno.serve(async (req) => {
         category: m.category,
         subcategory: m.subcategory,
         createdAt: new Date().toISOString(),
+        statusCode: head?.status_code || "",
+        reasonCode: "",
+        podUrl: "",
+        otpVerified: "",
       });
     }
     statuses.sort((a, b) => b.statusTimestamp - a.statusTimestamp);
 
-    const consignee = root?.consignee || root?.delivery || {};
-    const seller = root?.seller || root?.pickup || {};
     const trackingData = {
       orderInformation: {
         trackingId: trackId,
-        cAwbNumber: root?.awb || trackId,
-        orderId: root?.order_no || root?.shipment_no || trackId,
-        sourceLocation: {
-          address: seller?.address || "",
-          city: seller?.city || "",
-          landmark: "",
-          pincode: String(seller?.pin || seller?.pincode || ""),
-          state: seller?.state || "",
-        },
-        destinationLocation: {
-          address: consignee?.address || "",
-          city: consignee?.city || "",
-          landmark: "",
-          pincode: String(consignee?.pin || consignee?.pincode || ""),
-          state: consignee?.state || "",
-        },
-        senderDetails: {
-          sender_mobile: String(seller?.mobile || seller?.phone || ""),
-          sender_name: seller?.name || "",
-        },
-        receiverDetails: {
-          receiver_mobile: String(consignee?.mobile || consignee?.phone || ""),
-          receiver_name: consignee?.name || "",
-        },
-        travelType: root?.mode || "surface",
-        serviceType: root?.service_type || "standard",
-        bookingDate: root?.created_at || new Date().toISOString(),
-        type: "FORWARD",
+        cAwbNumber: head?.awb || trackId,
+        orderId: orderNo,
+        sourceLocation: { address: "", city: "", landmark: "", pincode: "", state: "" },
+        destinationLocation: { address: "", city: "", landmark: "", pincode: "", state: "" },
+        senderDetails: { sender_mobile: "", sender_name: "" },
+        receiverDetails: { receiver_mobile: "", receiver_name: "" },
+        travelType: head?.product_type || "surface",
+        serviceType: head?.product_type || "standard",
+        bookingDate: head?.event_date || new Date().toISOString(),
+        type: head?.isReturn ? "REVERSE" : "FORWARD",
+        edd,
+        podUrl,
+        weight: head?.weight || "",
+        pieces: head?.pieces || 1,
       },
       statuses,
     };
