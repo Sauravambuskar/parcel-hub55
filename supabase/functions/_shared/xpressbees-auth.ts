@@ -1,54 +1,30 @@
-// Shared XpressBees token helpers. XpressBees has TWO separate auth realms:
-//   - ship.xpressbees.com   → franchise APIs (login: /api/users/franchise_login)
-//   - shipment.xpressbees.com → standard B2C APIs (login: /api/users/login)
-// Tokens from one host are NOT accepted by the other. We cache per host.
+// Shared XpressBees token helpers.
+// Single host: https://ship.xpressbees.com
+// Single login endpoint: POST /api/users/franchise_login
 import { getXpressbeesConfig, type Environment } from "./environment.ts";
 
-type Host = "ship" | "shipment";
-
-const HOST_URL: Record<Host, string> = {
-  ship: "https://ship.xpressbees.com",
-  shipment: "https://shipment.xpressbees.com",
-};
-
-const LOGIN_PATH: Record<Host, string> = {
-  ship: "/api/users/franchise_login",
-  shipment: "/api/users/login",
-};
+const BASE_URL = "https://ship.xpressbees.com";
+const LOGIN_PATH = "/api/users/franchise_login";
 
 interface CachedToken {
   token: string;
   expiresAt: number; // epoch ms
 }
 
-const tokenCache = new Map<string, CachedToken>(); // key = `${env}:${host}`
+const tokenCache = new Map<string, CachedToken>(); // key = env
 
-async function loginAt(host: Host, env: Environment): Promise<string> {
-  // The shipment realm uses a different login than the franchise realm and
-  // typically requires a separate set of credentials. Prefer host-specific
-  // credentials when available, otherwise fall back to the franchise creds.
-  let email: string | undefined;
-  let password: string | undefined;
-  if (host === "shipment") {
-    email = Deno.env.get("XPRESSBEES_SHIPMENT_EMAIL") || undefined;
-    password = Deno.env.get("XPRESSBEES_SHIPMENT_PASSWORD") || undefined;
-  }
-  if (!email || !password) {
-    const cfg = getXpressbeesConfig(env);
-    email = email || cfg.email;
-    password = password || cfg.password;
-  }
+async function login(env: Environment): Promise<string> {
+  const { email, password } = getXpressbeesConfig(env);
   if (!email || !password) {
     throw new Error(
-      `XpressBees credentials not configured for host "${host}" ` +
-        `(set XPRESSBEES_SHIPMENT_EMAIL/PASSWORD for shipment, or XPRESSBEES_PROD_EMAIL/PASSWORD for franchise)`,
+      "XpressBees credentials not configured (XPRESSBEES_PROD_EMAIL / XPRESSBEES_PROD_PASSWORD)",
     );
   }
   const normalizedEmail = email.trim();
   const normalizedPassword = password.trim();
-  const url = `${HOST_URL[host]}${LOGIN_PATH[host]}`;
+  const url = `${BASE_URL}${LOGIN_PATH}`;
 
-  console.log("[xpressbees-auth] login", { host, url, email_suffix: normalizedEmail.slice(-6) });
+  console.log("[xpressbees-auth] login", { url, email_suffix: normalizedEmail.slice(-6) });
 
   const res = await fetch(url, {
     method: "POST",
@@ -60,56 +36,47 @@ async function loginAt(host: Host, env: Environment): Promise<string> {
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
   if (!res.ok || data?.status === false) {
-    console.error("[xpressbees-auth] login failed", host, res.status, text.slice(0, 500));
-    throw new Error(`XpressBees auth failed (${host}): ${data?.message || data?.error || res.status}`);
+    console.error("[xpressbees-auth] login failed", res.status, text.slice(0, 500));
+    throw new Error(`XpressBees auth failed: ${data?.message || data?.error || res.status}`);
   }
 
   const token: string | undefined =
     data?.data || data?.token || data?.access_token ||
     data?.data?.token || data?.data?.access_token;
   if (!token || typeof token !== "string") {
-    console.error("[xpressbees-auth] no token in response", host, text.slice(0, 500));
-    throw new Error(`XpressBees auth response missing token (${host})`);
+    console.error("[xpressbees-auth] no token in response", text.slice(0, 500));
+    throw new Error("XpressBees auth response missing token");
   }
   return token;
 }
 
-export async function getXpressbeesTokenFor(
-  host: Host,
+export async function getXpressbeesToken(
   env: Environment,
   forceRefresh = false,
 ): Promise<string> {
-  const key = `${env}:${host}`;
-  const cached = tokenCache.get(key);
+  const cached = tokenCache.get(env);
   const now = Date.now();
   if (!forceRefresh && cached && cached.expiresAt - 60_000 > now) {
     return cached.token;
   }
-  const token = await loginAt(host, env);
-  tokenCache.set(key, { token, expiresAt: now + 5 * 60 * 60 * 1000 });
+  const token = await login(env);
+  tokenCache.set(env, { token, expiresAt: now + 5 * 60 * 60 * 1000 });
   return token;
 }
 
-// Back-compat: default to the franchise (ship) token.
-export async function getXpressbeesToken(env: Environment, forceRefresh = false): Promise<string> {
-  return getXpressbeesTokenFor("ship", env, forceRefresh);
+export function invalidateXpressbeesToken(env: Environment) {
+  tokenCache.delete(env);
 }
 
-export function invalidateXpressbeesToken(env: Environment, host: Host = "ship") {
-  tokenCache.delete(`${env}:${host}`);
-}
-
-// Shipment/track/cancel APIs live on shipment.xpressbees.com and require the
-// token issued by that host's /api/users/login endpoint.
+// All XpressBees API calls go through ship.xpressbees.com.
 export async function xpressbeesFetch(
   env: Environment,
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  const host: Host = "shipment";
-  const url = path.startsWith("http") ? path : `${HOST_URL[host]}${path}`;
+  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
 
-  let token = await getXpressbeesTokenFor(host, env);
+  let token = await getXpressbeesToken(env);
   const doFetch = (t: string) =>
     fetch(url, {
       ...init,
@@ -122,8 +89,8 @@ export async function xpressbeesFetch(
     });
   let res = await doFetch(token);
   if (res.status === 401) {
-    invalidateXpressbeesToken(env, host);
-    token = await getXpressbeesTokenFor(host, env, true);
+    invalidateXpressbeesToken(env);
+    token = await getXpressbeesToken(env, true);
     res = await doFetch(token);
   }
   return res;
