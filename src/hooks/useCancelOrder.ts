@@ -89,6 +89,22 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         if (error || !data?.success) {
           throw new Error(data?.error || error?.message || "Failed to cancel order");
         }
+      } else if (bookingSource === "xpressbees_direct") {
+        if (!awb) {
+          throw new Error("AWB number required to cancel an XpressBees shipment");
+        }
+        const { data, error } = await supabase.functions.invoke("xpressbees-cancel-order", {
+          body: {
+            waybill: awb,
+            cancel_remarks: reason,
+            booking_id: bookingId,
+          },
+          headers: { "x-environment": CURRENT_ENV },
+        });
+
+        if (error || !data?.success) {
+          throw new Error(data?.error || error?.message || "Failed to cancel order");
+        }
       } else {
         throw new Error(
           "This order was placed with a partner that is no longer supported. Please contact support."

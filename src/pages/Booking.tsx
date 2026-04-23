@@ -475,6 +475,7 @@ const Booking = () => {
       let isShadowfaxDirect = false;
       let isDelhiveryDirect = false;
       let isUrbaneboltDirect = false;
+      let isXpressbeesDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
@@ -486,6 +487,9 @@ const Booking = () => {
             }
             if (partner.partner_id === 'urbanebolt_direct') {
               isUrbaneboltDirect = true;
+            }
+            if (partner.partner_id === 'xpressbees_direct') {
+              isXpressbeesDirect = true;
             }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
@@ -851,6 +855,75 @@ const Booking = () => {
         prayogOrderId = ubResult.orderId || orderId;
         labelUrl = ubResult.label_url || null;
 
+      } else if (isXpressbeesDirect) {
+        // ─── XpressBees Direct Booking ───
+        console.log('[Booking] Using XpressBees direct booking');
+        const { data: xbResult, error: xbError } = await supabase.functions.invoke('xpressbees-booking', {
+          body: {
+            order_id: orderId,
+            sender_name: senderData.name,
+            sender_phone: senderData.phone,
+            sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+            sender_pincode: senderData.pincode,
+            sender_city: senderData.city,
+            sender_state: senderData.state,
+            receiver_name: receiverData.name,
+            receiver_phone: receiverData.phone,
+            receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+            receiver_pincode: receiverData.pincode,
+            receiver_city: receiverData.city,
+            receiver_state: receiverData.state,
+            package_weight: physicalWeight,
+            goods_type: goodsType || 'Package',
+            shipment_value: shipmentValue ? parseFloat(shipmentValue) : 0,
+            length, width, height,
+            service_code: selectedService?.service_code || 'xb_surface_z6',
+          },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (xbError || !xbResult?.success) {
+          if (paymentDetails?.razorpay_payment_id) {
+            const prayogAuthRawXb = localStorage.getItem('prayog_auth');
+            const failedBookingRow = {
+              sender_name: senderData.name, sender_phone: senderData.phone,
+              sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+              sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+              receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+              receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+              receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+              goods_type: goodsType || "Package",
+              package_weight: String(physicalWeight),
+              urgency: urgency || "standard",
+              courier_name: selectedService?.partner_code || selectedCourierData?.name || "XpressBees",
+              courier_price: totalAmount,
+              delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
+              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              booking_source: 'xpressbees_direct',
+            };
+            const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+              body: {
+                payment_id: paymentDetails.razorpay_payment_id,
+                reason: 'xpressbees_booking_failed',
+                error_detail: String(xbResult?.error || xbError?.message || 'unknown'),
+                booking_row: failedBookingRow,
+              },
+              headers: { ...(prayogAuthRawXb ? { 'x-prayog-auth': prayogAuthRawXb } : {}), 'x-environment': CURRENT_ENV },
+            });
+            localStorage.removeItem('booking_draft');
+            if (refundData?.refunded) {
+              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`);
+            }
+            throw new Error(`XpressBees booking failed and refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+          }
+          throw new Error(`XpressBees booking failed: ${xbResult?.error || xbError?.message || 'Unknown error'}`);
+        }
+
+        trackingId = xbResult.awbNumber || xbResult.orderId || orderId;
+        awbNumber = xbResult.awbNumber || null;
+        prayogOrderId = xbResult.orderId || orderId;
+        labelUrl = xbResult.label_url || null;
+
       } else {
         // Unsupported partner — Prayog and other aggregators have been removed.
         throw new Error(
@@ -865,7 +938,9 @@ const Booking = () => {
           ? 'delhivery_direct'
           : isUrbaneboltDirect
             ? 'urbanebolt_direct'
-            : 'unknown';
+            : isXpressbeesDirect
+              ? 'xpressbees_direct'
+              : 'unknown';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,

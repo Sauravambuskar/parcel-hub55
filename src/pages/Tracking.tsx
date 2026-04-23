@@ -130,6 +130,7 @@ const Tracking = () => {
       const isShadowfax = bSource === 'shadowfax_direct';
       const isDelhiveryDirect = bSource === 'delhivery_direct';
       const isUrbanebolt = bSource === 'urbanebolt_direct';
+      const isXpressbees = bSource === 'xpressbees_direct';
 
       if (isShadowfax) {
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
@@ -157,6 +158,15 @@ const Tracking = () => {
 
         if (ubError || !ubData || ubData.error) throw new Error('Failed to fetch Urbanebolt tracking');
         setTrackingData(ubData);
+      } else if (isXpressbees) {
+        const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
+        const { data: xbData, error: xbError } = await supabase.functions.invoke('xpressbees-tracking', {
+          body: { waybill: trackAwb },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (xbError || !xbData || xbData.error) throw new Error('Failed to fetch XpressBees tracking');
+        setTrackingData(xbData);
       } else {
         toast({
           title: "Tracking Unavailable",

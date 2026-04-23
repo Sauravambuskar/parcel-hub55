@@ -165,3 +165,33 @@ export function getUrbaneboltConfig(env: Environment) {
     customerCode: Deno.env.get('URBANEBOLT_CUSTOMER_CODE'),
   };
 }
+
+interface XpressbeesConfig {
+  apiBaseUrl: string;
+  emailEnvVar: string;
+  passwordEnvVar: string;
+}
+
+// XpressBees franchise B2C API has only one base URL (no UAT). Both env keys
+// fall back to PROD credentials so sandbox testing still works.
+export const XPRESSBEES_CONFIG: Record<Environment, XpressbeesConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://shipment.xpressbees.com',
+    emailEnvVar: 'XPRESSBEES_PROD_EMAIL',
+    passwordEnvVar: 'XPRESSBEES_PROD_PASSWORD',
+  },
+  production: {
+    apiBaseUrl: 'https://shipment.xpressbees.com',
+    emailEnvVar: 'XPRESSBEES_PROD_EMAIL',
+    passwordEnvVar: 'XPRESSBEES_PROD_PASSWORD',
+  },
+};
+
+export function getXpressbeesConfig(env: Environment) {
+  const config = XPRESSBEES_CONFIG[env];
+  return {
+    apiBaseUrl: config.apiBaseUrl,
+    email: Deno.env.get(config.emailEnvVar),
+    password: Deno.env.get(config.passwordEnvVar),
+  };
+}

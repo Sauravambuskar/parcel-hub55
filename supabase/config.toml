@@ -104,3 +104,21 @@ verify_jwt = false
 
 [functions.xpressbees-seed-pincodes]
 verify_jwt = false
+
+[functions.xpressbees-serviceability]
+verify_jwt = false
+
+[functions.xpressbees-booking]
+verify_jwt = false
+
+[functions.xpressbees-tracking]
+verify_jwt = false
+
+[functions.xpressbees-cancel-order]
+verify_jwt = false
+
+[functions.xpressbees-label]
+verify_jwt = false
+
+[functions.xpressbees-webhook]
+verify_jwt = false

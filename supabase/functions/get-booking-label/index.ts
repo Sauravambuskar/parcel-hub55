@@ -133,6 +133,39 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 3b) XpressBees: fetch on demand and persist
+    if (source === "xpressbees_direct") {
+      if (!awb) {
+        return new Response(JSON.stringify({ success: false, error: "AWB missing for XpressBees booking" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const env = req.headers.get("x-environment") || "production";
+      const res = await fetch(`${supabaseUrl}/functions/v1/xpressbees-label`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+          "x-environment": env,
+        },
+        body: JSON.stringify({ waybill: awb }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      const labelUrl = payload?.label_url || null;
+
+      if (labelUrl) {
+        await supabase.from("bookings").update({ label_url: labelUrl }).eq("id", b.id);
+        return new Response(JSON.stringify({ success: true, label_url: labelUrl, source: "xpressbees_fresh" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: false, error: "Label not yet available from XpressBees. Please try again in a few minutes." }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // 4) Shadowfax: no direct label API in current integration
     if (source === "shadowfax_direct") {
       return new Response(JSON.stringify({
