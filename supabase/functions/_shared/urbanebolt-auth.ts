@@ -36,9 +36,10 @@ export async function getUrbaneboltToken(env: Environment, forceRefresh = false)
     throw new Error(`Urbanebolt auth failed: ${data?.message || data?.detail || res.status}`);
   }
 
-  // Tokens commonly returned under "access" / "token" / "data.token"
+  // Urbanebolt returns { access_token, expires_in, token_type, expires, status }
   const token: string | undefined =
-    data?.access || data?.token || data?.data?.token || data?.data?.access;
+    data?.access_token || data?.access || data?.token ||
+    data?.data?.access_token || data?.data?.token || data?.data?.access;
   if (!token) {
     console.error("[urbanebolt-auth] no token in response", text.slice(0, 500));
     throw new Error("Urbanebolt auth response missing token");

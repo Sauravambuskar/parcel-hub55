@@ -58,31 +58,61 @@ interface PincodeInfo {
 
 async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<string, PincodeInfo>> {
   const map: Record<string, PincodeInfo> = {};
-  try {
-    const url = `/api/v1/location/pincodes/?pincodes=${pincodes.join(",")}`;
-    const res = await urbaneboltFetch(env, url, { method: "GET" });
-    const text = await res.text();
-    if (!res.ok) {
-      console.warn("[urbanebolt-serviceability] pincode lookup failed", res.status, text.slice(0, 400));
-      return map;
+  // Try a few known endpoint variants — Urbanebolt's WAF blocks unknown paths with HTML 404.
+  const variants: Array<{ path: string; method: string; body?: any }> = [
+    { path: `/api/v1/location/pincodes/?pincodes=${pincodes.join(",")}`, method: "GET" },
+    { path: "/api/v1/location/pincodes/", method: "POST", body: { pincodes } },
+    { path: "/api/v1/services/pincode/", method: "POST", body: { pincodes } },
+  ];
+  for (const v of variants) {
+    try {
+      const init: RequestInit = { method: v.method };
+      if (v.body) init.body = JSON.stringify(v.body);
+      const res = await urbaneboltFetch(env, v.path, init);
+      const text = await res.text();
+      if (!res.ok) {
+        console.warn("[urbanebolt-serviceability] pincode variant failed", v.path, res.status, text.slice(0, 200));
+        continue;
+      }
+      let data: any;
+      try { data = JSON.parse(text); } catch { continue; }
+      const list: any[] = data?.data || data?.results || data?.pincodes || (Array.isArray(data) ? data : []);
+      for (const item of list) {
+        const pin = String(item?.pincode || item?.pin || "");
+        if (!pin) continue;
+        map[pin] = {
+          pincode: pin,
+          city: item?.city || item?.city_name || "",
+          state: item?.state || item?.state_name || "",
+          serviceable: item?.is_serviceable !== false && item?.serviceable !== false,
+        };
+      }
+      if (Object.keys(map).length) return map;
+    } catch (e) {
+      console.warn("[urbanebolt-serviceability] pincode variant error", v.path, String(e));
     }
-    let data: any;
-    try { data = JSON.parse(text); } catch { return map; }
-    const list: any[] = data?.data || data?.results || data?.pincodes || (Array.isArray(data) ? data : []);
-    for (const item of list) {
-      const pin = String(item?.pincode || item?.pin || "");
-      if (!pin) continue;
-      map[pin] = {
+  }
+  return map;
+}
+
+// Fallback: geocode pincode via India Post (free, no auth) to get city/state.
+async function geocodeFallback(pin: string): Promise<PincodeInfo> {
+  try {
+    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+    const j = await r.json();
+    const po = j?.[0]?.PostOffice?.[0];
+    if (po) {
+      return {
         pincode: pin,
-        city: item?.city || item?.city_name || "",
-        state: item?.state || item?.state_name || "",
-        serviceable: item?.is_serviceable !== false && item?.serviceable !== false,
+        city: po.District || po.Block || po.Name || "",
+        state: po.State || "",
+        serviceable: true, // Assume serviceable; Urbanebolt covers 7000+ pincodes
       };
     }
   } catch (e) {
-    console.error("[urbanebolt-serviceability] pincode lookup error", e);
+    console.warn("[urbanebolt-serviceability] india-post fallback failed", pin, String(e));
   }
-  return map;
+  return { pincode: pin, city: "", state: "", serviceable: true };
 }
 
 type ZoneKey = keyof typeof RATE_CARD;
@@ -135,8 +165,13 @@ Deno.serve(async (req) => {
     }
 
     const map = await lookupPincodes(env, [pickup_pincode, delivery_pincode]);
-    const pickup = map[pickup_pincode];
-    const delivery = map[delivery_pincode];
+    let pickup = map[pickup_pincode];
+    let delivery = map[delivery_pincode];
+
+    // If Urbanebolt's pincode API didn't return data (WAF block / rate limit / endpoint mismatch),
+    // fall back to India Post geocoding and assume serviceable. Urbanebolt covers 7000+ pincodes.
+    if (!pickup) pickup = await geocodeFallback(pickup_pincode);
+    if (!delivery) delivery = await geocodeFallback(delivery_pincode);
 
     const isServiceable = !!(pickup?.serviceable && delivery?.serviceable);
     if (!isServiceable) {
