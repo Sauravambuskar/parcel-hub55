@@ -73,13 +73,16 @@ export function invalidateXpressbeesToken(env: Environment) {
 }
 
 // Helper: call XpressBees API, auto-retry once on 401 with a fresh token.
+// NOTE: Auth/login lives on ship.xpressbees.com, but shipment/track/cancel
+// endpoints are served by shipment.xpressbees.com. We rewrite the host here.
+const SHIPMENT_HOST = "https://shipment.xpressbees.com";
+
 export async function xpressbeesFetch(
   env: Environment,
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  const { apiBaseUrl } = getXpressbeesConfig(env);
-  const url = path.startsWith("http") ? path : `${apiBaseUrl}${path}`;
+  const url = path.startsWith("http") ? path : `${SHIPMENT_HOST}${path}`;
   let token = await getXpressbeesToken(env);
   const doFetch = (t: string) =>
     fetch(url, {
