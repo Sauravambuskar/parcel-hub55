@@ -1,7 +1,6 @@
 // Urbanebolt serviceability check + price quote.
-// Calls Pincode API for both pickup & delivery, computes price from the rate
-// card (intra-city + intercity tiers, weight slabs, FSC), and returns a
-// partner shape compatible with Shadowfax/Delhivery.
+// Uses official Urbanebolt rate card (6 zones), 15% flat FSC, volumetric weight.
+// Pincode API confirms serviceability and returns city/state used for zoning.
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { urbaneboltFetch } from "../_shared/urbanebolt-auth.ts";
@@ -12,16 +11,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-// Rate card (forward, per 500g slab).
-// Tuned to fall in the same competitive range as Shadowfax/Delhivery; refine
-// once Urbanebolt shares an official rate sheet.
+// Official Urbanebolt rate card (per 500g slab, INR).
+// FSC: 15% flat. Volumetric: L*B*H/5000.
 const RATE_CARD = {
-  intracity:   { first: 45, additional: 35, tat: "Same/Next Day", tatDays: 1, fsc: 0.10 },
-  intercity:   { first: 70, additional: 55, tat: "2-4 Days",      tatDays: 3, fsc: 0.20 },
+  intracity_sdd: { first: 35, additional: 35, tat: "Same Day (12 Hrs)",  tatDays: 0, label: "Intracity SDD" },
+  intracity_ndd: { first: 25, additional: 22, tat: "Next Day (24 Hrs)",  tatDays: 1, label: "Intracity NDD" },
+  intercity:     { first: 38, additional: 35, tat: "24 Hrs",             tatDays: 1, label: "Intercity" },
+  metro:         { first: 55, additional: 52, tat: "24 Hrs",             tatDays: 1, label: "Metro" },
+  roi:           { first: 58, additional: 55, tat: "24-48 Hrs",          tatDays: 2, label: "Rest of India" },
+  ne:            { first: 75, additional: 72, tat: "48-72 Hrs",          tatDays: 3, label: "North East" },
 };
 
+const FSC_RATE = 0.15;
+
+const METRO_CITIES = new Set([
+  "delhi", "new delhi", "mumbai", "bangalore", "bengaluru", "chennai",
+  "kolkata", "hyderabad", "pune", "ahmedabad",
+]);
+
+const NE_STATES = new Set([
+  "assam", "arunachal pradesh", "manipur", "meghalaya", "mizoram",
+  "nagaland", "tripura", "sikkim", "jammu and kashmir", "ladakh",
+  "andaman and nicobar islands", "lakshadweep",
+]);
+
 function calculatePrice(
-  rate: { first: number; additional: number; fsc: number },
+  rate: { first: number; additional: number },
   weightKg: number,
   l: number, w: number, h: number,
 ): number {
@@ -30,7 +45,7 @@ function calculatePrice(
   const slabs = Math.ceil((chargeable * 1000) / 500);
   let price = rate.first;
   if (slabs > 1) price += (slabs - 1) * rate.additional;
-  price += price * rate.fsc;
+  price += price * FSC_RATE;
   return Math.round(price);
 }
 
@@ -61,7 +76,6 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
         pincode: pin,
         city: item?.city || item?.city_name || "",
         state: item?.state || item?.state_name || "",
-        // Treat presence in response as serviceable unless explicitly false
         serviceable: item?.is_serviceable !== false && item?.serviceable !== false,
       };
     }
@@ -69,6 +83,33 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
     console.error("[urbanebolt-serviceability] pincode lookup error", e);
   }
   return map;
+}
+
+type ZoneKey = keyof typeof RATE_CARD;
+
+function detectZones(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey[] {
+  const pCity = (pickup.city || "").trim().toLowerCase();
+  const dCity = (delivery.city || "").trim().toLowerCase();
+  const pState = (pickup.state || "").trim().toLowerCase();
+  const dState = (delivery.state || "").trim().toLowerCase();
+
+  // North East / remote — overrides everything
+  if (NE_STATES.has(pState) || NE_STATES.has(dState)) return ["ne"];
+
+  // Intracity — same city: offer both SDD + NDD
+  if (pCity && dCity && pCity === dCity) return ["intracity_sdd", "intracity_ndd"];
+
+  // Metro to Metro — Intercity
+  if (METRO_CITIES.has(pCity) && METRO_CITIES.has(dCity)) return ["intercity"];
+
+  // Either end is metro — Metro tier
+  if (METRO_CITIES.has(pCity) || METRO_CITIES.has(dCity)) return ["metro"];
+
+  // Same state — treat as Intercity (within state)
+  if (pState && dState && pState === dState) return ["intercity"];
+
+  // Default: Rest of India
+  return ["roi"];
 }
 
 Deno.serve(async (req) => {
@@ -109,51 +150,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Decide intracity vs intercity based on city match
-    const sameCity =
-      pickup.city && delivery.city &&
-      pickup.city.trim().toLowerCase() === delivery.city.trim().toLowerCase();
+    const zones = detectZones(pickup, delivery);
 
-    const services: any[] = [];
-    if (sameCity) {
-      const r = RATE_CARD.intracity;
+    const services = zones.map((zoneKey) => {
+      const r = RATE_CARD[zoneKey];
       const price = calculatePrice(r, weight_kg, length_cm, width_cm, height_cm);
-      services.push({
-        service_code: "ub_intracity",
-        service_name: "Urbanebolt Intra-City",
+      const isExpress = zoneKey === "intracity_sdd" || zoneKey === "intracity_ndd";
+      return {
+        service_code: `ub_${zoneKey}`,
+        service_name: `Urbanebolt ${r.label}`,
         tat_days: r.tatDays,
         tat_label: r.tat,
-        delivery_modes: { express: true, standard: false },
+        delivery_modes: { express: isExpress, standard: !isExpress },
         is_cod: false,
         pickup: true,
         delivery: true,
         insurance: false,
         rate: {
-          rate_id: "ub_rate_intracity",
+          rate_id: `ub_rate_${zoneKey}`,
           price: { amount: price, currency: "INR", type: "calculated" },
-          description: "Urbanebolt Intra-City Express",
+          description: `Urbanebolt ${r.label} (incl. 15% FSC)`,
         },
-      });
-    } else {
-      const r = RATE_CARD.intercity;
-      const price = calculatePrice(r, weight_kg, length_cm, width_cm, height_cm);
-      services.push({
-        service_code: "ub_intercity",
-        service_name: "Urbanebolt Intercity",
-        tat_days: r.tatDays,
-        tat_label: r.tat,
-        delivery_modes: { express: false, standard: true },
-        is_cod: false,
-        pickup: true,
-        delivery: true,
-        insurance: false,
-        rate: {
-          rate_id: "ub_rate_intercity",
-          price: { amount: price, currency: "INR", type: "calculated" },
-          description: "Urbanebolt Intercity Standard",
-        },
-      });
-    }
+      };
+    });
 
     const partner = {
       partner_id: "urbanebolt_direct",
@@ -165,7 +184,9 @@ Deno.serve(async (req) => {
       metadata: {
         pickup_city: pickup.city,
         delivery_city: delivery.city,
-        zone: sameCity ? "intracity" : "intercity",
+        pickup_state: pickup.state,
+        delivery_state: delivery.state,
+        zones,
       },
     };
 
