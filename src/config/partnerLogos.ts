@@ -3,6 +3,7 @@
 
 import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
 import delhiveryLogo from "@/assets/delhivery-logo.jpg";
+import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
 
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
