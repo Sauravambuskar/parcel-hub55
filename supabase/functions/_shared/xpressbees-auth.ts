@@ -36,7 +36,7 @@ export async function getXpressbeesToken(env: Environment, forceRefresh = false)
     base: apiBaseUrl,
   });
 
-  const url = `${apiBaseUrl}/api/users/login`;
+  const url = `${apiBaseUrl}/api/users/franchise_login`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
