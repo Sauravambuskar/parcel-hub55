@@ -586,10 +586,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_cod: boolean | null
+          is_pickup: boolean | null
           is_prepaid: boolean | null
           pincode: string
           state: string | null
-          zone: string | null
         }
         Insert: {
           city?: string | null
@@ -597,10 +597,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_cod?: boolean | null
+          is_pickup?: boolean | null
           is_prepaid?: boolean | null
           pincode: string
           state?: string | null
-          zone?: string | null
         }
         Update: {
           city?: string | null
@@ -608,10 +608,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_cod?: boolean | null
+          is_pickup?: boolean | null
           is_prepaid?: boolean | null
           pincode?: string
           state?: string | null
-          zone?: string | null
         }
         Relationships: []
       }
