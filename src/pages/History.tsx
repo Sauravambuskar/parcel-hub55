@@ -369,6 +369,7 @@ const History = () => {
                     const canFetchLabel =
                       bm?.booking_source === 'delhivery_direct' ||
                       bm?.booking_source === 'urbanebolt_direct' ||
+                      bm?.booking_source === 'xpressbees_direct' ||
                       !!labelUrl;
                     if (!canFetchLabel || isShreeMaruti) return null;
                     return (
