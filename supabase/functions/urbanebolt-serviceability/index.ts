@@ -165,8 +165,13 @@ Deno.serve(async (req) => {
     }
 
     const map = await lookupPincodes(env, [pickup_pincode, delivery_pincode]);
-    const pickup = map[pickup_pincode];
-    const delivery = map[delivery_pincode];
+    let pickup = map[pickup_pincode];
+    let delivery = map[delivery_pincode];
+
+    // If Urbanebolt's pincode API didn't return data (WAF block / rate limit / endpoint mismatch),
+    // fall back to India Post geocoding and assume serviceable. Urbanebolt covers 7000+ pincodes.
+    if (!pickup) pickup = await geocodeFallback(pickup_pincode);
+    if (!delivery) delivery = await geocodeFallback(delivery_pincode);
 
     const isServiceable = !!(pickup?.serviceable && delivery?.serviceable);
     if (!isServiceable) {
