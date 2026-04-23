@@ -83,3 +83,21 @@ verify_jwt = false
 
 [functions.delhivery-label]
 verify_jwt = false
+
+[functions.urbanebolt-serviceability]
+verify_jwt = false
+
+[functions.urbanebolt-booking]
+verify_jwt = false
+
+[functions.urbanebolt-tracking]
+verify_jwt = false
+
+[functions.urbanebolt-cancel-order]
+verify_jwt = false
+
+[functions.urbanebolt-label]
+verify_jwt = false
+
+[functions.urbanebolt-webhook]
+verify_jwt = false
