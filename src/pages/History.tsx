@@ -366,7 +366,10 @@ const History = () => {
                   {(() => {
                     const bm = bookingsMap[order.orderId];
                     const bookingId = (order as any)._localBookingId || bm?.id;
-                    const canFetchLabel = bm?.booking_source === 'delhivery_direct' || !!labelUrl;
+                    const canFetchLabel =
+                      bm?.booking_source === 'delhivery_direct' ||
+                      bm?.booking_source === 'urbanebolt_direct' ||
+                      !!labelUrl;
                     if (!canFetchLabel || isShreeMaruti) return null;
                     return (
                       <Button
