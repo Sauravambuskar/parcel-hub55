@@ -1,80 +1,98 @@
 
 
-## Urbanebolt Direct Integration
+## XpressBees Direct Integration — Manual Serviceability + Rate Card
 
-Add Urbanebolt as a third direct courier partner alongside Shadowfax and Delhivery, covering serviceability + price quote, booking, tracking, cancellation, and label download.
+Since the XpressBees franchise B2C API exposes only Login, Courier List, Shipments, Cancel, Track, Pickup, Rate Calculator and NDR — there is **no live pincode serviceability endpoint** — we'll mirror the Shadowfax pattern: pincode CSV in DB + rate card in code.
 
-### What needs to happen first (from you)
-- **Sandbox (UAT) credentials**: `username` and `password` for `https://uat.urbanebolt.in/api/v1/auth/getToken/`
-- **Production credentials** (when ready): same pair for `https://api.urbanebolt.in/...`
-- **Customer code** that Urbanebolt assigns to your account (used in payloads)
+### What I need from you first
 
-I'll request these as Supabase secrets:
-- `URBANEBOLT_UAT_USERNAME`, `URBANEBOLT_UAT_PASSWORD`
-- `URBANEBOLT_PROD_USERNAME`, `URBANEBOLT_PROD_PASSWORD`
-- `URBANEBOLT_CUSTOMER_CODE`
+1. **Credentials** (Supabase secrets):
+   - `XPRESSBEES_PROD_EMAIL`, `XPRESSBEES_PROD_PASSWORD` (for `/api/users/franchise_login`)
+   - `XPRESSBEES_PICKUP_LOCATION` (the pickup location name registered on your XpressBees franchise panel)
+2. **Two CSVs / sheets** (you upload, I'll seed):
+   - **Serviceable pincodes** — columns: `pincode, city, state, zone (intra/metro/roi/special), is_cod, is_prepaid`
+   - **Rate card** — slabs by zone × weight (forward + RTO), FSC %, COD %, min chargeable weight, volumetric divisor
+3. **Courier ID list** — the JSON returned by `GET /api/franchise/shipments/courier` (or let me call it once after creds land and cache it). We need the `courier_id` values so we can show service modes (Surface / Air / etc.) on the ETA cards.
 
-### What I will build
+### Architecture
 
-#### 1) Shared environment + token helper
-Update `supabase/functions/_shared/environment.ts`:
-- Add `URBANEBOLT_CONFIG` (UAT vs PROD base URLs)
-- Add `getUrbanboltConfig(env)` returning `{ apiBaseUrl, username, password, customerCode }`
-
-Create `supabase/functions/_shared/urbanebolt-auth.ts`:
-- `getUrbanboltToken(env)` calls `/auth/getToken/`, caches the JWT in-memory per function instance until expiry, refreshes on 401
-- All Urbanebolt edge functions reuse this
-
-#### 2) New edge functions (all with `verify_jwt = false`, CORS, env header)
-- `urbanebolt-serviceability` — calls Pincode API for both pickup & delivery, returns the same shape Shadowfax/Delhivery use (`{ is_serviceable, partner: { partner_code: 'urbanebolt', services: [...] } }`). Price + TAT computed from the rate card sheet you shared (intra-city + intercity tiers, weight slabs, FSC).
-- `urbanebolt-booking` — calls Manifest API with mapped softdata payload (sender, receiver, package, payment mode, customer code), persists `prayog_awb` (= AWB returned), `booking_source = 'urbanebolt_direct'`, and `label_url` if returned.
-- `urbanebolt-tracking` — calls Tracking PULL API by AWB, normalizes status to the same shape used by Shadowfax/Delhivery tracking.
-- `urbanebolt-cancel-order` — calls Cancellation API with AWB + reason; updates booking row.
-- `urbanebolt-label` — calls Print Label API by AWB, returns label URL/blob; persisted into `bookings.label_url`.
-- `urbanebolt-webhook` — public endpoint registered in Urbanebolt panel; receives status updates and updates `bookings.status` by AWB.
-
-Register all six in `supabase/config.toml` with `verify_jwt = false`.
-
-#### 3) Wire into existing flows
-- `src/components/booking/BookingStep2.tsx` → add `{ code: 'urbanebolt', fn: 'urbanebolt-serviceability' }` to `DIRECT_PARTNERS` so it runs in parallel.
-- `src/config/partnerLogos.ts` → add `urbanebolt` and `urbanebolt_direct` entries (placeholder via UI Avatars until you provide an SVG/PNG).
-- `src/hooks/useCancelOrder.ts` → add `urbanebolt_direct` branch invoking `urbanebolt-cancel-order`.
-- `supabase/functions/get-booking-label/index.ts` → handle `booking_source === 'urbanebolt_direct'` by calling `urbanebolt-label` and persisting the URL.
-- `src/pages/Tracking.tsx` → route to `urbanebolt-tracking` when source matches.
-- `supabase/functions/save-booking/index.ts` and `confirm-booking-or-refund` → recognize `urbanebolt_direct` as a valid source.
-
-#### 4) Booking payload mapping (Urbanebolt softdata)
-Mapping ViaSetu booking → Urbanebolt manifest fields (mandatory fields from the shared spec sheet):
 ```text
-shipment_no       <- internal booking id
-awb               <- left blank (Urbanebolt assigns)
-order_no          <- internal booking id
-payment_mode      <- 'Prepaid' (no COD; COP handled separately if requested)
-customer_code     <- URBANEBOLT_CUSTOMER_CODE
-consignee_name    <- receiver_name
-consignee_address <- receiver flat + address
-consignee_city    <- receiver_city
-consignee_state   <- receiver_state
-consignee_pin     <- receiver_pincode
-consignee_mobile  <- receiver_phone
-seller_name       <- sender_name
-seller_address    <- sender flat + address
-seller_pin        <- sender_pincode
-product_desc      <- goods_type
-qty               <- 1
-weight (kg)       <- package_weight
-length/width/height <- dimensions (cm)
-declared_value    <- shipment_value
+Frontend (BookingStep2)
+   │  parallel serviceability fan-out
+   ▼
+xpressbees-serviceability  ── reads ──▶  xpressbees_pincodes (Postgres)
+   │                                      + rate_card.ts (in-code)
+   ▼
+returns { is_serviceable, services[]: [Surface, Air, …] with price + TAT }
+
+xpressbees-booking  ──▶  POST /api/franchise/shipments/  (Bearer)
+xpressbees-tracking ──▶  POST /api/franchise/shipments/track
+xpressbees-cancel   ──▶  POST /api/franchise/shipments/cancel
+xpressbees-label    ──▶  fetched from booking response / label endpoint
+xpressbees-webhook  ──▶  public, updates bookings.status by AWB
 ```
 
-#### 5) Verification checklist
-1. Sandbox token fetch succeeds, cached across calls.
-2. Pincode check returns serviceable for a known UAT pincode pair; Urbanebolt appears as a partner card on Step 4 alongside Shadowfax/Delhivery.
-3. Place a test booking → AWB stored, label downloads via `urbanebolt-label`, booking visible in History with all action buttons working.
-4. Tracking page shows live status from Tracking PULL API.
-5. Cancel from History/Details succeeds and reflects status.
-6. Webhook hit updates the booking status without manual refresh.
+### Build steps
+
+**1. Database**
+- New table `xpressbees_pincodes` (mirrors `shadowfax_pincodes`): `pincode, city, state, zone, is_cod, is_prepaid, is_active`. RLS: public read, service-role write. Seeded from your CSV via migration.
+
+**2. Shared helpers**
+- `_shared/environment.ts` → add `XPRESSBEES_CONFIG` (single base `https://ship.xpressbees.com`, since franchise API has no UAT).
+- `_shared/xpressbees-auth.ts` → `getXpressbeesToken()` calls `/api/users/franchise_login`, caches JWT in-memory, refreshes on 401.
+- `_shared/xpressbees-rates.ts` → pure function `quote({zone, weight_kg, dimensions, mode}) → {price, tat_days}`. Encodes the rate card you provide. Applies min chargeable weight + max(actual, volumetric).
+
+**3. Edge functions** (all `verify_jwt = false`, CORS, env header)
+- `xpressbees-serviceability` — looks up both pincodes in `xpressbees_pincodes`, derives zone (intra-city if same city; else metro/ROI/special based on the destination zone column), runs `quote()` for each available service mode, returns same shape as Shadowfax/Delhivery/Urbanebolt.
+- `xpressbees-booking` — maps booking → franchise shipment payload (field names from the docs: `consigner_*`, `consignee_*`, `products[]`, `weight` in **grams**, `length/breadth/height` in cm, `courier_id`, `pickup_location`, `payment_method: "PPD"`, `order_amount`, `collectable_amount: 0`). Persists AWB + label URL.
+- `xpressbees-tracking` — POST to track endpoint with AWB; normalize to shared status enum (DELIVERED / OUT_FOR_DELIVERY / IN_TRANSIT / RTO / CANCELLED).
+- `xpressbees-cancel-order` — POST to cancel with AWB + reason.
+- `xpressbees-label` — return label URL stored at booking, or fetch on-demand if endpoint exists.
+- `xpressbees-webhook` — public; updates `bookings.status` by AWB.
+
+All registered in `supabase/config.toml`.
+
+**4. Frontend wiring** (mirror Urbanebolt exactly)
+- `BookingStep2.tsx` → add `{ code: 'xpressbees', fn: 'xpressbees-serviceability' }` to `DIRECT_PARTNERS`.
+- `partnerLogos.ts` → add `xpressbees` + `xpressbees_direct` (placeholder until you share the logo).
+- `useCancelOrder.ts` → `xpressbees_direct` branch.
+- `get-booking-label/index.ts`, `Tracking.tsx`, `History.tsx` → recognize `xpressbees_direct`.
+- `Booking.tsx`, `save-booking`, `confirm-booking-or-refund` → accept `xpressbees_direct` as valid source.
+
+**5. Pricing**
+- Platform commission + 18% GST flow through the existing `usePlatformFee` / `calculate-platform-fee` path. No partner-specific changes.
+- Hidden platform-fee-merged-into-base-fare convention is preserved.
+
+### Payload mapping (Shipments API)
+
+```text
+id                <- internal booking id
+payment_method    <- "PPD" (no COD; COP handled separately)
+consigner_*       <- sender_*  (city/state/pincode/address/phone/name)
+consignee_*       <- receiver_* (same)
+products[0]       <- { product_name: goods_type, product_qty: "1",
+                       product_price: shipment_value, product_sku: id, product_hsn: "" }
+invoice[0]        <- empty strings (no e-invoice)
+weight            <- package_weight_kg * 1000  (grams, string)
+length/breadth/height <- cm (string)
+courier_id        <- selected service from serviceability response
+pickup_location   <- XPRESSBEES_PICKUP_LOCATION
+order_amount      <- shipment_value
+collectable_amount<- "0"
+```
+
+### Verification checklist
+
+1. Login returns token, cached across calls.
+2. Pincode CSV seeded; serviceability returns XpressBees with correct zone-based price + TAT.
+3. Test booking → AWB stored, label saved, visible in History with all action buttons.
+4. Tracking shows live status.
+5. Cancel from History/Details succeeds.
+6. Webhook hit updates status without refresh.
 
 ### Out of scope for this round
-ePOD, NDR re-attempt/RTO-lock, and PayMode change endpoints — happy to add as a follow-up once core flow is verified.
+NDR re-attempt, COD/Prepaid switch, ePOD fetch, Pickup Shipment endpoint (we'll rely on auto-pickup tied to `pickup_location`). Easy follow-ups.
+
+### Open question
+**Do you already have an XpressBees pincode CSV from them, or should I send you a template (`pincode,city,state,zone,is_cod,is_prepaid`) for you to fill?** Same question for the rate card — share the sheet they gave you and I'll encode it.
 
