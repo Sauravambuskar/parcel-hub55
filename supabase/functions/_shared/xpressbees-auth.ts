@@ -21,6 +21,17 @@ export async function getXpressbeesToken(env: Environment, forceRefresh = false)
     throw new Error("XpressBees credentials not configured (XPRESSBEES_PROD_EMAIL / XPRESSBEES_PROD_PASSWORD)");
   }
 
+  // One-time metadata log (no secret values) to detect typos / whitespace.
+  console.log("[xpressbees-auth] cred check", {
+    email_len: email.length,
+    email_prefix: email.slice(0, 2),
+    email_suffix: email.slice(-6),
+    email_trimmed_diff: email.length - email.trim().length,
+    pwd_len: password.length,
+    pwd_trimmed_diff: password.length - password.trim().length,
+    base: apiBaseUrl,
+  });
+
   const url = `${apiBaseUrl}/api/users/login`;
   const res = await fetch(url, {
     method: "POST",
