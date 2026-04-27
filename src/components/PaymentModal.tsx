@@ -153,7 +153,7 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
               console.error('Payment verification failed, triggering auto-refund:', verifyError || verifyData);
               // Auto-refund: payment was captured but signature verification failed.
               try {
-                const prayogAuthRaw = localStorage.getItem('prayog_auth');
+                // prayogAuthRaw already in scope from outer try
                 const { data: refundData, error: refundError } = await supabase.functions.invoke(
                   'confirm-booking-or-refund',
                   {
