@@ -5,10 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { IndianRupee, TrendingUp, Download, Percent, CreditCard, Package, RefreshCw } from "lucide-react";
+import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfDay, startOfMonth, startOfWeek, subDays, subMonths } from "date-fns";
+import { format, startOfDay, startOfMonth, startOfWeek, subMonths } from "date-fns";
 
 interface Booking {
   id: string;
@@ -19,12 +19,31 @@ interface Booking {
   created_at: string;
   sender_name: string;
   receiver_name: string;
-  base_fare?: number;
-  platform_fee?: number;
-  prayog_commission?: number;
-  gst?: number;
-  payment_status?: string;
+  base_fare?: number | null;
+  platform_fee?: number | null;
+  prayog_commission?: number | null;
+  gst?: number | null;
+  packaging_amount?: number | null;
+  insurance_amount?: number | null;
+  payment_status?: string | null;
 }
+
+const num = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
+
+// Real per-booking financial breakdown sourced from DB columns.
+const breakdownOf = (b: Booking) => {
+  const total = num(b.courier_price);
+  const platformRevenue = num(b.platform_fee);
+  const gst = num(b.gst);
+  const packaging = num(b.packaging_amount);
+  const insurance = num(b.insurance_amount);
+  // What we owe the courier partner. Prefer base_fare when present, otherwise derive.
+  const derivedPartner = total - platformRevenue - gst - packaging - insurance;
+  const partnerPayable = b.base_fare != null && num(b.base_fare) > 0
+    ? num(b.base_fare)
+    : Math.max(0, derivedPartner);
+  return { total, platformRevenue, gst, packaging, insurance, partnerPayable };
+};
 
 const RevenueManagement = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -34,6 +53,20 @@ const RevenueManagement = () => {
 
   useEffect(() => {
     fetchBookings();
+
+    // Realtime: refresh on any booking insert/update so revenue stays in sync
+    const channel = supabase
+      .channel("admin-revenue-bookings")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        () => fetchBookings(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchBookings = async () => {
@@ -60,97 +93,88 @@ const RevenueManagement = () => {
   const getFilteredBookings = () => {
     const now = new Date();
     let startDate: Date;
-
     switch (dateRange) {
-      case "today":
-        startDate = startOfDay(now);
-        break;
-      case "week":
-        startDate = startOfWeek(now);
-        break;
-      case "month":
-        startDate = startOfMonth(now);
-        break;
-      case "year":
-        startDate = subMonths(now, 12);
-        break;
-      default:
-        startDate = startOfDay(now);
+      case "today": startDate = startOfDay(now); break;
+      case "week": startDate = startOfWeek(now); break;
+      case "month": startDate = startOfMonth(now); break;
+      case "year": startDate = subMonths(now, 12); break;
+      default: startDate = startOfDay(now);
     }
-
     return bookings.filter(b => new Date(b.created_at) >= startDate);
   };
 
   const filteredBookings = getFilteredBookings();
 
-  // COP bookings haven't been collected yet — track separately
-  const copBookings = filteredBookings.filter(b => b.payment_status === 'cop_pending');
-  const collectedBookings = filteredBookings.filter(b => b.payment_status !== 'cop_pending');
+  // COP not collected yet — exclude from revenue totals
+  const copBookings = filteredBookings.filter(b => b.payment_status === "cop_pending");
+  const collectedBookings = filteredBookings.filter(b => b.payment_status !== "cop_pending");
 
-  // Calculate revenue stats (Total Collections excludes COP-pending)
-  const totalRevenue = collectedBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-  const copPendingTotal = copBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-  const platformCommission = Math.round(totalRevenue * 0.1); // 10% platform fee
-  const prayogCommission = Math.round(totalRevenue * 0.05); // 5% Prayog commission
-  const gstCollected = Math.round(totalRevenue * 0.18 / 1.18); // GST from total
-  const netRevenue = platformCommission; // Your actual earnings
+  const sumBy = (rows: Booking[], pick: (k: ReturnType<typeof breakdownOf>) => number) =>
+    rows.reduce((acc, b) => acc + pick(breakdownOf(b)), 0);
+
+  const totalCollections = sumBy(collectedBookings, k => k.total);
+  const partnerPayableTotal = sumBy(collectedBookings, k => k.partnerPayable);
+  const platformRevenueTotal = sumBy(collectedBookings, k => k.platformRevenue);
+  const gstCollected = sumBy(collectedBookings, k => k.gst);
+  const copPendingTotal = sumBy(copBookings, k => k.total);
 
   const revenueStats = [
     {
       title: "Total Collections",
-      value: `₹${totalRevenue.toLocaleString()}`,
+      value: `₹${totalCollections.toLocaleString()}`,
       change: `${collectedBookings.length} paid orders`,
       icon: IndianRupee,
-      color: "text-green-600"
+      color: "text-green-600",
     },
     {
       title: "Pending COP Collection",
       value: `₹${copPendingTotal.toLocaleString()}`,
       change: `${copBookings.length} cash-on-pickup orders`,
       icon: IndianRupee,
-      color: "text-yellow-600"
+      color: "text-yellow-600",
     },
     {
-      title: "Platform Commission (10%)",
-      value: `₹${platformCommission.toLocaleString()}`,
-      change: "Your earnings",
+      title: "Amount Payable to Partners",
+      value: `₹${partnerPayableTotal.toLocaleString()}`,
+      change: "Owed to courier partners",
+      icon: Truck,
+      color: "text-purple-600",
+    },
+    {
+      title: "Platform Revenue",
+      value: `₹${platformRevenueTotal.toLocaleString()}`,
+      change: "Net to Viasetu",
       icon: Percent,
-      color: "text-blue-600"
+      color: "text-blue-600",
     },
     {
       title: "GST Collected",
       value: `₹${gstCollected.toLocaleString()}`,
       change: "18% GST",
       icon: TrendingUp,
-      color: "text-orange-600"
+      color: "text-orange-600",
     },
   ];
 
-  // Calculate per-transaction breakdown
-  const getTransactionBreakdown = (booking: Booking) => {
-    const total = booking.courier_price || 0;
-    const baseFare = booking.base_fare || Math.round(total * 0.67);
-    const platformFee = booking.platform_fee || Math.round(total * 0.10);
-    const prayogFee = booking.prayog_commission || Math.round(total * 0.05);
-    const gst = booking.gst || Math.round(total * 0.18 / 1.18);
-    
-    return { baseFare, platformFee, prayogFee, gst, total };
-  };
-
-  // Monthly revenue data
+  // Monthly revenue using real columns
   const getMonthlyData = () => {
-    const monthlyMap = new Map<string, { revenue: number; orders: number; commission: number }>();
-    
-    bookings.forEach(booking => {
-      const monthKey = format(new Date(booking.created_at), "MMM yyyy");
-      const existing = monthlyMap.get(monthKey) || { revenue: 0, orders: 0, commission: 0 };
+    const monthlyMap = new Map<
+      string,
+      { revenue: number; orders: number; partner: number; platform: number; gst: number }
+    >();
+    bookings.forEach(b => {
+      if (b.payment_status === "cop_pending") return;
+      const k = breakdownOf(b);
+      const monthKey = format(new Date(b.created_at), "MMM yyyy");
+      const existing = monthlyMap.get(monthKey) || { revenue: 0, orders: 0, partner: 0, platform: 0, gst: 0 };
       monthlyMap.set(monthKey, {
-        revenue: existing.revenue + (booking.courier_price || 0),
+        revenue: existing.revenue + k.total,
         orders: existing.orders + 1,
-        commission: existing.commission + Math.round((booking.courier_price || 0) * 0.1),
+        partner: existing.partner + k.partnerPayable,
+        platform: existing.platform + k.platformRevenue,
+        gst: existing.gst + k.gst,
       });
     });
-
     return Array.from(monthlyMap.entries())
       .map(([month, data]) => ({ month, ...data }))
       .slice(0, 6);
@@ -158,23 +182,32 @@ const RevenueManagement = () => {
 
   const monthlyData = getMonthlyData();
 
+  // Period-wide breakdown shares for the Price Breakdown tab
+  const periodTotals = {
+    partner: sumBy(collectedBookings, k => k.partnerPayable),
+    platform: sumBy(collectedBookings, k => k.platformRevenue),
+    gst: sumBy(collectedBookings, k => k.gst),
+    packaging: sumBy(collectedBookings, k => k.packaging),
+    insurance: sumBy(collectedBookings, k => k.insurance),
+  };
+  const periodGrand = totalCollections || 1;
+  const pct = (n: number) => `${((n / periodGrand) * 100).toFixed(1)}%`;
+
   const handleExportReport = () => {
-    // Create CSV content
-    const headers = ["Order ID", "Date", "Courier", "Total", "Platform Fee", "Prayog Commission", "GST", "Status"];
+    const headers = [
+      "Order ID", "Date", "Courier", "Total",
+      "Partner Payable", "Platform Revenue", "GST", "Packaging", "Insurance", "Status",
+    ];
     const rows = filteredBookings.map(b => {
-      const breakdown = getTransactionBreakdown(b);
+      const k = breakdownOf(b);
       return [
         b.tracking_id || b.id.slice(0, 8),
         format(new Date(b.created_at), "dd/MM/yyyy"),
         b.courier_name,
-        breakdown.total,
-        breakdown.platformFee,
-        breakdown.prayogFee,
-        breakdown.gst,
-        b.status || "pending"
+        k.total, k.partnerPayable, k.platformRevenue, k.gst, k.packaging, k.insurance,
+        b.status || "pending",
       ].join(",");
     });
-    
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -182,7 +215,6 @@ const RevenueManagement = () => {
     a.href = url;
     a.download = `revenue-report-${dateRange}.csv`;
     a.click();
-    
     toast({ title: "Report exported successfully" });
   };
 
@@ -195,12 +227,19 @@ const RevenueManagement = () => {
     }
   };
 
+  // Lifetime aggregates for the analytics tab
+  const lifetimeCollected = bookings.filter(b => b.payment_status !== "cop_pending");
+  const lifetimeRevenue = sumBy(lifetimeCollected, k => k.total);
+  const lifetimePlatform = sumBy(lifetimeCollected, k => k.platformRevenue);
+  const lifetimePartner = sumBy(lifetimeCollected, k => k.partnerPayable);
+  const lifetimeAvg = lifetimeCollected.length > 0 ? Math.round(lifetimeRevenue / lifetimeCollected.length) : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Revenue & Commission Tracking</h2>
-          <p className="text-muted-foreground">Complete financial breakdown with price splits</p>
+          <p className="text-muted-foreground">Live financials sourced from each booking</p>
         </div>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
@@ -215,7 +254,7 @@ const RevenueManagement = () => {
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={fetchBookings}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           </Button>
           <Button variant="outline" onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
@@ -225,7 +264,7 @@ const RevenueManagement = () => {
       </div>
 
       {/* Revenue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {revenueStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -252,7 +291,7 @@ const RevenueManagement = () => {
           <Card>
             <CardHeader>
               <CardTitle>All Transactions</CardTitle>
-              <CardDescription>Complete list with commission breakdown</CardDescription>
+              <CardDescription>Real per-booking values from each order</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -267,16 +306,18 @@ const RevenueManagement = () => {
                         <TableHead>Order ID</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Courier</TableHead>
-                        <TableHead>Total Amount</TableHead>
-                        <TableHead>Platform Fee (10%)</TableHead>
-                        <TableHead>Prayog (5%)</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Partner Payable</TableHead>
+                        <TableHead>Platform Revenue</TableHead>
                         <TableHead>GST</TableHead>
+                        <TableHead>Packaging</TableHead>
+                        <TableHead>Insurance</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredBookings.map((booking) => {
-                        const breakdown = getTransactionBreakdown(booking);
+                        const k = breakdownOf(booking);
                         return (
                           <TableRow key={booking.id}>
                             <TableCell className="font-medium">
@@ -284,10 +325,12 @@ const RevenueManagement = () => {
                             </TableCell>
                             <TableCell>{format(new Date(booking.created_at), "dd MMM yyyy")}</TableCell>
                             <TableCell>{booking.courier_name}</TableCell>
-                            <TableCell className="font-medium">₹{breakdown.total.toLocaleString()}</TableCell>
-                            <TableCell className="text-green-600">₹{breakdown.platformFee.toLocaleString()}</TableCell>
-                            <TableCell className="text-purple-600">₹{breakdown.prayogFee.toLocaleString()}</TableCell>
-                            <TableCell className="text-orange-600">₹{breakdown.gst.toLocaleString()}</TableCell>
+                            <TableCell className="font-medium">₹{k.total.toLocaleString()}</TableCell>
+                            <TableCell className="text-purple-600">₹{k.partnerPayable.toLocaleString()}</TableCell>
+                            <TableCell className="text-blue-600">₹{k.platformRevenue.toLocaleString()}</TableCell>
+                            <TableCell className="text-orange-600">₹{k.gst.toLocaleString()}</TableCell>
+                            <TableCell>₹{k.packaging.toLocaleString()}</TableCell>
+                            <TableCell>₹{k.insurance.toLocaleString()}</TableCell>
                             <TableCell>
                               <Badge variant={getStatusColor(booking.status)}>
                                 {booking.status || "Pending"}
@@ -307,76 +350,101 @@ const RevenueManagement = () => {
         <TabsContent value="breakdown">
           <Card>
             <CardHeader>
-              <CardTitle>Price Structure Breakdown</CardTitle>
-              <CardDescription>How each order amount is distributed</CardDescription>
+              <CardTitle>Price Breakdown ({dateRange})</CardTitle>
+              <CardDescription>Where collected revenue actually went</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Revenue Split Structure</h3>
+              {totalCollections === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No collected revenue in this period
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Base Fare</p>
-                        <p className="text-sm text-muted-foreground">Courier partner cost</p>
-                      </div>
-                      <Badge variant="outline" className="text-lg">~67%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-4 border rounded-lg bg-green-50">
-                      <div>
-                        <p className="font-medium text-green-700">Platform Fee</p>
-                        <p className="text-sm text-muted-foreground">Your commission</p>
-                      </div>
-                      <Badge className="text-lg bg-green-600">10%</Badge>
-                    </div>
+                    <h3 className="font-semibold text-lg">Distribution</h3>
                     <div className="flex justify-between items-center p-4 border rounded-lg bg-purple-50">
                       <div>
-                        <p className="font-medium text-purple-700">Prayog Commission</p>
-                        <p className="text-sm text-muted-foreground">API partner fee</p>
+                        <p className="font-medium text-purple-700">Partner Payable</p>
+                        <p className="text-sm text-muted-foreground">Owed to courier partners</p>
                       </div>
-                      <Badge className="text-lg bg-purple-600">5%</Badge>
+                      <div className="text-right">
+                        <p className="font-bold">₹{periodTotals.partner.toLocaleString()}</p>
+                        <Badge variant="outline">{pct(periodTotals.partner)}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center p-4 border rounded-lg bg-blue-50">
+                      <div>
+                        <p className="font-medium text-blue-700">Platform Revenue</p>
+                        <p className="text-sm text-muted-foreground">Net to Viasetu</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">₹{periodTotals.platform.toLocaleString()}</p>
+                        <Badge variant="outline">{pct(periodTotals.platform)}</Badge>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center p-4 border rounded-lg bg-orange-50">
                       <div>
-                        <p className="font-medium text-orange-700">GST</p>
+                        <p className="font-medium text-orange-700">GST (18%)</p>
                         <p className="text-sm text-muted-foreground">Government tax</p>
                       </div>
-                      <Badge className="text-lg bg-orange-600">18%</Badge>
+                      <div className="text-right">
+                        <p className="font-bold">₹{periodTotals.gst.toLocaleString()}</p>
+                        <Badge variant="outline">{pct(periodTotals.gst)}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">Packaging</p>
+                        <p className="text-sm text-muted-foreground">Optional add-on</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">₹{periodTotals.packaging.toLocaleString()}</p>
+                        <Badge variant="outline">{pct(periodTotals.packaging)}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">Insurance</p>
+                        <p className="text-sm text-muted-foreground">Optional add-on</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">₹{periodTotals.insurance.toLocaleString()}</p>
+                        <Badge variant="outline">{pct(periodTotals.insurance)}</Badge>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Example Calculation</h3>
-                  <Card className="bg-muted">
-                    <CardContent className="pt-6 space-y-3">
-                      <p className="text-sm text-muted-foreground">For an order of ₹500:</p>
-                      <div className="space-y-2">
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-lg">Period Totals</h3>
+                    <Card className="bg-muted">
+                      <CardContent className="pt-6 space-y-2">
                         <div className="flex justify-between">
-                          <span>Base Fare (Courier Cost)</span>
-                          <span className="font-medium">₹335</span>
-                        </div>
-                        <div className="flex justify-between text-green-600">
-                          <span>Platform Fee (10%)</span>
-                          <span className="font-medium">₹50</span>
+                          <span>Total Collections</span>
+                          <span className="font-medium">₹{totalCollections.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-purple-600">
-                          <span>Prayog Commission (5%)</span>
-                          <span className="font-medium">₹25</span>
+                          <span>− Payable to Partners</span>
+                          <span className="font-medium">₹{periodTotals.partner.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-orange-600">
-                          <span>GST (18%)</span>
-                          <span className="font-medium">₹90</span>
+                          <span>− GST (passes through)</span>
+                          <span className="font-medium">₹{periodTotals.gst.toLocaleString()}</span>
                         </div>
-                        <div className="border-t pt-2 flex justify-between font-bold">
-                          <span>Total</span>
-                          <span>₹500</span>
+                        <div className="flex justify-between">
+                          <span>− Packaging / Insurance</span>
+                          <span className="font-medium">
+                            ₹{(periodTotals.packaging + periodTotals.insurance).toLocaleString()}
+                          </span>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="border-t pt-2 flex justify-between font-bold text-blue-700">
+                          <span>= Platform Revenue</span>
+                          <span>₹{periodTotals.platform.toLocaleString()}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -397,7 +465,9 @@ const RevenueManagement = () => {
                       <TableHead>Month</TableHead>
                       <TableHead>Total Orders</TableHead>
                       <TableHead>Total Revenue</TableHead>
-                      <TableHead>Platform Commission</TableHead>
+                      <TableHead>Partner Payable</TableHead>
+                      <TableHead>Platform Revenue</TableHead>
+                      <TableHead>GST</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -406,7 +476,9 @@ const RevenueManagement = () => {
                         <TableCell className="font-medium">{data.month}</TableCell>
                         <TableCell>{data.orders}</TableCell>
                         <TableCell className="font-medium">₹{data.revenue.toLocaleString()}</TableCell>
-                        <TableCell className="text-green-600">₹{data.commission.toLocaleString()}</TableCell>
+                        <TableCell className="text-purple-600">₹{data.partner.toLocaleString()}</TableCell>
+                        <TableCell className="text-blue-600">₹{data.platform.toLocaleString()}</TableCell>
+                        <TableCell className="text-orange-600">₹{data.gst.toLocaleString()}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -421,25 +493,34 @@ const RevenueManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue Summary</CardTitle>
-                <CardDescription>Overall financial health</CardDescription>
+                <CardDescription>Lifetime financial health</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">Total Lifetime Revenue</p>
-                    <p className="text-sm text-muted-foreground">{bookings.length} orders</p>
+                    <p className="text-sm text-muted-foreground">{lifetimeCollected.length} paid orders</p>
                   </div>
                   <p className="text-2xl font-bold text-primary">
-                    ₹{bookings.reduce((sum, b) => sum + (b.courier_price || 0), 0).toLocaleString()}
+                    ₹{lifetimeRevenue.toLocaleString()}
                   </p>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded-lg">
                   <div>
-                    <p className="font-medium">Total Platform Earnings</p>
-                    <p className="text-sm text-muted-foreground">10% commission</p>
+                    <p className="font-medium">Total Platform Revenue</p>
+                    <p className="text-sm text-muted-foreground">Net to Viasetu</p>
                   </div>
-                  <p className="text-xl font-bold text-green-600">
-                    ₹{Math.round(bookings.reduce((sum, b) => sum + (b.courier_price || 0), 0) * 0.1).toLocaleString()}
+                  <p className="text-xl font-bold text-blue-600">
+                    ₹{lifetimePlatform.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex justify-between items-center p-4 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Total Payable to Partners</p>
+                    <p className="text-sm text-muted-foreground">Owed to couriers</p>
+                  </div>
+                  <p className="text-xl font-bold text-purple-600">
+                    ₹{lifetimePartner.toLocaleString()}
                   </p>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded-lg">
@@ -447,11 +528,7 @@ const RevenueManagement = () => {
                     <p className="font-medium">Average Order Value</p>
                     <p className="text-sm text-muted-foreground">Per booking</p>
                   </div>
-                  <p className="text-xl font-bold">
-                    ₹{bookings.length > 0 
-                      ? Math.round(bookings.reduce((sum, b) => sum + (b.courier_price || 0), 0) / bookings.length).toLocaleString()
-                      : 0}
-                  </p>
+                  <p className="text-xl font-bold">₹{lifetimeAvg.toLocaleString()}</p>
                 </div>
               </CardContent>
             </Card>
@@ -463,12 +540,14 @@ const RevenueManagement = () => {
               </CardHeader>
               <CardContent>
                 {(() => {
-                  const courierMap = new Map<string, { revenue: number; orders: number }>();
-                  bookings.forEach(b => {
-                    const existing = courierMap.get(b.courier_name) || { revenue: 0, orders: 0 };
+                  const courierMap = new Map<string, { revenue: number; orders: number; partner: number }>();
+                  lifetimeCollected.forEach(b => {
+                    const k = breakdownOf(b);
+                    const existing = courierMap.get(b.courier_name) || { revenue: 0, orders: 0, partner: 0 };
                     courierMap.set(b.courier_name, {
-                      revenue: existing.revenue + (b.courier_price || 0),
+                      revenue: existing.revenue + k.total,
                       orders: existing.orders + 1,
+                      partner: existing.partner + k.partnerPayable,
                     });
                   });
                   const topCouriers = Array.from(courierMap.entries())
@@ -488,7 +567,9 @@ const RevenueManagement = () => {
                             </div>
                             <div>
                               <p className="font-medium">{courier.name}</p>
-                              <p className="text-sm text-muted-foreground">{courier.orders} orders</p>
+                              <p className="text-sm text-muted-foreground">
+                                {courier.orders} orders · ₹{courier.partner.toLocaleString()} payable
+                              </p>
                             </div>
                           </div>
                           <p className="font-bold">₹{courier.revenue.toLocaleString()}</p>
