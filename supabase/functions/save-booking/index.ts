@@ -54,19 +54,40 @@ Deno.serve(async (req) => {
     );
 
     // Idempotency: if a row with this payment_id already exists for this user,
-    // return it instead of inserting a duplicate.
+    // UPDATE it (covers the PAYMENT_RECEIVED row pre-created by
+    // razorpay-verify-payment). Never create a duplicate.
     const paymentId = bookingRow.payment_id;
     if (paymentId) {
       const { data: existing } = await supabase
         .from("bookings")
-        .select("*")
+        .select("id, status")
         .eq("payment_id", paymentId)
         .eq("user_id", userId)
         .maybeSingle();
 
       if (existing) {
-        console.log("[save-booking] idempotent hit for payment_id:", paymentId);
-        return new Response(JSON.stringify({ booking: existing, idempotent: true }), {
+        console.log(
+          "[save-booking] updating existing row for payment_id:",
+          paymentId,
+          "from",
+          existing.status,
+          "→",
+          bookingRow.status,
+        );
+        const { data: updated, error: updateErr } = await supabase
+          .from("bookings")
+          .update(bookingRow)
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (updateErr) {
+          console.error("[save-booking] update error:", updateErr);
+          return new Response(
+            JSON.stringify({ error: updateErr.message, details: updateErr }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify({ booking: updated, updated: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
