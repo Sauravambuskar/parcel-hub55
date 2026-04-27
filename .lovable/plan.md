@@ -1,98 +1,88 @@
+## Problem
 
+The admin **Revenue & Commission Tracking** page (`/admin/revenue`) does not reflect what was actually charged on each booking. It computes everything as fixed percentages of `courier_price`:
 
-## XpressBees Direct Integration — Manual Serviceability + Rate Card
+- Platform Commission = `courier_price × 10%` (hardcoded)
+- Prayog Commission = `courier_price × 5%` (hardcoded — this fee doesn't even exist on most bookings; the column is mostly `0`)
+- GST = `courier_price × 18 / 118` (treats total as GST-inclusive — wrong; in this codebase GST is added on top of base fare)
+- Base Fare = `courier_price × 67%` (made up)
 
-Since the XpressBees franchise B2C API exposes only Login, Courier List, Shipments, Cancel, Track, Pickup, Rate Calculator and NDR — there is **no live pincode serviceability endpoint** — we'll mirror the Shadowfax pattern: pincode CSV in DB + rate card in code.
+But the `bookings` table already stores the **real** values written at booking time:
+`base_fare`, `platform_fee`, `gst`, `packaging_amount`, `insurance_amount`, `courier_price` (= grand total).
 
-### What I need from you first
+The platform fee is also dynamic per-shipment (₹30–₹250 from `calculate-platform-fee`), not 10%, so the current display can be off by hundreds of rupees per order.
 
-1. **Credentials** (Supabase secrets):
-   - `XPRESSBEES_PROD_EMAIL`, `XPRESSBEES_PROD_PASSWORD` (for `/api/users/franchise_login`)
-   - `XPRESSBEES_PICKUP_LOCATION` (the pickup location name registered on your XpressBees franchise panel)
-2. **Two CSVs / sheets** (you upload, I'll seed):
-   - **Serviceable pincodes** — columns: `pincode, city, state, zone (intra/metro/roi/special), is_cod, is_prepaid`
-   - **Rate card** — slabs by zone × weight (forward + RTO), FSC %, COD %, min chargeable weight, volumetric divisor
-3. **Courier ID list** — the JSON returned by `GET /api/franchise/shipments/courier` (or let me call it once after creds land and cache it). We need the `courier_id` values so we can show service modes (Surface / Air / etc.) on the ETA cards.
+In addition, the user wants the wording changed from "Platform Commission" to **"Platform Revenue"**, and a clear **"Amount Payable to Partners"** figure (what we owe couriers).
 
-### Architecture
+## What will change
 
-```text
-Frontend (BookingStep2)
-   │  parallel serviceability fan-out
-   ▼
-xpressbees-serviceability  ── reads ──▶  xpressbees_pincodes (Postgres)
-   │                                      + rate_card.ts (in-code)
-   ▼
-returns { is_serviceable, services[]: [Surface, Air, …] with price + TAT }
+### 1. `src/pages/admin/RevenueManagement.tsx` — rebuild the math from real columns
 
-xpressbees-booking  ──▶  POST /api/franchise/shipments/  (Bearer)
-xpressbees-tracking ──▶  POST /api/franchise/shipments/track
-xpressbees-cancel   ──▶  POST /api/franchise/shipments/cancel
-xpressbees-label    ──▶  fetched from booking response / label endpoint
-xpressbees-webhook  ──▶  public, updates bookings.status by AWB
-```
+Replace the percentage-based calculations with real DB values for every booking:
 
-### Build steps
+- `total = courier_price` (already the grand total incl. fee + GST + packaging + insurance)
+- `platformRevenue = platform_fee` (real value stored per booking)
+- `gst = gst` (real)
+- `packaging = packaging_amount`, `insurance = insurance_amount` (real)
+- `partnerPayable = courier_price − platform_fee − gst − packaging_amount − insurance_amount`
+  (i.e. what the courier partner is owed; equals `base_fare` when set, with a safe fallback)
 
-**1. Database**
-- New table `xpressbees_pincodes` (mirrors `shadowfax_pincodes`): `pincode, city, state, zone, is_cod, is_prepaid, is_active`. RLS: public read, service-role write. Seeded from your CSV via migration.
+Aggregate stats (respecting the date filter and excluding `payment_status = 'cop_pending'` from collected revenue, same as today):
 
-**2. Shared helpers**
-- `_shared/environment.ts` → add `XPRESSBEES_CONFIG` (single base `https://ship.xpressbees.com`, since franchise API has no UAT).
-- `_shared/xpressbees-auth.ts` → `getXpressbeesToken()` calls `/api/users/franchise_login`, caches JWT in-memory, refreshes on 401.
-- `_shared/xpressbees-rates.ts` → pure function `quote({zone, weight_kg, dimensions, mode}) → {price, tat_days}`. Encodes the rate card you provide. Applies min chargeable weight + max(actual, volumetric).
+- **Total Collections** — sum of `courier_price` for paid orders
+- **Pending COP Collection** — sum of `courier_price` for `cop_pending` orders
+- **Amount Payable to Partners** — sum of `partnerPayable` for paid orders (NEW card, replaces "Prayog (5%)" which is not real)
+- **Platform Revenue** — sum of `platform_fee` for paid orders (renamed from "Platform Commission (10%)", real value, no `× 0.1`)
+- **GST Collected** — sum of `gst` for paid orders (real)
 
-**3. Edge functions** (all `verify_jwt = false`, CORS, env header)
-- `xpressbees-serviceability` — looks up both pincodes in `xpressbees_pincodes`, derives zone (intra-city if same city; else metro/ROI/special based on the destination zone column), runs `quote()` for each available service mode, returns same shape as Shadowfax/Delhivery/Urbanebolt.
-- `xpressbees-booking` — maps booking → franchise shipment payload (field names from the docs: `consigner_*`, `consignee_*`, `products[]`, `weight` in **grams**, `length/breadth/height` in cm, `courier_id`, `pickup_location`, `payment_method: "PPD"`, `order_amount`, `collectable_amount: 0`). Persists AWB + label URL.
-- `xpressbees-tracking` — POST to track endpoint with AWB; normalize to shared status enum (DELIVERED / OUT_FOR_DELIVERY / IN_TRANSIT / RTO / CANCELLED).
-- `xpressbees-cancel-order` — POST to cancel with AWB + reason.
-- `xpressbees-label` — return label URL stored at booking, or fetch on-demand if endpoint exists.
-- `xpressbees-webhook` — public; updates `bookings.status` by AWB.
+Transactions table columns become:
+`Order ID | Date | Courier | Total | Partner Payable | Platform Revenue | GST | Packaging | Insurance | Status`
+— each row reads straight from the booking row, no derivations.
 
-All registered in `supabase/config.toml`.
+Monthly Reports table:
+`Month | Orders | Total Revenue | Partner Payable | Platform Revenue | GST` — all summed from real columns.
 
-**4. Frontend wiring** (mirror Urbanebolt exactly)
-- `BookingStep2.tsx` → add `{ code: 'xpressbees', fn: 'xpressbees-serviceability' }` to `DIRECT_PARTNERS`.
-- `partnerLogos.ts` → add `xpressbees` + `xpressbees_direct` (placeholder until you share the logo).
-- `useCancelOrder.ts` → `xpressbees_direct` branch.
-- `get-booking-label/index.ts`, `Tracking.tsx`, `History.tsx` → recognize `xpressbees_direct`.
-- `Booking.tsx`, `save-booking`, `confirm-booking-or-refund` → accept `xpressbees_direct` as valid source.
+Revenue Analytics tab:
+- "Total Lifetime Revenue" = sum of `courier_price`
+- "Total Platform Revenue" = sum of `platform_fee` (rename, drop the "10% commission" subtitle — replace with "Net to Viasetu")
+- "Total Payable to Partners" = sum of `partnerPayable` (new row)
+- Average Order Value — unchanged
 
-**5. Pricing**
-- Platform commission + 18% GST flow through the existing `usePlatformFee` / `calculate-platform-fee` path. No partner-specific changes.
-- Hidden platform-fee-merged-into-base-fare convention is preserved.
+### 2. Price Breakdown tab — replace the static "67% / 10% / 5% / 18%" template
 
-### Payload mapping (Shipments API)
+That tab currently shows a fictional fixed-percentage split with a ₹500 example. Replace it with a **dynamic breakdown of the filtered period** showing the real distribution:
 
-```text
-id                <- internal booking id
-payment_method    <- "PPD" (no COD; COP handled separately)
-consigner_*       <- sender_*  (city/state/pincode/address/phone/name)
-consignee_*       <- receiver_* (same)
-products[0]       <- { product_name: goods_type, product_qty: "1",
-                       product_price: shipment_value, product_sku: id, product_hsn: "" }
-invoice[0]        <- empty strings (no e-invoice)
-weight            <- package_weight_kg * 1000  (grams, string)
-length/breadth/height <- cm (string)
-courier_id        <- selected service from serviceability response
-pickup_location   <- XPRESSBEES_PICKUP_LOCATION
-order_amount      <- shipment_value
-collectable_amount<- "0"
-```
+- Bars/rows for: Partner Payable, Platform Revenue, GST, Packaging, Insurance
+- Each shows ₹ amount + actual share of total collections (computed)
+- Removes the ₹500 hard-coded example and the "Prayog 5%" row (Prayog commission is not charged here)
 
-### Verification checklist
+### 3. CSV export
 
-1. Login returns token, cached across calls.
-2. Pincode CSV seeded; serviceability returns XpressBees with correct zone-based price + TAT.
-3. Test booking → AWB stored, label saved, visible in History with all action buttons.
-4. Tracking shows live status.
-5. Cancel from History/Details succeeds.
-6. Webhook hit updates status without refresh.
+Update headers/rows to: `Order ID, Date, Courier, Total, Partner Payable, Platform Revenue, GST, Packaging, Insurance, Status` — using real column values.
 
-### Out of scope for this round
-NDR re-attempt, COD/Prepaid switch, ePOD fetch, Pickup Shipment endpoint (we'll rely on auto-pickup tied to `pickup_location`). Easy follow-ups.
+### 4. Sync the rest of the admin UI to the same model
 
-### Open question
-**Do you already have an XpressBees pincode CSV from them, or should I send you a template (`pincode,city,state,zone,is_cod,is_prepaid`) for you to fill?** Same question for the rate card — share the sheet they gave you and I'll encode it.
+To keep the dashboards consistent (otherwise users will see different numbers on different pages):
 
+- **`src/pages/admin/AdminDashboard.tsx`**
+  - "Platform Earnings" card → rename to **"Platform Revenue"**, value = `sum(platform_fee)` instead of `totalRevenue × 0.1`. Subtitle changes from "10% commission" to "Net to Viasetu".
+  - "Revenue Breakdown" panel: replace "Platform Commission (10%)" row with "Platform Revenue" using `sum(platform_fee)`. Add a "Payable to Partners" row using the same formula.
+
+- **`src/pages/admin/OrderMonitoring.tsx`** (lines 154–156)
+  - Drop the `Math.round(courierPrice * 0.1 / 0.05 / 0.18)` fallbacks and read the real columns; only fall back to `0` when missing. Rename any "Commission" label to "Platform Revenue".
+
+### 5. Realtime freshness (so admin numbers move as new orders come in)
+
+`RevenueManagement.tsx` currently only fetches on mount. Add a Supabase Realtime subscription on the `bookings` table (INSERT + UPDATE) that re-runs `fetchBookings`, plus keep the manual Refresh button. Same subscription added to `AdminDashboard.tsx` so cards update live when a customer pays. Subscription is cleaned up on unmount.
+
+## Out of scope
+
+- No DB migration. All required columns (`base_fare`, `platform_fee`, `gst`, `packaging_amount`, `insurance_amount`, `payment_status`) already exist and are populated by `Booking.tsx` at booking time.
+- No change to how prices are calculated at booking time. Only how admin pages read and label them.
+- No change to Razorpay / refund flow.
+
+## Files touched
+
+- `src/pages/admin/RevenueManagement.tsx` — main rewrite (stats, tables, breakdown tab, export, realtime)
+- `src/pages/admin/AdminDashboard.tsx` — rename + real `platform_fee` sum + realtime
+- `src/pages/admin/OrderMonitoring.tsx` — drop hardcoded percent fallbacks, rename label

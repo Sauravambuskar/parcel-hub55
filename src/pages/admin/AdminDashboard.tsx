@@ -60,6 +60,17 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    const channel = supabase
+      .channel("admin-dashboard-bookings")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        () => fetchDashboardData(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -89,8 +100,9 @@ const AdminDashboard = () => {
       const inTransitOrders = bookings?.filter(b => b.status === "in_transit" || b.status === "in transit").length || 0;
       const deliveredOrders = bookings?.filter(b => b.status === "delivered").length || 0;
 
-      // Platform fee calculation (assuming 10% of total)
-      const platformFees = Math.round(totalRevenue * 0.1);
+      // Platform Revenue = sum of real platform_fee column on collected bookings
+      const collectedBookings = bookings?.filter(b => b.payment_status !== "cop_pending") || [];
+      const platformFees = collectedBookings.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
 
       setStats({
         totalOrders: bookings?.length || 0,
@@ -167,9 +179,9 @@ const AdminDashboard = () => {
       bgColor: "bg-yellow-50"
     },
     { 
-      title: "Platform Earnings", 
+      title: "Platform Revenue", 
       value: `₹${stats.platformFees.toLocaleString()}`, 
-      subValue: "10% commission",
+      subValue: "Net to Viasetu",
       icon: TrendingUp, 
       color: "text-purple-600",
       bgColor: "bg-purple-50"
@@ -272,8 +284,8 @@ const AdminDashboard = () => {
             </div>
             <div className="flex justify-between items-center p-3 border rounded-lg">
               <div>
-                <p className="font-medium">Platform Commission (10%)</p>
-                <p className="text-sm text-muted-foreground">Your earnings</p>
+                <p className="font-medium">Platform Revenue</p>
+                <p className="text-sm text-muted-foreground">Net to Viasetu</p>
               </div>
               <p className="text-xl font-bold text-green-600">₹{stats.platformFees.toLocaleString()}</p>
             </div>
