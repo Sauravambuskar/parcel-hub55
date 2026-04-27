@@ -148,14 +148,16 @@ const OrderMonitoring = () => {
   ];
 
   const calculatePriceBreakdown = (booking: Booking) => {
-    const courierPrice = booking.courier_price || 0;
-    // Default calculation if breakdown not stored
-    const baseFare = booking.base_fare || Math.round(courierPrice * 0.7);
-    const platformFee = booking.platform_fee || Math.round(courierPrice * 0.1);
-    const prayogCommission = booking.prayog_commission || Math.round(courierPrice * 0.05);
-    const gst = booking.gst || Math.round(courierPrice * 0.18);
-    const insurance = booking.insurance_amount || (booking.insurance_required ? Math.round((booking.shipment_value || 0) * 0.02) : 0);
-    const packaging = booking.packaging_amount || (booking.packaging_required ? 50 : 0);
+    const courierPrice = Number(booking.courier_price) || 0;
+    const platformFee = Number(booking.platform_fee) || 0;
+    const prayogCommission = Number(booking.prayog_commission) || 0;
+    const gst = Number(booking.gst) || 0;
+    const insurance = Number(booking.insurance_amount) || 0;
+    const packaging = Number(booking.packaging_amount) || 0;
+    // Partner payable = real base_fare when stored, else derive from total
+    const baseFare = booking.base_fare != null && Number(booking.base_fare) > 0
+      ? Number(booking.base_fare)
+      : Math.max(0, courierPrice - platformFee - gst - insurance - packaging);
 
     return {
       baseFare,
@@ -164,7 +166,7 @@ const OrderMonitoring = () => {
       gst,
       insurance,
       packaging,
-      total: courierPrice
+      total: courierPrice,
     };
   };
 
