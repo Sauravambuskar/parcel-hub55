@@ -12,7 +12,8 @@ import {
   LogOut,
   Shield,
   Home,
-  MapPin
+  MapPin,
+  AlertTriangle
 } from "lucide-react";
 import { 
   Sidebar, 
