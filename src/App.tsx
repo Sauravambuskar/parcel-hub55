@@ -24,6 +24,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import AdminUserManagement from "./pages/admin/AdminUserManagement";
 import OrderMonitoring from "./pages/admin/OrderMonitoring";
 import RevenueManagement from "./pages/admin/RevenueManagement";
+import Reconciliation from "./pages/admin/Reconciliation";
 import SupportManagement from "./pages/admin/SupportManagement";
 import Analytics from "./pages/admin/Analytics";
 import SystemSettings from "./pages/admin/SystemSettings";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="users" element={<UserManagement />} />
             <Route path="admin-users" element={<ProtectedAdminRoute requireSuperAdmin><AdminUserManagement /></ProtectedAdminRoute>} />
             <Route path="revenue" element={<RevenueManagement />} />
+            <Route path="reconciliation" element={<Reconciliation />} />
             <Route path="support" element={<SupportManagement />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<SystemSettings />} />
