@@ -40,9 +40,16 @@ interface PaymentModalProps {
     phone?: string;
     email?: string;
   };
+  /**
+   * Snapshot of the booking the customer is paying for. Sent to
+   * razorpay-verify-payment so a PAYMENT_RECEIVED row is persisted server-side
+   * the moment payment is verified — preventing orphan payments if the browser
+   * closes before the courier API call completes.
+   */
+  bookingDraft?: Record<string, unknown>;
 }
 
-const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, customerDetails }: PaymentModalProps) => {
+const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, customerDetails, bookingDraft }: PaymentModalProps) => {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
@@ -129,14 +136,17 @@ const PaymentModal = ({ isOpen, onClose, orderDetails, onPaymentSuccess, custome
         handler: async function (response: any) {
           console.log('Payment successful, verifying...', response);
           
-          // Step 3: Verify payment
+          // Step 3: Verify payment AND persist a PAYMENT_RECEIVED booking row
           try {
+            const prayogAuthRaw = localStorage.getItem('prayog_auth');
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('razorpay-verify-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-              }
+                booking_draft: bookingDraft || null,
+              },
+              headers: prayogAuthRaw ? { 'x-prayog-auth': prayogAuthRaw } : {},
             });
 
             if (verifyError || !verifyData?.verified) {
