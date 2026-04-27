@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Idempotency: if we already recorded a row for this payment_id, return it.
+    // Idempotency: if we already finalized a row for this payment_id, return it.
     const { data: existing } = await supabase
       .from("bookings")
       .select("*")
@@ -140,9 +140,29 @@ Deno.serve(async (req) => {
     const refunded = !!refundData;
     const paymentStatus = refunded ? "refunded" : "refund_failed";
 
-    // Insert FAILED audit row if caller provided one and none exists yet.
     let bookingRecord: any = existing || null;
-    if (!existing && booking_row && typeof booking_row === "object") {
+
+    if (existing) {
+      // A row already exists (PAYMENT_RECEIVED row from verify-payment, or
+      // a previous attempt). Mark it FAILED + refund details.
+      const { data: updated, error: updateErr } = await supabase
+        .from("bookings")
+        .update({
+          status: "FAILED",
+          payment_status: paymentStatus,
+          refund_id: refundData?.id || null,
+          refund_reason: reason || "booking_failed_after_payment",
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+      if (updateErr) {
+        console.error("[confirm-booking-or-refund] FAILED row update error:", updateErr);
+      } else {
+        bookingRecord = updated;
+      }
+    } else if (booking_row && typeof booking_row === "object") {
+      // No row yet — insert a fresh FAILED audit row.
       const failedRow = {
         ...booking_row,
         user_id: userId,

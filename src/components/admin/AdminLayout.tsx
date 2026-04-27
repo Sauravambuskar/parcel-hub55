@@ -12,7 +12,8 @@ import {
   LogOut,
   Shield,
   Home,
-  MapPin
+  MapPin,
+  AlertTriangle
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -36,6 +37,7 @@ const adminMenuItems = [
   { title: "User & Partner Management", url: "/admin/users", icon: Users },
   { title: "Admin Users", url: "/admin/admin-users", icon: Shield, requireSuperAdmin: true },
   { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign },
+  { title: "Payment Reconciliation", url: "/admin/reconciliation", icon: AlertTriangle },
   { title: "Support Management", url: "/admin/support", icon: MessageSquare },
   { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3 },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
