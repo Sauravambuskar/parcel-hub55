@@ -1138,6 +1138,33 @@ const Booking = () => {
         name: senderData.name,
         phone: senderData.phone,
         email: undefined
+      }} bookingDraft={{
+        sender_name: senderData.name,
+        sender_phone: senderData.phone,
+        sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+        sender_city: senderData.city,
+        sender_state: senderData.state,
+        sender_pincode: senderData.pincode,
+        receiver_name: receiverData.name,
+        receiver_phone: receiverData.phone,
+        receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+        receiver_city: receiverData.city,
+        receiver_state: receiverData.state,
+        receiver_pincode: receiverData.pincode,
+        goods_type: goodsType || 'Package',
+        package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
+        length: dimensions?.length || null,
+        width: dimensions?.width || null,
+        height: dimensions?.height || null,
+        shipment_value: shipmentValue ? parseFloat(shipmentValue) : null,
+        urgency: urgency || 'standard',
+        courier_name: selectedCourierData.name ?? '',
+        courier_price: totalAmount,
+        delivery_time: selectedCourierData.deliveryTime || 'Standard',
+        base_fare: baseFare,
+        platform_fee: platformFee,
+        gst: gstAmount,
+        booking_source: 'pending',
       }} />}
 
         {/* Booking Confirmation Dialog */}
