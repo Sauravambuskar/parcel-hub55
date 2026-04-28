@@ -54,6 +54,7 @@ interface PrayogOrder {
   payment?: {
     finalAmount?: number;
   };
+  statusReason?: string | null;
 }
 
 const OrderCardSkeleton = () => (
