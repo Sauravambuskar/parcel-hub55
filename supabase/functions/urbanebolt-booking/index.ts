@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     }
 
     // Try to fetch label URL (non-fatal)
-    let labelUrl: string | null = first?.label_url || first?.label || null;
+    let labelUrl: string | null = first?.shippingLabel || first?.label_url || first?.label || null;
     if (!labelUrl) {
       try {
         const lblRes = await urbaneboltFetch(env, `/api/v1/services/label/?awbs=${encodeURIComponent(awb)}`, { method: "GET" });
