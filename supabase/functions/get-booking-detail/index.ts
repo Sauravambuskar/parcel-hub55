@@ -117,13 +117,22 @@ Deno.serve(async (req) => {
         },
       ],
       payment: {
-        finalAmount: Number(b.courier_price || 0) + Number(b.gst || 0) +
+        // courier_price already stores the grand total charged to the user
+        // (Base Fare + GST). Do NOT re-add GST here — it would double-count.
+        // Add packaging/insurance only if they were charged on top.
+        finalAmount: Number(b.courier_price || 0) +
           Number(b.packaging_amount || 0) + Number(b.insurance_amount || 0),
         type: b.payment_status === "cop_pending" ? "COP" : "PREPAID",
         breakdown: {
           otherCharges: [
             { name: "Base Fare", chargedAmount: Number(b.base_fare || 0) },
             { name: "GST (18%)", chargedAmount: Number(b.gst || 0) },
+            ...(Number(b.packaging_amount || 0) > 0
+              ? [{ name: "Packaging", chargedAmount: Number(b.packaging_amount) }]
+              : []),
+            ...(Number(b.insurance_amount || 0) > 0
+              ? [{ name: "Insurance", chargedAmount: Number(b.insurance_amount) }]
+              : []),
           ],
         },
       },
