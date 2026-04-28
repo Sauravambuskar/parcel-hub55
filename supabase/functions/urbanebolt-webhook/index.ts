@@ -52,6 +52,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Verify shared secret sent by Urbanebolt (Authorization: Bearer <token>)
+    const expected = Deno.env.get("URBANEBOLT_WEBHOOK_TOKEN");
+    if (expected) {
+      const auth = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+      const provided = auth.replace(/^Bearer\s+/i, "").trim();
+      if (provided !== expected) {
+        console.warn("[urbanebolt-webhook] unauthorized — token mismatch");
+        return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const body = await req.json().catch(() => ({}));
     console.log("[urbanebolt-webhook] payload:", JSON.stringify(body).slice(0, 2000));
 
