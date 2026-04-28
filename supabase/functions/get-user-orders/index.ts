@@ -103,7 +103,8 @@ Deno.serve(async (req) => {
           },
         ],
         payment: {
-          finalAmount: Number(b.courier_price || 0) + Number(b.gst || 0) + Number(b.packaging_amount || 0) + Number(b.insurance_amount || 0),
+          // courier_price already includes GST (stores grand total). Don't re-add GST.
+          finalAmount: Number(b.courier_price || 0) + Number(b.packaging_amount || 0) + Number(b.insurance_amount || 0),
         },
         // Booking metadata used by Cancel/Label/Details buttons (avoids a second roundtrip)
         _booking: {
