@@ -133,12 +133,23 @@ Deno.serve(async (req) => {
     try { result = JSON.parse(text); } catch { result = { raw: text }; }
     console.log("[urbanebolt-booking] manifest response", res.status, text.slice(0, 1000));
 
-    // Try to pull AWB from common shapes
+    // Try to pull AWB from common shapes (Urbanebolt uses successResponse[])
     const first =
-      result?.data?.[0] || result?.shipments?.[0] || result?.results?.[0] || result?.[0] || result;
-    const awb: string | null =
-      first?.awb || first?.awb_no || first?.awbNumber || first?.waybill || result?.awb || null;
-    const ok = res.ok && (result?.success === true || result?.status === "success" || !!awb);
+      result?.successResponse?.[0] ||
+      result?.data?.[0] ||
+      result?.shipments?.[0] ||
+      result?.results?.[0] ||
+      result?.[0] ||
+      result;
+    const errFirst = result?.errorResponse?.[0];
+    const awbRaw =
+      first?.awbNumber ?? first?.awb ?? first?.awb_no ?? first?.waybill ?? result?.awb ?? null;
+    const awb: string | null = awbRaw != null ? String(awbRaw) : null;
+    const statusStr = String(result?.status || first?.status || "").toLowerCase();
+    const ok =
+      res.ok &&
+      !!awb &&
+      (statusStr === "success" || result?.success === true || !errFirst);
 
     if (!ok || !awb) {
       const err =
