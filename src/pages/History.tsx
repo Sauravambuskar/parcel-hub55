@@ -319,6 +319,11 @@ const History = () => {
                       <Calendar className="h-3 w-3" />
                       {formatDate(order.orderDate)}
                     </p>
+                    {order.statusReason && (
+                      <p className="mt-1 text-xs text-red-200 bg-red-500/20 border border-red-400/40 rounded px-2 py-1 max-w-md">
+                        {order.statusReason}
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
