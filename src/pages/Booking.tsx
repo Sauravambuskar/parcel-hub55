@@ -678,7 +678,7 @@ const Booking = () => {
         if (sfxError || !sfxResult?.success) {
           // Auto-refund + audit row via centralized edge function.
           if (paymentDetails?.razorpay_payment_id) {
-            const prayogAuthRawSfx = localStorage.getItem('prayog_auth');
+            const prayogAuthRawSfx = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
             const failedBookingRow = {
               sender_name: senderData.name, sender_phone: senderData.phone,
               sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
@@ -746,7 +746,7 @@ const Booking = () => {
 
         if (dlvError || !dlvResult?.success) {
           if (paymentDetails?.razorpay_payment_id) {
-            const prayogAuthRawDlv = localStorage.getItem('prayog_auth');
+            const prayogAuthRawDlv = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
             const failedBookingRow = {
               sender_name: senderData.name, sender_phone: senderData.phone,
               sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
@@ -815,7 +815,7 @@ const Booking = () => {
 
         if (ubError || !ubResult?.success) {
           if (paymentDetails?.razorpay_payment_id) {
-            const prayogAuthRawUb = localStorage.getItem('prayog_auth');
+            const prayogAuthRawUb = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
             const failedBookingRow = {
               sender_name: senderData.name, sender_phone: senderData.phone,
               sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
@@ -884,7 +884,7 @@ const Booking = () => {
 
         if (xbError || !xbResult?.success) {
           if (paymentDetails?.razorpay_payment_id) {
-            const prayogAuthRawXb = localStorage.getItem('prayog_auth');
+            const prayogAuthRawXb = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
             const failedBookingRow = {
               sender_name: senderData.name, sender_phone: senderData.phone,
               sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
@@ -981,7 +981,7 @@ const Booking = () => {
         booking_source: bookingSource,
       } as any;
       // Persist via edge function (RLS-safe; Prayog auth doesn't set auth.uid()).
-      const prayogAuthRaw = localStorage.getItem('prayog_auth');
+      const prayogAuthRaw = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
       const { error: dbError } = await supabase.functions.invoke('save-booking', {
         body: bookingData,
         headers: prayogAuthRaw ? { 'x-prayog-auth': prayogAuthRaw } : {},
@@ -1010,7 +1010,7 @@ const Booking = () => {
       const alreadyRefunded = /refund/i.test(error?.message || "");
       if (paymentDetails?.razorpay_payment_id && !alreadyRefunded) {
         try {
-          const prayogAuthRawFallback = localStorage.getItem('prayog_auth');
+          const prayogAuthRawFallback = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
           const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
             body: {
               payment_id: paymentDetails.razorpay_payment_id,
