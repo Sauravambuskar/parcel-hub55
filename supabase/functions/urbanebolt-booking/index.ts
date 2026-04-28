@@ -62,38 +62,66 @@ Deno.serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Map to Urbanebolt softdata payload (mandatory fields per integration spec)
+    // Map to Urbanebolt Manifest API payload (per official Postman spec)
+    // Body is an ARRAY of shipment objects; field names are camelCase abbreviations.
+    const declared = Number(shipment_value) || 1;
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const senderPin = Number(sender_pincode) || 0;
+    const receiverPin = Number(receiver_pincode) || 0;
+    const senderMob = Number(String(sender_phone).replace(/\D/g, "").slice(-10)) || 0;
+    const receiverMob = Number(String(receiver_phone).replace(/\D/g, "").slice(-10)) || 0;
+
     const shipment = {
-      shipment_no: order_id,
-      order_no: order_id,
-      payment_mode: "Prepaid",
-      customer_code: customerCode,
-      // Consignee = receiver
-      consignee_name: receiver_name,
-      consignee_address: receiver_address,
-      consignee_city: receiver_city,
-      consignee_state: receiver_state,
-      consignee_pin: receiver_pincode,
-      consignee_mobile: receiver_phone,
-      // Seller = sender
-      seller_name: sender_name,
-      seller_address: sender_address,
-      seller_city: sender_city,
-      seller_state: sender_state,
-      seller_pin: sender_pincode,
-      seller_mobile: sender_phone,
-      // Package
-      product_desc: goods_type || "Package",
-      qty: 1,
-      weight: Number(package_weight) || 0.5,
-      length: Number(length) || 10,
-      width: Number(width) || 10,
+      customerCode,
+      orderNumber: order_id,
+      declaredValue: declared,
+      itemDescription: goods_type || "Package",
+      collectableValue: 0,
       height: Number(height) || 10,
-      declared_value: Number(shipment_value) || 0,
-      cod_amount: 0,
+      length: Number(length) || 10,
+      breadth: Number(width) || 10,
+      pieces: 1,
+      weight: Number(package_weight) || 0.5,
+      serviceType: "NDD",
+      payMode: "PPD",
+      // Consignee = receiver
+      consName: receiver_name,
+      consAddress: receiver_address,
+      consAddressType: "Home",
+      consCity: receiver_city,
+      consState: receiver_state,
+      consPincode: receiverPin,
+      consMobile: receiverMob,
+      consCountry: "INDIA",
+      consEmail: "noreply@viasetu.com",
+      // Shipper = sender
+      shprName: sender_name,
+      shprAddress: sender_address,
+      shprAddressType: "Seller",
+      shprCity: sender_city,
+      shprState: sender_state,
+      shprPincode: senderPin,
+      shprMobile: senderMob,
+      shprCountry: "INDIA",
+      shprEmail: "noreply@viasetu.com",
+      // Return = sender (same as shipper)
+      rtnName: sender_name,
+      rtnAddress: sender_address,
+      rtnAddressType: "Seller",
+      rtnCity: sender_city,
+      rtnState: sender_state,
+      rtnPincode: senderPin,
+      rtnMobile: senderMob,
+      rtnCountry: "INDIA",
+      rtnEmail: "noreply@viasetu.com",
+      // Invoice
+      invoiceNumber: order_id,
+      invoiceDate: today,
+      invoiceValue: declared,
+      itemQuantity: 1,
     };
 
-    const payload = { shipments: [shipment] };
+    const payload = [shipment];
     console.log("[urbanebolt-booking] manifest payload:", JSON.stringify(payload));
 
     const res = await urbaneboltFetch(env, "/api/v1/services/manifest/", {
