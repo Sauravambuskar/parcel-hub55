@@ -52,6 +52,8 @@ export type Database = {
           courier_price: number
           created_at: string
           delivery_time: string
+          failure_reason: string | null
+          failure_step: string | null
           goods_type: string
           gst: number | null
           height: string | null
@@ -98,6 +100,8 @@ export type Database = {
           courier_price: number
           created_at?: string
           delivery_time: string
+          failure_reason?: string | null
+          failure_step?: string | null
           goods_type: string
           gst?: number | null
           height?: string | null
@@ -144,6 +148,8 @@ export type Database = {
           courier_price?: number
           created_at?: string
           delivery_time?: string
+          failure_reason?: string | null
+          failure_step?: string | null
           goods_type?: string
           gst?: number | null
           height?: string | null

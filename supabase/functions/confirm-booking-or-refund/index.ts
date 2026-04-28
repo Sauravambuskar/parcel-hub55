@@ -142,6 +142,23 @@ Deno.serve(async (req) => {
 
     let bookingRecord: any = existing || null;
 
+    // Build a user-friendly failure reason for the History UI.
+    const friendlyReason = (() => {
+      const r = (reason || "").toLowerCase();
+      if (r.includes("shadowfax")) return "Shadowfax couldn't accept the booking. Payment refunded.";
+      if (r.includes("delhivery")) return "Delhivery couldn't accept the booking. Payment refunded.";
+      if (r.includes("urbanebolt")) return "Urbanebolt couldn't accept the booking. Payment refunded.";
+      if (r.includes("xpressbees")) return "XpressBees couldn't accept the booking. Payment refunded.";
+      if (r.includes("unexpected")) return "An unexpected error occurred. Payment refunded.";
+      return "Booking could not be completed. Payment refunded.";
+    })();
+    const failureStep = (() => {
+      const r = (reason || "").toLowerCase();
+      if (r.includes("payment")) return "payment";
+      if (r.includes("cancel")) return "cancel";
+      return "manifest";
+    })();
+
     if (existing) {
       // A row already exists (PAYMENT_RECEIVED row from verify-payment, or
       // a previous attempt). Mark it FAILED + refund details.
@@ -152,6 +169,8 @@ Deno.serve(async (req) => {
           payment_status: paymentStatus,
           refund_id: refundData?.id || null,
           refund_reason: reason || "booking_failed_after_payment",
+          failure_reason: friendlyReason,
+          failure_step: failureStep,
         })
         .eq("id", existing.id)
         .select()
@@ -171,6 +190,8 @@ Deno.serve(async (req) => {
         payment_status: paymentStatus,
         refund_id: refundData?.id || null,
         refund_reason: reason || "booking_failed_after_payment",
+        failure_reason: friendlyReason,
+        failure_step: failureStep,
       };
       const { data: inserted, error: insertErr } = await supabase
         .from("bookings")

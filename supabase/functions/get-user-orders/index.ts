@@ -116,7 +116,11 @@ Deno.serve(async (req) => {
           tracking_id: b.tracking_id || null,
           label_url: b.label_url || null,
           awb: b.prayog_awb || b.tracking_id || null,
+          failure_reason: b.failure_reason || null,
+          failure_step: b.failure_step || null,
+          refund_id: b.refund_id || null,
         },
+        statusReason: b.failure_reason || null,
       };
     });
 

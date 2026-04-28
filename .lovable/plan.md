@@ -1,88 +1,51 @@
 ## Problem
 
-The admin **Revenue & Commission Tracking** page (`/admin/revenue`) does not reflect what was actually charged on each booking. It computes everything as fixed percentages of `courier_price`:
+1. **401 Unauthorized on save-booking** — Booking succeeded at Urbanebolt but the row never saved to `bookings`, so it's missing from /history.
+   - Root cause: After the recent auth migration, sessions are stored under `auth_session` (see `src/lib/auth.ts`). `Booking.tsx` still reads only the legacy `prayog_auth` key in 7 places. For new logins that key is empty, so no `x-prayog-auth` header is sent → `save-booking` rejects with 401.
 
-- Platform Commission = `courier_price × 10%` (hardcoded)
-- Prayog Commission = `courier_price × 5%` (hardcoded — this fee doesn't even exist on most bookings; the column is mostly `0`)
-- GST = `courier_price × 18 / 118` (treats total as GST-inclusive — wrong; in this codebase GST is added on top of base fare)
-- Base Fare = `courier_price × 67%` (made up)
+2. **Failed/cancelled orders disappear** — Today, if any step throws (partner API error, parser mismatch, refund path, etc.) the code returns early without inserting a row. The user wants every attempt persisted with a clear status + reason so History is the single source of truth.
 
-But the `bookings` table already stores the **real** values written at booking time:
-`base_fare`, `platform_fee`, `gst`, `packaging_amount`, `insurance_amount`, `courier_price` (= grand total).
+## Fix
 
-The platform fee is also dynamic per-shipment (₹30–₹250 from `calculate-platform-fee`), not 10%, so the current display can be off by hundreds of rupees per order.
+### 1. Use the unified auth key everywhere in Booking.tsx
+Replace all 7 `localStorage.getItem('prayog_auth')` calls with the unified lookup already used at line 97:
+```ts
+localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth')
+```
+Extract into a tiny local helper at the top of the component to avoid repetition. This immediately fixes the 401 and the missing-from-history symptom for every partner (Urbanebolt, Shadowfax, Delhivery, XpressBees) and for the refund fallback.
 
-In addition, the user wants the wording changed from "Platform Commission" to **"Platform Revenue"**, and a clear **"Amount Payable to Partners"** figure (what we owe couriers).
+### 2. Always log every booking attempt to history
+Add new fields to `bookings` (migration):
+- `failure_reason text` — human-readable reason (e.g. "Urbanebolt manifest failed: AWB not returned", "User cancelled at payment", "Pickup partner unreachable")
+- `failure_step text` — which step failed (`payment`, `manifest`, `label`, `cancel`, etc.)
+- Extend `status` usage with: `CREATED`, `BOOKING_FAILED`, `CANCELLED`, `REFUNDED`, `PAYMENT_FAILED`
 
-## What will change
+Wrap the booking flow in `Booking.tsx › handlePaymentSuccess` so that **every exit path** writes a row via `save-booking` before returning:
+- Partner API success → status `CREATED` (existing behaviour)
+- Partner API returned no AWB / non-2xx → status `BOOKING_FAILED` + `failure_reason` from the partner response, then trigger refund
+- Outer catch (unexpected error) → status `BOOKING_FAILED` + `failure_reason` = error message, then trigger refund
+- Refund completed → update same row to `REFUNDED` (idempotent on `payment_id`, already supported by `save-booking`)
+- User cancellation via `urbanebolt-cancel-order` etc. → update row to `CANCELLED` with reason
 
-### 1. `src/pages/admin/RevenueManagement.tsx` — rebuild the math from real columns
+`save-booking` is already idempotent on `payment_id`, so writing early then updating later is safe.
 
-Replace the percentage-based calculations with real DB values for every booking:
+### 3. Surface failure reason in History UI
+- `get-user-orders/index.ts`: include `failure_reason` and `failure_step` in the normalized order object (under `_booking` and a top-level `statusReason`).
+- `src/pages/History.tsx` + order card: when `status` is `BOOKING_FAILED`, `CANCELLED`, `REFUNDED`, or `PAYMENT_FAILED`, render a red/amber badge plus a one-line reason underneath the AWB area. Successful orders look unchanged.
 
-- `total = courier_price` (already the grand total incl. fee + GST + packaging + insurance)
-- `platformRevenue = platform_fee` (real value stored per booking)
-- `gst = gst` (real)
-- `packaging = packaging_amount`, `insurance = insurance_amount` (real)
-- `partnerPayable = courier_price − platform_fee − gst − packaging_amount − insurance_amount`
-  (i.e. what the courier partner is owed; equals `base_fare` when set, with a safe fallback)
-
-Aggregate stats (respecting the date filter and excluding `payment_status = 'cop_pending'` from collected revenue, same as today):
-
-- **Total Collections** — sum of `courier_price` for paid orders
-- **Pending COP Collection** — sum of `courier_price` for `cop_pending` orders
-- **Amount Payable to Partners** — sum of `partnerPayable` for paid orders (NEW card, replaces "Prayog (5%)" which is not real)
-- **Platform Revenue** — sum of `platform_fee` for paid orders (renamed from "Platform Commission (10%)", real value, no `× 0.1`)
-- **GST Collected** — sum of `gst` for paid orders (real)
-
-Transactions table columns become:
-`Order ID | Date | Courier | Total | Partner Payable | Platform Revenue | GST | Packaging | Insurance | Status`
-— each row reads straight from the booking row, no derivations.
-
-Monthly Reports table:
-`Month | Orders | Total Revenue | Partner Payable | Platform Revenue | GST` — all summed from real columns.
-
-Revenue Analytics tab:
-- "Total Lifetime Revenue" = sum of `courier_price`
-- "Total Platform Revenue" = sum of `platform_fee` (rename, drop the "10% commission" subtitle — replace with "Net to Viasetu")
-- "Total Payable to Partners" = sum of `partnerPayable` (new row)
-- Average Order Value — unchanged
-
-### 2. Price Breakdown tab — replace the static "67% / 10% / 5% / 18%" template
-
-That tab currently shows a fictional fixed-percentage split with a ₹500 example. Replace it with a **dynamic breakdown of the filtered period** showing the real distribution:
-
-- Bars/rows for: Partner Payable, Platform Revenue, GST, Packaging, Insurance
-- Each shows ₹ amount + actual share of total collections (computed)
-- Removes the ₹500 hard-coded example and the "Prayog 5%" row (Prayog commission is not charged here)
-
-### 3. CSV export
-
-Update headers/rows to: `Order ID, Date, Courier, Total, Partner Payable, Platform Revenue, GST, Packaging, Insurance, Status` — using real column values.
-
-### 4. Sync the rest of the admin UI to the same model
-
-To keep the dashboards consistent (otherwise users will see different numbers on different pages):
-
-- **`src/pages/admin/AdminDashboard.tsx`**
-  - "Platform Earnings" card → rename to **"Platform Revenue"**, value = `sum(platform_fee)` instead of `totalRevenue × 0.1`. Subtitle changes from "10% commission" to "Net to Viasetu".
-  - "Revenue Breakdown" panel: replace "Platform Commission (10%)" row with "Platform Revenue" using `sum(platform_fee)`. Add a "Payable to Partners" row using the same formula.
-
-- **`src/pages/admin/OrderMonitoring.tsx`** (lines 154–156)
-  - Drop the `Math.round(courierPrice * 0.1 / 0.05 / 0.18)` fallbacks and read the real columns; only fall back to `0` when missing. Rename any "Commission" label to "Platform Revenue".
-
-### 5. Realtime freshness (so admin numbers move as new orders come in)
-
-`RevenueManagement.tsx` currently only fetches on mount. Add a Supabase Realtime subscription on the `bookings` table (INSERT + UPDATE) that re-runs `fetchBookings`, plus keep the manual Refresh button. Same subscription added to `AdminDashboard.tsx` so cards update live when a customer pays. Subscription is cleaned up on unmount.
-
-## Out of scope
-
-- No DB migration. All required columns (`base_fare`, `platform_fee`, `gst`, `packaging_amount`, `insurance_amount`, `payment_status`) already exist and are populated by `Booking.tsx` at booking time.
-- No change to how prices are calculated at booking time. Only how admin pages read and label them.
-- No change to Razorpay / refund flow.
+### 4. Backfill the orphan AWB
+The earlier successful Urbanebolt manifest (`AWB 200001021145`) exists at the courier but not in our DB. Insert one row via the data tool with status `CREATED`, the captured AWB + label URL, and `failure_reason = 'Backfilled — manifest succeeded but legacy parser returned failure'` so it shows up in History.
 
 ## Files touched
 
-- `src/pages/admin/RevenueManagement.tsx` — main rewrite (stats, tables, breakdown tab, export, realtime)
-- `src/pages/admin/AdminDashboard.tsx` — rename + real `platform_fee` sum + realtime
-- `src/pages/admin/OrderMonitoring.tsx` — drop hardcoded percent fallbacks, rename label
+- `src/pages/Booking.tsx` — unified auth lookup helper; ensure every exit path calls `save-booking`
+- `supabase/functions/save-booking/index.ts` — accept and persist `failure_reason`, `failure_step` (no schema-checking, just pass-through)
+- `supabase/functions/get-user-orders/index.ts` — expose new fields
+- `src/pages/History.tsx` (and the order card it renders) — show status badge + reason for non-successful rows
+- New migration: add `failure_reason` and `failure_step` columns to `bookings`
+- Data insert: backfill the orphan Urbanebolt AWB
+
+## Out of scope
+
+- No changes to RLS (existing policies on `bookings` are fine; service-role insert via `save-booking` continues to be the write path).
+- No changes to the partner edge functions themselves — the booking flow already captures their responses; we just persist them.
