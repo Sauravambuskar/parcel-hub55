@@ -95,26 +95,6 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
   return map;
 }
 
-// Fallback: geocode pincode via India Post (free, no auth) to get city/state.
-async function geocodeFallback(pin: string): Promise<PincodeInfo> {
-  try {
-    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-    const j = await r.json();
-    const po = j?.[0]?.PostOffice?.[0];
-    if (po) {
-      return {
-        pincode: pin,
-        city: po.District || po.Block || po.Name || "",
-        state: po.State || "",
-        serviceable: true, // Assume serviceable; Urbanebolt covers 7000+ pincodes
-      };
-    }
-  } catch (e) {
-    console.warn("[urbanebolt-serviceability] india-post fallback failed", pin, String(e));
-  }
-  return { pincode: pin, city: "", state: "", serviceable: true };
-}
-
 type ZoneKey = keyof typeof RATE_CARD;
 
 function detectZones(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey[] {
@@ -164,22 +144,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // STRICT MODE: Only mark serviceable if Urbanebolt's pincode API confirms BOTH pincodes.
+    // No India Post fallback — if Urbanebolt's API doesn't confirm coverage, hide the partner.
     const map = await lookupPincodes(env, [pickup_pincode, delivery_pincode]);
-    let pickup = map[pickup_pincode];
-    let delivery = map[delivery_pincode];
+    const pickup = map[pickup_pincode];
+    const delivery = map[delivery_pincode];
 
-    // If Urbanebolt's pincode API didn't return data (WAF block / rate limit / endpoint mismatch),
-    // fall back to India Post geocoding and assume serviceable. Urbanebolt covers 7000+ pincodes.
-    if (!pickup) pickup = await geocodeFallback(pickup_pincode);
-    if (!delivery) delivery = await geocodeFallback(delivery_pincode);
+    const pickupServiceable = !!pickup && pickup.serviceable === true;
+    const deliveryServiceable = !!delivery && delivery.serviceable === true;
+    const isServiceable = pickupServiceable && deliveryServiceable;
 
-    const isServiceable = !!(pickup?.serviceable && delivery?.serviceable);
     if (!isServiceable) {
       return new Response(
         JSON.stringify({
           is_serviceable: false,
-          pickup_serviceable: !!pickup?.serviceable,
-          delivery_serviceable: !!delivery?.serviceable,
+          pickup_serviceable: pickupServiceable,
+          delivery_serviceable: deliveryServiceable,
+          reason: !pickupServiceable
+            ? "Pickup pincode not serviced by Urbanebolt"
+            : "Delivery pincode not serviced by Urbanebolt",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
