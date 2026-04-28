@@ -24,10 +24,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload = {
-      awbs: [trackId],
-      reason: cancel_remarks || "Cancelled By Customer",
-    };
+    // Per Urbanebolt spec: { "awbs": "200000001170" } — string, comma-separated for multiple
+    const payload = { awbs: String(trackId) };
     console.log("[urbanebolt-cancel] payload:", JSON.stringify(payload));
 
     const res = await urbaneboltFetch(env, "/api/v1/services/cancel/", {
