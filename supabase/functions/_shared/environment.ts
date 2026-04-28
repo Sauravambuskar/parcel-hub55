@@ -158,11 +158,19 @@ export function getUrbaneboltConfig(env: Environment) {
     Deno.env.get(config.usernameEnvVar) || Deno.env.get('URBANEBOLT_PROD_USERNAME');
   const password =
     Deno.env.get(config.passwordEnvVar) || Deno.env.get('URBANEBOLT_PROD_PASSWORD');
+  // Per Urbanebolt support: UAT customer code = UEBCUS0008, Prod = UBC0235.
+  // Allow override via env-specific secrets, otherwise fall back to known values.
+  const customerCode =
+    (env === 'production'
+      ? Deno.env.get('URBANEBOLT_PROD_CUSTOMER_CODE')
+      : Deno.env.get('URBANEBOLT_UAT_CUSTOMER_CODE')) ||
+    Deno.env.get('URBANEBOLT_CUSTOMER_CODE') ||
+    (env === 'production' ? 'UBC0235' : 'UEBCUS0008');
   return {
     apiBaseUrl: config.apiBaseUrl,
     username,
     password,
-    customerCode: Deno.env.get('URBANEBOLT_CUSTOMER_CODE'),
+    customerCode,
   };
 }
 
