@@ -184,12 +184,12 @@ interface XpressbeesConfig {
 // fall back to PROD credentials so sandbox testing still works.
 export const XPRESSBEES_CONFIG: Record<Environment, XpressbeesConfig> = {
   sandbox: {
-    apiBaseUrl: 'https://ship.xpressbees.com',
+    apiBaseUrl: 'https://shipment.xpressbees.com',
     emailEnvVar: 'XPRESSBEES_PROD_EMAIL',
     passwordEnvVar: 'XPRESSBEES_PROD_PASSWORD',
   },
   production: {
-    apiBaseUrl: 'https://ship.xpressbees.com',
+    apiBaseUrl: 'https://shipment.xpressbees.com',
     emailEnvVar: 'XPRESSBEES_PROD_EMAIL',
     passwordEnvVar: 'XPRESSBEES_PROD_PASSWORD',
   },
