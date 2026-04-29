@@ -35,19 +35,20 @@ function resolveCreds(env: Environment): { username: string; password: string } 
 }
 
 async function login(env: Environment): Promise<string> {
-  const { username, password } = resolveCreds(env);
-  if (!username || !password) {
+  const { username: email, password } = resolveCreds(env);
+  if (!email || !password) {
     throw new Error(
-      "XpressBees credentials not configured (XPRESSBEES_SHIPMENT_EMAIL/USERNAME and XPRESSBEES_SHIPMENT_PASSWORD)",
+      "XpressBees credentials not configured (XPRESSBEES_SHIPMENT_EMAIL and XPRESSBEES_SHIPMENT_PASSWORD)",
     );
   }
   const url = `${BASE_URL}${LOGIN_PATH}`;
-  console.log("[xpressbees-auth] franchise_login", { url, user_suffix: username.slice(-6) });
+  console.log("[xpressbees-auth] franchise_login", { url, email_suffix: email.slice(-6) });
 
+  // Per Postman curl: body uses { email, password } (not username).
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
   const text = await res.text();
   let data: any;
