@@ -36,12 +36,14 @@ interface BookingBody {
   service_code?: string; // e.g. "xb_surface_z2" / "xb_air_z4"
 }
 
-// Per doc: Air = "01", Surface = "02".
+// Account-specific courier IDs (fetched from /api/franchise/shipments/courier).
+// ViaSetu franchise: 17018 = B2C, 17019 = B2B. We ship B2C for both Air & Surface
+// since the franchise account exposes only one B2C courier line.
 function pickCourierId(serviceCode: string | undefined): string {
-  const isAir = (serviceCode || "").includes("air");
-  return isAir
-    ? (Deno.env.get("XPRESSBEES_AIR_COURIER_ID") || "01")
-    : (Deno.env.get("XPRESSBEES_SURFACE_COURIER_ID") || "02");
+  const isB2B = (serviceCode || "").includes("b2b");
+  return isB2B
+    ? (Deno.env.get("XPRESSBEES_B2B_COURIER_ID") || "17019")
+    : (Deno.env.get("XPRESSBEES_B2C_COURIER_ID") || "17018");
 }
 
 function digits10(s: string): string {
