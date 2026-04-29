@@ -174,6 +174,39 @@ const Tracking = () => {
         return;
       }
 
+      // If the booking is cancelled in our DB, prepend a CANCELLED status so
+      // the UI reflects the cancellation regardless of what the partner
+      // tracking API returns (some partners keep returning the last in-transit
+      // event for a while after cancellation).
+      if (partnerData && bookingRow) {
+        const bookingStatus = String(bookingRow.status || '').toLowerCase();
+        if (bookingStatus === 'cancelled' || bookingStatus === 'canceled') {
+          const cancelTs = bookingRow.updated_at
+            ? new Date(bookingRow.updated_at).getTime()
+            : Date.now();
+          const cancelEntry: TrackingStatus = {
+            trackingId: awb,
+            status: 'Cancelled',
+            location: '',
+            deliveryPartnerName: partnerData.statuses?.[0]?.deliveryPartnerName || '',
+            statusTimestamp: cancelTs,
+            event: bookingRow.refund_reason || 'Order Cancelled',
+            category: 'CANCELLED',
+            subcategory: bookingRow.refund_reason || 'Order Cancelled',
+            createdAt: new Date(cancelTs).toISOString(),
+          };
+          // Drop any partner statuses with timestamps after the cancellation,
+          // and ensure the cancellation entry is the latest.
+          const filtered = (partnerData.statuses || []).filter(
+            (s) => s.statusTimestamp <= cancelTs && s.category !== 'CANCELLED'
+          );
+          partnerData = {
+            ...partnerData,
+            statuses: [cancelEntry, ...filtered],
+          };
+        }
+      }
+
       // Merge address/contact info from booking row — partner tracking APIs
       // typically return only event history, not sender/receiver details.
       if (partnerData && bookingRow) {
