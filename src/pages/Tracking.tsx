@@ -132,41 +132,39 @@ const Tracking = () => {
       const isUrbanebolt = bSource === 'urbanebolt_direct';
       const isXpressbees = bSource === 'xpressbees_direct';
 
+      let partnerData: TrackingData | null = null;
+
       if (isShadowfax) {
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
           body: { order_id: bookingRow?.prayog_order_id || awb },
           headers: { 'x-environment': CURRENT_ENV },
         });
-
         if (sfxError || !sfxData) throw new Error('Failed to fetch Shadowfax tracking');
-        setTrackingData(sfxData);
+        partnerData = sfxData;
       } else if (isDelhiveryDirect) {
         const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
         const { data: dlvData, error: dlvError } = await supabase.functions.invoke('delhivery-tracking', {
           body: { waybill: trackAwb },
           headers: { 'x-environment': CURRENT_ENV },
         });
-
         if (dlvError || !dlvData || dlvData.error) throw new Error('Failed to fetch Delhivery tracking');
-        setTrackingData(dlvData);
+        partnerData = dlvData;
       } else if (isUrbanebolt) {
         const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
         const { data: ubData, error: ubError } = await supabase.functions.invoke('urbanebolt-tracking', {
           body: { waybill: trackAwb },
           headers: { 'x-environment': CURRENT_ENV },
         });
-
         if (ubError || !ubData || ubData.error) throw new Error('Failed to fetch Urbanebolt tracking');
-        setTrackingData(ubData);
+        partnerData = ubData;
       } else if (isXpressbees) {
         const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
         const { data: xbData, error: xbError } = await supabase.functions.invoke('xpressbees-tracking', {
           body: { waybill: trackAwb },
           headers: { 'x-environment': CURRENT_ENV },
         });
-
         if (xbError || !xbData || xbData.error) throw new Error('Failed to fetch XpressBees tracking');
-        setTrackingData(xbData);
+        partnerData = xbData;
       } else {
         toast({
           title: "Tracking Unavailable",
@@ -175,6 +173,46 @@ const Tracking = () => {
         });
         return;
       }
+
+      // Merge address/contact info from booking row — partner tracking APIs
+      // typically return only event history, not sender/receiver details.
+      if (partnerData && bookingRow) {
+        const oi = (partnerData.orderInformation || {}) as any;
+        const src = oi.sourceLocation || {};
+        const dst = oi.destinationLocation || {};
+        const snd = oi.senderDetails || {};
+        const rcv = oi.receiverDetails || {};
+        partnerData = {
+          ...partnerData,
+          orderInformation: {
+            ...oi,
+            sourceLocation: {
+              address: src.address || bookingRow.sender_address || '',
+              city: src.city || bookingRow.sender_city || '',
+              landmark: src.landmark || '',
+              pincode: src.pincode || bookingRow.sender_pincode || '',
+              state: src.state || bookingRow.sender_state || '',
+            },
+            destinationLocation: {
+              address: dst.address || bookingRow.receiver_address || '',
+              city: dst.city || bookingRow.receiver_city || '',
+              landmark: dst.landmark || '',
+              pincode: dst.pincode || bookingRow.receiver_pincode || '',
+              state: dst.state || bookingRow.receiver_state || '',
+            },
+            senderDetails: {
+              sender_name: snd.sender_name || bookingRow.sender_name || '',
+              sender_mobile: snd.sender_mobile || bookingRow.sender_phone || '',
+            },
+            receiverDetails: {
+              receiver_name: rcv.receiver_name || bookingRow.receiver_name || '',
+              receiver_mobile: rcv.receiver_mobile || bookingRow.receiver_phone || '',
+            },
+            bookingDate: oi.bookingDate || bookingRow.created_at || new Date().toISOString(),
+          },
+        };
+      }
+      setTrackingData(partnerData);
     } catch (error: any) {
       console.error("Error fetching tracking:", error);
       toast({
