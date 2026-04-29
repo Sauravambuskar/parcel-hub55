@@ -1,5 +1,12 @@
-// XpressBees tracking — POST /api/shipments2/track  with { awb }.
-// Maps to the same TrackingData shape used by Shadowfax / Delhivery / Urbanebolt.
+// XpressBees Franchise tracking.
+// Per franchise_apidoc: POST https://ship.xpressbees.com/api/franchise/shipments/track_shipment
+// with body { "awb_number": "<awb>" }.
+// Response shape:
+//   { response, message, tracking_data: {
+//       delivered: [...], "out for delivery": [...], "in transit": [...],
+//       "pending pickup": [...], rto: [...], ... } }
+// Each entry: { id, awb_number, event_time (epoch seconds str), status_code,
+//               location, message, status, ship_status, rto_awb }
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { xpressbeesFetch } from "../_shared/xpressbees-auth.ts";
@@ -10,18 +17,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-function mapStatus(status: string): { category: string; subcategory: string } {
-  const v = (status || "").toLowerCase().trim();
-  const sub = status || "Update";
-  if (v.includes("delivered")) return { category: "DELIVERED", subcategory: sub };
-  if (v.includes("out for delivery") || v.includes("ofd")) return { category: "OUT_FOR_DELIVERY", subcategory: sub };
-  if (v.includes("rto") || v.includes("return")) return { category: "RTO", subcategory: sub };
-  if (v.includes("cancel")) return { category: "CANCELLED", subcategory: sub };
-  if (v.includes("picked") || v.includes("transit") || v.includes("dispatched") || v.includes("hub") || v.includes("manifest")) {
+function mapStatus(shipStatus: string, statusText: string): { category: string; subcategory: string } {
+  const s = (shipStatus || statusText || "").toLowerCase().trim();
+  const sub = statusText || shipStatus || "Update";
+  if (s.includes("delivered")) return { category: "DELIVERED", subcategory: sub };
+  if (s.includes("out for delivery") || s.includes("ofd")) return { category: "OUT_FOR_DELIVERY", subcategory: sub };
+  if (s.includes("rto") || s.includes("return")) return { category: "RTO", subcategory: sub };
+  if (s.includes("cancel")) return { category: "CANCELLED", subcategory: sub };
+  if (s.includes("pending pickup") || s.includes("pending")) return { category: "ORDER_CONFIRMED", subcategory: sub };
+  if (s.includes("transit") || s.includes("picked") || s.includes("dispatch") || s.includes("hub") || s.includes("manifest")) {
     return { category: "IN_TRANSIT", subcategory: sub };
-  }
-  if (v.includes("booked") || v.includes("created") || v.includes("pending")) {
-    return { category: "ORDER_CONFIRMED", subcategory: sub };
   }
   return { category: "IN_TRANSIT", subcategory: sub };
 }
@@ -39,9 +44,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Per CUSTOM_API.pdf: GET /api/shipments2/track/{AWB} (no body).
-    const res = await xpressbeesFetch(env, `/api/shipments2/track/${encodeURIComponent(String(trackId))}`, {
-      method: "GET",
+    const res = await xpressbeesFetch(env, "/api/franchise/shipments/track_shipment", {
+      method: "POST",
+      body: JSON.stringify({ awb_number: String(trackId) }),
     });
     const text = await res.text();
     if (!res.ok) {
@@ -53,45 +58,42 @@ Deno.serve(async (req) => {
     let data: any;
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    const inner = data?.data || data;
-    const history: any[] =
-      Array.isArray(inner?.history) ? inner.history :
-      Array.isArray(inner?.tracking_history) ? inner.tracking_history :
-      Array.isArray(inner?.scans) ? inner.scans :
-      Array.isArray(inner?.events) ? inner.events :
-      Array.isArray(inner) ? inner : [];
+    // Flatten all bucket arrays inside tracking_data.
+    const td = data?.tracking_data || data?.data?.tracking_data || data?.data || {};
+    const allEntries: any[] = [];
+    if (td && typeof td === "object" && !Array.isArray(td)) {
+      for (const bucket of Object.values(td)) {
+        if (Array.isArray(bucket)) allEntries.push(...bucket);
+      }
+    } else if (Array.isArray(td)) {
+      allEntries.push(...td);
+    }
 
-    const head = inner?.shipment || inner;
-    const orderNo = head?.order_number || head?.order_id || trackId;
-    const edd = head?.edd || head?.expected_delivery_date || "";
-
-    const statuses = history.map((entry: any) => {
-      const ts = entry?.timestamp || entry?.scan_time || entry?.event_time || entry?.date || new Date().toISOString();
-      const desc = entry?.status || entry?.message || entry?.activity || entry?.event || "Update";
-      const m = mapStatus(desc);
-      const tsMs = typeof ts === "string"
-        ? Date.parse(ts.replace(" ", "T") + (ts.includes("T") || ts.includes("Z") ? "" : "+05:30"))
-        : new Date(ts).getTime();
+    const statuses = allEntries.map((entry: any) => {
+      const epoch = Number(entry?.event_time);
+      const tsMs = isFinite(epoch) && epoch > 0 ? epoch * 1000 : Date.now();
+      const desc = entry?.message || entry?.status || "Update";
+      const m = mapStatus(entry?.ship_status || "", desc);
       return {
         trackingId: trackId,
         status: desc,
-        location: entry?.location || entry?.city || entry?.hub || "",
+        location: entry?.location || "",
         deliveryPartnerName: "XpressBees",
-        statusTimestamp: isNaN(tsMs) ? Date.now() : tsMs,
+        statusTimestamp: tsMs,
         event: desc,
         category: m.category,
         subcategory: m.subcategory,
-        createdAt: typeof ts === "string" ? ts : new Date(ts).toISOString(),
+        createdAt: new Date(tsMs).toISOString(),
         statusCode: entry?.status_code || "",
-        reasonCode: entry?.reason_code || "",
-        podUrl: entry?.pod_url || "",
-        otpVerified: entry?.otp_verified || "",
+        reasonCode: "",
+        podUrl: "",
+        otpVerified: "",
       };
     });
 
     if (statuses.length === 0) {
-      const cur = head?.status || "Manifested";
-      const m = mapStatus(cur);
+      const cur = data?.message || "Manifested";
+      const m = mapStatus("", cur);
       statuses.push({
         trackingId: trackId,
         status: cur, location: "",
@@ -107,19 +109,19 @@ Deno.serve(async (req) => {
     const trackingData = {
       orderInformation: {
         trackingId: trackId,
-        cAwbNumber: head?.awb_number || trackId,
-        orderId: orderNo,
+        cAwbNumber: trackId,
+        orderId: trackId,
         sourceLocation: { address: "", city: "", landmark: "", pincode: "", state: "" },
         destinationLocation: { address: "", city: "", landmark: "", pincode: "", state: "" },
         senderDetails: { sender_mobile: "", sender_name: "" },
         receiverDetails: { receiver_mobile: "", receiver_name: "" },
-        travelType: head?.courier_name || "surface",
-        serviceType: head?.courier_name || "standard",
-        bookingDate: head?.created_at || new Date().toISOString(),
+        travelType: "surface",
+        serviceType: "standard",
+        bookingDate: new Date().toISOString(),
         type: "FORWARD",
-        edd,
+        edd: "",
         podUrl: "",
-        weight: head?.weight || "",
+        weight: "",
         pieces: 1,
       },
       statuses,

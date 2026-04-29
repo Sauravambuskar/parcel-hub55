@@ -24,10 +24,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload = { awb: String(trackId), reason: cancel_remarks || "Cancelled By Customer" };
+    // Per franchise_apidoc: POST /api/franchise/shipments/cancel_shipment with { awb_number }
+    const payload = { awb_number: String(trackId) };
     console.log("[xpressbees-cancel] payload:", JSON.stringify(payload));
 
-    const res = await xpressbeesFetch(env, "/api/shipments2/cancel", {
+    const res = await xpressbeesFetch(env, "/api/franchise/shipments/cancel_shipment", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -36,7 +37,8 @@ Deno.serve(async (req) => {
     try { result = JSON.parse(text); } catch { result = { raw: text }; }
     console.log("[xpressbees-cancel] response:", res.status, text.slice(0, 800));
 
-    if (!res.ok || result?.status === false || result?.success === false) {
+    const success = res.ok && (result?.response === true || result?.status === true);
+    if (!success) {
       return new Response(JSON.stringify({
         success: false,
         error: result?.message || result?.error || "Failed to cancel order",
