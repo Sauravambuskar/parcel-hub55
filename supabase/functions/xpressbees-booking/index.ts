@@ -73,10 +73,6 @@ Deno.serve(async (req) => {
     const weightGrams = Math.max(50, Math.round((Number(package_weight) || 0.5) * 1000));
     const courierId = pickCourierId(service_code);
 
-    // Use the sender address as the pickup location for this single shipment.
-    // Franchise API accepts a `pickup_location` object inline on the shipment payload.
-    const pickupLocationName = `pl_${sender_pincode}_${order_id.slice(-6)}`.toLowerCase();
-
     // Per CUSTOM_API.pdf: order_amount is REQUIRED (not total_order_value),
     // payment_type must be cod/prepaid/reverse, weight in grams, dimensions in cm.
     // Pickup is the sender address inline (no warehouse_name field in spec).
