@@ -73,17 +73,23 @@ Deno.serve(async (req) => {
     const weightGrams = Math.max(50, Math.round((Number(package_weight) || 0.5) * 1000));
     const courierId = pickCourierId(service_code);
 
-    // Use the sender address as the pickup location for this single shipment.
-    // Franchise API accepts a `pickup_location` object inline on the shipment payload.
-    const pickupLocationName = `pl_${sender_pincode}_${order_id.slice(-6)}`.toLowerCase();
-
+    // Per CUSTOM_API.pdf: order_amount is REQUIRED (not total_order_value),
+    // payment_type must be cod/prepaid/reverse, weight in grams, dimensions in cm.
+    // Pickup is the sender address inline (no warehouse_name field in spec).
+    const orderAmount = Number(shipment_value) || 0;
     const payload = {
       order_number: order_id,
+      unique_order_number: "yes",
       payment_type: "prepaid",
-      package_weight: String(weightGrams), // grams (string per spec)
-      package_length: String(Math.max(1, Math.round(Number(length) || 10))),
-      package_breadth: String(Math.max(1, Math.round(Number(width) || 10))),
-      package_height: String(Math.max(1, Math.round(Number(height) || 10))),
+      order_amount: orderAmount,
+      collectable_amount: 0, // prepaid → no COD collection
+      shipping_charges: 0,
+      cod_charges: 0,
+      discount: 0,
+      package_weight: weightGrams, // grams
+      package_length: Math.max(1, Math.round(Number(length) || 10)),
+      package_breadth: Math.max(1, Math.round(Number(width) || 10)),
+      package_height: Math.max(1, Math.round(Number(height) || 10)),
       request_auto_pickup: "yes",
       consignee: {
         name: receiver_name,
@@ -95,7 +101,6 @@ Deno.serve(async (req) => {
         phone: String(receiver_phone),
       },
       pickup: {
-        warehouse_name: pickupLocationName,
         name: sender_name,
         address: sender_address,
         address_2: "",
@@ -107,12 +112,10 @@ Deno.serve(async (req) => {
       order_items: [{
         name: goods_type || "Package",
         qty: "1",
-        price: String(Number(shipment_value) || 0),
+        price: String(orderAmount),
         sku: order_id,
       }],
       courier_id: courierId,
-      collectable_amount: "0",
-      total_order_value: String(Number(shipment_value) || 0),
     };
 
     console.log("[xpressbees-booking] payload:", JSON.stringify(payload).slice(0, 1500));

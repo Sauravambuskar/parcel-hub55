@@ -39,9 +39,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const res = await xpressbeesFetch(env, "/api/shipments2/track", {
-      method: "POST",
-      body: JSON.stringify({ awb: String(trackId) }),
+    // Per CUSTOM_API.pdf: GET /api/shipments2/track/{AWB} (no body).
+    const res = await xpressbeesFetch(env, `/api/shipments2/track/${encodeURIComponent(String(trackId))}`, {
+      method: "GET",
     });
     const text = await res.text();
     if (!res.ok) {
