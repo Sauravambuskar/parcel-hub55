@@ -1,9 +1,8 @@
-// XpressBees franchise B2C — create shipment.
-// POST /api/shipments2  with Bearer token from getXpressbeesToken().
-// Pickup location is created on-the-fly from the user's sender address (we do
-// NOT use a global pickup warehouse — each booking ships from the sender).
-//
-// Returns AWB + label URL when available, normalized for save-booking.
+// XpressBees Franchise B2C — create shipment.
+// Per franchise_apidoc_v1.1.6: POST https://ship.xpressbees.com/api/franchise/shipments
+// with a flat payload (consigner_/consignee_ fields, products[], invoice[],
+// weight in grams as string, dims in cm as strings, courier_id "01" Air / "02" Surface).
+// Pickup is from sender (not a franchise warehouse), so pickup_location = "customer".
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { xpressbeesFetch } from "../_shared/xpressbees-auth.ts";
@@ -37,16 +36,16 @@ interface BookingBody {
   service_code?: string; // e.g. "xb_surface_z2" / "xb_air_z4"
 }
 
-// Decide courier_id based on the selected mode (surface vs air).
-// XpressBees franchise courier IDs vary by account; we default to common defaults
-// and let the user override via env if needed.
+// Per doc: Air = "01", Surface = "02".
 function pickCourierId(serviceCode: string | undefined): string {
   const isAir = (serviceCode || "").includes("air");
-  // Defaults documented in franchise B2C onboarding kit.
-  // Surface ~ "1" (Standard Surface), Air ~ "2" (Air Express).
   return isAir
-    ? (Deno.env.get("XPRESSBEES_AIR_COURIER_ID") || "2")
-    : (Deno.env.get("XPRESSBEES_SURFACE_COURIER_ID") || "1");
+    ? (Deno.env.get("XPRESSBEES_AIR_COURIER_ID") || "01")
+    : (Deno.env.get("XPRESSBEES_SURFACE_COURIER_ID") || "02");
+}
+
+function digits10(s: string): string {
+  return String(s || "").replace(/\D/g, "").slice(-10);
 }
 
 Deno.serve(async (req) => {
@@ -72,54 +71,56 @@ Deno.serve(async (req) => {
 
     const weightGrams = Math.max(50, Math.round((Number(package_weight) || 0.5) * 1000));
     const courierId = pickCourierId(service_code);
+    const orderAmount = Number(shipment_value) || 1;
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    // Per CUSTOM_API.pdf: order_amount is REQUIRED (not total_order_value),
-    // payment_type must be cod/prepaid/reverse, weight in grams, dimensions in cm.
-    // Pickup is the sender address inline (no warehouse_name field in spec).
-    const orderAmount = Number(shipment_value) || 0;
+    // Doc: id max length 20 chars.
+    const orderIdShort = String(order_id).slice(0, 20);
+
+    // Flat franchise payload.
     const payload = {
-      order_number: order_id,
+      id: orderIdShort,
       unique_order_number: "yes",
-      payment_type: "prepaid",
-      order_amount: orderAmount,
-      collectable_amount: 0, // prepaid → no COD collection
-      shipping_charges: 0,
-      cod_charges: 0,
-      discount: 0,
-      package_weight: weightGrams, // grams
-      package_length: Math.max(1, Math.round(Number(length) || 10)),
-      package_breadth: Math.max(1, Math.round(Number(width) || 10)),
-      package_height: Math.max(1, Math.round(Number(height) || 10)),
-      request_auto_pickup: "yes",
-      consignee: {
-        name: receiver_name,
-        address: receiver_address,
-        address_2: "",
-        city: receiver_city,
-        state: receiver_state,
-        pincode: String(receiver_pincode),
-        phone: String(receiver_phone),
-      },
-      pickup: {
-        name: sender_name,
-        address: sender_address,
-        address_2: "",
-        city: sender_city,
-        state: sender_state,
-        pincode: String(sender_pincode),
-        phone: String(sender_phone),
-      },
-      order_items: [{
-        name: goods_type || "Package",
-        qty: "1",
-        price: String(orderAmount),
-        sku: order_id,
+      payment_method: "prepaid", // No COD policy
+      // Consigner = sender
+      consigner_name: String(sender_name).slice(0, 100),
+      consigner_phone: digits10(sender_phone),
+      consigner_pincode: String(sender_pincode),
+      consigner_city: String(sender_city).slice(0, 40),
+      consigner_state: String(sender_state).slice(0, 40),
+      consigner_address: String(sender_address).slice(0, 200),
+      // Consignee = receiver
+      consignee_name: String(receiver_name).slice(0, 100),
+      consignee_phone: digits10(receiver_phone),
+      consignee_pincode: String(receiver_pincode),
+      consignee_city: String(receiver_city).slice(0, 40),
+      consignee_state: String(receiver_state).slice(0, 40),
+      consignee_address: String(receiver_address).slice(0, 200),
+      products: [{
+        product_name: String(goods_type || "Package").slice(0, 40),
+        product_qty: "1",
+        product_price: String(orderAmount),
+        product_sku: orderIdShort,
       }],
+      invoice: [{
+        invoice_number: orderIdShort,
+        invoice_date: today,
+      }],
+      weight: String(weightGrams), // grams as string
+      length: String(Math.max(1, Math.round(Number(length) || 10))),
+      breadth: String(Math.max(1, Math.round(Number(width) || 10))),
+      height: String(Math.max(1, Math.round(Number(height) || 10))),
       courier_id: courierId,
+      pickup_location: "customer", // pickup is from sender's address
+      shipping_charges: "0",
+      cod_charges: "0",
+      discount: "0",
+      order_amount: String(orderAmount),
+      collectable_amount: "0", // prepaid
     };
 
     console.log("[xpressbees-booking] payload:", JSON.stringify(payload).slice(0, 1500));
-    const res = await xpressbeesFetch(env, "/api/shipments2", {
+    const res = await xpressbeesFetch(env, "/api/franchise/shipments", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -128,19 +129,17 @@ Deno.serve(async (req) => {
     try { result = JSON.parse(text); } catch { result = { raw: text }; }
     console.log("[xpressbees-booking] response", res.status, text.slice(0, 1500));
 
-    const data = result?.data || result;
+    // Per doc: success → { response: true, message: "booked", awb_number, label, ... }
     const awb: string | null =
-      data?.awb_number || data?.awb || data?.awbNumber || data?.waybill ||
-      data?.shipment?.awb_number || result?.awb_number || null;
+      result?.awb_number || result?.data?.awb_number || result?.awbNumber || null;
     const labelUrl: string | null =
-      data?.label || data?.label_url || data?.shipping_label || data?.shipping_label_url ||
-      data?.shipment?.label || null;
+      result?.label || result?.data?.label || result?.label_url || null;
 
-    const ok = res.ok && (result?.status === true || result?.success === true || !!awb);
+    const ok = res.ok && (result?.response === true || result?.status === true) && !!awb;
 
     if (!ok || !awb) {
       const err =
-        result?.message || result?.error || data?.message || data?.error ||
+        result?.message || result?.error ||
         `XpressBees booking failed (${res.status})`;
       return new Response(JSON.stringify({
         success: false, step: "shipment",

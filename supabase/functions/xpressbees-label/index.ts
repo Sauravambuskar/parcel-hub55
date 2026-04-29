@@ -1,8 +1,9 @@
-// XpressBees label fetch — POST /api/shipments2/label  with { awb }.
-// Returns a label/PDF URL for the given AWB.
+// XpressBees label fetch.
+// Per franchise_apidoc: there is NO standalone label endpoint — the label URL
+// (`label`) is returned in the create-shipment response and stored on the
+// booking row by save-booking. So this function reads it back from the DB.
 
-import { getEnvironmentFromRequest } from "../_shared/environment.ts";
-import { xpressbeesFetch } from "../_shared/xpressbees-auth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,38 +15,44 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const env = getEnvironmentFromRequest(req);
-    const { waybill, awb } = await req.json().catch(() => ({}));
+    const { waybill, awb, booking_id } = await req.json().catch(() => ({}));
     const trackId = waybill || awb;
-    if (!trackId) {
-      return new Response(JSON.stringify({ success: false, error: "waybill is required" }), {
+    if (!trackId && !booking_id) {
+      return new Response(JSON.stringify({ success: false, error: "waybill or booking_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const res = await xpressbeesFetch(env, "/api/shipments2/label", {
-      method: "POST",
-      body: JSON.stringify({ awb: String(trackId) }),
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.warn("[xpressbees-label] failed", res.status, text.slice(0, 500));
-      return new Response(JSON.stringify({ success: false, error: "Label fetch failed", details: text.slice(0, 500) }), {
-        status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    let labelUrl: string | null = null;
+
+    if (booking_id) {
+      const { data } = await supabase
+        .from("bookings")
+        .select("label_url")
+        .eq("id", booking_id)
+        .single();
+      labelUrl = data?.label_url || null;
     }
-    let data: any;
-    try { data = JSON.parse(text); } catch { data = { raw: text }; }
-    const inner = data?.data || data;
-    const labelUrl: string | null =
-      inner?.label || inner?.label_url || inner?.url || inner?.pdf_url ||
-      (Array.isArray(inner) ? inner[0]?.label : null) ||
-      data?.label || null;
+
+    if (!labelUrl && trackId) {
+      const { data } = await supabase
+        .from("bookings")
+        .select("label_url")
+        .eq("waybill", String(trackId))
+        .maybeSingle();
+      labelUrl = data?.label_url || null;
+    }
 
     if (!labelUrl) {
-      return new Response(JSON.stringify({ success: false, error: "Label not yet available", details: data }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Label not available. XpressBees returns the label URL only at booking time.",
+      }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ success: true, label_url: labelUrl }), {
