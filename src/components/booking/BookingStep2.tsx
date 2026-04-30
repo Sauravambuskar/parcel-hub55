@@ -448,45 +448,20 @@ const BookingStep2 = ({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="package-weight">Weight ({weightUnit})</Label>
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => { setWeightUnit('kg'); onWeightUnitChange?.('kg'); }}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    weightUnit === 'kg' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  kg
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setWeightUnit('g'); onWeightUnitChange?.('g'); }}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    weightUnit === 'g' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  g
-                </button>
-              </div>
-            </div>
+            <Label htmlFor="package-weight">Weight (g)</Label>
             <Input
               id="package-weight"
               type="number"
               value={packageWeight}
               onChange={(e) => onInputChange('packageWeight', e.target.value)}
-              placeholder={weightUnit === 'kg' ? "e.g., 1.5" : "e.g., 500"}
-              min={weightUnit === 'kg' ? "0.1" : "1"}
-              step={weightUnit === 'kg' ? "0.1" : "1"}
+              placeholder="e.g., 500"
+              min="1"
+              step="1"
+              inputMode="numeric"
             />
             <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
               <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
-              <span>Note: Weight discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
+              <span>Enter weight in grams. Discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
             </p>
           </div>
           {dimensionsRequired ? (
