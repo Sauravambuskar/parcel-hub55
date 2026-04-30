@@ -4,10 +4,11 @@ import CourierAssistant from "./CourierAssistant";
 import ETACard, { ETACardSkeleton, ETACardHeader } from "./ETACard";
 import ETASortBar from "./ETASortBar";
 import { usePartnerRatings } from "@/hooks/usePartnerRatings";
-import { Loader2, Truck } from "lucide-react";
+import { Loader2, Truck, XCircle } from "lucide-react";
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays } from "@/lib/tat-utils";
+import { getPartnerLogo } from "@/config/partnerLogos";
 
 
 interface Partner {
@@ -83,7 +84,7 @@ const BookingStep5 = ({
   platformFeeData,
 }: BookingStep5Props) => {
   const isValid = selectedServiceId !== null;
-  const [showNonServiceable, setShowNonServiceable] = React.useState(false);
+  const [showNonServiceable, setShowNonServiceable] = React.useState(true);
   const [etaResults, setEtaResults] = useState<Map<string, ETAResult>>(new Map());
   const [etaLoading, setEtaLoading] = useState(false);
   const [sortMode, setSortMode] = useState("best");
@@ -292,31 +293,51 @@ const BookingStep5 = ({
         </div>
       )}
 
-      {/* Toggle for Non-Serviceable Partners */}
+      {/* Non-Serviceable Partners — visible by default */}
       {nonServiceablePartners.length > 0 && (
-        <div className="space-y-3">
-          <button
-            onClick={() => setShowNonServiceable(!showNonServiceable)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-          >
-            {showNonServiceable ? "▼" : "▶"} Show {nonServiceablePartners.length} unavailable partner
-            {nonServiceablePartners.length > 1 ? "s" : ""}
-          </button>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <h3 className="text-sm font-semibold">
+                Not available for this route ({nonServiceablePartners.length})
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowNonServiceable(!showNonServiceable)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showNonServiceable ? "Hide" : "Show"}
+            </button>
+          </div>
           {showNonServiceable && (
-            <div className="space-y-2 opacity-60">
-              {nonServiceablePartners.map((partner) => (
-                <div key={partner.partner_id} className="p-3 rounded-lg border border-border bg-muted/30 flex items-center gap-3">
-                  <Truck className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{partner.partner_name}</p>
-                    <p className="text-xs text-destructive">
-                      {partner.error || (partner.is_serviceable && (!partner.services || partner.services.length === 0)
-                        ? "No rates available for this route"
-                        : "Not serviceable for this route")}
-                    </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {nonServiceablePartners.map((partner) => {
+                const reason =
+                  partner.error ||
+                  (partner.is_serviceable && (!partner.services || partner.services.length === 0)
+                    ? "No rates available for this route"
+                    : "Not serviceable for this route");
+                return (
+                  <div
+                    key={partner.partner_id}
+                    className="p-3 rounded-lg border border-border bg-muted/20 flex items-center gap-3 opacity-70"
+                  >
+                    <img
+                      src={getPartnerLogo(partner.partner_code, partner.partner_name)}
+                      alt={partner.partner_name}
+                      className="h-8 w-8 rounded object-contain bg-background border border-border p-0.5 grayscale"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{partner.partner_name}</p>
+                      <p className="text-xs text-destructive truncate">{reason}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
