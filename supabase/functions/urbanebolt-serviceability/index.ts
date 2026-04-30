@@ -1,10 +1,11 @@
 // Urbanebolt serviceability check + price quote.
-// Uses embedded UrbaneBolt B2C Light Weight rate card (5 zones × Surface+Air).
-// Pincode API confirms serviceability and returns city/state used for zoning.
-// Source: UB_Rate_card-3.xlsx (uploaded by client).
+// Uses the shared embedded UrbaneBolt rate card (Zone A–E + Special, FSC 15%).
+// UB pincode API confirms serviceability and returns city/state used for zoning.
+// Source of truth for rates: supabase/functions/_shared/rate-cards.ts
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { urbaneboltFetch } from "../_shared/urbanebolt-auth.ts";
+import { quoteFromCard, type PinInfo } from "../_shared/rate-cards.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,88 +13,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-// ============================================================
-// EMBEDDED RATE CARD — UrbaneBolt B2C Light Weight (INR)
-// Zones: Local | WithinZone | Metro | ROI | Special
-// Slabs: 0.25 / 0.5 / 1 / 2 kg, then +Add.1kg per kg above 2 kg
-// Air is NOT available for Local zone.
-// ============================================================
-type ZoneKey = "Local" | "WithinZone" | "Metro" | "ROI" | "Special";
-type Mode = "surface" | "air";
-
-interface SlabRates {
-  upto_0_25: number | null;
-  upto_0_5: number | null;
-  add_0_5: number | null;   // unused but kept for reference
-  upto_1: number | null;
-  upto_2: number | null;
-  add_1kg: number | null;   // additional per kg beyond 2 kg
-}
-
-const RATE_CARD: Record<Mode, Record<ZoneKey, SlabRates>> = {
-  surface: {
-    Local:      { upto_0_25: 23, upto_0_5: 25, add_0_5: 19, upto_1: 40, upto_2: 60,  add_1kg: 32 },
-    WithinZone: { upto_0_25: 29, upto_0_5: 32, add_0_5: 28, upto_1: 55, upto_2: 72,  add_1kg: 43 },
-    Metro:      { upto_0_25: 36, upto_0_5: 42, add_0_5: 33, upto_1: 65, upto_2: 95,  add_1kg: 52 },
-    ROI:        { upto_0_25: 44, upto_0_5: 48, add_0_5: 39, upto_1: 83, upto_2: 111, add_1kg: 64 },
-    Special:    { upto_0_25: 54, upto_0_5: 58, add_0_5: 45, upto_1: 93, upto_2: 162, add_1kg: 78 },
-  },
-  air: {
-    Local:      { upto_0_25: null, upto_0_5: null, add_0_5: null, upto_1: null, upto_2: null, add_1kg: null },
-    WithinZone: { upto_0_25: 38, upto_0_5: 52, add_0_5: 41, upto_1: 80,  upto_2: 120, add_1kg: 60 },
-    Metro:      { upto_0_25: 42, upto_0_5: 60, add_0_5: 47, upto_1: 90,  upto_2: 138, add_1kg: 72 },
-    ROI:        { upto_0_25: 52, upto_0_5: 75, add_0_5: 60, upto_1: 102, upto_2: 160, add_1kg: 85 },
-    Special:    { upto_0_25: 68, upto_0_5: 83, add_0_5: 65, upto_1: 120, upto_2: 185, add_1kg: 98 },
-  },
-};
-
-const TAT: Record<Mode, { label: string; days: number }> = {
-  surface: { label: "Surface (2-4 days)", days: 3 },
-  air:     { label: "Air (1-2 days)",     days: 2 },
-};
-
-const METRO_CITIES = new Set([
-  "delhi", "new delhi", "mumbai", "bangalore", "bengaluru", "chennai",
-  "kolkata", "hyderabad", "pune", "ahmedabad",
-]);
-
-const SPECIAL_STATES = new Set([
-  "assam", "arunachal pradesh", "manipur", "meghalaya", "mizoram",
-  "nagaland", "tripura", "sikkim", "jammu and kashmir", "ladakh",
-  "andaman and nicobar islands", "lakshadweep",
-]);
-
-function pickSlabPrice(slab: SlabRates, chargeableKg: number): number | null {
-  if (slab.upto_0_25 == null && slab.upto_2 == null) return null;
-  if (chargeableKg <= 0.25 && slab.upto_0_25 != null) return slab.upto_0_25;
-  if (chargeableKg <= 0.5  && slab.upto_0_5  != null) return slab.upto_0_5;
-  if (chargeableKg <= 1    && slab.upto_1    != null) return slab.upto_1;
-  if (chargeableKg <= 2    && slab.upto_2    != null) return slab.upto_2;
-  // > 2 kg: base + per-extra-kg
-  if (slab.upto_2 != null && slab.add_1kg != null) {
-    const extraKg = Math.ceil(chargeableKg - 2);
-    return slab.upto_2 + extraKg * slab.add_1kg;
-  }
-  return null;
-}
-
-function calculatePrice(
-  zone: ZoneKey,
-  mode: Mode,
-  weightKg: number,
-  l: number, w: number, h: number,
-): number | null {
-  const volWeight = (l * w * h) / 5000;
-  const chargeable = Math.max(weightKg, volWeight);
-  const slab = RATE_CARD[mode][zone];
-  const price = pickSlabPrice(slab, chargeable);
-  return price == null ? null : Math.round(price);
-}
-
-interface PincodeInfo {
-  pincode: string;
-  city?: string;
-  state?: string;
+interface PincodeInfo extends PinInfo {
   serviceable?: boolean;
 }
 
@@ -135,35 +55,14 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
   return map;
 }
 
-// UB pincode API returns values like "Delhi - DEL" / "Maharashtra - MH" — strip the trailing code.
-function normalize(s: string | undefined): string {
-  return (s || "").split(" - ")[0].trim().toLowerCase();
-}
-
-function detectZone(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey {
-  const pCity = normalize(pickup.city);
-  const dCity = normalize(delivery.city);
-  const pState = normalize(pickup.state);
-  const dState = normalize(delivery.state);
-  const pPin = pickup.pincode || "";
-  const dPin = delivery.pincode || "";
-
-  // Special — NE / J&K / islands
-  if (SPECIAL_STATES.has(pState) || SPECIAL_STATES.has(dState)) return "Special";
-
-  // Local — same pincode (or same city)
-  if (pPin && dPin && pPin === dPin) return "Local";
-  if (pCity && dCity && pCity === dCity) return "Local";
-
-  // Metro — both ends are top metros
-  if (METRO_CITIES.has(pCity) && METRO_CITIES.has(dCity)) return "Metro";
-
-  // WithinZone — same state
-  if (pState && dState && pState === dState) return "WithinZone";
-
-  // Default: Rest of India
-  return "ROI";
-}
+const TAT_BY_ZONE: Record<string, { surface: { days: number; label: string }; air: { days: number; label: string } | null }> = {
+  "Zone A": { surface: { days: 1, label: "Same Day (12 hrs)" },  air: null },
+  "Zone B": { surface: { days: 1, label: "Next Day (24 hrs)" },  air: { days: 1, label: "Next Day (24 hrs)" } },
+  "Zone C": { surface: { days: 2, label: "Within State (24 hrs)" }, air: { days: 1, label: "Within State Air (24 hrs)" } },
+  "Zone D": { surface: { days: 2, label: "Metro (24 hrs)" }, air: { days: 1, label: "Metro Air (24 hrs)" } },
+  "Zone E": { surface: { days: 3, label: "ROI (24-48 hrs)" }, air: { days: 2, label: "ROI Air (24-48 hrs)" } },
+  "Special": { surface: { days: 5, label: "NE (48-72 hrs)" }, air: { days: 3, label: "NE Air (48-72 hrs)" } },
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -210,33 +109,44 @@ Deno.serve(async (req) => {
       );
     }
 
-    const zone = detectZone(pickup, delivery);
+    const dims = { l: length_cm, w: width_cm, h: height_cm };
+    const surfaceCard = quoteFromCard("urbanebolt", "surface", pickup, delivery, weight_kg, dims);
+    const airCard = quoteFromCard("urbanebolt", "air", pickup, delivery, weight_kg, dims);
 
-    // Build Surface + Air services (skip Air if not available for the zone)
-    const modes: Mode[] = ["surface", "air"];
-    const services = modes
-      .map((mode) => {
-        const price = calculatePrice(zone, mode, weight_kg, length_cm, width_cm, height_cm);
-        if (price == null) return null;
-        const isAir = mode === "air";
-        return {
-          service_code: `ub_${zone.toLowerCase()}_${mode}`,
-          service_name: `Urbanebolt ${zone} ${isAir ? "Air" : "Surface"}`,
-          tat_days: TAT[mode].days,
-          tat_label: TAT[mode].label,
-          delivery_modes: { express: isAir, standard: !isAir },
-          is_cod: false,
-          pickup: true,
-          delivery: true,
-          insurance: false,
-          rate: {
-            rate_id: `ub_rate_${zone.toLowerCase()}_${mode}`,
-            price: { amount: price, currency: "INR", type: "calculated" },
-            description: `Urbanebolt ${zone} ${isAir ? "Air" : "Surface"} (B2C Light Weight)`,
-          },
-        };
-      })
-      .filter((s): s is NonNullable<typeof s> => s !== null);
+    const services: any[] = [];
+    const push = (mode: "surface" | "air", card: ReturnType<typeof quoteFromCard>) => {
+      if (!card) return;
+      const tat = TAT_BY_ZONE[card.zone]?.[mode];
+      if (!tat) return;
+      const isAir = mode === "air";
+      services.push({
+        service_code: `ub_${card.zone.replace(/\s+/g, "_").toLowerCase()}_${mode}`,
+        service_name: `Urbanebolt ${card.zone} ${isAir ? "Air" : "Surface"}`,
+        tat_days: tat.days,
+        tat_label: tat.label,
+        delivery_modes: { express: isAir, standard: !isAir },
+        is_cod: false,
+        pickup: true,
+        delivery: true,
+        insurance: false,
+        rate: {
+          rate_id: `ub_rate_${card.zone}_${mode}`,
+          price: { amount: card.price_with_fsc, currency: "INR", type: "calculated" },
+          description: `Urbanebolt ${card.zone} ${isAir ? "Air" : "Surface"} (incl. ${(card.fsc_percent * 100).toFixed(0)}% FSC)`,
+        },
+        metadata: {
+          rate_source: "card",
+          card_price: card.price_with_fsc,
+          card_zone: card.zone,
+          chargeable_g: card.chargeable_g,
+          fsc_percent: card.fsc_percent,
+        },
+      });
+    };
+
+    push("surface", surfaceCard);
+    // Air: skip Zone A (intracity SDD has no air option)
+    if (airCard && airCard.zone !== "Zone A") push("air", airCard);
 
     if (services.length === 0) {
       return new Response(
@@ -260,8 +170,8 @@ Deno.serve(async (req) => {
         delivery_city: delivery.city,
         pickup_state: pickup.state,
         delivery_state: delivery.state,
-        zone,
-        rate_card: "B2C Light Weight (embedded)",
+        zone: surfaceCard?.zone ?? null,
+        rate_card: "ViaSetu_1.xlsx (embedded)",
       },
     };
 
