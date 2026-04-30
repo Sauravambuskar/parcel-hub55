@@ -48,6 +48,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         const { data, error } = await supabase.functions.invoke("shadowfax-cancel-order", {
           body: {
             client_order_id: orderId,
+            awb: awb || undefined,
             cancel_remarks: reason,
             booking_id: bookingId,
           },
