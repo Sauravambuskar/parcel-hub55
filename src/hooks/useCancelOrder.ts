@@ -21,6 +21,48 @@ export const CANCEL_REASONS = [
 
 export type CancelReason = typeof CANCEL_REASONS[number];
 
+/**
+ * Map raw partner cancellation errors (e.g. "...status is READY_FOR_DISPATCH")
+ * to friendly, customer-facing copy. Patterns cover lifecycle states used
+ * across Delhivery, XpressBees, UrbaneBolt, Shadowfax, and Shree Maruti.
+ */
+const friendlyCancelError = (raw: string): string => {
+  const upper = String(raw || "").toUpperCase();
+  if (
+    upper.includes("READY_FOR_DISPATCH") ||
+    upper.includes("MANIFESTED") ||
+    upper.includes("READY TO SHIP")
+  ) {
+    return "This order is already ready for dispatch and can no longer be cancelled online. Please contact support if you need to stop the shipment.";
+  }
+  if (
+    upper.includes("PICKED_UP") || upper.includes("PICKED UP") ||
+    upper.includes("IN_TRANSIT") || upper.includes("IN TRANSIT") ||
+    upper.includes("OUT_FOR_DELIVERY") || upper.includes("OUT FOR DELIVERY") ||
+    upper.includes("REACHED_HUB")
+  ) {
+    return "This order has already been picked up and cannot be cancelled. Please contact support.";
+  }
+  if (upper.includes("DELIVERED")) {
+    return "This order has already been delivered and cannot be cancelled.";
+  }
+  if (upper.includes("RTO") || upper.includes("RETURN")) {
+    return "This order is in return/RTO flow and cannot be cancelled. Please contact support.";
+  }
+  if (upper.includes("CANCELLED") || upper.includes("CANCELED")) {
+    return "This order is already cancelled.";
+  }
+  return raw || "Failed to cancel order";
+};
+
+const extractCancelError = (data: any, error: any): string =>
+  data?.error ||
+  data?.details?.message ||
+  (error as any)?.context?.error ||
+  (error as any)?.context?.details?.message ||
+  error?.message ||
+  "Failed to cancel order";
+
 interface UseCancelOrderOptions {
   onSuccess?: () => void;
 }
@@ -56,7 +98,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "delhivery_direct") {
         if (!awb) {
@@ -72,7 +114,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "urbanebolt_direct") {
         if (!awb) {
@@ -88,7 +130,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "xpressbees_direct") {
         if (!awb) {
@@ -104,7 +146,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "shree_maruti_direct") {
         const { data, error } = await supabase.functions.invoke("shree-maruti-cancel-order", {
@@ -117,24 +159,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          let raw: string =
-            data?.error ||
-            data?.details?.message ||
-            (error as any)?.context?.error ||
-            (error as any)?.context?.details?.message ||
-            error?.message ||
-            "Failed to cancel order";
-          const upper = String(raw).toUpperCase();
-          if (upper.includes("READY_FOR_DISPATCH")) {
-            raw = "This order is already ready for dispatch and can no longer be cancelled online. Please contact support if you need to stop the shipment.";
-          } else if (upper.includes("PICKED_UP") || upper.includes("IN_TRANSIT") || upper.includes("OUT_FOR_DELIVERY")) {
-            raw = "This order has already been picked up and cannot be cancelled. Please contact support.";
-          } else if (upper.includes("DELIVERED")) {
-            raw = "This order has already been delivered and cannot be cancelled.";
-          } else if (upper.includes("CANCELLED") || upper.includes("CANCELED")) {
-            raw = "This order is already cancelled.";
-          }
-          throw new Error(raw);
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "prayog" || bookingSource === "" || !bookingSource) {
         // Legacy / Prayog-routed bookings — cancel via Prayog gateway.
@@ -149,7 +174,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else {
         throw new Error(
