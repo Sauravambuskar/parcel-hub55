@@ -5,6 +5,7 @@ import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
 import delhiveryLogo from "@/assets/delhivery-logo.jpg";
 import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
 import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
+import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
 
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
@@ -19,8 +20,8 @@ export const PARTNER_LOGOS: Record<string, string> = {
   'dlv': delhiveryLogo,
   'dtdc': 'https://logo.clearbit.com/dtdc.in',
   'ecom_express': 'https://logo.clearbit.com/ecomexpress.in',
-  'xpressbees': 'https://logo.clearbit.com/xpressbees.com',
-  'xpressbees_direct': 'https://logo.clearbit.com/xpressbees.com',
+  'xpressbees': xpressbeesLogo,
+  'xpressbees_direct': xpressbeesLogo,
   'shadowfax': shadowfaxLogo,
   'shadowfax_direct': shadowfaxLogo,
   'urbanebolt': urbaneboltLogo,
