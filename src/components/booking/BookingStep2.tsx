@@ -83,7 +83,9 @@ const BookingStep2 = ({
   const [isServiceable, setIsServiceable] = useState(false);
   const [isLoadingPickupCity, setIsLoadingPickupCity] = useState(false);
   const [isLoadingDeliveryCity, setIsLoadingDeliveryCity] = useState(false);
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg');
+  // Weight is always captured in grams in the UI; converted to kg before sending to API.
+  const weightUnit: 'g' = 'g';
+  useEffect(() => { onWeightUnitChange?.('g'); }, [onWeightUnitChange]);
   const [customGoodsType, setCustomGoodsType] = useState('');
   
   const pickupDebounceRef = useRef<NodeJS.Timeout | null>(null);
