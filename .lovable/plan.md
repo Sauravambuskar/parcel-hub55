@@ -1,59 +1,70 @@
-## Shree Maruti Courier Integration — Implementation Plan
+## Goal
 
-Add Shree Maruti as a forward courier alongside Delhivery / XpressBees / Urbanebolt. Reverse-pickup carve-out stays Shadowfax-only. Webhook is **out of scope** for this iteration — tracking will be polled on demand.
+Run a final end-to-end validation pass on all 5 logistics integrations — **Delhivery, XpressBees, UrbaneBolt, Shadowfax, Shree Maruti** — confirm each functional surface works, and produce a partner-by-partner readiness report. Fix any bugs found along the way.
 
-### Prerequisites (already done)
-- Secrets configured: `SHREE_MARUTI_PROD_EMAIL`, `SHREE_MARUTI_PROD_PASSWORD`, `SHREE_MARUTI_STAGING_EMAIL`, `SHREE_MARUTI_STAGING_PASSWORD`
-- Shared auth helper exists: `supabase/functions/_shared/shree-maruti-auth.ts`
-- Environment config wired: `getShreeMarutiConfig()` in `_shared/environment.ts`
-- Legacy "block label download" removed from `History.tsx`
+## Scope of validation
 
-### Edge functions to create
+Five surfaces × five partners = 25 checkpoints:
 
-| Function | Upstream endpoint | Purpose |
-|---|---|---|
-| `shree-maruti-serviceability` | `POST /fulfillment/.../serviceability` | Pincode coverage check |
-| `shree-maruti-rate` | `POST /fulfillment/.../rate-calculation` | Rate quote for pricing |
-| `shree-maruti-booking` | `POST /fulfillment/public/seller/order/ecomm/push-order` | Create forward order, return AWB |
-| `shree-maruti-label` | `GET /fulfillment/.../download/label-invoice` | Download label PDF (binary) |
-| `shree-maruti-tracking` | `GET /fulfillment/public/seller/order/order-tracking/{awb}` | Status timeline |
-| `shree-maruti-cancel-order` | `POST /fulfillment/.../cancel-order` | Cancel + trigger Razorpay refund |
+| Surface | What we verify |
+|---|---|
+| Serviceability | Pincode coverage call returns success/unavailability with reason, surfaces in BookingStep2 |
+| Rate / pricing | Partner appears in SmartRanking with correct price, GST, hidden platform fee |
+| Booking | Order creation succeeds, AWB stored, `booking_source` set correctly, label URL captured |
+| Label | Download via `get-booking-label` returns a valid URL/PDF for that partner |
+| Tracking | `Tracking.tsx` routes the AWB to the correct partner function and returns mapped status |
+| Cancellation + refund | `useCancelOrder` branch fires, friendly errors for non-cancellable states, Razorpay refund triggers when paid |
 
-All functions follow existing conventions: CORS, `x-prayog-auth` user verification, `x-environment` switch, structured logging, service-role writes to `bookings`. All use the shared `shreeMarutiFetch()` helper for auth/refresh.
+## Validation method
 
-### Key implementation details
+For each partner, in order:
 
-- **Weight**: convert kg → grams before pushing to upstream (Shree Maruti expects grams).
-- **Payment**: hardcode `paymentType: ONLINE` (no COD per project policy).
-- **Status mapping** for `shree-maruti-tracking`:
-  - `BOOKED` / `ORDER_CONFIRMED` → `CREATED`
-  - `PICKED_UP` → `PICKED_UP`
-  - `IN_TRANSIT` / `REACHED_HUB` → `IN_TRANSIT`
-  - `OUT_FOR_DELIVERY` → `OUT_FOR_DELIVERY`
-  - `DELIVERED` → `DELIVERED`
-  - `CANCELLED` / `RTO*` → `CANCELLED`
-- **Label**: response is binary PDF → upload to Supabase storage or stream back as base64; store URL in `bookings.label_url`. (Same pattern as `delhivery-label`.)
+1. **Static review** — read the partner's edge function set and confirm CORS, `x-prayog-auth` user gate, `x-environment` switch, and service-role writes match the project conventions.
+2. **Frontend wiring** — confirm partner ID exists in `Booking.tsx` submit branches, `OrderDetails.tsx` label allow-list, `Tracking.tsx` router, `useCancelOrder.ts` branch, `partnerLogos.ts`, and `BookingStep2.tsx` serviceability fan-out.
+3. **Live function probe** — using `supabase--curl_edge_functions`, hit each partner's serviceability endpoint with a known-good Indian pincode pair (e.g. 110001 → 400001) and confirm a 200 response shape.
+4. **Recent-traffic check** — pull last 50 log lines for booking + label + cancel functions via `supabase--edge_function_logs` to look for unhandled errors, 500s, or auth refresh loops.
+5. **DB sanity** — for the most recent real booking per partner, query `bookings` to confirm `prayog_awb`, `label_url`, `booking_source`, `status`, `payment_status` are populated correctly.
 
-### Frontend wiring
+## Issues already known and addressed in this session
 
-- **Partner registry**: add `shree_maruti_direct` to `src/config/partnerLogos.ts`; placeholder logo at `src/assets/shree-maruti-logo.svg`.
-- **`SmartRanking.tsx`**: include Shree Maruti in courier list with surface + express service codes.
-- **`Booking.tsx`**: add 5th submit branch → `shree-maruti-booking`; store `booking_source: 'shree_maruti_direct'`, AWB in `prayog_awb`, label URL in `label_url`.
-- **`OrderDetails.tsx` + `get-booking-label`**: add `shree_maruti_direct` to label download allow-list.
-- **`Tracking.tsx`**: route Shree Maruti AWBs to `shree-maruti-tracking`.
-- **`useCancelOrder.ts`**: add branch for `shree_maruti_direct` → `shree-maruti-cancel-order` → existing Razorpay refund flow.
-- **`check-serviceability` orchestrator**: add parallel `shree-maruti-serviceability` call.
+- Shree Maruti label parser (handles array-of-objects response)
+- Shree Maruti cancel: friendly error mapping for `READY_FOR_DISPATCH`, `PICKED_UP`, `DELIVERED`, etc. (just shipped)
 
-### Confirmation dialog
-No change needed — Shree Maruti is forward-only, so existing "Download → Print → Attach" flow applies (`isReversePickup` stays `false`).
+We will extend the same friendly-error mapping pattern to **Delhivery, XpressBees, UrbaneBolt, Shadowfax** cancel branches in `useCancelOrder.ts` if their upstream returns similar lifecycle-state rejections. This makes the experience consistent across partners.
 
-### Memory updates (post-implementation)
-- Create `mem://logistics/shree-maruti-integration` (base URLs, auth, status map, label format).
-- Update `mem://features/shipping-label-management-logic` to drop the "block Shree Maruti labels" rule.
+## Deliverables
 
-### Out of scope (this iteration)
-- Webhook receiver + HMAC verification (deferred — relying on tracking polling).
-- Manifest / DRS / PRS / bulk upload / postpaid reconciliation.
+1. **Readiness matrix** — a 5×6 table posted in chat:
 
-### Build order
-1. `shree-maruti-serviceability` → 2. `shree-maruti-rate` → 3. `shree-maruti-booking` → 4. `shree-maruti-label` → 5. `shree-maruti-tracking` → 6. `shree-maruti-cancel-order` → 7. Frontend wiring → 8. Memory updates.
+````text
+Partner        | Service. | Rate | Booking | Label | Track | Cancel
+---------------+----------+------+---------+-------+-------+--------
+Delhivery      |   ✅     |  ✅  |   ✅    |  ✅   |  ✅   |  ✅
+XpressBees     |   ✅     |  ✅  |   ✅    |  ✅   |  ✅   |  ✅
+UrbaneBolt     |   ✅     |  ✅  |   ✅    |  ✅   |  ✅   |  ✅
+Shadowfax      |   ✅     |  ✅  |   ✅    |  ✅   |  ✅   |  ✅
+Shree Maruti   |   ✅     |  ✅  |   ✅    |  ✅   |  ✅   |  ✅
+````
+
+Each cell links to either a passing log line or a fix that was applied.
+
+2. **Code fixes** for any gaps found. Likely candidates (will only ship if confirmed):
+   - Unify lifecycle-state friendly error messages across all 4 other partners' cancel branches in `useCancelOrder.ts`.
+   - Make sure `get-booking-label` falls back to `bookings.label_url` if a fresh fetch fails (graceful degradation).
+   - Verify all five partners are present in `OrderDetails.tsx` cancel-button visibility logic.
+
+3. **Summary note** — a short go/no-go verdict per partner with any caveats (e.g. "XpressBees sandbox returns rate but prod credentials needed for booking").
+
+## Out of scope
+
+- New features (no new partners, no manifest/DRS, no webhook receivers).
+- Visual redesigns.
+- Database schema changes — read-only queries only.
+
+## Files I expect to touch (only if fixes needed)
+
+- `src/hooks/useCancelOrder.ts` — extend friendly-error mapping
+- `src/pages/OrderDetails.tsx` — confirm cancel-button gating
+- `supabase/functions/get-booking-label/index.ts` — graceful fallback (only if a partner regression is found)
+
+No edge-function logic rewrites planned unless live probes uncover a real bug.
