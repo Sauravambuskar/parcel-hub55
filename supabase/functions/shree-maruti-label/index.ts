@@ -43,42 +43,74 @@ Deno.serve(async (req) => {
     if (awbNumber) params.set("awbNumber", String(awbNumber));
     if (cAwbNumber) params.set("cAwbNumber", String(cAwbNumber));
 
-    const res = await shreeMarutiFetch(
-      env,
-      `/fulfillment/public/seller/order/download/label-invoice?${params.toString()}`,
-      { method: "GET" },
-    );
+    const path = `/fulfillment/public/seller/order/download/label-invoice?${params.toString()}`;
+    console.log("[shree-maruti-label] requesting", path);
+
+    const res = await shreeMarutiFetch(env, path, { method: "GET" });
+    const contentType = res.headers.get("content-type") || "";
+    console.log("[shree-maruti-label] response status", res.status, "content-type", contentType);
 
     if (!res.ok) {
       const errText = await res.text();
-      console.warn("[shree-maruti-label] failed", res.status, errText.slice(0, 500));
+      console.warn("[shree-maruti-label] failed", res.status, errText.slice(0, 800));
       return new Response(JSON.stringify({
         success: false,
         error: "Label fetch failed",
-        details: errText.slice(0, 500),
+        status: res.status,
+        details: errText.slice(0, 800),
       }), { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const contentType = res.headers.get("content-type") || "";
     let labelUrl: string | null = null;
 
     if (contentType.includes("application/pdf") || contentType.includes("octet-stream")) {
       const buf = new Uint8Array(await res.arrayBuffer());
-      const b64 = bytesToBase64(buf);
-      labelUrl = `data:application/pdf;base64,${b64}`;
+      console.log("[shree-maruti-label] received binary PDF bytes:", buf.length);
+      if (buf.length > 100) {
+        const b64 = bytesToBase64(buf);
+        labelUrl = `data:application/pdf;base64,${b64}`;
+      } else {
+        // Tiny payload — likely an error masquerading as binary
+        const asText = new TextDecoder().decode(buf);
+        console.warn("[shree-maruti-label] unexpectedly small binary payload:", asText.slice(0, 300));
+      }
     } else {
-      // Possibly a JSON envelope with a URL
+      // JSON envelope (success or error) — log full body so we can adapt parsing.
       const text = await res.text();
+      console.log("[shree-maruti-label] JSON body:", text.slice(0, 1500));
       let data: any;
       try { data = JSON.parse(text); } catch { data = { raw: text }; }
-      labelUrl =
-        data?.url || data?.label_url || data?.data?.url ||
-        data?.data?.label_url || data?.data?.labelUrl || null;
 
-      // If JSON contained base64 string
-      const b64 = data?.base64 || data?.pdf || data?.data?.base64;
-      if (!labelUrl && typeof b64 === "string") {
-        labelUrl = `data:application/pdf;base64,${b64.replace(/^data:[^,]+,/, "")}`;
+      // Possible shapes documented / observed:
+      //   { data: { url: "https://..." } }
+      //   { data: { labelUrl: "..." } }
+      //   { data: { base64: "JVBERi0..." } }  /  { data: { pdf: "JVBERi0..." } }
+      //   { data: { fileContent: "JVBERi0..." } }  (some variants)
+      const inner = data?.data ?? data;
+      labelUrl =
+        inner?.url || inner?.label_url || inner?.labelUrl ||
+        inner?.invoiceUrl || inner?.fileUrl || data?.url || data?.label_url || null;
+
+      if (!labelUrl) {
+        const b64 =
+          inner?.base64 || inner?.pdf || inner?.fileContent ||
+          inner?.label || inner?.invoice || data?.base64 || null;
+        if (typeof b64 === "string" && b64.length > 100) {
+          labelUrl = `data:application/pdf;base64,${b64.replace(/^data:[^,]+,/, "")}`;
+        }
+      }
+
+      if (!labelUrl) {
+        // Surface the partner-stated message back to the caller.
+        const partnerMsg =
+          data?.message || inner?.message || data?.error || inner?.error || null;
+        return new Response(JSON.stringify({
+          success: false,
+          error: partnerMsg
+            ? `Shree Maruti: ${partnerMsg}`
+            : "Label not yet available from Shree Maruti",
+          partner_response: text.slice(0, 800),
+        }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
