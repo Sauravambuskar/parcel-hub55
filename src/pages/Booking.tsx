@@ -8,6 +8,7 @@ import { getPartnerLogo } from "@/config/partnerLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays, formatTatRange } from "@/lib/tat-utils";
 import { usePlatformFee } from "@/hooks/usePlatformFee";
+import { computeBaseFare } from "@/lib/pricing";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -216,9 +217,9 @@ const Booking = () => {
           partner.services.forEach((service: any) => {
             // Extract price from rate object and add dynamic platform fee
             const apiPrice = Math.round(service.rate?.price?.amount || 0);
-            const dynamicFee = platformFee; // Use dynamic platform fee from hook
-            const totalPrice = apiPrice + dynamicFee;
-            const basePrice = totalPrice;
+            // Deterministic pricing: 50% markup + ₹50 flat zone fee per courier card price.
+            const basePrice = computeBaseFare(apiPrice);
+            const totalPrice = basePrice;
             const convenienceFee = 0;
 
             // Format partner name properly
@@ -388,10 +389,11 @@ const Booking = () => {
         const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
         if (service) {
           const apiPrice = Math.round(service.rate?.price?.amount || 0);
-          const dynamicFee = platformFee; // Use dynamic platform fee from hook
+          // Deterministic pricing: baseFare = round(card * 1.5) + 50.
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
-            basePrice: apiPrice + dynamicFee,
+            basePrice: computeBaseFare(apiPrice),
+            cardPrice: apiPrice,
             convenienceFee: calculateConvenienceFee(),
             deliveryTime: formatTatRange(service.tat_days, service.service_name),
             platformFeeBreakdown: platformFeeData,
