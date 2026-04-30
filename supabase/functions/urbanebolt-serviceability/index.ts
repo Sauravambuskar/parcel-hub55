@@ -135,11 +135,16 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
   return map;
 }
 
+// UB pincode API returns values like "Delhi - DEL" / "Maharashtra - MH" — strip the trailing code.
+function normalize(s: string | undefined): string {
+  return (s || "").split(" - ")[0].trim().toLowerCase();
+}
+
 function detectZone(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey {
-  const pCity = (pickup.city || "").trim().toLowerCase();
-  const dCity = (delivery.city || "").trim().toLowerCase();
-  const pState = (pickup.state || "").trim().toLowerCase();
-  const dState = (delivery.state || "").trim().toLowerCase();
+  const pCity = normalize(pickup.city);
+  const dCity = normalize(delivery.city);
+  const pState = normalize(pickup.state);
+  const dState = normalize(delivery.state);
   const pPin = pickup.pincode || "";
   const dPin = delivery.pincode || "";
 
