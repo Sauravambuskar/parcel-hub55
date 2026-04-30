@@ -49,13 +49,13 @@ interface BookingStep2Props {
 // Registry of direct courier partners. Add a new entry here (and a matching
 // edge function) to enable a new partner. Each function should respond with
 // `{ is_serviceable, partner: { partner_code, partner_name, services, ... } }`.
-const DIRECT_PARTNERS: { code: string; fn: string }[] = [
-  { code: 'shadowfax', fn: 'shadowfax-serviceability' },
-  { code: 'delhivery', fn: 'delhivery-serviceability' },
-  { code: 'urbanebolt', fn: 'urbanebolt-serviceability' },
-  { code: 'xpressbees', fn: 'xpressbees-serviceability' },
-  { code: 'shree_maruti', fn: 'shree-maruti-serviceability' },
-  // Future: { code: 'dtdc', fn: 'dtdc-serviceability' },
+const DIRECT_PARTNERS: { code: string; name: string; fn: string }[] = [
+  { code: 'shadowfax', name: 'Shadowfax', fn: 'shadowfax-serviceability' },
+  { code: 'delhivery', name: 'Delhivery', fn: 'delhivery-serviceability' },
+  { code: 'urbanebolt', name: 'UrbaneBolt', fn: 'urbanebolt-serviceability' },
+  { code: 'xpressbees', name: 'XpressBees', fn: 'xpressbees-serviceability' },
+  { code: 'shree_maruti', name: 'Shree Maruti Courier', fn: 'shree-maruti-serviceability' },
+  // Future: { code: 'dtdc', name: 'DTDC', fn: 'dtdc-serviceability' },
 ];
 
 const BookingStep2 = ({ 
@@ -191,28 +191,56 @@ const BookingStep2 = ({
 
       const partners: any[] = [];
       results.forEach((result, idx) => {
-        const partnerCode = DIRECT_PARTNERS[idx].code;
+        const meta = DIRECT_PARTNERS[idx];
+        const partnerCode = meta.code;
+        const partnerName = meta.name;
+        const partnerId = `${partnerCode}_direct`;
+
+        const pushUnavailable = (reason: string) => {
+          partners.push({
+            partner_id: partnerId,
+            partner_code: partnerCode,
+            partner_name: partnerName,
+            is_serviceable: false,
+            services: [],
+            rating: 0,
+            error: reason,
+          });
+        };
+
         if (result.status === 'fulfilled') {
           const { data, error } = result.value as any;
           if (!error && data?.is_serviceable && data?.partner) {
             partners.push(data.partner);
             console.log(`${partnerCode} is serviceable:`, data.partner);
-          } else if (error || data?.error) {
-            console.warn(`${partnerCode} serviceability failed (non-blocking):`, error || data);
+          } else {
+            // Capture the API's stated reason so the UI can show it.
+            const reason =
+              data?.reason ||
+              data?.error ||
+              error?.message ||
+              'Not serviceable for this route';
+            pushUnavailable(String(reason));
+            console.warn(`${partnerCode} not serviceable:`, reason, data || error);
           }
         } else {
-          console.warn(`${partnerCode} serviceability rejected (non-blocking):`, result.reason);
+          pushUnavailable('Partner service temporarily unavailable');
+          console.warn(`${partnerCode} serviceability rejected:`, result.reason);
         }
       });
 
+      const serviceableCount = partners.filter((p) => p.is_serviceable).length;
       const serviceabilityData = {
-        success: partners.length > 0,
+        success: serviceableCount > 0,
         partners,
-        metadata: { serviceable_count: partners.length },
+        metadata: { serviceable_count: serviceableCount },
       };
 
-      if (partners.length === 0) {
+      if (serviceableCount === 0) {
         setIsServiceable(false);
+        // Still pass partners (with reasons) to the next step so the user
+        // can see WHY each courier declined.
+        if (onServiceabilityData) onServiceabilityData(serviceabilityData);
         toast({
           title: "Service Unavailable",
           description: "No courier partner serves this route right now. Please try different pincodes.",
