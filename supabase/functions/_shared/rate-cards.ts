@@ -71,9 +71,11 @@ function norm(s?: string | null): string {
 }
 
 function chargeableGrams(weightKg: number, l: number, w: number, h: number): number {
-  const actual = Math.max(1, Number(weightKg) || 0) * 1000;
-  const vol = ((Number(l) || 0) * (Number(w) || 0) * (Number(h) || 0)) / 5000 * 1000;
-  return Math.max(1, Math.ceil(Math.max(actual, vol)));
+  // NOTE: floor is 1 GRAM (not 1 kg). Apply min AFTER converting to grams,
+  // otherwise sub-kg parcels (250g/500g) get clamped up to 1000g.
+  const actualG = Math.max(0, Number(weightKg) || 0) * 1000;
+  const volG = ((Number(l) || 0) * (Number(w) || 0) * (Number(h) || 0)) / 5000 * 1000;
+  return Math.max(1, Math.ceil(Math.max(actualG, volG)));
 }
 
 // =============================================================================
