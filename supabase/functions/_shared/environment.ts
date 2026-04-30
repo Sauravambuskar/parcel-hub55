@@ -203,3 +203,40 @@ export function getXpressbeesConfig(env: Environment) {
     password: Deno.env.get(config.passwordEnvVar),
   };
 }
+
+interface ShreeMarutiConfig {
+  apiBaseUrl: string;
+  emailEnvVar: string;
+  passwordEnvVar: string;
+}
+
+// Shree Maruti uses the Innofulfill / Delcaper API platform.
+// Login returns a JWT (1d access token, 30d refresh).
+export const SHREE_MARUTI_CONFIG: Record<Environment, ShreeMarutiConfig> = {
+  sandbox: {
+    apiBaseUrl: 'https://qaapis.delcaper.com',
+    emailEnvVar: 'SHREE_MARUTI_STAGING_EMAIL',
+    passwordEnvVar: 'SHREE_MARUTI_STAGING_PASSWORD',
+  },
+  production: {
+    apiBaseUrl: 'https://apis.delcaper.com',
+    emailEnvVar: 'SHREE_MARUTI_PROD_EMAIL',
+    passwordEnvVar: 'SHREE_MARUTI_PROD_PASSWORD',
+  },
+};
+
+export function getShreeMarutiConfig(env: Environment) {
+  const config = SHREE_MARUTI_CONFIG[env];
+  // Fall back to prod creds if env-specific ones are missing
+  const email =
+    Deno.env.get(config.emailEnvVar) || Deno.env.get('SHREE_MARUTI_PROD_EMAIL');
+  const password =
+    Deno.env.get(config.passwordEnvVar) || Deno.env.get('SHREE_MARUTI_PROD_PASSWORD');
+  const vendorType = Deno.env.get('SHREE_MARUTI_VENDOR_TYPE') || 'SELLER';
+  return {
+    apiBaseUrl: config.apiBaseUrl,
+    email,
+    password,
+    vendorType,
+  };
+}
