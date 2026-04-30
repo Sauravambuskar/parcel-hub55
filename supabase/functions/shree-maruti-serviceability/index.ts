@@ -213,8 +213,9 @@ Deno.serve(async (req) => {
     };
 
     // Surface/Air: serve if API was serviceable OR card has a price (fallback)
-    if (surface.ok || quoteFromCard("shree_maruti", "surface", pickupInfo, deliveryInfo, weight_kg, dims)) buildService("SURFACE");
-    if (air.ok || quoteFromCard("shree_maruti", "air", pickupInfo, deliveryInfo, weight_kg, dims))         buildService("AIR");
+    // Build only modes the partner explicitly confirmed as serviceable.
+    if (surface.ok) buildService("SURFACE");
+    if (air.ok)     buildService("AIR");
 
     if (services.length === 0) {
       return new Response(
