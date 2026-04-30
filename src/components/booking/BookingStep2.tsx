@@ -145,8 +145,19 @@ const BookingStep2 = ({
     };
   }, [deliveryPincode]);
   
-  const dimensionsRequired = goodsType !== 'documents';
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height)) && (goodsType !== 'others' || customGoodsType.trim());
+  const isDocuments = goodsType === 'documents';
+  const dimensionsRequired = !isDocuments;
+  const weightRequired = !isDocuments;
+  // For documents/envelope, weight is fixed at 250g (no user input needed).
+  useEffect(() => {
+    if (isDocuments && packageWeight !== '250') {
+      onInputChange('packageWeight', '250');
+    }
+  }, [isDocuments, packageWeight, onInputChange]);
+  const isValid = pickupPincode && deliveryPincode && goodsType
+    && (!weightRequired || packageWeight)
+    && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height))
+    && (goodsType !== 'others' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
