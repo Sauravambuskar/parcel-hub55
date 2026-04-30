@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, TrendingUp, Zap, Shield, ThumbsUp } from "lucide-react";
 import { normalizeTatDays } from "@/lib/tat-utils";
+import { computeBaseFare } from "@/lib/pricing";
 
 interface Partner {
   partner_id: string;
