@@ -168,9 +168,19 @@ const BookingStep2 = ({
       let deliveryCityLocal = '';
       let deliveryState = '';
 
-      const weightKg = weightUnit === 'g'
-        ? (parseFloat(packageWeight) || 1000) / 1000
-        : parseFloat(packageWeight) || 1.0;
+      // Weight is always entered in grams now. Reject empty/invalid input
+      // instead of silently defaulting to 1 kg (which masked the real weight).
+      const weightG = parseFloat(packageWeight);
+      if (!weightG || weightG <= 0) {
+        toast({
+          title: "Invalid weight",
+          description: "Please enter the package weight in grams.",
+          variant: "destructive",
+        });
+        setIsCheckingServiceability(false);
+        return;
+      }
+      const weightKg = weightG / 1000;
 
       const partnerPayload = {
         pickup_pincode: pickupPincode,
