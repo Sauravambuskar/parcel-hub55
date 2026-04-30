@@ -166,15 +166,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 4) Shadowfax: no direct label API in current integration
+    // 4) Shadowfax: generate an in-house printable label (no native label API).
     if (source === "shadowfax_direct") {
-      return new Response(JSON.stringify({
-        success: false,
-        unsupported: true,
-        error: "Shipping label is not available for Shadowfax orders. The pickup partner will provide the label.",
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const env = req.headers.get("x-environment") || "production";
+      const res = await fetch(`${supabaseUrl}/functions/v1/shadowfax-label`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+          "x-environment": env,
+        },
+        body: JSON.stringify({ booking_id: b.id, awb }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      const labelUrl = payload?.label_url || null;
+      if (labelUrl) {
+        return new Response(JSON.stringify({ success: true, label_url: labelUrl, source: "shadowfax_generated", format: payload.format || "html" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: false, error: payload?.error || "Could not generate Shadowfax label." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
