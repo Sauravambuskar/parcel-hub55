@@ -166,6 +166,41 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 3c) Shree Maruti: fetch on demand and persist (returns base64 data URL).
+    if (source === "shree_maruti_direct") {
+      if (!awb) {
+        return new Response(JSON.stringify({ success: false, error: "AWB missing for Shree Maruti booking" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const env = req.headers.get("x-environment") || "production";
+      const res = await fetch(`${supabaseUrl}/functions/v1/shree-maruti-label`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+          "x-environment": env,
+        },
+        body: JSON.stringify({ waybill: awb, booking_id: b.id }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      const labelUrl = payload?.label_url || null;
+      if (labelUrl) {
+        // shree-maruti-label already persists, but ensure idempotently
+        if (!labelUrl.startsWith("data:")) {
+          await supabase.from("bookings").update({ label_url: labelUrl }).eq("id", b.id);
+        }
+        return new Response(JSON.stringify({ success: true, label_url: labelUrl, source: "shree_maruti_fresh" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: false, error: "Label not yet available from Shree Maruti. Please try again in a few minutes." }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // 4) Shadowfax: generate an in-house printable label (no native label API).
     if (source === "shadowfax_direct") {
       const env = req.headers.get("x-environment") || "production";

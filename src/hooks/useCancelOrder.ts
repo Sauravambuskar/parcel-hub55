@@ -106,6 +106,19 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         if (error || !data?.success) {
           throw new Error(data?.error || error?.message || "Failed to cancel order");
         }
+      } else if (bookingSource === "shree_maruti_direct") {
+        const { data, error } = await supabase.functions.invoke("shree-maruti-cancel-order", {
+          body: {
+            waybill: awb || undefined,
+            cancel_remarks: reason,
+            booking_id: bookingId,
+          },
+          headers: { "x-environment": CURRENT_ENV },
+        });
+
+        if (error || !data?.success) {
+          throw new Error(data?.error || error?.message || "Failed to cancel order");
+        }
       } else if (bookingSource === "prayog" || bookingSource === "" || !bookingSource) {
         // Legacy / Prayog-routed bookings — cancel via Prayog gateway.
         const auth = JSON.parse(localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth") || "{}");
