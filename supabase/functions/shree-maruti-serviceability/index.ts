@@ -5,6 +5,17 @@
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { shreeMarutiFetch } from "../_shared/shree-maruti-auth.ts";
+import { quoteFromCard, resolvePrice, type PinInfo } from "../_shared/rate-cards.ts";
+
+async function lookupPinInfo(pin: string): Promise<PinInfo> {
+  try {
+    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+    const j = await r.json();
+    const po = j?.[0]?.PostOffice?.[0];
+    if (po) return { pincode: pin, city: po.District || po.Block || po.Name || "", state: po.State || "" };
+  } catch (_) { /* swallow */ }
+  return { pincode: pin };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -145,7 +156,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch rates for available modes (in parallel)
+    // Fetch live rates + pin info for embedded card lookup, in parallel
     const ratePromises: Array<Promise<{ mode: "SURFACE" | "AIR"; price: number | null }>> = [];
     if (surface.ok) {
       ratePromises.push(
@@ -159,29 +170,52 @@ Deno.serve(async (req) => {
           .then((price) => ({ mode: "AIR" as const, price })),
       );
     }
-    const rates = await Promise.all(ratePromises);
+    const [rates, pickupInfo, deliveryInfo] = await Promise.all([
+      Promise.all(ratePromises),
+      lookupPinInfo(String(pickup_pincode)),
+      lookupPinInfo(String(delivery_pincode)),
+    ]);
 
-    const services = rates
-      .filter((r) => r.price != null && r.price > 0)
-      .map((r) => {
-        const isAir = r.mode === "AIR";
-        return {
-          service_code: isAir ? "shree_maruti_express" : "shree_maruti_surface",
-          service_name: isAir ? "Shree Maruti Express (Air)" : "Shree Maruti Surface",
-          tat_days: isAir ? 2 : 4,
-          tat_label: isAir ? "1-2 days" : "3-5 days",
-          delivery_modes: { express: isAir, standard: !isAir },
-          is_cod: false,
-          pickup: true,
-          delivery: true,
-          insurance: false,
-          rate: {
-            rate_id: `sm_rate_${r.mode.toLowerCase()}`,
-            price: { amount: r.price as number, currency: "INR", type: "calculated" },
-            description: isAir ? "Shree Maruti Air" : "Shree Maruti Surface",
-          },
-        };
+    const dims = { l: length_cm, w: width_cm, h: height_cm };
+    const apiByMode: Record<"SURFACE" | "AIR", number | null> = { SURFACE: null, AIR: null };
+    rates.forEach((r) => { apiByMode[r.mode] = r.price; });
+
+    const services: any[] = [];
+    const buildService = (mode: "SURFACE" | "AIR") => {
+      const isAir = mode === "AIR";
+      const card = quoteFromCard("shree_maruti", isAir ? "air" : "surface", pickupInfo, deliveryInfo, weight_kg, dims);
+      const apiPrice = apiByMode[mode];
+      const resolved = resolvePrice(apiPrice, card);
+      if (!resolved.price) return;
+      services.push({
+        service_code: isAir ? "shree_maruti_express" : "shree_maruti_surface",
+        service_name: isAir ? "Shree Maruti Express (Air)" : "Shree Maruti Surface",
+        tat_days: isAir ? 2 : 4,
+        tat_label: isAir ? "1-2 days" : "3-5 days",
+        delivery_modes: { express: isAir, standard: !isAir },
+        is_cod: false,
+        pickup: true,
+        delivery: true,
+        insurance: false,
+        rate: {
+          rate_id: `sm_rate_${mode.toLowerCase()}`,
+          price: { amount: resolved.price, currency: "INR", type: "calculated" },
+          description: isAir ? "Shree Maruti Air" : "Shree Maruti Surface",
+        },
+        metadata: {
+          rate_source: resolved.rate_source,
+          api_price: apiPrice,
+          card_price: card?.price_with_fsc ?? null,
+          card_zone: card?.zone ?? null,
+          card_delta_pct: resolved.verify?.delta_pct ?? null,
+        },
       });
+    };
+
+    // Surface/Air: serve if API was serviceable OR card has a price (fallback)
+    // Build only modes the partner explicitly confirmed as serviceable.
+    if (surface.ok) buildService("SURFACE");
+    if (air.ok)     buildService("AIR");
 
     if (services.length === 0) {
       return new Response(
@@ -200,6 +234,12 @@ Deno.serve(async (req) => {
       is_serviceable: true,
       rating: 4.0,
       services,
+      metadata: {
+        pickup_city: pickupInfo.city,
+        delivery_city: deliveryInfo.city,
+        pickup_state: pickupInfo.state,
+        delivery_state: deliveryInfo.state,
+      },
     };
 
     return new Response(

@@ -4,6 +4,17 @@
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { shreeMarutiFetch } from "../_shared/shree-maruti-auth.ts";
+import { quoteFromCard, resolvePrice } from "../_shared/rate-cards.ts";
+
+async function pinInfo(pin: string) {
+  try {
+    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+    const j = await r.json();
+    const po = j?.[0]?.PostOffice?.[0];
+    if (po) return { pincode: pin, city: po.District || po.Block || po.Name || "", state: po.State || "" };
+  } catch (_) { /* swallow */ }
+  return { pincode: pin };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,17 +59,42 @@ Deno.serve(async (req) => {
     const text = await res.text();
     let data: any;
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+    // Embedded card fallback / verification
+    const [pInfo, dInfo] = await Promise.all([pinInfo(String(pickup_pincode)), pinInfo(String(delivery_pincode))]);
+    const cardMode = String(mode).toUpperCase() === "AIR" ? "air" : "surface";
+    const card = quoteFromCard("shree_maruti", cardMode, pInfo, dInfo, Number(weight_kg), {
+      l: Number(length_cm), w: Number(width_cm), h: Number(height_cm),
+    });
+
     if (!res.ok) {
-      console.warn("[shree-maruti-rate] failed", res.status, text.slice(0, 500));
+      console.warn("[shree-maruti-rate] api failed, falling back to card", res.status, text.slice(0, 300));
+      if (card) {
+        return new Response(JSON.stringify({
+          success: true,
+          data: { totalAmount: card.price_with_fsc },
+          rate_source: "card_fallback",
+          card_zone: card.zone,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       return new Response(
         JSON.stringify({ error: data?.message || "Rate fetch failed", details: data }),
         { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    return new Response(JSON.stringify({ success: true, data: data?.data ?? data }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const inner = data?.data ?? data;
+    const apiPrice = inner?.totalAmount ?? inner?.totalCharge ?? inner?.grandTotal ?? inner?.amount ?? null;
+    const resolved = resolvePrice(typeof apiPrice === "number" ? apiPrice : null, card);
+    return new Response(JSON.stringify({
+      success: true,
+      data: inner,
+      rate_source: resolved.rate_source,
+      card_price: card?.price_with_fsc ?? null,
+      card_zone: card?.zone ?? null,
+      card_delta_pct: resolved.verify?.delta_pct ?? null,
+      final_price: resolved.price,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("[shree-maruti-rate] error:", err);
     return new Response(JSON.stringify({ error: "Internal server error", details: String(err) }), {
