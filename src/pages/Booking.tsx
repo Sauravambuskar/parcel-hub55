@@ -546,7 +546,7 @@ const Booking = () => {
           baseFare: baseFare,
           gstAmount: gstAmount,
           totalAmount: totalAmount,
-          platformFee: platformFee,
+          platformFee: effectivePlatformFee,
           ...(paymentDetails && {
             razorpay_payment_id: paymentDetails.razorpay_payment_id,
             razorpay_order_id: paymentDetails.razorpay_order_id
@@ -698,7 +698,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shadowfax",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'shadowfax_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -766,7 +766,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Delhivery",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'delhivery_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -835,7 +835,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Urbanebolt",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'urbanebolt_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -904,7 +904,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "XpressBees",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'xpressbees_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -973,7 +973,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shree Maruti Courier",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'shree_maruti_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -1052,7 +1052,7 @@ const Booking = () => {
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: isCop ? "cop_pending" : "paid",
         base_fare: baseFare,
-        platform_fee: platformFee,
+        platform_fee: effectivePlatformFee,
         gst: gstAmount,
         prayog_commission: (isShadowfaxDirect || isDelhiveryDirect || isUrbaneboltDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
@@ -1106,7 +1106,7 @@ const Booking = () => {
                 courier_name: selectedCourierData?.name || "",
                 courier_price: totalAmount,
                 delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+                base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               },
             },
             headers: { ...(prayogAuthRawFallback ? { 'x-prayog-auth': prayogAuthRawFallback } : {}), 'x-environment': CURRENT_ENV },
@@ -1244,7 +1244,7 @@ const Booking = () => {
         courier_price: totalAmount,
         delivery_time: selectedCourierData.deliveryTime || 'Standard',
         base_fare: baseFare,
-        platform_fee: platformFee,
+        platform_fee: effectivePlatformFee,
         gst: gstAmount,
         booking_source: 'pending',
       }} />}
