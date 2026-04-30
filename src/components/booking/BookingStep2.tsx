@@ -236,8 +236,11 @@ const BookingStep2 = ({
         metadata: { serviceable_count: serviceableCount },
       };
 
-      if (partners.length === 0) {
+      if (serviceableCount === 0) {
         setIsServiceable(false);
+        // Still pass partners (with reasons) to the next step so the user
+        // can see WHY each courier declined.
+        if (onServiceabilityData) onServiceabilityData(serviceabilityData);
         toast({
           title: "Service Unavailable",
           description: "No courier partner serves this route right now. Please try different pincodes.",
