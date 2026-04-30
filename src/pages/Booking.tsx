@@ -1141,6 +1141,11 @@ const Booking = () => {
   const baseFare = Math.round(selectedCourierData ? selectedCourierData.basePrice : 0);
   const gstAmount = Math.round(baseFare * 0.18);
   const totalAmount = baseFare + gstAmount;
+  // Effective platform fee for persistence: baseFare - cardPrice (hidden in UI).
+  // Falls back to the hook-provided value when no service is selected yet.
+  const effectivePlatformFee = selectedCourierData?.cardPrice != null
+    ? Math.max(0, baseFare - Math.round(selectedCourierData.cardPrice))
+    : platformFee;
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
