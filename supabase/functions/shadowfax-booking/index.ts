@@ -84,8 +84,10 @@ Deno.serve(async (req) => {
     const totalAmount = num(shipment_value, 0);
     const priceExcl = totalAmount > 0 ? Math.round(totalAmount / 1.18) : 0;
 
+    const orderIdStr = String(order_id).slice(0, 100);
     const payload = {
-      client_order_number: String(order_id).slice(0, 100),
+      client_order_id: orderIdStr,
+      client_order_number: orderIdStr,
       client_request_id: awbNumber,
       total_amount: totalAmount,
       price: priceExcl,
