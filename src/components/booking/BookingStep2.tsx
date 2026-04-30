@@ -145,8 +145,19 @@ const BookingStep2 = ({
     };
   }, [deliveryPincode]);
   
-  const dimensionsRequired = goodsType !== 'documents';
-  const isValid = pickupPincode && deliveryPincode && goodsType && packageWeight && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height)) && (goodsType !== 'others' || customGoodsType.trim());
+  const isDocuments = goodsType === 'documents';
+  const dimensionsRequired = !isDocuments;
+  const weightRequired = !isDocuments;
+  // For documents/envelope, weight is fixed at 250g (no user input needed).
+  useEffect(() => {
+    if (isDocuments && packageWeight !== '250') {
+      onInputChange('packageWeight', '250');
+    }
+  }, [isDocuments, packageWeight, onInputChange]);
+  const isValid = pickupPincode && deliveryPincode && goodsType
+    && (!weightRequired || packageWeight)
+    && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height))
+    && (goodsType !== 'others' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -457,23 +468,29 @@ const BookingStep2 = ({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="package-weight">Weight (g)</Label>
-            <Input
-              id="package-weight"
-              type="number"
-              value={packageWeight}
-              onChange={(e) => onInputChange('packageWeight', e.target.value)}
-              placeholder="e.g., 500"
-              min="1"
-              step="1"
-              inputMode="numeric"
-            />
-            <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
-              <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
-              <span>Enter weight in grams. Discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
+          {weightRequired ? (
+            <div className="space-y-2">
+              <Label htmlFor="package-weight">Weight (g)</Label>
+              <Input
+                id="package-weight"
+                type="number"
+                value={packageWeight}
+                onChange={(e) => onInputChange('packageWeight', e.target.value)}
+                placeholder="e.g., 500"
+                min="1"
+                step="1"
+                inputMode="numeric"
+              />
+              <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
+                <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
+                <span>Enter weight in grams. Discrepancies may lead to additional charges or pickup cancellation by the courier partner.</span>
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              ✉️ Weight fixed at 250g for documents/envelopes — no input needed.
             </p>
-          </div>
+          )}
           {dimensionsRequired ? (
             <div className="space-y-2">
               <Label>Dimensions (cm)</Label>
