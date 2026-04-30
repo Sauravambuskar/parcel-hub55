@@ -476,6 +476,7 @@ const Booking = () => {
       let isDelhiveryDirect = false;
       let isUrbaneboltDirect = false;
       let isXpressbeesDirect = false;
+      let isShreeMarutiDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
@@ -490,6 +491,9 @@ const Booking = () => {
             }
             if (partner.partner_id === 'xpressbees_direct') {
               isXpressbeesDirect = true;
+            }
+            if (partner.partner_id === 'shree_maruti_direct') {
+              isShreeMarutiDirect = true;
             }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
