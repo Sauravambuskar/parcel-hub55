@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Shield, Truck, Check, Zap, ArrowUpDown, Filter } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { normalizeTatDays } from "@/lib/tat-utils";
+import { computeBaseFare } from "@/lib/pricing";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -78,7 +79,7 @@ const PartnerComparisonTable = ({
     partner,
     service,
     serviceId: `${partner.partner_id}_${service.service_code}`,
-    price: Math.round((service.rate?.price?.amount || 0) + platformFee),
+    price: computeBaseFare(service.rate?.price?.amount || 0),
     aiRating: ratings.get(partner.partner_code)
   })));
 

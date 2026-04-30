@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, TrendingUp, Zap, Shield, ThumbsUp } from "lucide-react";
 import { normalizeTatDays } from "@/lib/tat-utils";
+import { computeBaseFare } from "@/lib/pricing";
 
 interface Partner {
   partner_id: string;
@@ -49,7 +50,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
       partner.services.map(service => ({
         partner,
         service,
-        price: (service.rate?.price?.amount || 0) + platformFee,
+        price: computeBaseFare(service.rate?.price?.amount || 0),
         deliveryDays: normalizeTatDays(service.tat_days, service.service_name),
         rating: ratings.get(partner.partner_code),
       }))
@@ -70,12 +71,12 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
     .map(partner => {
       const rating = ratings.get(partner.partner_code);
       const bestService = partner.services.reduce((best, current) => {
-        const bestPrice = (best?.rate?.price?.amount || Infinity) + platformFee;
-        const currentPrice = (current.rate?.price?.amount || Infinity) + platformFee;
+        const bestPrice = best?.rate?.price?.amount != null ? computeBaseFare(best.rate.price.amount) : Infinity;
+        const currentPrice = current?.rate?.price?.amount != null ? computeBaseFare(current.rate.price.amount) : Infinity;
         return currentPrice < bestPrice ? current : best;
       }, partner.services[0]);
       
-      const price = (bestService?.rate?.price?.amount || 0) + platformFee;
+      const price = computeBaseFare(bestService?.rate?.price?.amount || 0);
       const deliveryDays = bestService?.tat_days || 7;
       
       // Normalized scoring (0-100 scale for each)
@@ -173,7 +174,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
                 {/* Compute badges based on actual shipment prices */}
               {(() => {
                 const service = ranked.partner.services[0];
-                const price = (service?.rate?.price?.amount || 0) + platformFee;
+                const price = computeBaseFare(service?.rate?.price?.amount || 0);
                   const deliveryDays = normalizeTatDays(service?.tat_days, service?.service_name);
                   const computedBadges: string[] = [];
                   
@@ -211,7 +212,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
 
               <div className="mt-2 pt-2 border-t flex items-center justify-between">
                 <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
-                  ₹{Math.round((ranked.partner.services[0]?.rate?.price?.amount || 0) + platformFee)}
+                  ₹{computeBaseFare(ranked.partner.services[0]?.rate?.price?.amount || 0)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days

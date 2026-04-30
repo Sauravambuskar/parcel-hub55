@@ -9,6 +9,7 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays } from "@/lib/tat-utils";
 import { getPartnerLogo } from "@/config/partnerLogos";
+import { computeBaseFare } from "@/lib/pricing";
 
 
 interface Partner {
@@ -101,11 +102,12 @@ const BookingStep5 = ({
         partner,
         service,
         serviceId: `${partner.partner_id}_${service.service_code}`,
-        price: Math.round((service.rate?.price?.amount || 0) + platformFee),
+        // Deterministic: 50% markup + ₹50 zone fee on courier card price.
+        price: computeBaseFare(service.rate?.price?.amount || 0),
         etaKey: `${partner.partner_code}_${service.service_code}`,
       }))
     );
-  }, [serviceablePartners, platformFee]);
+  }, [serviceablePartners]);
 
   // Fetch predict-eta for all services in parallel
   const fetchETAs = useCallback(async () => {
@@ -223,7 +225,7 @@ const BookingStep5 = ({
       services: p.services.map((s) => ({
         service_name: s.service_name,
         tat_days: s.tat_days,
-        price: (s.rate?.price?.amount || 0) + platformFee,
+        price: computeBaseFare(s.rate?.price?.amount || 0),
         is_cod: s.is_cod,
         insurance: s.insurance,
       })),

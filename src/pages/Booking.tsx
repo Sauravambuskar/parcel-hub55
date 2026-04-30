@@ -8,6 +8,7 @@ import { getPartnerLogo } from "@/config/partnerLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeTatDays, formatTatRange } from "@/lib/tat-utils";
 import { usePlatformFee } from "@/hooks/usePlatformFee";
+import { computeBaseFare } from "@/lib/pricing";
 import PaymentModal from "@/components/PaymentModal";
 import BookingProgress from "@/components/booking/BookingProgress";
 import BookingStep1 from "@/components/booking/BookingStep1";
@@ -216,9 +217,9 @@ const Booking = () => {
           partner.services.forEach((service: any) => {
             // Extract price from rate object and add dynamic platform fee
             const apiPrice = Math.round(service.rate?.price?.amount || 0);
-            const dynamicFee = platformFee; // Use dynamic platform fee from hook
-            const totalPrice = apiPrice + dynamicFee;
-            const basePrice = totalPrice;
+            // Deterministic pricing: 50% markup + ₹50 flat zone fee per courier card price.
+            const basePrice = computeBaseFare(apiPrice);
+            const totalPrice = basePrice;
             const convenienceFee = 0;
 
             // Format partner name properly
@@ -388,10 +389,11 @@ const Booking = () => {
         const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
         if (service) {
           const apiPrice = Math.round(service.rate?.price?.amount || 0);
-          const dynamicFee = platformFee; // Use dynamic platform fee from hook
+          // Deterministic pricing: baseFare = round(card * 1.5) + 50.
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
-            basePrice: apiPrice + dynamicFee,
+            basePrice: computeBaseFare(apiPrice),
+            cardPrice: apiPrice,
             convenienceFee: calculateConvenienceFee(),
             deliveryTime: formatTatRange(service.tat_days, service.service_name),
             platformFeeBreakdown: platformFeeData,
@@ -544,7 +546,7 @@ const Booking = () => {
           baseFare: baseFare,
           gstAmount: gstAmount,
           totalAmount: totalAmount,
-          platformFee: platformFee,
+          platformFee: effectivePlatformFee,
           ...(paymentDetails && {
             razorpay_payment_id: paymentDetails.razorpay_payment_id,
             razorpay_order_id: paymentDetails.razorpay_order_id
@@ -696,7 +698,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shadowfax",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'shadowfax_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -764,7 +766,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Delhivery",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'delhivery_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -833,7 +835,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Urbanebolt",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'urbanebolt_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -902,7 +904,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "XpressBees",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "2-4 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'xpressbees_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -971,7 +973,7 @@ const Booking = () => {
               courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shree Maruti Courier",
               courier_price: totalAmount,
               delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               booking_source: 'shree_maruti_direct',
             };
             const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
@@ -1050,7 +1052,7 @@ const Booking = () => {
         payment_id: paymentDetails?.razorpay_payment_id || null,
         payment_status: isCop ? "cop_pending" : "paid",
         base_fare: baseFare,
-        platform_fee: platformFee,
+        platform_fee: effectivePlatformFee,
         gst: gstAmount,
         prayog_commission: (isShadowfaxDirect || isDelhiveryDirect || isUrbaneboltDirect) ? 0 : Math.round(baseAmount * 0.05),
         booking_source: bookingSource,
@@ -1104,7 +1106,7 @@ const Booking = () => {
                 courier_name: selectedCourierData?.name || "",
                 courier_price: totalAmount,
                 delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
-                base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+                base_fare: baseFare, platform_fee: effectivePlatformFee, gst: gstAmount,
               },
             },
             headers: { ...(prayogAuthRawFallback ? { 'x-prayog-auth': prayogAuthRawFallback } : {}), 'x-environment': CURRENT_ENV },
@@ -1139,6 +1141,11 @@ const Booking = () => {
   const baseFare = Math.round(selectedCourierData ? selectedCourierData.basePrice : 0);
   const gstAmount = Math.round(baseFare * 0.18);
   const totalAmount = baseFare + gstAmount;
+  // Effective platform fee for persistence: baseFare - cardPrice (hidden in UI).
+  // Falls back to the hook-provided value when no service is selected yet.
+  const effectivePlatformFee = selectedCourierData?.cardPrice != null
+    ? Math.max(0, baseFare - Math.round(selectedCourierData.cardPrice))
+    : platformFee;
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -1237,7 +1244,7 @@ const Booking = () => {
         courier_price: totalAmount,
         delivery_time: selectedCourierData.deliveryTime || 'Standard',
         base_fare: baseFare,
-        platform_fee: platformFee,
+        platform_fee: effectivePlatformFee,
         gst: gstAmount,
         booking_source: 'pending',
       }} />}

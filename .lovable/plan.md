@@ -1,72 +1,102 @@
-## Why chargeable weight is always ≥ 1000 g
+## Goal
 
-There are two bugs that together force every Shree Maruti quote to land on the 1 kg slab regardless of what the user enters:
+Replace the current non-deterministic AI-driven platform fee with a deterministic formula applied per-courier:
 
-### Bug 1 — 1 kg floor in `chargeableGrams` (root cause)
-
-`supabase/functions/_shared/rate-cards.ts` line 74:
-
-```ts
-const actual = Math.max(1, Number(weightKg) || 0) * 1000;
+```
+baseFare  = round(cardPrice * 1.5) + 50
+gst       = round(baseFare * 0.18)
+total     = baseFare + gst
 ```
 
-The `Math.max(1, …)` is applied to the **kg value before multiplying by 1000**. So any weight below 1 kg (250 g, 500 g, 750 g) gets clamped to `1` kg → 1000 g actual. This is what produces the `chargeable_g: 1000` you saw, and it affects all five partners that use this helper, not just Shree Maruti.
+The courier-specific card price is preserved (so XpressBees stays cheaper than Delhivery Air, etc.). The flat ₹50 zone fee + 50% markup is applied uniformly across all 5 partners (Shree Maruti, Delhivery, XpressBees, UrbaneBolt, Shadowfax) and all services (Surface/Air).
 
-The intent was clearly "minimum 1 gram", not "minimum 1 kg". The floor should be applied **after** the conversion to grams.
+## Changes
 
-### Bug 2 — Frontend fallback default is 1000 g
+### 1. New shared helper — `src/lib/pricing.ts`
 
-`src/components/booking/BookingStep2.tsx` lines 171-173:
-
-```ts
-const weightKg = weightUnit === 'g'
-  ? (parseFloat(packageWeight) || 1000) / 1000   // ← falls back to 1000 g
-  : parseFloat(packageWeight) || 1.0;
-```
-
-If the weight field is empty or non-numeric, it silently sends 1 kg to the edge function. Combined with Bug 1, the user has no way to get a sub-kg quote unless they enter a valid number AND the backend floor is removed.
-
-The `isValid` check on line 149 already requires `packageWeight` to be truthy, but `parseFloat("")` → `NaN`, and the `|| 1000` swallows it silently. Better to send the parsed value (or 0) and let the backend reject invalid inputs explicitly.
-
-## Fix
-
-### 1. `supabase/functions/_shared/rate-cards.ts`
-
-Replace the broken floor:
+Create a single source of truth used by every UI surface that displays a price:
 
 ```ts
-function chargeableGrams(weightKg: number, l: number, w: number, h: number): number {
-  const actualG = Math.max(0, Number(weightKg) || 0) * 1000;
-  const volG = ((Number(l) || 0) * (Number(w) || 0) * (Number(h) || 0)) / 5000 * 1000;
-  return Math.max(1, Math.ceil(Math.max(actualG, volG)));  // 1 g minimum, applied to grams
+export const MARKUP_PCT = 0.5;     // 50%
+export const ZONE_FEE   = 50;      // flat ₹50
+export const GST_RATE   = 0.18;
+
+export function computeBaseFare(cardPrice: number) {
+  return Math.round((cardPrice || 0) * (1 + MARKUP_PCT)) + ZONE_FEE;
+}
+export function computeGst(baseFare: number)   { return Math.round(baseFare * GST_RATE); }
+export function computeTotal(cardPrice: number) {
+  const base = computeBaseFare(cardPrice);
+  return base + computeGst(base);
+}
+export function computePriceBreakdown(cardPrice: number) {
+  const base = computeBaseFare(cardPrice);
+  const gst  = computeGst(base);
+  return { cardPrice, baseFare: base, gst, total: base + gst, markupPct: MARKUP_PCT, zoneFee: ZONE_FEE };
 }
 ```
 
-Now a 250 g parcel with 10×10×10 cm box (vol = 200 g) correctly resolves to **chargeable_g = 250** → Shree Maruti Surface ROI 0–250 g slab = ₹44 (was ₹83).
+### 2. Frontend — replace `(cardPrice + platformFee)` usages
 
-### 2. `src/components/booking/BookingStep2.tsx`
+Files to update:
 
-Tighten the weight parse so an empty/invalid field doesn't silently become 1 kg:
+- `src/pages/Booking.tsx` — drop `usePlatformFee` hook usage for the listing/total math. Keep `platformFee` variable available for legacy props but derive it per-selected-service via `computeBaseFare(cardPrice) - cardPrice`. Update every spot where `baseFare`, `platform_fee`, `gst`, `total` are computed for the selected service to use the new helpers (lines ~219, 391, 547, 699, 767, 836, 905, 974, 1053, 1107, 1149, 1240).
+- `src/components/booking/BookingStep5.tsx` — replace `(price + platformFee)` mapping (line 104, 226) with `computeBaseFare(price)` and pass full breakdown to children.
+- `src/components/booking/SmartRanking.tsx` — replace 5 occurrences of `+ platformFee` with `computeBaseFare(...)`.
+- `src/components/booking/PartnerComparisonTable.tsx` — replace `+ platformFee` mapping with `computeBaseFare(...)`.
+- `src/components/booking/ETACard.tsx` — replace `courierData.price + platformFee` with `computeBaseFare(courierData.price)` for the displayed total. Show breakdown tooltip if already wired.
+- `src/components/booking/BookingStep2.tsx` line 338 — replace hardcoded `const platformFee = 50; basePrice = apiPrice + platformFee;` with `basePrice = computeBaseFare(apiPrice)`.
+- `src/components/booking/BookingReviewStep.tsx` — ensure base/GST display uses helper (verify on edit).
 
-```ts
-const weightG = parseFloat(packageWeight);
-if (!weightG || weightG <= 0) {
-  toast({ title: "Invalid weight", description: "Enter package weight in grams.", variant: "destructive" });
-  setIsCheckingServiceability(false);
-  return;
-}
-const weightKg = weightG / 1000;
-```
+### 3. Backend — deterministic platform-fee endpoint
 
-(Removes the `|| 1000` fallback. `weightUnit` branch is gone since the unit is locked to grams now.)
+`supabase/functions/calculate-platform-fee/index.ts`:
 
-## Impact
+- Remove the AI (Lovable Gateway) call entirely.
+- Replace with a pure deterministic computation. Since the new model is markup-on-card-price (not per-shipment), this endpoint becomes a thin compatibility wrapper that returns a representative platform fee for legacy callers:
+  ```
+  representative_card_price = 100  // fallback; real callers should use the helper
+  platform_fee = computeBaseFare(card) - card  // = 100
+  ```
+  Return shape kept identical so `usePlatformFee` consumers don't break, but `breakdown.distance_fee` is removed and `explanation` becomes `"Flat 50% markup + ₹50 zone fee per courier card price"`.
 
-- **Shree Maruti**: 0.25 / 0.5 / 0.75 kg parcels now hit their correct sub-kg slabs (₹44 / ₹48 / ₹83 for ROI Surface, etc.) instead of all rounding up to ₹83.
-- **Delhivery, XpressBees, UrbaneBolt, Shadowfax**: same fix benefits all of them — light parcels (e.g. 250 g) will now hit their lowest slab (Delhivery ₹28 zone A, etc.) instead of being floored to 1 kg.
-- **No schema or API change.** Volumetric weight calculation is unchanged.
+### 4. Persisted price metadata (orders / Razorpay)
 
-## Out of scope
+In `src/pages/Booking.tsx` order-creation paths and edge functions that snapshot pricing:
 
-- The partner serviceability APIs themselves (Shree Maruti's `check-ecomm-order-serviceability`) still receive `weight_kg` as-is — they don't use it for slab pricing, only for serviceability, so no change needed there.
-- Booking payload (`shree-maruti-booking`) already converts grams correctly via `Math.round(package_weight * 1000)`.
+- `supabase/functions/razorpay-create-order/index.ts`
+- `supabase/functions/razorpay-verify-payment/index.ts`
+- `supabase/functions/save-booking/index.ts`
+- `supabase/functions/get-booking-detail/index.ts` (display only)
+
+Make sure `base_fare`, `platform_fee` (now derived as `baseFare - cardPrice`), `gst`, `total` are stored using the new formula. No DB schema change — fields already exist in `bookings.price_breakdown` JSON.
+
+### 5. Admin views (display only)
+
+`src/pages/admin/RevenueManagement.tsx`, `OrderMonitoring.tsx`, `AdminDashboard.tsx`, `OrderDetails.tsx` already read `platform_fee` from stored `price_breakdown`. No code change needed — they will simply display the new (deterministic) values for new orders. Old orders keep their historical numbers.
+
+## Worked Example (Pune → Bhopal, 1 kg)
+
+| Courier            | Card | Base = round(card×1.5)+50 | GST 18% | **Total** |
+| ------------------ | ---- | ------------------------- | ------- | --------- |
+| Shree Maruti Surf  | ₹83  | ₹175                      | ₹32     | **₹207**  |
+| Shree Maruti Air   | ₹102 | ₹203                      | ₹37     | **₹240**  |
+| Delhivery Air      | ₹110 | ₹215                      | ₹39     | **₹254**  |
+| XpressBees Surf    | ₹78  | ₹167                      | ₹30     | **₹197**  |
+| Shadowfax          | ₹95  | ₹193                      | ₹35     | **₹228**  |
+
+Deterministic: same input always yields the same number. Per-courier differentiation preserved.
+
+## Out of Scope
+
+- Distance-tiered zone fees (can revisit later by replacing `ZONE_FEE` constant with a `getZoneFee(km)` lookup).
+- Changes to courier rate cards in `supabase/functions/_shared/rate-cards.ts`.
+- Refund / cancellation logic — they read from stored `price_breakdown`, so they auto-adapt.
+
+## Test Checklist (post-implementation)
+
+1. Pune (411001) → Bhopal (462013), 1 kg → all 5 couriers display deterministic totals matching the table above.
+2. Same pincode pair, 5 kg → totals scale with card price; markup math holds.
+3. Local lane (411001 → 411014) → cheaper card → cheaper total, still markup + ₹50.
+4. Razorpay charged amount === `total` shown on review screen.
+5. Admin OrderMonitoring shows `platform_fee = baseFare − cardPrice` for new orders.

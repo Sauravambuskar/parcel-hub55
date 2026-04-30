@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
+import { computeBaseFare } from "@/lib/pricing";
 
 const goodsTypes = [
   { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
@@ -335,8 +336,8 @@ const BookingStep2 = ({
       if (serviceablePartner?.services && serviceablePartner.services.length > 0) {
         const service = serviceablePartner.services[0];
         const apiPrice = Math.round(service.rate?.price?.amount || 0);
-        const platformFee = 50;
-        const basePrice = apiPrice + platformFee;
+        // Deterministic: 50% markup + ₹50 zone fee on courier card price.
+        const basePrice = computeBaseFare(apiPrice);
         const convenienceFee = 0;
         const totalPrice = basePrice;
 

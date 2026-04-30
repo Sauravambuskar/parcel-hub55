@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Truck, Clock, Check, Zap, Star, Info } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { useState } from "react";
+import { computeBaseFare } from "@/lib/pricing";
 
 interface CourierData {
   partner_id: string;
@@ -90,7 +91,7 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
-  const totalPrice = Math.round(courierData.price + platformFee);
+  const totalPrice = computeBaseFare(courierData.price);
 
   const days = etaData?.adjusted_days ?? courierData.tat_days;
   const confidenceScore = etaData?.confidence_score;
