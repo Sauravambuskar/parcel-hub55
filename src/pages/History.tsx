@@ -286,11 +286,7 @@ const History = () => {
             );
             const labelUrl = labelDocument?.url;
             
-            const isShreeMaruti = order.carrierName?.toLowerCase().includes('shree maruti') || 
-                                  order.carrierName?.toLowerCase().includes('shreemaruti') ||
-                                  order.carrierName?.toLowerCase().includes('smcourier');
-            
-            const showLabelButton = labelUrl && !isShreeMaruti;
+            const showLabelButton = !!labelUrl;
             
             return (
               <Card key={order.orderId} className="p-4 bg-white/10 backdrop-blur-xl border-white/20">
@@ -376,8 +372,9 @@ const History = () => {
                       bm?.booking_source === 'delhivery_direct' ||
                       bm?.booking_source === 'urbanebolt_direct' ||
                       bm?.booking_source === 'xpressbees_direct' ||
+                      bm?.booking_source === 'shree_maruti_direct' ||
                       !!labelUrl;
-                    if (!canFetchLabel || isShreeMaruti) return null;
+                    if (!canFetchLabel) return null;
                     return (
                       <Button
                         variant="outline"
