@@ -321,7 +321,7 @@ const BookingStep5 = ({
                 return (
                   <div
                     key={partner.partner_id}
-                    className="p-3 rounded-lg border border-border bg-muted/20 flex items-center gap-3 opacity-70"
+                    className="p-3 rounded-lg border border-border flex items-center gap-3 opacity-70 bg-card"
                   >
                     <img
                       src={getPartnerLogo(partner.partner_code, partner.partner_name)}
