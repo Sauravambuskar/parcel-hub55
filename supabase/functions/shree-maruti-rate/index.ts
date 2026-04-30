@@ -4,6 +4,17 @@
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { shreeMarutiFetch } from "../_shared/shree-maruti-auth.ts";
+import { quoteFromCard, resolvePrice } from "../_shared/rate-cards.ts";
+
+async function pinInfo(pin: string) {
+  try {
+    const r = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+    const j = await r.json();
+    const po = j?.[0]?.PostOffice?.[0];
+    if (po) return { pincode: pin, city: po.District || po.Block || po.Name || "", state: po.State || "" };
+  } catch (_) { /* swallow */ }
+  return { pincode: pin };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
