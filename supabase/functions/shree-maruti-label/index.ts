@@ -82,14 +82,16 @@ Deno.serve(async (req) => {
       try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
       // Possible shapes documented / observed:
-      //   { data: { url: "https://..." } }
-      //   { data: { labelUrl: "..." } }
-      //   { data: { base64: "JVBERi0..." } }  /  { data: { pdf: "JVBERi0..." } }
-      //   { data: { fileContent: "JVBERi0..." } }  (some variants)
-      const inner = data?.data ?? data;
+      //   { data: [{ shippingLabelUrl, invoiceUrl, awbNumber, ... }] }   <-- actual prod shape
+      //   { data: { url|labelUrl|label_url|invoiceUrl|fileUrl: "..." } }
+      //   { data: { base64|pdf|fileContent|label|invoice: "JVBERi0..." } }
+      const innerRaw = data?.data ?? data;
+      const inner = Array.isArray(innerRaw) ? (innerRaw[0] ?? {}) : innerRaw;
       labelUrl =
+        inner?.shippingLabelUrl || inner?.shipping_label_url ||
         inner?.url || inner?.label_url || inner?.labelUrl ||
-        inner?.invoiceUrl || inner?.fileUrl || data?.url || data?.label_url || null;
+        inner?.invoiceUrl || inner?.invoice_url || inner?.fileUrl ||
+        data?.url || data?.label_url || null;
 
       if (!labelUrl) {
         const b64 =
