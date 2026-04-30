@@ -754,7 +754,8 @@ const OrderDetails = () => {
             const canFetchFresh = bookingMeta?.booking_source === 'delhivery_direct'
               || bookingMeta?.booking_source === 'urbanebolt_direct'
               || bookingMeta?.booking_source === 'xpressbees_direct'
-              || bookingMeta?.booking_source === 'shadowfax_direct';
+              || bookingMeta?.booking_source === 'shadowfax_direct'
+              || bookingMeta?.booking_source === 'shree_maruti_direct';
             if (!labelDoc?.url && !canFetchFresh) return null;
 
             const handleLabel = async () => {
