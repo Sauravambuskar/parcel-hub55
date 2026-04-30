@@ -1182,7 +1182,7 @@ const Booking = () => {
             }
           });
         }
-      }} awbNumber={confirmationData?.awbNumber || ""} labelUrl={confirmationData?.labelUrl} courierName={confirmationData?.courierName} />
+      }} awbNumber={confirmationData?.awbNumber || ""} labelUrl={confirmationData?.labelUrl} courierName={confirmationData?.courierName} isReversePickup={(confirmationData?.courierName || "").toLowerCase().includes("shadowfax")} />
       </div>
     </PageBackground>;
 };
