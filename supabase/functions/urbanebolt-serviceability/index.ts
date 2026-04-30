@@ -1,6 +1,7 @@
 // Urbanebolt serviceability check + price quote.
-// Uses official Urbanebolt rate card (6 zones), 15% flat FSC, volumetric weight.
+// Uses embedded UrbaneBolt B2C Light Weight rate card (5 zones × Surface+Air).
 // Pincode API confirms serviceability and returns city/state used for zoning.
+// Source: UB_Rate_card-3.xlsx (uploaded by client).
 
 import { getEnvironmentFromRequest } from "../_shared/environment.ts";
 import { urbaneboltFetch } from "../_shared/urbanebolt-auth.ts";
@@ -11,42 +12,82 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-// Official Urbanebolt rate card (per 500g slab, INR).
-// FSC: 15% flat. Volumetric: L*B*H/5000.
-const RATE_CARD = {
-  intracity_sdd: { first: 35, additional: 35, tat: "Same Day (12 Hrs)",  tatDays: 0, label: "Intracity SDD" },
-  intracity_ndd: { first: 25, additional: 22, tat: "Next Day (24 Hrs)",  tatDays: 1, label: "Intracity NDD" },
-  intercity:     { first: 38, additional: 35, tat: "24 Hrs",             tatDays: 1, label: "Intercity" },
-  metro:         { first: 55, additional: 52, tat: "24 Hrs",             tatDays: 1, label: "Metro" },
-  roi:           { first: 58, additional: 55, tat: "24-48 Hrs",          tatDays: 2, label: "Rest of India" },
-  ne:            { first: 75, additional: 72, tat: "48-72 Hrs",          tatDays: 3, label: "North East" },
+// ============================================================
+// EMBEDDED RATE CARD — UrbaneBolt B2C Light Weight (INR)
+// Zones: Local | WithinZone | Metro | ROI | Special
+// Slabs: 0.25 / 0.5 / 1 / 2 kg, then +Add.1kg per kg above 2 kg
+// Air is NOT available for Local zone.
+// ============================================================
+type ZoneKey = "Local" | "WithinZone" | "Metro" | "ROI" | "Special";
+type Mode = "surface" | "air";
+
+interface SlabRates {
+  upto_0_25: number | null;
+  upto_0_5: number | null;
+  add_0_5: number | null;   // unused but kept for reference
+  upto_1: number | null;
+  upto_2: number | null;
+  add_1kg: number | null;   // additional per kg beyond 2 kg
+}
+
+const RATE_CARD: Record<Mode, Record<ZoneKey, SlabRates>> = {
+  surface: {
+    Local:      { upto_0_25: 23, upto_0_5: 25, add_0_5: 19, upto_1: 40, upto_2: 60,  add_1kg: 32 },
+    WithinZone: { upto_0_25: 29, upto_0_5: 32, add_0_5: 28, upto_1: 55, upto_2: 72,  add_1kg: 43 },
+    Metro:      { upto_0_25: 36, upto_0_5: 42, add_0_5: 33, upto_1: 65, upto_2: 95,  add_1kg: 52 },
+    ROI:        { upto_0_25: 44, upto_0_5: 48, add_0_5: 39, upto_1: 83, upto_2: 111, add_1kg: 64 },
+    Special:    { upto_0_25: 54, upto_0_5: 58, add_0_5: 45, upto_1: 93, upto_2: 162, add_1kg: 78 },
+  },
+  air: {
+    Local:      { upto_0_25: null, upto_0_5: null, add_0_5: null, upto_1: null, upto_2: null, add_1kg: null },
+    WithinZone: { upto_0_25: 38, upto_0_5: 52, add_0_5: 41, upto_1: 80,  upto_2: 120, add_1kg: 60 },
+    Metro:      { upto_0_25: 42, upto_0_5: 60, add_0_5: 47, upto_1: 90,  upto_2: 138, add_1kg: 72 },
+    ROI:        { upto_0_25: 52, upto_0_5: 75, add_0_5: 60, upto_1: 102, upto_2: 160, add_1kg: 85 },
+    Special:    { upto_0_25: 68, upto_0_5: 83, add_0_5: 65, upto_1: 120, upto_2: 185, add_1kg: 98 },
+  },
 };
 
-const FSC_RATE = 0.15;
+const TAT: Record<Mode, { label: string; days: number }> = {
+  surface: { label: "Surface (2-4 days)", days: 3 },
+  air:     { label: "Air (1-2 days)",     days: 2 },
+};
 
 const METRO_CITIES = new Set([
   "delhi", "new delhi", "mumbai", "bangalore", "bengaluru", "chennai",
   "kolkata", "hyderabad", "pune", "ahmedabad",
 ]);
 
-const NE_STATES = new Set([
+const SPECIAL_STATES = new Set([
   "assam", "arunachal pradesh", "manipur", "meghalaya", "mizoram",
   "nagaland", "tripura", "sikkim", "jammu and kashmir", "ladakh",
   "andaman and nicobar islands", "lakshadweep",
 ]);
 
+function pickSlabPrice(slab: SlabRates, chargeableKg: number): number | null {
+  if (slab.upto_0_25 == null && slab.upto_2 == null) return null;
+  if (chargeableKg <= 0.25 && slab.upto_0_25 != null) return slab.upto_0_25;
+  if (chargeableKg <= 0.5  && slab.upto_0_5  != null) return slab.upto_0_5;
+  if (chargeableKg <= 1    && slab.upto_1    != null) return slab.upto_1;
+  if (chargeableKg <= 2    && slab.upto_2    != null) return slab.upto_2;
+  // > 2 kg: base + per-extra-kg
+  if (slab.upto_2 != null && slab.add_1kg != null) {
+    const extraKg = Math.ceil(chargeableKg - 2);
+    return slab.upto_2 + extraKg * slab.add_1kg;
+  }
+  return null;
+}
+
 function calculatePrice(
-  rate: { first: number; additional: number },
+  zone: ZoneKey,
+  mode: Mode,
   weightKg: number,
   l: number, w: number, h: number,
-): number {
+): number | null {
   const volWeight = (l * w * h) / 5000;
   const chargeable = Math.max(weightKg, volWeight);
-  const slabs = Math.ceil((chargeable * 1000) / 500);
-  let price = rate.first;
-  if (slabs > 1) price += (slabs - 1) * rate.additional;
-  price += price * FSC_RATE;
-  return Math.round(price);
+  const slab = RATE_CARD[mode][zone];
+  const price = pickSlabPrice(slab, chargeable);
+  return price == null ? null : Math.round(price);
 }
 
 interface PincodeInfo {
@@ -58,7 +99,6 @@ interface PincodeInfo {
 
 async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<string, PincodeInfo>> {
   const map: Record<string, PincodeInfo> = {};
-  // Try a few known endpoint variants — Urbanebolt's WAF blocks unknown paths with HTML 404.
   const variants: Array<{ path: string; method: string; body?: any }> = [
     { path: `/api/v1/location/pincodes/?pincodes=${pincodes.join(",")}`, method: "GET" },
     { path: "/api/v1/location/pincodes/", method: "POST", body: { pincodes } },
@@ -95,31 +135,34 @@ async function lookupPincodes(env: any, pincodes: string[]): Promise<Record<stri
   return map;
 }
 
-type ZoneKey = keyof typeof RATE_CARD;
+// UB pincode API returns values like "Delhi - DEL" / "Maharashtra - MH" — strip the trailing code.
+function normalize(s: string | undefined): string {
+  return (s || "").split(" - ")[0].trim().toLowerCase();
+}
 
-function detectZones(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey[] {
-  const pCity = (pickup.city || "").trim().toLowerCase();
-  const dCity = (delivery.city || "").trim().toLowerCase();
-  const pState = (pickup.state || "").trim().toLowerCase();
-  const dState = (delivery.state || "").trim().toLowerCase();
+function detectZone(pickup: PincodeInfo, delivery: PincodeInfo): ZoneKey {
+  const pCity = normalize(pickup.city);
+  const dCity = normalize(delivery.city);
+  const pState = normalize(pickup.state);
+  const dState = normalize(delivery.state);
+  const pPin = pickup.pincode || "";
+  const dPin = delivery.pincode || "";
 
-  // North East / remote — overrides everything
-  if (NE_STATES.has(pState) || NE_STATES.has(dState)) return ["ne"];
+  // Special — NE / J&K / islands
+  if (SPECIAL_STATES.has(pState) || SPECIAL_STATES.has(dState)) return "Special";
 
-  // Intracity — same city: offer both SDD + NDD
-  if (pCity && dCity && pCity === dCity) return ["intracity_sdd", "intracity_ndd"];
+  // Local — same pincode (or same city)
+  if (pPin && dPin && pPin === dPin) return "Local";
+  if (pCity && dCity && pCity === dCity) return "Local";
 
-  // Metro to Metro — Intercity
-  if (METRO_CITIES.has(pCity) && METRO_CITIES.has(dCity)) return ["intercity"];
+  // Metro — both ends are top metros
+  if (METRO_CITIES.has(pCity) && METRO_CITIES.has(dCity)) return "Metro";
 
-  // Either end is metro — Metro tier
-  if (METRO_CITIES.has(pCity) || METRO_CITIES.has(dCity)) return ["metro"];
-
-  // Same state — treat as Intercity (within state)
-  if (pState && dState && pState === dState) return ["intercity"];
+  // WithinZone — same state
+  if (pState && dState && pState === dState) return "WithinZone";
 
   // Default: Rest of India
-  return ["roi"];
+  return "ROI";
 }
 
 Deno.serve(async (req) => {
@@ -144,8 +187,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // STRICT MODE: Only mark serviceable if Urbanebolt's pincode API confirms BOTH pincodes.
-    // No India Post fallback — if Urbanebolt's API doesn't confirm coverage, hide the partner.
+    // STRICT: Urbanebolt's pincode API must confirm BOTH pincodes.
     const map = await lookupPincodes(env, [pickup_pincode, delivery_pincode]);
     const pickup = map[pickup_pincode];
     const delivery = map[delivery_pincode];
@@ -168,29 +210,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    const zones = detectZones(pickup, delivery);
+    const zone = detectZone(pickup, delivery);
 
-    const services = zones.map((zoneKey) => {
-      const r = RATE_CARD[zoneKey];
-      const price = calculatePrice(r, weight_kg, length_cm, width_cm, height_cm);
-      const isExpress = zoneKey === "intracity_sdd" || zoneKey === "intracity_ndd";
-      return {
-        service_code: `ub_${zoneKey}`,
-        service_name: `Urbanebolt ${r.label}`,
-        tat_days: r.tatDays,
-        tat_label: r.tat,
-        delivery_modes: { express: isExpress, standard: !isExpress },
-        is_cod: false,
-        pickup: true,
-        delivery: true,
-        insurance: false,
-        rate: {
-          rate_id: `ub_rate_${zoneKey}`,
-          price: { amount: price, currency: "INR", type: "calculated" },
-          description: `Urbanebolt ${r.label} (incl. 15% FSC)`,
-        },
-      };
-    });
+    // Build Surface + Air services (skip Air if not available for the zone)
+    const modes: Mode[] = ["surface", "air"];
+    const services = modes
+      .map((mode) => {
+        const price = calculatePrice(zone, mode, weight_kg, length_cm, width_cm, height_cm);
+        if (price == null) return null;
+        const isAir = mode === "air";
+        return {
+          service_code: `ub_${zone.toLowerCase()}_${mode}`,
+          service_name: `Urbanebolt ${zone} ${isAir ? "Air" : "Surface"}`,
+          tat_days: TAT[mode].days,
+          tat_label: TAT[mode].label,
+          delivery_modes: { express: isAir, standard: !isAir },
+          is_cod: false,
+          pickup: true,
+          delivery: true,
+          insurance: false,
+          rate: {
+            rate_id: `ub_rate_${zone.toLowerCase()}_${mode}`,
+            price: { amount: price, currency: "INR", type: "calculated" },
+            description: `Urbanebolt ${zone} ${isAir ? "Air" : "Surface"} (B2C Light Weight)`,
+          },
+        };
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null);
+
+    if (services.length === 0) {
+      return new Response(
+        JSON.stringify({
+          is_serviceable: false,
+          reason: "No rate available for this zone/weight combination",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const partner = {
       partner_id: "urbanebolt_direct",
@@ -204,7 +260,8 @@ Deno.serve(async (req) => {
         delivery_city: delivery.city,
         pickup_state: pickup.state,
         delivery_state: delivery.state,
-        zones,
+        zone,
+        rate_card: "B2C Light Weight (embedded)",
       },
     };
 
