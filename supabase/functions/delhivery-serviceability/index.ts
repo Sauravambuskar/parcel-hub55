@@ -166,15 +166,24 @@ Deno.serve(async (req) => {
     const volG = (length_cm * width_cm * height_cm) / 5000 * 1000;
     const cgm = Math.max(1, Math.ceil(Math.max(actualG, volG)));
 
-    // Step 3: parallel Express + Surface rate calls
-    // Reverse Pickup: o_pin = sender (physical origin), d_pin = receiver (physical destination)
-    const [express, surface] = await Promise.all([
+    // Step 3: parallel Express + Surface rate calls + pin info for card lookup
+    const [express, surface, pickupInfo, deliveryInfo] = await Promise.all([
       fetchRate(apiBaseUrl, token, "E", pickup_pincode, delivery_pincode, cgm),
       fetchRate(apiBaseUrl, token, "S", pickup_pincode, delivery_pincode, cgm),
+      lookupPinInfo(pickup_pincode),
+      lookupPinInfo(delivery_pincode),
     ]);
 
-    if (!express && !surface) {
-      console.warn("Delhivery: both rate calls failed");
+    // Embedded rate-card quotes — used to verify API price and as fallback if API is silent
+    const dims = { l: length_cm, w: width_cm, h: height_cm };
+    const expressCard = quoteFromCard("delhivery", "express", pickupInfo, deliveryInfo, weight_kg, dims);
+    const surfaceCard = quoteFromCard("delhivery", "surface", pickupInfo, deliveryInfo, weight_kg, dims);
+
+    const expressResolved = resolvePrice(express?.amount ?? null, expressCard);
+    const surfaceResolved = resolvePrice(surface?.amount ?? null, surfaceCard);
+
+    if (!expressResolved.price && !surfaceResolved.price) {
+      console.warn("Delhivery: API + card both produced no price");
       return new Response(
         JSON.stringify({ is_serviceable: false, error: "Rate quote unavailable" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -182,7 +191,7 @@ Deno.serve(async (req) => {
     }
 
     const services: any[] = [];
-    if (express) {
+    if (expressResolved.price > 0) {
       services.push({
         service_code: "delhivery_express",
         service_name: "Delhivery Express",
@@ -195,12 +204,19 @@ Deno.serve(async (req) => {
         insurance: false,
         rate: {
           rate_id: "delhivery_rate_express",
-          price: { amount: express.amount, currency: "INR", type: "calculated" },
+          price: { amount: expressResolved.price, currency: "INR", type: "calculated" },
           description: "Delhivery Express (Reverse Pickup)",
+        },
+        metadata: {
+          rate_source: expressResolved.rate_source,
+          api_price: express?.amount ?? null,
+          card_price: expressCard?.price_with_fsc ?? null,
+          card_zone: expressCard?.zone ?? null,
+          card_delta_pct: expressResolved.verify?.delta_pct ?? null,
         },
       });
     }
-    if (surface) {
+    if (surfaceResolved.price > 0) {
       services.push({
         service_code: "delhivery_surface",
         service_name: "Delhivery Surface",
@@ -213,8 +229,15 @@ Deno.serve(async (req) => {
         insurance: false,
         rate: {
           rate_id: "delhivery_rate_surface",
-          price: { amount: surface.amount, currency: "INR", type: "calculated" },
+          price: { amount: surfaceResolved.price, currency: "INR", type: "calculated" },
           description: "Delhivery Surface (Reverse Pickup)",
+        },
+        metadata: {
+          rate_source: surfaceResolved.rate_source,
+          api_price: surface?.amount ?? null,
+          card_price: surfaceCard?.price_with_fsc ?? null,
+          card_zone: surfaceCard?.zone ?? null,
+          card_delta_pct: surfaceResolved.verify?.delta_pct ?? null,
         },
       });
     }
@@ -230,6 +253,8 @@ Deno.serve(async (req) => {
         chargeable_weight_g: cgm,
         environment: env,
         rvp: true,
+        pickup_city: pickupInfo.city,
+        delivery_city: deliveryInfo.city,
       },
     };
 
