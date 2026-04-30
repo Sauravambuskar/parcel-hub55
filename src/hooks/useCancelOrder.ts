@@ -98,7 +98,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "delhivery_direct") {
         if (!awb) {
@@ -114,7 +114,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "urbanebolt_direct") {
         if (!awb) {
@@ -130,7 +130,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "xpressbees_direct") {
         if (!awb) {
@@ -146,7 +146,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else if (bookingSource === "shree_maruti_direct") {
         const { data, error } = await supabase.functions.invoke("shree-maruti-cancel-order", {
@@ -191,7 +191,7 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || "Failed to cancel order");
+          throw new Error(friendlyCancelError(extractCancelError(data, error)));
         }
       } else {
         throw new Error(
