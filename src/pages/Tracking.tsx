@@ -131,6 +131,7 @@ const Tracking = () => {
       const isDelhiveryDirect = bSource === 'delhivery_direct';
       const isUrbanebolt = bSource === 'urbanebolt_direct';
       const isXpressbees = bSource === 'xpressbees_direct';
+      const isShreeMaruti = bSource === 'shree_maruti_direct';
 
       let partnerData: TrackingData | null = null;
 
@@ -166,6 +167,14 @@ const Tracking = () => {
         });
         if (xbError || !xbData || xbData.error) throw new Error('Failed to fetch XpressBees tracking');
         partnerData = xbData;
+      } else if (isShreeMaruti) {
+        const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
+        const { data: smData, error: smError } = await supabase.functions.invoke('shree-maruti-tracking', {
+          body: { waybill: trackAwb, order_id: bookingRow?.prayog_order_id || awb },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+        if (smError || !smData || smData.error) throw new Error('Failed to fetch Shree Maruti tracking');
+        partnerData = smData;
       } else {
         toast({
           title: "Tracking Unavailable",

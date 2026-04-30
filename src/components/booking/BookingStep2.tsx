@@ -54,6 +54,7 @@ const DIRECT_PARTNERS: { code: string; fn: string }[] = [
   { code: 'delhivery', fn: 'delhivery-serviceability' },
   { code: 'urbanebolt', fn: 'urbanebolt-serviceability' },
   { code: 'xpressbees', fn: 'xpressbees-serviceability' },
+  { code: 'shree_maruti', fn: 'shree-maruti-serviceability' },
   // Future: { code: 'dtdc', fn: 'dtdc-serviceability' },
 ];
 

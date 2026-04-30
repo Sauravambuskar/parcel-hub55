@@ -476,6 +476,7 @@ const Booking = () => {
       let isDelhiveryDirect = false;
       let isUrbaneboltDirect = false;
       let isXpressbeesDirect = false;
+      let isShreeMarutiDirect = false;
       if (serviceabilityData?.partners && selectedPartnerData) {
         for (const partner of serviceabilityData.partners) {
           if (partner.partner_id === selectedPartnerData.partnerId) {
@@ -490,6 +491,9 @@ const Booking = () => {
             }
             if (partner.partner_id === 'xpressbees_direct') {
               isXpressbeesDirect = true;
+            }
+            if (partner.partner_id === 'shree_maruti_direct') {
+              isShreeMarutiDirect = true;
             }
             const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
             if (service) {
@@ -924,6 +928,75 @@ const Booking = () => {
         prayogOrderId = xbResult.orderId || orderId;
         labelUrl = xbResult.label_url || null;
 
+      } else if (isShreeMarutiDirect) {
+        // ─── Shree Maruti Direct Booking ───
+        console.log('[Booking] Using Shree Maruti direct booking');
+        const { data: smResult, error: smError } = await supabase.functions.invoke('shree-maruti-booking', {
+          body: {
+            order_id: orderId,
+            sender_name: senderData.name,
+            sender_phone: senderData.phone,
+            sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+            sender_pincode: senderData.pincode,
+            sender_city: senderData.city,
+            sender_state: senderData.state,
+            receiver_name: receiverData.name,
+            receiver_phone: receiverData.phone,
+            receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+            receiver_pincode: receiverData.pincode,
+            receiver_city: receiverData.city,
+            receiver_state: receiverData.state,
+            package_weight: physicalWeight,
+            goods_type: goodsType || 'Package',
+            shipment_value: shipmentValue ? parseFloat(shipmentValue) : 0,
+            length, width, height,
+            service_code: selectedService?.service_code || 'shree_maruti_surface',
+          },
+          headers: { 'x-environment': CURRENT_ENV },
+        });
+
+        if (smError || !smResult?.success) {
+          if (paymentDetails?.razorpay_payment_id) {
+            const prayogAuthRawSm = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
+            const failedBookingRow = {
+              sender_name: senderData.name, sender_phone: senderData.phone,
+              sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+              sender_city: senderData.city, sender_state: senderData.state, sender_pincode: senderData.pincode,
+              receiver_name: receiverData.name, receiver_phone: receiverData.phone,
+              receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+              receiver_city: receiverData.city, receiver_state: receiverData.state, receiver_pincode: receiverData.pincode,
+              goods_type: goodsType || "Package",
+              package_weight: String(physicalWeight),
+              urgency: urgency || "standard",
+              courier_name: selectedService?.partner_code || selectedCourierData?.name || "Shree Maruti Courier",
+              courier_price: totalAmount,
+              delivery_time: selectedCourierData?.deliveryTime || "3-5 days",
+              base_fare: baseFare, platform_fee: platformFee, gst: gstAmount,
+              booking_source: 'shree_maruti_direct',
+            };
+            const { data: refundData } = await supabase.functions.invoke('confirm-booking-or-refund', {
+              body: {
+                payment_id: paymentDetails.razorpay_payment_id,
+                reason: 'shree_maruti_booking_failed',
+                error_detail: String(smResult?.error || smError?.message || 'unknown'),
+                booking_row: failedBookingRow,
+              },
+              headers: { ...(prayogAuthRawSm ? { 'x-prayog-auth': prayogAuthRawSm } : {}), 'x-environment': CURRENT_ENV },
+            });
+            localStorage.removeItem('booking_draft');
+            if (refundData?.refunded) {
+              throw new Error(`Booking could not be created. Your payment of ₹${totalAmount} has been refunded automatically. Refund ID: ${refundData.refund_id || 'processing'}`);
+            }
+            throw new Error(`Shree Maruti booking failed and refund could not be processed. Payment ID: ${paymentDetails.razorpay_payment_id}. Please contact support.`);
+          }
+          throw new Error(`Shree Maruti booking failed: ${smResult?.error || smError?.message || 'Unknown error'}`);
+        }
+
+        trackingId = smResult.awbNumber || smResult.orderId || orderId;
+        awbNumber = smResult.awbNumber || null;
+        prayogOrderId = smResult.orderId || orderId;
+        labelUrl = smResult.label_url || null;
+
       } else {
         // Unsupported partner — Prayog and other aggregators have been removed.
         throw new Error(
@@ -940,7 +1013,9 @@ const Booking = () => {
             ? 'urbanebolt_direct'
             : isXpressbeesDirect
               ? 'xpressbees_direct'
-              : 'unknown';
+              : isShreeMarutiDirect
+                ? 'shree_maruti_direct'
+                : 'unknown';
       const bookingData = {
         user_id: userId,
         sender_name: senderData.name,
