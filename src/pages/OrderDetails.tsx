@@ -751,7 +751,10 @@ const OrderDetails = () => {
           {/* Download Label */}
           {(() => {
             const labelDoc = shipment?.documents?.find(doc => doc.type === 'label');
-            const canFetchFresh = bookingMeta?.booking_source === 'delhivery_direct';
+            const canFetchFresh = bookingMeta?.booking_source === 'delhivery_direct'
+              || bookingMeta?.booking_source === 'urbanebolt_direct'
+              || bookingMeta?.booking_source === 'xpressbees_direct'
+              || bookingMeta?.booking_source === 'shadowfax_direct';
             if (!labelDoc?.url && !canFetchFresh) return null;
 
             const handleLabel = async () => {

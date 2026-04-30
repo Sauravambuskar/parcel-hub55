@@ -1,48 +1,39 @@
-import { getEnvironmentFromRequest } from "../_shared/environment.ts";
+// Shadowfax Reverse Pickup (Seller Delivery) — Booking
+// Doc: https://sfxreversepickupsellerdelivery.docs.apiary.io/
+// Two-step flow: (1) generate AWB, (2) create pickup request using that AWB
+// as client_request_id.
+
+import { getEnvironmentFromRequest, getShadowfaxConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-interface ShadowfaxConfig {
-  apiBaseUrl: string;
-  tokenEnvVar: string;
+function num(v: any, fallback = 0): number {
+  const n = typeof v === "string" ? parseFloat(v) : Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
-const SHADOWFAX_CONFIG: Record<string, ShadowfaxConfig> = {
-  sandbox: {
-    apiBaseUrl: "https://dale.staging.shadowfax.in",
-    tokenEnvVar: "SHADOWFAX_STAGING_TOKEN",
-  },
-  production: {
-    apiBaseUrl: "https://dale.shadowfax.in",
-    tokenEnvVar: "SHADOWFAX_PROD_TOKEN",
-  },
-};
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const env = getEnvironmentFromRequest(req);
-    const config = SHADOWFAX_CONFIG[env];
-    const token = Deno.env.get(config.tokenEnvVar);
+    const { apiBaseUrl, token } = getShadowfaxConfig(env);
 
     if (!token) {
       return new Response(
         JSON.stringify({ error: "Shadowfax API token not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const body = await req.json();
     const {
       order_id,
-      sender_name, sender_phone, sender_address, sender_pincode, sender_city, sender_state,
-      receiver_name, receiver_phone, receiver_address, receiver_pincode, receiver_city, receiver_state,
+      sender_name, sender_phone, sender_address, sender_pincode, sender_city,
+      receiver_name, receiver_phone, receiver_address, receiver_pincode, receiver_city,
       package_weight, goods_type, shipment_value,
       length, width, height,
     } = body;
@@ -50,82 +41,137 @@ Deno.serve(async (req) => {
     if (!order_id || !sender_name || !receiver_name) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: order_id, sender_name, receiver_name" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Map to Shadowfax Reverse Pickup API format
-    const shadowfaxPayload = {
-      client_order_id: order_id,
-      order_details: {
-        // Shadowfax Reverse Pickup: customer = pickup point (sender), seller = delivery point (receiver)
-        customer_name: sender_name,
-        customer_phone: sender_phone,
-        customer_address: sender_address,
-        customer_pincode: sender_pincode,
-        customer_city: sender_city,
-        customer_state: sender_state,
-        seller_name: receiver_name,
-        seller_phone: receiver_phone,
-        seller_address: receiver_address,
-        seller_pincode: receiver_pincode,
-        seller_city: receiver_city,
-        seller_state: receiver_state,
-        item_name: goods_type || "Package",
-        item_quantity: 1,
-        piece_count: 1,
-        total_amount: shipment_value || 0,
-        cod_amount: 0,
-        is_cod: false,
-        dead_weight: package_weight || 1,
-        length: length || 10,
-        breadth: width || 10,
-        height: height || 10,
-      },
+    const authHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
     };
 
-    console.log("Shadowfax booking payload:", JSON.stringify(shadowfaxPayload));
-
-    const response = await fetch(`${config.apiBaseUrl}/api/v3/clients/orders/`, {
+    // ─── Step A: Generate AWB ───
+    const awbRes = await fetch(`${apiBaseUrl}/api/v3/clients/orders/generate_awb/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
-      body: JSON.stringify(shadowfaxPayload),
+      headers: authHeaders,
+      body: JSON.stringify({ count: 1 }),
     });
+    const awbData = await awbRes.json().catch(() => ({}));
+    console.log("[shadowfax-booking] AWB generate response:", JSON.stringify(awbData));
 
-    const result = await response.json();
-    console.log("Shadowfax booking response:", JSON.stringify(result));
+    const awbNumber: string | undefined = Array.isArray(awbData?.awb_numbers)
+      ? awbData.awb_numbers[0]
+      : undefined;
 
-    if (!response.ok) {
+    if (!awbRes.ok || !awbNumber) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: result.message || result.detail || "Shadowfax booking failed",
-          shadowfax_response: result,
+          step: "generate_awb",
+          error: awbData?.message || awbData?.detail || "Failed to generate Shadowfax AWB",
+          shadowfax_response: awbData,
         }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: awbRes.status || 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Normalize response
+    // ─── Step B: Create pickup request ───
+    const weightKg = num(package_weight, 1);
+    const actualWeightG = Math.max(1, Math.round(weightKg * 1000));
+    const L = num(length, 10), B = num(width, 10), H = num(height, 10);
+    const volumetricWeightG = Math.max(1, Math.round((L * B * H * 1000) / 5000)); // grams
+
+    const totalAmount = num(shipment_value, 0);
+    const priceExcl = totalAmount > 0 ? Math.round(totalAmount / 1.18) : 0;
+
+    const payload = {
+      client_order_number: String(order_id).slice(0, 100),
+      client_request_id: awbNumber,
+      total_amount: totalAmount,
+      price: priceExcl,
+      eway_bill: "",
+      address_attributes: {
+        // Pickup customer = our sender
+        name: sender_name,
+        phone_number: String(sender_phone || ""),
+        alternate_contact: String(sender_phone || ""),
+        address_line: sender_address || "",
+        city: sender_city || "",
+        country: "India",
+        pincode: Number(sender_pincode) || 0,
+        latitude: "0",
+        longitude: "0",
+      },
+      weight_details: {
+        actual_weight: actualWeightG,
+        volumetric_weight: volumetricWeightG,
+      },
+      seller_attributes: {
+        // Drop seller = our receiver
+        name: receiver_name,
+        address_line: receiver_address || "",
+        city: receiver_city || "",
+        email: "noreply@viasetu.com",
+        pincode: String(receiver_pincode || ""),
+        phone: String(receiver_phone || ""),
+        unique_code: "VIASETU",
+      },
+      skus_attributes: [
+        {
+          name: goods_type || "Package",
+          client_sku_id: String(order_id),
+          price: totalAmount,
+          brand: "ViaSetu",
+          category: goods_type || "General",
+          return_reason: "Reverse Pickup",
+          qc_required: "false",
+          hsn_code: "00000000",
+          invoice_id: String(order_id),
+        },
+      ],
+    };
+
+    console.log("[shadowfax-booking] Order create payload:", JSON.stringify(payload));
+
+    const createRes = await fetch(`${apiBaseUrl}/api/v3/clients/requests`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify(payload),
+    });
+    const createData = await createRes.json().catch(() => ({}));
+    console.log("[shadowfax-booking] Order create response:", JSON.stringify(createData));
+
+    const respAwb = createData?.awb_number || awbNumber;
+    const respClientReqId = createData?.client_request_id || awbNumber;
+
+    if (!createRes.ok || !respAwb) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          step: "create_request",
+          error: createData?.message || createData?.detail || "Shadowfax order creation failed",
+          shadowfax_response: createData,
+        }),
+        { status: createRes.status || 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        orderId: result.client_order_id || order_id,
-        awbNumber: result.awb_number || result.sf_order_id || null,
-        sfOrderId: result.sf_order_id || null,
-        status: result.status || "CREATED",
-        shadowfax_response: result,
+        orderId: createData?.client_order_number || order_id,
+        awbNumber: respAwb,
+        clientRequestId: respClientReqId,
+        status: createData?.status || "New",
+        shadowfax_response: createData,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    console.error("Shadowfax booking error:", err);
+    console.error("[shadowfax-booking] error:", err);
     return new Response(
       JSON.stringify({ error: "Internal server error", details: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

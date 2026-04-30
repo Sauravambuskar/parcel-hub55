@@ -1,3 +1,7 @@
+// Shadowfax Reverse Pickup — Cancel
+// Doc: POST /api/v2/clients/requests/mark_cancel
+// Allowed cancel_remarks: "Cancelled By Customer", "Incorrect/ Incomplete contact info", "Payment Issue"
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getEnvironmentFromRequest, getShadowfaxConfig, getRazorpayConfig } from "../_shared/environment.ts";
 
@@ -6,15 +10,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-const NON_CANCELLABLE_STATUSES = [
-  "Out For Pickup", "Out for delivery", "Picked", "Delivered",
-  "Cancelled", "Dispatched", "Received", "RTO", "Returned To Client",
+const ALLOWED_REMARKS = [
+  "Cancelled By Customer",
+  "Incorrect/ Incomplete contact info",
+  "Payment Issue",
 ];
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+function normalizeRemark(input?: string): string {
+  if (!input) return "Cancelled By Customer";
+  const exact = ALLOWED_REMARKS.find((r) => r.toLowerCase() === input.toLowerCase());
+  if (exact) return exact;
+  const lower = input.toLowerCase();
+  if (lower.includes("contact") || lower.includes("address") || lower.includes("incomplete")) {
+    return "Incorrect/ Incomplete contact info";
   }
+  if (lower.includes("payment") || lower.includes("refund")) return "Payment Issue";
+  return "Cancelled By Customer";
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const env = getEnvironmentFromRequest(req);
@@ -23,50 +38,53 @@ Deno.serve(async (req) => {
     if (!sfxConfig.token) {
       return new Response(
         JSON.stringify({ error: "Shadowfax API token not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const { client_order_id, cancel_remarks, booking_id } = await req.json();
+    const { client_order_id, awb, cancel_remarks, booking_id } = await req.json();
+    // Prefer AWB / client_request_id; fall back to client_order_id for backward compat.
+    const requestId = awb || client_order_id;
 
-    if (!client_order_id) {
+    if (!requestId) {
       return new Response(
-        JSON.stringify({ error: "client_order_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "awb or client_order_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const remarks = cancel_remarks || "Cancelled By Customer";
+    const remarks = normalizeRemark(cancel_remarks);
+    console.log(`[shadowfax-cancel] Cancelling request_id=${requestId} reason="${remarks}"`);
 
-    console.log(`[shadowfax-cancel] Cancelling order ${client_order_id}, reason: ${remarks}`);
-
-    // Call Shadowfax Cancel API
     const response = await fetch(
-      `${sfxConfig.apiBaseUrl}/api/v3/clients/orders/cancel/`,
+      `${sfxConfig.apiBaseUrl}/api/v2/clients/requests/mark_cancel`,
       {
         method: "POST",
         headers: {
           Authorization: `Token ${sfxConfig.token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          client_order_id: client_order_id,
-          cancel_remarks: remarks,
-        }),
-      }
+        body: JSON.stringify({ request_id: requestId, cancel_remarks: remarks }),
+      },
     );
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
     console.log("[shadowfax-cancel] Response:", JSON.stringify(result));
 
-    if (!response.ok) {
+    const apiOk = response.ok && (result?.responseCode === 200 || result?.responseCode === undefined);
+
+    if (!apiOk) {
       return new Response(
-        JSON.stringify({ success: false, error: result?.message || "Failed to cancel order", details: result }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: false,
+          error: result?.responseMsg || result?.message || "Failed to cancel order",
+          details: result,
+        }),
+        { status: response.status || 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Update booking status in DB
+    // Update booking + auto-refund (unchanged)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -80,10 +98,9 @@ Deno.serve(async (req) => {
 
       await supabase
         .from("bookings")
-        .update({ status: "CANCELLED", updated_at: new Date().toISOString() })
+        .update({ status: "CANCELLED", refund_reason: remarks, updated_at: new Date().toISOString() })
         .eq("id", booking_id);
 
-      // Auto-refund if payment was collected
       if (bookingData?.payment_id && bookingData?.payment_status === "paid") {
         try {
           console.log(`[shadowfax-cancel] Initiating refund for payment ${bookingData.payment_id}`);
@@ -94,47 +111,35 @@ Deno.serve(async (req) => {
             `https://api.razorpay.com/v1/payments/${bookingData.payment_id}/refund`,
             {
               method: "POST",
-              headers: {
-                Authorization: `Basic ${authHeader}`,
-                "Content-Type": "application/json",
-              },
+              headers: { Authorization: `Basic ${authHeader}`, "Content-Type": "application/json" },
               body: JSON.stringify({ speed: "normal" }),
-            }
+            },
           );
 
           const refundResult = await refundResp.json();
           if (refundResp.ok) {
-            await supabase
-              .from("bookings")
-              .update({ payment_status: "refunded" })
-              .eq("id", booking_id);
+            await supabase.from("bookings").update({ payment_status: "refunded" }).eq("id", booking_id);
             console.log(`[shadowfax-cancel] Refund initiated: ${refundResult.id}`);
           } else {
-            await supabase
-              .from("bookings")
-              .update({ payment_status: "refund_failed" })
-              .eq("id", booking_id);
+            await supabase.from("bookings").update({ payment_status: "refund_failed" }).eq("id", booking_id);
             console.error(`[shadowfax-cancel] Refund failed:`, refundResult);
           }
         } catch (refundErr) {
           console.error("[shadowfax-cancel] Refund error:", refundErr);
-          await supabase
-            .from("bookings")
-            .update({ payment_status: "refund_failed" })
-            .eq("id", booking_id);
+          await supabase.from("bookings").update({ payment_status: "refund_failed" }).eq("id", booking_id);
         }
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Order cancelled successfully", details: result }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: true, message: result?.responseMsg || "Order cancelled successfully", details: result }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("[shadowfax-cancel] Error:", err);
     return new Response(
       JSON.stringify({ error: "Internal server error", details: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

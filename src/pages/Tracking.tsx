@@ -135,8 +135,9 @@ const Tracking = () => {
       let partnerData: TrackingData | null = null;
 
       if (isShadowfax) {
+        const trackAwb = bookingRow?.prayog_awb || bookingRow?.tracking_id || awb;
         const { data: sfxData, error: sfxError } = await supabase.functions.invoke('shadowfax-tracking', {
-          body: { order_id: bookingRow?.prayog_order_id || awb },
+          body: { client_request_id: trackAwb, awb: trackAwb, order_id: bookingRow?.prayog_order_id || awb },
           headers: { 'x-environment': CURRENT_ENV },
         });
         if (sfxError || !sfxData) throw new Error('Failed to fetch Shadowfax tracking');
