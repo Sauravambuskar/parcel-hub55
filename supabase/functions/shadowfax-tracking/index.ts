@@ -1,27 +1,13 @@
-import { getEnvironmentFromRequest } from "../_shared/environment.ts";
+// Shadowfax Reverse Pickup — Tracking
+// Doc: GET /api/v4/clients/requests/{client_request_id}
+
+import { getEnvironmentFromRequest, getShadowfaxConfig } from "../_shared/environment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-environment",
 };
 
-interface ShadowfaxConfig {
-  apiBaseUrl: string;
-  tokenEnvVar: string;
-}
-
-const SHADOWFAX_CONFIG: Record<string, ShadowfaxConfig> = {
-  sandbox: {
-    apiBaseUrl: "https://dale.staging.shadowfax.in",
-    tokenEnvVar: "SHADOWFAX_STAGING_TOKEN",
-  },
-  production: {
-    apiBaseUrl: "https://dale.shadowfax.in",
-    tokenEnvVar: "SHADOWFAX_PROD_TOKEN",
-  },
-};
-
-// Map Shadowfax statuses to app categories
 const STATUS_MAP: Record<string, { category: string; subcategory: string }> = {
   "New": { category: "ORDER_CONFIRMED", subcategory: "Order Created" },
   "Order Received": { category: "ORDER_CONFIRMED", subcategory: "Order Received" },
@@ -30,10 +16,12 @@ const STATUS_MAP: Record<string, { category: string; subcategory: string }> = {
   "Picked": { category: "IN_TRANSIT", subcategory: "Picked Up" },
   "Received": { category: "IN_TRANSIT", subcategory: "Received at Hub" },
   "Item added to Bag": { category: "IN_TRANSIT", subcategory: "Added to Bag" },
-  "Bag In Transit": { category: "IN_TRANSIT", subcategory: "Bag In Transit" },
+  "Bag in transit for return": { category: "IN_TRANSIT", subcategory: "Bag In Transit" },
   "Bag Received": { category: "IN_TRANSIT", subcategory: "Bag Received at Hub" },
+  "Bag Received at Via": { category: "IN_TRANSIT", subcategory: "Bag Received at Via Hub" },
   "Dispatched": { category: "IN_TRANSIT", subcategory: "Dispatched" },
   "Out for delivery": { category: "OUT_FOR_DELIVERY", subcategory: "Out for Delivery" },
+  "Return Shipment Out for Delivery": { category: "OUT_FOR_DELIVERY", subcategory: "Out for Delivery to Seller" },
   "Delivered": { category: "DELIVERED", subcategory: "Delivered" },
   "Not Contactable": { category: "IN_TRANSIT", subcategory: "Customer Not Contactable" },
   "Not Attempted": { category: "IN_TRANSIT", subcategory: "Delivery Not Attempted" },
@@ -43,137 +31,146 @@ const STATUS_MAP: Record<string, { category: string; subcategory: string }> = {
   "Cid": { category: "IN_TRANSIT", subcategory: "Customer ID Verification" },
   "QC Failed": { category: "RTO", subcategory: "Quality Check Failed" },
   "Return to Seller initiated": { category: "RTO", subcategory: "Return Initiated" },
-  "Return Shipment Out for Delivery": { category: "RTO", subcategory: "Return Out for Delivery" },
-  "Received at Return DC": { category: "RTO", subcategory: "Received at Return DC" },
-  "Received at RTS destination hub": { category: "RTO", subcategory: "At Return Destination" },
-  "Returned To Client": { category: "RTO", subcategory: "Returned to Client" },
+  "Received at Return DC": { category: "IN_TRANSIT", subcategory: "Received at Return DC" },
+  "Returned To Client": { category: "DELIVERED", subcategory: "Returned to Seller" },
   "Cancelled": { category: "CANCELLED", subcategory: "Cancelled" },
   "RTO": { category: "RTO", subcategory: "Return to Origin" },
 };
 
+function mapStatus(s: string) {
+  return STATUS_MAP[s] || { category: "IN_TRANSIT", subcategory: s };
+}
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const env = getEnvironmentFromRequest(req);
-    const config = SHADOWFAX_CONFIG[env];
-    const token = Deno.env.get(config.tokenEnvVar);
+    const { apiBaseUrl, token } = getShadowfaxConfig(env);
 
     if (!token) {
       return new Response(
         JSON.stringify({ error: "Shadowfax API token not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const { order_id } = await req.json();
+    const { order_id, awb, client_request_id } = await req.json();
+    const reqId = client_request_id || awb || order_id;
 
-    if (!order_id) {
+    if (!reqId) {
       return new Response(
-        JSON.stringify({ error: "order_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "client_request_id (or awb/order_id) is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const response = await fetch(
-      `${config.apiBaseUrl}/api/v4/clients/status/?order_ids=${order_id}`,
+      `${apiBaseUrl}/api/v4/clients/requests/${encodeURIComponent(reqId)}`,
       {
         method: "GET",
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+        headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+      },
     );
 
-    const result = await response.json();
-    console.log("Shadowfax tracking response:", JSON.stringify(result));
+    const result = await response.json().catch(() => ({}));
+    console.log("[shadowfax-tracking] Response:", JSON.stringify(result).slice(0, 1500));
 
     if (!response.ok) {
       return new Response(
         JSON.stringify({ error: "Failed to fetch tracking", details: result }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Shadowfax v4 returns an array of order statuses
-    const orderData = Array.isArray(result) ? result[0] : result;
+    // The doc returns an object (sometimes wrapped under `data` or as an array of one). Normalize.
+    const orderData: any = Array.isArray(result)
+      ? result[0]
+      : (result?.data && Array.isArray(result.data) ? result.data[0] : (result?.data || result));
 
     if (!orderData) {
       return new Response(
         JSON.stringify({ error: "Order not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Normalize to match the app's TrackingData interface
-    const statusHistory = orderData.status_history || [];
-    const currentStatus = orderData.current_status || orderData.status || "Unknown";
-    const mapped = STATUS_MAP[currentStatus] || { category: "IN_TRANSIT", subcategory: currentStatus };
+    const history: any[] = orderData.pickup_request_state_histories || orderData.status_history || [];
+    const sorted = [...history].sort((a, b) => {
+      const ta = new Date(a.created_at || a.timestamp || 0).getTime();
+      const tb = new Date(b.created_at || b.timestamp || 0).getTime();
+      return ta - tb;
+    });
 
-    const statuses = statusHistory.map((s: any, index: number) => {
-      const sm = STATUS_MAP[s.status] || { category: "IN_TRANSIT", subcategory: s.status };
+    const statuses = sorted.map((s: any) => {
+      const stateName = s.state || s.status || "Unknown";
+      const sm = mapStatus(stateName);
+      const ts = new Date(s.created_at || s.timestamp || Date.now()).getTime();
       return {
-        trackingId: order_id,
-        status: s.status,
-        location: s.location || "",
+        trackingId: reqId,
+        status: stateName,
+        location: s.current_location || s.location || "",
         deliveryPartnerName: "Shadowfax",
-        statusTimestamp: new Date(s.timestamp || s.created_at || Date.now()).getTime(),
-        event: s.status,
+        statusTimestamp: ts,
+        event: s.comment || stateName,
         category: sm.category,
         subcategory: sm.subcategory,
-        createdAt: s.timestamp || s.created_at || new Date().toISOString(),
+        createdAt: new Date(ts).toISOString(),
       };
     });
 
-    // If no status history, create a single status from current
+    const currentStatus = orderData.status || (sorted.length ? (sorted[sorted.length - 1].state || sorted[sorted.length - 1].status) : "New");
     if (statuses.length === 0) {
+      const sm = mapStatus(currentStatus);
       statuses.push({
-        trackingId: order_id,
+        trackingId: reqId,
         status: currentStatus,
         location: "",
         deliveryPartnerName: "Shadowfax",
         statusTimestamp: Date.now(),
         event: currentStatus,
-        category: mapped.category,
-        subcategory: mapped.subcategory,
+        category: sm.category,
+        subcategory: sm.subcategory,
         createdAt: new Date().toISOString(),
       });
     }
 
+    const addr = orderData.address || {};
+    const seller = orderData.seller || {};
+
     const trackingData = {
       orderInformation: {
-        trackingId: order_id,
-        cAwbNumber: orderData.awb_number || orderData.sf_order_id || order_id,
-        orderId: order_id,
+        trackingId: orderData.client_request_id || reqId,
+        cAwbNumber: orderData.awb_number || orderData.client_request_id || reqId,
+        orderId: orderData.client_order_number || reqId,
         sourceLocation: {
-          address: orderData.customer_address || "",
-          city: orderData.customer_city || "",
+          address: addr.address_line || "",
+          city: addr.city || "",
           landmark: "",
-          pincode: orderData.customer_pincode || "",
-          state: orderData.customer_state || "",
+          pincode: String(addr.pincode || ""),
+          state: addr.state || "",
         },
         destinationLocation: {
-          address: orderData.seller_address || "",
-          city: orderData.seller_city || "",
+          address: seller.address_line || "",
+          city: seller.city || "",
           landmark: "",
-          pincode: orderData.seller_pincode || "",
-          state: orderData.seller_state || "",
+          pincode: String(seller.pincode || ""),
+          state: seller.state || "",
         },
         senderDetails: {
-          sender_mobile: orderData.customer_phone || "",
-          sender_name: orderData.customer_name || "",
+          sender_mobile: addr.phone_number || "",
+          sender_name: addr.name || "",
         },
         receiverDetails: {
-          receiver_mobile: orderData.seller_phone || "",
-          receiver_name: orderData.seller_name || "",
+          receiver_mobile: seller.phone_number || "",
+          receiver_name: seller.name || "",
         },
         travelType: "surface",
-        serviceType: "standard",
-        bookingDate: orderData.created_at || new Date().toISOString(),
-        type: "FORWARD",
+        serviceType: "reverse_pickup",
+        bookingDate: orderData.date_created
+          ? new Date(orderData.date_created).toISOString()
+          : (sorted[0]?.created_at || new Date().toISOString()),
+        type: "REVERSE",
       },
       statuses,
     };
@@ -182,10 +179,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Shadowfax tracking error:", err);
+    console.error("[shadowfax-tracking] error:", err);
     return new Response(
       JSON.stringify({ error: "Internal server error", details: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
