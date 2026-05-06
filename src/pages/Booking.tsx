@@ -1186,7 +1186,7 @@ const Booking = () => {
           baseFare: baseFare,
           // This already includes platform fee (merged into displayed price)
           deliveryTime: selectedCourierData?.deliveryTime || ""
-        }} selectedDate={selectedDate} onConfirm={handleProceedToPayment} onCashOnPickup={handleCashOnPickup} onBack={handlePrevStep} />;
+        }} selectedDate={selectedDate} onConfirm={handleProceedToPayment} onBack={handlePrevStep} />;
       default:
         return null;
     }

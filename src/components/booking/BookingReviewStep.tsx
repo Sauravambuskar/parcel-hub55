@@ -3,17 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Package, MapPin, Calendar, IndianRupee, Truck, Banknote, CreditCard } from "lucide-react";
+import { Package, MapPin, IndianRupee, Truck, CreditCard } from "lucide-react";
 
 interface BookingReviewStepProps {
   senderData: {
@@ -48,7 +38,6 @@ interface BookingReviewStepProps {
   };
   selectedDate?: Date;
   onConfirm: () => void;
-  onCashOnPickup?: () => void;
   onBack: () => void;
 }
 
@@ -59,27 +48,14 @@ const BookingReviewStep = ({
   courierDetails,
   selectedDate,
   onConfirm,
-  onCashOnPickup,
   onBack,
 }: BookingReviewStepProps) => {
-  const [copConfirmOpen, setCopConfirmOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting] = useState(false);
 
   // Calculate GST at 18% on the base fare (which includes hidden platform fee)
   const baseFareRounded = Math.round(courierDetails.baseFare);
   const gstAmount = Math.round(baseFareRounded * 0.18);
   const totalAmount = baseFareRounded + gstAmount;
-
-  const handleCopConfirm = async () => {
-    if (!onCashOnPickup) return;
-    setSubmitting(true);
-    setCopConfirmOpen(false);
-    try {
-      await onCashOnPickup();
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <Card className="mt-6">
@@ -216,58 +192,19 @@ const BookingReviewStep = ({
 
         {/* Action Buttons */}
         <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              onClick={onConfirm}
-              className="flex-1"
-              disabled={submitting}
-            >
-              <CreditCard className="h-4 w-4" />
-              Pay Now (₹{totalAmount})
-            </Button>
-            {onCashOnPickup && (
-              <Button
-                variant="outline"
-                onClick={() => setCopConfirmOpen(true)}
-                className="flex-1"
-                disabled={submitting}
-              >
-                <Banknote className="h-4 w-4" />
-                Cash on Pickup
-              </Button>
-            )}
-          </div>
+          <Button
+            onClick={onConfirm}
+            className="w-full"
+            disabled={submitting}
+          >
+            <CreditCard className="h-4 w-4" />
+            Pay Now (₹{totalAmount})
+          </Button>
           <Button variant="ghost" onClick={onBack} className="w-full" disabled={submitting}>
             Back to Edit
           </Button>
         </div>
       </CardContent>
-
-      {/* COP Confirmation Dialog */}
-      <AlertDialog open={copConfirmOpen} onOpenChange={setCopConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-primary" />
-              Confirm Cash on Pickup
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2 pt-2">
-              <span className="block">
-                You will pay <strong className="text-foreground">₹{totalAmount}</strong> in cash to the courier executive at the time of pickup.
-              </span>
-              <span className="block text-xs">
-                Please keep the exact amount ready. The shipment will only be picked up after the cash is collected.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCopConfirm}>
-              Confirm & Book
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 };
