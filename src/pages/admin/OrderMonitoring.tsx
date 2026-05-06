@@ -838,6 +838,13 @@ const OrderMonitoring = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <CancelOrderDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        onConfirm={handleCancelConfirm}
+        cancelling={cancelling}
+      />
     </div>
   );
 };
