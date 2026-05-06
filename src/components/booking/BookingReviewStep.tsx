@@ -216,58 +216,19 @@ const BookingReviewStep = ({
 
         {/* Action Buttons */}
         <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              onClick={onConfirm}
-              className="flex-1"
-              disabled={submitting}
-            >
-              <CreditCard className="h-4 w-4" />
-              Pay Now (₹{totalAmount})
-            </Button>
-            {onCashOnPickup && (
-              <Button
-                variant="outline"
-                onClick={() => setCopConfirmOpen(true)}
-                className="flex-1"
-                disabled={submitting}
-              >
-                <Banknote className="h-4 w-4" />
-                Cash on Pickup
-              </Button>
-            )}
-          </div>
+          <Button
+            onClick={onConfirm}
+            className="w-full"
+            disabled={submitting}
+          >
+            <CreditCard className="h-4 w-4" />
+            Pay Now (₹{totalAmount})
+          </Button>
           <Button variant="ghost" onClick={onBack} className="w-full" disabled={submitting}>
             Back to Edit
           </Button>
         </div>
       </CardContent>
-
-      {/* COP Confirmation Dialog */}
-      <AlertDialog open={copConfirmOpen} onOpenChange={setCopConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-primary" />
-              Confirm Cash on Pickup
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2 pt-2">
-              <span className="block">
-                You will pay <strong className="text-foreground">₹{totalAmount}</strong> in cash to the courier executive at the time of pickup.
-              </span>
-              <span className="block text-xs">
-                Please keep the exact amount ready. The shipment will only be picked up after the cash is collected.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCopConfirm}>
-              Confirm & Book
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 };
