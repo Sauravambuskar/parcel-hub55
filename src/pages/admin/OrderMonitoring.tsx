@@ -759,19 +759,81 @@ const OrderMonitoring = () => {
                 </Card>
               </div>
 
+              {/* Live Tracking from Partner API */}
+              <Card className="border-primary/20">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Navigation className="h-5 w-5" />
+                    Live Tracking ({selectedBooking.booking_source || "n/a"})
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fetchTrackingForBooking(selectedBooking)}
+                    disabled={tracking.loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-1 ${tracking.loading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {tracking.loading && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Fetching from partner API…
+                    </div>
+                  )}
+                  {tracking.error && !tracking.loading && (
+                    <p className="text-sm text-destructive">{tracking.error}</p>
+                  )}
+                  {tracking.data && !tracking.loading && (
+                    <div className="space-y-2">
+                      {(tracking.data.statuses || []).slice(0, 6).map((s: any, i: number) => (
+                        <div key={i} className="flex items-start gap-3 text-sm border-l-2 border-primary/40 pl-3">
+                          <div className="flex-1">
+                            <p className="font-medium">{s.status || s.event || s.category}</p>
+                            {s.location && <p className="text-xs text-muted-foreground">{s.location}</p>}
+                            {s.statusTimestamp && (
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(s.statusTimestamp), "dd MMM yyyy HH:mm")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!tracking.data.statuses || tracking.data.statuses.length === 0) && (
+                        <pre className="text-xs bg-muted p-3 rounded max-h-60 overflow-auto">
+                          {JSON.stringify(tracking.data, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Actions */}
-              {(selectedBooking.tracking_id || selectedBooking.prayog_awb) && (
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
+              <div className="flex flex-wrap gap-2">
+                {(selectedBooking.tracking_id || selectedBooking.prayog_awb) && (
+                  <Button
+                    variant="outline"
                     onClick={() => window.open(`/admin/tracking?id=${selectedBooking.prayog_awb || selectedBooking.tracking_id}`, '_self')}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Track in Admin
+                    Open in Tracking Console
                   </Button>
-                </div>
-              )}
+                )}
+                {PARTNER_FN[selectedBooking.booking_source || ""]?.label && (selectedBooking.prayog_awb || selectedBooking.tracking_id) && (
+                  <Button variant="outline" onClick={handleDownloadLabel} disabled={labelLoading}>
+                    {labelLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                    Download Label
+                  </Button>
+                )}
+                {isCancellable(selectedBooking.status) && (
+                  <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} disabled={cancelling}>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel Order
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
