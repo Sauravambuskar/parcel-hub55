@@ -3,17 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Package, MapPin, Calendar, IndianRupee, Truck, Banknote, CreditCard } from "lucide-react";
+import { Package, MapPin, IndianRupee, Truck, CreditCard } from "lucide-react";
 
 interface BookingReviewStepProps {
   senderData: {
