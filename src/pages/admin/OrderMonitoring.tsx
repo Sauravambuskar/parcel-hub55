@@ -8,10 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink } from "lucide-react";
+import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink, Navigation, XCircle, Download, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { CURRENT_ENV } from "@/config/environment";
+import { useCancelOrder, isCancellable } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+
+// Map booking_source -> partner edge function names
+const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
+  shadowfax_direct: { tracking: "shadowfax-tracking", label: "shadowfax-label" },
+  delhivery_direct: { tracking: "delhivery-tracking", label: "delhivery-label" },
+  urbanebolt_direct: { tracking: "urbanebolt-tracking", label: "urbanebolt-label" },
+  xpressbees_direct: { tracking: "xpressbees-tracking", label: "xpressbees-label" },
+  shree_maruti_direct: { tracking: "shree-maruti-tracking", label: "shree-maruti-label" },
+};
 
 interface Booking {
   id: string;
@@ -53,6 +65,8 @@ interface Booking {
   payment_status?: string;
   prayog_order_id?: string;
   prayog_awb?: string;
+  booking_source?: string | null;
+  label_url?: string | null;
 }
 
 const OrderMonitoring = () => {
@@ -62,7 +76,17 @@ const OrderMonitoring = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [tracking, setTracking] = useState<{ loading: boolean; data: any | null; error: string | null }>({ loading: false, data: null, error: null });
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [labelLoading, setLabelLoading] = useState(false);
   const { toast } = useToast();
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setCancelDialogOpen(false);
+      fetchBookings();
+      if (selectedBooking) fetchTrackingForBooking(selectedBooking);
+    },
+  });
 
   useEffect(() => {
     fetchBookings();
@@ -173,6 +197,72 @@ const OrderMonitoring = () => {
   const openDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setDetailsOpen(true);
+    setTracking({ loading: false, data: null, error: null });
+    fetchTrackingForBooking(booking);
+  };
+
+  const fetchTrackingForBooking = async (booking: Booking) => {
+    const src = booking.booking_source || "";
+    const fn = PARTNER_FN[src]?.tracking;
+    const awb = booking.prayog_awb || booking.tracking_id;
+    if (!fn || !awb) {
+      setTracking({ loading: false, data: null, error: !fn ? `Tracking not supported for ${src || "this partner"}` : "No AWB on order yet" });
+      return;
+    }
+    setTracking({ loading: true, data: null, error: null });
+    try {
+      const body: Record<string, any> = { waybill: awb, awb, client_request_id: awb, order_id: booking.prayog_order_id || awb };
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body,
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTracking({ loading: false, data, error: null });
+    } catch (e: any) {
+      setTracking({ loading: false, data: null, error: e.message || "Failed to load tracking" });
+    }
+  };
+
+  const handleDownloadLabel = async () => {
+    if (!selectedBooking) return;
+    if (selectedBooking.label_url) {
+      window.open(selectedBooking.label_url, "_blank");
+      return;
+    }
+    const src = selectedBooking.booking_source || "";
+    const fn = PARTNER_FN[src]?.label;
+    const awb = selectedBooking.prayog_awb || selectedBooking.tracking_id;
+    if (!fn || !awb) {
+      toast({ title: "Label unavailable", description: "Label not supported for this partner or AWB missing.", variant: "destructive" });
+      return;
+    }
+    setLabelLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body: { waybill: awb, awb, booking_id: selectedBooking.id, order_id: selectedBooking.prayog_order_id || awb },
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      const url = data?.label_url || data?.url;
+      if (!url) throw new Error(data?.error || "No label URL returned");
+      window.open(url, "_blank");
+    } catch (e: any) {
+      toast({ title: "Label error", description: e.message || "Failed to fetch label", variant: "destructive" });
+    } finally {
+      setLabelLoading(false);
+    }
+  };
+
+  const handleCancelConfirm = async (reason: any) => {
+    if (!selectedBooking) return;
+    await cancelOrder({
+      orderId: selectedBooking.prayog_order_id || selectedBooking.id,
+      bookingSource: selectedBooking.booking_source || "",
+      bookingId: selectedBooking.id,
+      reason,
+      awb: selectedBooking.prayog_awb || selectedBooking.tracking_id,
+    });
   };
 
   return (
@@ -669,23 +759,92 @@ const OrderMonitoring = () => {
                 </Card>
               </div>
 
+              {/* Live Tracking from Partner API */}
+              <Card className="border-primary/20">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Navigation className="h-5 w-5" />
+                    Live Tracking ({selectedBooking.booking_source || "n/a"})
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fetchTrackingForBooking(selectedBooking)}
+                    disabled={tracking.loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-1 ${tracking.loading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {tracking.loading && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Fetching from partner API…
+                    </div>
+                  )}
+                  {tracking.error && !tracking.loading && (
+                    <p className="text-sm text-destructive">{tracking.error}</p>
+                  )}
+                  {tracking.data && !tracking.loading && (
+                    <div className="space-y-2">
+                      {(tracking.data.statuses || []).slice(0, 6).map((s: any, i: number) => (
+                        <div key={i} className="flex items-start gap-3 text-sm border-l-2 border-primary/40 pl-3">
+                          <div className="flex-1">
+                            <p className="font-medium">{s.status || s.event || s.category}</p>
+                            {s.location && <p className="text-xs text-muted-foreground">{s.location}</p>}
+                            {s.statusTimestamp && (
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(s.statusTimestamp), "dd MMM yyyy HH:mm")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!tracking.data.statuses || tracking.data.statuses.length === 0) && (
+                        <pre className="text-xs bg-muted p-3 rounded max-h-60 overflow-auto">
+                          {JSON.stringify(tracking.data, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Actions */}
-              {(selectedBooking.tracking_id || selectedBooking.prayog_awb) && (
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
+              <div className="flex flex-wrap gap-2">
+                {(selectedBooking.tracking_id || selectedBooking.prayog_awb) && (
+                  <Button
+                    variant="outline"
                     onClick={() => window.open(`/admin/tracking?id=${selectedBooking.prayog_awb || selectedBooking.tracking_id}`, '_self')}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Track in Admin
+                    Open in Tracking Console
                   </Button>
-                </div>
-              )}
+                )}
+                {PARTNER_FN[selectedBooking.booking_source || ""]?.label && (selectedBooking.prayog_awb || selectedBooking.tracking_id) && (
+                  <Button variant="outline" onClick={handleDownloadLabel} disabled={labelLoading}>
+                    {labelLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                    Download Label
+                  </Button>
+                )}
+                {isCancellable(selectedBooking.status) && (
+                  <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} disabled={cancelling}>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel Order
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <CancelOrderDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        onConfirm={handleCancelConfirm}
+        cancelling={cancelling}
+      />
     </div>
   );
 };
