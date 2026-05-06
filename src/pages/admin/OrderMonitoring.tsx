@@ -65,6 +65,8 @@ interface Booking {
   payment_status?: string;
   prayog_order_id?: string;
   prayog_awb?: string;
+  booking_source?: string | null;
+  label_url?: string | null;
 }
 
 const OrderMonitoring = () => {
