@@ -8,10 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink } from "lucide-react";
+import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink, Navigation, XCircle, Download, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { CURRENT_ENV } from "@/config/environment";
+import { useCancelOrder, isCancellable } from "@/hooks/useCancelOrder";
+import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+
+// Map booking_source -> partner edge function names
+const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
+  shadowfax_direct: { tracking: "shadowfax-tracking", label: "shadowfax-label" },
+  delhivery_direct: { tracking: "delhivery-tracking", label: "delhivery-label" },
+  urbanebolt_direct: { tracking: "urbanebolt-tracking", label: "urbanebolt-label" },
+  xpressbees_direct: { tracking: "xpressbees-tracking", label: "xpressbees-label" },
+  shree_maruti_direct: { tracking: "shree-maruti-tracking", label: "shree-maruti-label" },
+};
 
 interface Booking {
   id: string;
