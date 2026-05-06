@@ -197,6 +197,72 @@ const OrderMonitoring = () => {
   const openDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setDetailsOpen(true);
+    setTracking({ loading: false, data: null, error: null });
+    fetchTrackingForBooking(booking);
+  };
+
+  const fetchTrackingForBooking = async (booking: Booking) => {
+    const src = booking.booking_source || "";
+    const fn = PARTNER_FN[src]?.tracking;
+    const awb = booking.prayog_awb || booking.tracking_id;
+    if (!fn || !awb) {
+      setTracking({ loading: false, data: null, error: !fn ? `Tracking not supported for ${src || "this partner"}` : "No AWB on order yet" });
+      return;
+    }
+    setTracking({ loading: true, data: null, error: null });
+    try {
+      const body: Record<string, any> = { waybill: awb, awb, client_request_id: awb, order_id: booking.prayog_order_id || awb };
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body,
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTracking({ loading: false, data, error: null });
+    } catch (e: any) {
+      setTracking({ loading: false, data: null, error: e.message || "Failed to load tracking" });
+    }
+  };
+
+  const handleDownloadLabel = async () => {
+    if (!selectedBooking) return;
+    if (selectedBooking.label_url) {
+      window.open(selectedBooking.label_url, "_blank");
+      return;
+    }
+    const src = selectedBooking.booking_source || "";
+    const fn = PARTNER_FN[src]?.label;
+    const awb = selectedBooking.prayog_awb || selectedBooking.tracking_id;
+    if (!fn || !awb) {
+      toast({ title: "Label unavailable", description: "Label not supported for this partner or AWB missing.", variant: "destructive" });
+      return;
+    }
+    setLabelLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body: { waybill: awb, awb, booking_id: selectedBooking.id, order_id: selectedBooking.prayog_order_id || awb },
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      const url = data?.label_url || data?.url;
+      if (!url) throw new Error(data?.error || "No label URL returned");
+      window.open(url, "_blank");
+    } catch (e: any) {
+      toast({ title: "Label error", description: e.message || "Failed to fetch label", variant: "destructive" });
+    } finally {
+      setLabelLoading(false);
+    }
+  };
+
+  const handleCancelConfirm = async (reason: any) => {
+    if (!selectedBooking) return;
+    await cancelOrder({
+      orderId: selectedBooking.prayog_order_id || selectedBooking.id,
+      bookingSource: selectedBooking.booking_source || "",
+      bookingId: selectedBooking.id,
+      reason,
+      awb: selectedBooking.prayog_awb || selectedBooking.tracking_id,
+    });
   };
 
   return (
