@@ -38,7 +38,6 @@ interface BookingReviewStepProps {
   };
   selectedDate?: Date;
   onConfirm: () => void;
-  onCashOnPickup?: () => void;
   onBack: () => void;
 }
 
@@ -49,27 +48,14 @@ const BookingReviewStep = ({
   courierDetails,
   selectedDate,
   onConfirm,
-  onCashOnPickup,
   onBack,
 }: BookingReviewStepProps) => {
-  const [copConfirmOpen, setCopConfirmOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting] = useState(false);
 
   // Calculate GST at 18% on the base fare (which includes hidden platform fee)
   const baseFareRounded = Math.round(courierDetails.baseFare);
   const gstAmount = Math.round(baseFareRounded * 0.18);
   const totalAmount = baseFareRounded + gstAmount;
-
-  const handleCopConfirm = async () => {
-    if (!onCashOnPickup) return;
-    setSubmitting(true);
-    setCopConfirmOpen(false);
-    try {
-      await onCashOnPickup();
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <Card className="mt-6">
