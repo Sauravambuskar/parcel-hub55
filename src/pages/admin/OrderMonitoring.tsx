@@ -76,7 +76,17 @@ const OrderMonitoring = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [tracking, setTracking] = useState<{ loading: boolean; data: any | null; error: string | null }>({ loading: false, data: null, error: null });
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [labelLoading, setLabelLoading] = useState(false);
   const { toast } = useToast();
+  const { cancelOrder, cancelling } = useCancelOrder({
+    onSuccess: () => {
+      setCancelDialogOpen(false);
+      fetchBookings();
+      if (selectedBooking) fetchTrackingForBooking(selectedBooking);
+    },
+  });
 
   useEffect(() => {
     fetchBookings();
