@@ -7,13 +7,13 @@ import {
 
 // Brand tokens (kept inline for the landing page only — does not affect app theme)
 const C = {
-  bg: "#080E1A",
-  bg2: "#0D1628",
-  card: "#111E33",
-  teal: "#00C8C8",
-  white: "#FFFFFF",
-  gray: "#B0BECE",
-  border: "#1C2A44",
+  bg: "#FFFFFF",
+  bg2: "#F4F7FB",
+  card: "#FFFFFF",
+  teal: "#00A8A8",
+  white: "#0B1220",      // primary text (dark on light)
+  gray: "#5A6B80",       // secondary text
+  border: "#E2E8F0",
   err: "#C0392B",
   ok: "#1A7A4A",
 };
@@ -52,11 +52,11 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all ${scrolled ? "backdrop-blur-sm" : ""}`}
-      style={{ background: scrolled ? "rgba(8,14,26,0.95)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
+      style={{ background: scrolled ? "rgba(255,255,255,0.92)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
     >
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
         <a href="/" className="flex items-center">
-          <span className="text-white font-bold text-[22px]">Via</span>
+          <span className="text-[#0B1220] font-bold text-[22px]">Via</span>
           <span className="font-bold text-[22px]" style={{ color: C.teal }}>setu</span>
         </a>
 
@@ -85,7 +85,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
           </button>
         </div>
 
-        <button className="md:hidden text-white" onClick={() => setOpen(true)} aria-label="Open menu">
+        <button className="md:hidden text-[#0B1220]" onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu className="h-6 w-6" />
         </button>
       </div>
@@ -93,12 +93,12 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
       {open && (
         <div className="fixed inset-0 z-50 md:hidden" style={{ background: C.bg }}>
           <div className="flex justify-between items-center px-6 h-16" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <span className="text-white font-bold text-[22px]">Via<span style={{ color: C.teal }}>setu</span></span>
-            <button onClick={() => setOpen(false)} className="text-white" aria-label="Close menu"><X className="h-6 w-6" /></button>
+            <span className="text-[#0B1220] font-bold text-[22px]">Via<span style={{ color: C.teal }}>setu</span></span>
+            <button onClick={() => setOpen(false)} className="text-[#0B1220]" aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
             {links.map((l) => (
-              <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-white text-lg">{l.label}</a>
+              <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
             ))}
             <button onClick={() => { setOpen(false); onTrackClick(); }} className="mt-4 h-12 rounded-lg border-2 font-semibold" style={{ borderColor: C.teal, color: C.teal }}>Track Your Parcel</button>
             <button onClick={() => { setOpen(false); onSendClick(); }} className="h-12 rounded-lg font-bold" style={{ background: C.teal, color: C.bg }}>Send a Parcel →</button>
@@ -145,7 +145,7 @@ const PhoneMockup = ({ children }: { children?: React.ReactNode }) => (
         <div className="h-7 flex items-center justify-center" style={{ background: "#000" }}>
           <div className="w-20 h-5 rounded-b-2xl" style={{ background: "#000" }} />
         </div>
-        <div className="p-4 text-white">
+        <div className="p-4 text-[#0B1220]">
           {children || (
             <>
               <div className="text-xs mb-3" style={{ color: C.gray }}>Compare Results</div>
@@ -211,7 +211,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
   return (
     <div className="rounded-xl mb-3" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-5 text-left">
-        <span className="text-white font-semibold text-[15px] pr-4">{q}</span>
+        <span className="text-[#0B1220] font-semibold text-[15px] pr-4">{q}</span>
         <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: C.teal }} />
       </button>
       <div className="overflow-hidden transition-all" style={{ maxHeight: open ? 400 : 0 }}>
@@ -263,13 +263,13 @@ const Landing = () => {
         className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
         style={{
           minHeight: "100vh",
-          background: `linear-gradient(rgba(8,14,26,0.88), rgba(8,14,26,0.94)), url(${deliveryHero}) center/cover no-repeat`,
+          background: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero}) center/cover no-repeat`,
         }}
       >
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)" }} />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
           <div>
-            <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-white">
+            <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online — <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
             <h2 className="mt-5 text-[16px] md:text-[20px] font-normal" style={{ color: C.gray }}>
@@ -318,7 +318,7 @@ const Landing = () => {
         id="partners"
         className="relative py-16 px-6"
         style={{
-          background: `linear-gradient(rgba(13,22,40,0.92), rgba(13,22,40,0.96)), url(${warehouseBg}) center/cover no-repeat`,
+          background: `linear-gradient(rgba(244,247,251,0.90), rgba(255,255,255,0.94)), url(${warehouseBg}) center/cover no-repeat`,
         }}
       >
         <div className="max-w-7xl mx-auto relative">
@@ -350,9 +350,9 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(8,14,26,0.94), rgba(8,14,26,0.97)), url(${logisticsBg}) center/cover no-repeat` }}>
+      <section id="how-it-works" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(255,255,255,0.88), rgba(244,247,251,0.94)), url(${logisticsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-[28px] md:text-[40px] font-bold text-white">How to Send a Parcel with Viasetu</h2>
+          <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
             {[
@@ -364,7 +364,7 @@ const Landing = () => {
               <div key={s.n} className="rounded-xl p-7 text-left" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
                 <div className="h-14 w-14 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{s.icon}</div>
                 <div className="text-[12px] font-bold mb-1" style={{ color: C.teal }}>STEP {s.n}</div>
-                <h3 className="text-white font-bold text-[16px] mb-2">{s.t}</h3>
+                <h3 className="text-[#0B1220] font-bold text-[16px] mb-2">{s.t}</h3>
                 <p className="text-[13px] leading-relaxed" style={{ color: C.gray }}>{s.b}</p>
               </div>
             ))}
@@ -378,10 +378,10 @@ const Landing = () => {
       </section>
 
       {/* WHY VIASETU */}
-      <section id="why-viasetu" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.93), rgba(13,22,40,0.97)), url(${shippingBg}) center/cover no-repeat` }}>
+      <section id="why-viasetu" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(244,247,251,0.90), rgba(255,255,255,0.96)), url(${shippingBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-[28px] md:text-[40px] font-bold text-white leading-tight">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220] leading-tight">
               Why 10,000+ Indians Choose Viasetu to Send Their Parcels
             </h2>
             <div className="mt-8 space-y-5">
@@ -395,7 +395,7 @@ const Landing = () => {
                 <div key={t} className="flex gap-3 p-3 rounded-lg" style={{ borderLeft: "2px solid transparent" }}>
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: C.teal }} />
                   <div>
-                    <div className="text-white font-bold text-[15px]">{t}</div>
+                    <div className="text-[#0B1220] font-bold text-[15px]">{t}</div>
                     <div className="text-[13px] mt-1" style={{ color: C.gray }}>{b}</div>
                   </div>
                 </div>
@@ -409,7 +409,7 @@ const Landing = () => {
       {/* PERSONAS */}
       <section id="user-stories" className="py-20 px-6" style={{ background: C.bg }}>
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-white">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
+          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220]">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
               { e: "🧁", t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
@@ -418,7 +418,7 @@ const Landing = () => {
             ].map((p) => (
               <div key={p.t} className="rounded-xl p-8" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
                 <div className="h-14 w-14 rounded-full flex items-center justify-center text-2xl mb-4" style={{ background: "rgba(0,200,200,0.15)" }}>{p.e}</div>
-                <h3 className="text-white font-bold text-[18px] mb-3">{p.t}</h3>
+                <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
                 <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
                 <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
               </div>
@@ -437,7 +437,7 @@ const Landing = () => {
             { v: 4, s: " Steps", l: "To Send Any Parcel" },
           ].map((x, i) => (
             <div key={i} className="text-center px-4">
-              <div className="text-white font-bold text-[32px] md:text-[42px]"><Counter end={x.v} suffix={x.s} /></div>
+              <div className="text-[#0B1220] font-bold text-[32px] md:text-[42px]"><Counter end={x.v} suffix={x.s} /></div>
               <div className="text-[14px] mt-1" style={{ color: C.bg }}>{x.l}</div>
             </div>
           ))}
@@ -445,9 +445,9 @@ const Landing = () => {
       </section>
 
       {/* POPULAR ROUTES */}
-      <section id="popular-routes" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.94), rgba(13,22,40,0.97)), url(${parcelsBg}) center/cover no-repeat` }}>
+      <section id="popular-routes" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(244,247,251,0.92), rgba(255,255,255,0.96)), url(${parcelsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-[28px] md:text-[40px] font-bold text-white">Popular Courier Routes in India</h2>
+          <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Popular Courier Routes in India</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Compare prices and book courier pickup on India's most shipped routes</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10">
             {ROUTES.map((r) => (
@@ -455,7 +455,7 @@ const Landing = () => {
                 key={r}
                 onClick={goSend}
                 aria-label={`Book ${r} Courier`}
-                className="px-4 py-2 rounded-full text-[13px] text-white text-center transition-colors hover:bg-[#00C8C8] hover:text-[#080E1A]"
+                className="px-4 py-2 rounded-full text-[13px] text-[#0B1220] text-center transition-colors hover:bg-[#00C8C8] hover:text-white"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}
               >
                 {r} Courier
@@ -475,7 +475,7 @@ const Landing = () => {
       {/* FAQ */}
       <section id="faq" className="py-20 px-6" style={{ background: C.bg }}>
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-white mb-10">Frequently Asked Questions About Sending Parcels in India</h2>
+          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220] mb-10">Frequently Asked Questions About Sending Parcels in India</h2>
           {FAQ_ITEMS.map(([q, a]) => <FAQItem key={q} q={q} a={a} />)}
         </div>
       </section>
@@ -484,8 +484,8 @@ const Landing = () => {
       <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
           <div>
-            <div className="text-white font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
-            <div className="text-[13px] font-semibold mt-2 text-white">India's First Consumer Courier Aggregator</div>
+            <div className="text-[#0B1220] font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
+            <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
             <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
             <div className="flex gap-4 mt-4">
               <a href="#" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
@@ -494,7 +494,7 @@ const Landing = () => {
             </div>
           </div>
           <div>
-            <h3 className="text-white font-bold text-[14px] mb-4">Our Services</h3>
+            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Our Services</h3>
             <ul className="space-y-2 text-[13px]">
               {[
                 { label: "Compare Courier Prices", onClick: goSend },
@@ -510,7 +510,7 @@ const Landing = () => {
             </ul>
           </div>
           <div>
-            <h3 className="text-white font-bold text-[14px] mb-4">Popular Routes</h3>
+            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Popular Routes</h3>
             <ul className="space-y-2 text-[13px]">
               {ROUTES.slice(0, 6).map((r) => (
                 <li key={r}>
@@ -520,7 +520,7 @@ const Landing = () => {
             </ul>
           </div>
           <div>
-            <h3 className="text-white font-bold text-[14px] mb-4">Company</h3>
+            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
             <ul className="space-y-2 text-[13px]">
               {["About Us","How It Works","Courier Partners","Press","Careers","Contact Us","Privacy Policy","Terms of Service","Refund Policy"].map((x) => (
                 <li key={x}><a href="#" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x}</a></li>
