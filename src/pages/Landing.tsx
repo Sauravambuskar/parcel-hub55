@@ -49,6 +49,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     { href: "#hero", label: "Compare Couriers", onClick: undefined as undefined | (() => void) },
     { href: "#track", label: "Track Shipment", onClick: undefined as undefined | (() => void) },
     { href: "#how-it-works", label: "How It Works", onClick: undefined as undefined | (() => void) },
+    { href: "#blog", label: "Blog", onClick: undefined as undefined | (() => void) },
     { href: "#faq", label: "FAQ", onClick: undefined as undefined | (() => void) },
   ];
   return (
@@ -457,6 +458,76 @@ const Landing = () => {
             </button>{" "}
             to compare any pincode-to-pincode combination across India.
           </p>
+        </div>
+      </section>
+
+      {/* BLOG */}
+      <section id="blog" className="py-20 px-6" style={{ background: C.bg2 }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220] mb-3">From the Viasetu Blog</h2>
+            <p className="text-[16px]" style={{ color: C.gray }}>
+              Tips, guides and insights to ship smarter across India.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                tag: "Shipping Guide",
+                img: parcelsBg,
+                title: "How to Pack Fragile Items for Safe Delivery",
+                excerpt: "Bubble wrap, double-boxing, and labelling tips that prevent damage during transit.",
+                read: "5 min read",
+              },
+              {
+                tag: "Compare Couriers",
+                img: logisticsBg,
+                title: "Delhivery vs XpressBees vs Shadowfax: Which to Choose?",
+                excerpt: "A practical breakdown of pricing, TAT and serviceability across India's top partners.",
+                read: "7 min read",
+              },
+              {
+                tag: "Cost Saving",
+                img: shippingBg,
+                title: "5 Ways to Reduce Your Courier Costs in 2026",
+                excerpt: "Volumetric weight, surface vs air, and pickup batching — small changes, big savings.",
+                read: "4 min read",
+              },
+            ].map((p) => (
+              <article
+                key={p.title}
+                className="rounded-2xl overflow-hidden flex flex-col cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
+                style={{ background: C.card, border: `1px solid ${C.border}` }}
+              >
+                <div className="h-44 w-full overflow-hidden">
+                  <img src={p.img} alt={p.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                </div>
+                <div className="p-5 flex flex-col flex-1">
+                  <span
+                    className="self-start text-[11px] font-semibold px-2 py-1 rounded-full mb-3"
+                    style={{ background: `${C.teal}15`, color: C.teal }}
+                  >
+                    {p.tag}
+                  </span>
+                  <h3 className="text-[18px] font-bold text-[#0B1220] mb-2 leading-snug">{p.title}</h3>
+                  <p className="text-[14px] mb-4 flex-1" style={{ color: C.gray }}>{p.excerpt}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px]" style={{ color: C.gray }}>{p.read}</span>
+                    <span className="text-[13px] font-semibold" style={{ color: C.teal }}>Read more →</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <a
+              href="#blog"
+              className="inline-block px-6 h-11 leading-[44px] rounded-lg font-semibold text-[14px] border-2 transition-colors hover:bg-[#00C8C8]/10"
+              style={{ borderColor: C.teal, color: C.teal }}
+            >
+              View all articles
+            </a>
+          </div>
         </div>
       </section>
 
