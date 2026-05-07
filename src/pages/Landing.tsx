@@ -230,7 +230,13 @@ const ROUTES = [
   "Mumbai to Chennai", "Pune to Bangalore",
 ];
 
-const ACTIVE_PARTNERS = ["Delhivery", "Shadowfax", "XpressBees", "UrbaneBolt", "Shree Maruti"];
+const ACTIVE_PARTNERS: { name: string; logo: string }[] = [
+  { name: "Delhivery", logo: delhiveryLogo },
+  { name: "Shadowfax", logo: shadowfaxLogo },
+  { name: "XpressBees", logo: xpressbeesLogo },
+  { name: "UrbaneBolt", logo: urbaneboltLogo },
+  { name: "Shree Maruti", logo: shreeMarutiLogo },
+];
 const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"];
 
 /* ---------------- MAIN ---------------- */
