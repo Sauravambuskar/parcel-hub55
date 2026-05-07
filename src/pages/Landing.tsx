@@ -7,13 +7,13 @@ import {
 
 // Brand tokens (kept inline for the landing page only — does not affect app theme)
 const C = {
-  bg: "#080E1A",
-  bg2: "#0D1628",
-  card: "#111E33",
-  teal: "#00C8C8",
-  white: "#FFFFFF",
-  gray: "#B0BECE",
-  border: "#1C2A44",
+  bg: "#FFFFFF",
+  bg2: "#F4F7FB",
+  card: "#FFFFFF",
+  teal: "#00A8A8",
+  white: "#0B1220",      // primary text (dark on light)
+  gray: "#5A6B80",       // secondary text
+  border: "#E2E8F0",
   err: "#C0392B",
   ok: "#1A7A4A",
 };
