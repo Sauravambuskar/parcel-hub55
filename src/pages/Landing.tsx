@@ -445,7 +445,7 @@ const Landing = () => {
       </section>
 
       {/* POPULAR ROUTES */}
-      <section id="popular-routes" className="py-20 px-6" style={{ background: C.bg2 }}>
+      <section id="popular-routes" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.94), rgba(13,22,40,0.97)), url(${parcelsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-white">Popular Courier Routes in India</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Compare prices and book courier pickup on India's most shipped routes</p>
