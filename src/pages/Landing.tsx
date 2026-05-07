@@ -257,7 +257,15 @@ const Landing = () => {
       <NavBar onSendClick={goSend} onTrackClick={goTrack} />
 
       {/* HERO */}
-      <section id="hero" aria-label="Compare courier services India" className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden" style={{ minHeight: "100vh" }}>
+      <section
+        id="hero"
+        aria-label="Compare courier services India"
+        className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
+        style={{
+          minHeight: "100vh",
+          background: `linear-gradient(rgba(8,14,26,0.88), rgba(8,14,26,0.94)), url(${deliveryHero}) center/cover no-repeat`,
+        }}
+      >
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)" }} />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
           <div>
