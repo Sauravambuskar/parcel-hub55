@@ -49,6 +49,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     { href: "#hero", label: "Compare Couriers", onClick: undefined as undefined | (() => void) },
     { href: "#track", label: "Track Shipment", onClick: undefined as undefined | (() => void) },
     { href: "#how-it-works", label: "How It Works", onClick: undefined as undefined | (() => void) },
+    { href: "#blog", label: "Blog", onClick: undefined as undefined | (() => void) },
     { href: "#faq", label: "FAQ", onClick: undefined as undefined | (() => void) },
   ];
   return (
