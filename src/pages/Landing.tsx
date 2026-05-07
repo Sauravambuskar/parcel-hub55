@@ -378,7 +378,7 @@ const Landing = () => {
       </section>
 
       {/* WHY VIASETU */}
-      <section id="why-viasetu" className="py-20 px-6" style={{ background: C.bg2 }}>
+      <section id="why-viasetu" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.93), rgba(13,22,40,0.97)), url(${shippingBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-[28px] md:text-[40px] font-bold text-white leading-tight">
