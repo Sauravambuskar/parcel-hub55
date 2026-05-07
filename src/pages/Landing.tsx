@@ -18,7 +18,21 @@ const C = {
   ok: "#1A7A4A",
 };
 
-const FONT_STACK = 'Helvetica, "Helvetica Neue", Arial, sans-serif';
+const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
+
+// Partner logos
+import delhiveryLogo from "@/assets/delhivery-logo.jpg";
+import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
+import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
+import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
+
+// Background imagery (logistics & courier)
+import logisticsBg from "@/assets/logistics-bg.jpg";
+import warehouseBg from "@/assets/warehouse-bg.jpg";
+import parcelsBg from "@/assets/parcels-bg.jpg";
+import shippingBg from "@/assets/shipping-bg.jpg";
+import deliveryHero from "@/assets/delivery-hero.jpg";
 
 /* ---------------- NAV ---------------- */
 const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrackClick: () => void }) => {
