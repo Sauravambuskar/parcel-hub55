@@ -34,6 +34,7 @@ import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
 import deliveryHero from "@/assets/delivery-hero.jpg";
 import appPreview from "@/assets/app-preview.png";
+import appPreview2 from "@/assets/app-preview-2.png";
 
 /* ---------------- NAV ---------------- */
 const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrackClick: () => void }) => {
@@ -139,12 +140,12 @@ const TrackForm = ({ onTrack }: { onTrack: (awb: string) => void }) => {
 };
 
 /* ---------------- PHONE MOCKUP ---------------- */
-const PhoneMockup = ({ children }: { children?: React.ReactNode }) => (
+const PhoneMockup = ({ children, src = appPreview }: { children?: React.ReactNode; src?: string }) => (
   <div className="mx-auto" style={{ width: 280 }}>
     <div className="rounded-[40px] p-3" style={{ background: "#000", border: `2px solid ${C.border}`, boxShadow: "0 30px 60px rgba(0,200,200,0.2)" }}>
       <div className="rounded-[32px] overflow-hidden" style={{ background: C.bg2, height: 560 }}>
         <img
-          src={appPreview}
+          src={src}
           alt="Viasetu app showing courier comparison with ratings, ETA, reliability and prices"
           className="w-full h-full object-cover"
           loading="lazy"
@@ -389,7 +390,7 @@ const Landing = () => {
               ))}
             </div>
           </div>
-          <div className="hidden lg:block"><PhoneMockup /></div>
+          <div className="hidden lg:block"><PhoneMockup src={appPreview2} /></div>
         </div>
       </section>
 
