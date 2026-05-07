@@ -350,7 +350,7 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-20 px-6" style={{ background: C.bg }}>
+      <section id="how-it-works" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(8,14,26,0.94), rgba(8,14,26,0.97)), url(${logisticsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-white">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
