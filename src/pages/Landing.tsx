@@ -18,7 +18,21 @@ const C = {
   ok: "#1A7A4A",
 };
 
-const FONT_STACK = 'Helvetica, "Helvetica Neue", Arial, sans-serif';
+const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
+
+// Partner logos
+import delhiveryLogo from "@/assets/delhivery-logo.jpg";
+import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
+import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
+import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
+
+// Background imagery (logistics & courier)
+import logisticsBg from "@/assets/logistics-bg.jpg";
+import warehouseBg from "@/assets/warehouse-bg.jpg";
+import parcelsBg from "@/assets/parcels-bg.jpg";
+import shippingBg from "@/assets/shipping-bg.jpg";
+import deliveryHero from "@/assets/delivery-hero.jpg";
 
 /* ---------------- NAV ---------------- */
 const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrackClick: () => void }) => {
@@ -216,7 +230,13 @@ const ROUTES = [
   "Mumbai to Chennai", "Pune to Bangalore",
 ];
 
-const ACTIVE_PARTNERS = ["Delhivery", "Shadowfax", "XpressBees", "UrbaneBolt", "Shree Maruti"];
+const ACTIVE_PARTNERS: { name: string; logo: string }[] = [
+  { name: "Delhivery", logo: delhiveryLogo },
+  { name: "Shadowfax", logo: shadowfaxLogo },
+  { name: "XpressBees", logo: xpressbeesLogo },
+  { name: "UrbaneBolt", logo: urbaneboltLogo },
+  { name: "Shree Maruti", logo: shreeMarutiLogo },
+];
 const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"];
 
 /* ---------------- MAIN ---------------- */
@@ -237,7 +257,15 @@ const Landing = () => {
       <NavBar onSendClick={goSend} onTrackClick={goTrack} />
 
       {/* HERO */}
-      <section id="hero" aria-label="Compare courier services India" className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden" style={{ minHeight: "100vh" }}>
+      <section
+        id="hero"
+        aria-label="Compare courier services India"
+        className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
+        style={{
+          minHeight: "100vh",
+          background: `linear-gradient(rgba(8,14,26,0.88), rgba(8,14,26,0.94)), url(${deliveryHero}) center/cover no-repeat`,
+        }}
+      >
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)" }} />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
           <div>
@@ -286,18 +314,29 @@ const Landing = () => {
       </section>
 
       {/* PARTNERS */}
-      <section id="partners" className="py-12 px-6" style={{ background: C.bg2 }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-6" style={{ color: C.teal }}>Our Courier Partners</div>
-          <div className="flex flex-wrap justify-center gap-x-12 gap-y-4">
+      <section
+        id="partners"
+        className="relative py-16 px-6"
+        style={{
+          background: `linear-gradient(rgba(13,22,40,0.92), rgba(13,22,40,0.96)), url(${warehouseBg}) center/cover no-repeat`,
+        }}
+      >
+        <div className="max-w-7xl mx-auto relative">
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-8" style={{ color: C.teal }}>Our Courier Partners</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {ACTIVE_PARTNERS.map((p) => (
-              <div key={p} className="text-white font-semibold text-[15px]">
-                {p}
+              <div
+                key={p.name}
+                className="rounded-xl p-5 flex flex-col items-center justify-center gap-3 transition-transform hover:scale-[1.03]"
+                style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, minHeight: 110 }}
+              >
+                <img src={p.logo} alt={`${p.name} logo`} className="max-h-12 max-w-[140px] object-contain" loading="lazy" />
+                <div className="text-[12px] font-semibold" style={{ color: C.bg }}>{p.name}</div>
               </div>
             ))}
           </div>
 
-          <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-10 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-12 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
           <div className="flex flex-wrap justify-center gap-3">
             {COMING_SOON_PARTNERS.map((p) => (
               <div key={p} className="px-3 py-1.5 rounded-full text-[12px] flex items-center gap-2"
@@ -311,7 +350,7 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-20 px-6" style={{ background: C.bg }}>
+      <section id="how-it-works" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(8,14,26,0.94), rgba(8,14,26,0.97)), url(${logisticsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-white">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
@@ -339,7 +378,7 @@ const Landing = () => {
       </section>
 
       {/* WHY VIASETU */}
-      <section id="why-viasetu" className="py-20 px-6" style={{ background: C.bg2 }}>
+      <section id="why-viasetu" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.93), rgba(13,22,40,0.97)), url(${shippingBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-[28px] md:text-[40px] font-bold text-white leading-tight">
@@ -406,7 +445,7 @@ const Landing = () => {
       </section>
 
       {/* POPULAR ROUTES */}
-      <section id="popular-routes" className="py-20 px-6" style={{ background: C.bg2 }}>
+      <section id="popular-routes" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(13,22,40,0.94), rgba(13,22,40,0.97)), url(${parcelsBg}) center/cover no-repeat` }}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-white">Popular Courier Routes in India</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Compare prices and book courier pickup on India's most shipped routes</p>
