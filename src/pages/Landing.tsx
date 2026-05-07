@@ -306,18 +306,29 @@ const Landing = () => {
       </section>
 
       {/* PARTNERS */}
-      <section id="partners" className="py-12 px-6" style={{ background: C.bg2 }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-6" style={{ color: C.teal }}>Our Courier Partners</div>
-          <div className="flex flex-wrap justify-center gap-x-12 gap-y-4">
+      <section
+        id="partners"
+        className="relative py-16 px-6"
+        style={{
+          background: `linear-gradient(rgba(13,22,40,0.92), rgba(13,22,40,0.96)), url(${warehouseBg}) center/cover no-repeat`,
+        }}
+      >
+        <div className="max-w-7xl mx-auto relative">
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-8" style={{ color: C.teal }}>Our Courier Partners</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {ACTIVE_PARTNERS.map((p) => (
-              <div key={p} className="text-white font-semibold text-[15px]">
-                {p}
+              <div
+                key={p.name}
+                className="rounded-xl p-5 flex flex-col items-center justify-center gap-3 transition-transform hover:scale-[1.03]"
+                style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, minHeight: 110 }}
+              >
+                <img src={p.logo} alt={`${p.name} logo`} className="max-h-12 max-w-[140px] object-contain" loading="lazy" />
+                <div className="text-[12px] font-semibold" style={{ color: C.bg }}>{p.name}</div>
               </div>
             ))}
           </div>
 
-          <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-10 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-12 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
           <div className="flex flex-wrap justify-center gap-3">
             {COMING_SOON_PARTNERS.map((p) => (
               <div key={p} className="px-3 py-1.5 rounded-full text-[12px] flex items-center gap-2"
