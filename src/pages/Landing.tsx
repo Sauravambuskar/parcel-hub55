@@ -33,6 +33,7 @@ import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
 import deliveryHero from "@/assets/delivery-hero.jpg";
+import appPreview from "@/assets/app-preview.png";
 
 /* ---------------- NAV ---------------- */
 const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrackClick: () => void }) => {
@@ -142,28 +143,12 @@ const PhoneMockup = ({ children }: { children?: React.ReactNode }) => (
   <div className="mx-auto" style={{ width: 280 }}>
     <div className="rounded-[40px] p-3" style={{ background: "#000", border: `2px solid ${C.border}`, boxShadow: "0 30px 60px rgba(0,200,200,0.2)" }}>
       <div className="rounded-[32px] overflow-hidden" style={{ background: C.bg2, height: 560 }}>
-        <div className="h-7 flex items-center justify-center" style={{ background: "#000" }}>
-          <div className="w-20 h-5 rounded-b-2xl" style={{ background: "#000" }} />
-        </div>
-        <div className="p-4 text-[#0B1220]">
-          {children || (
-            <>
-              <div className="text-xs mb-3" style={{ color: C.gray }}>Compare Results</div>
-              {["Delhivery", "Shadowfax", "XpressBees", "UrbaneBolt"].map((n, i) => (
-                <div key={n} className="rounded-lg p-3 mb-2 flex items-center justify-between" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-                  <div>
-                    <div className="text-sm font-semibold">{n}</div>
-                    <div className="text-[10px]" style={{ color: C.gray }}>{2 + i}-{4 + i} days</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold" style={{ color: C.teal }}>₹{120 + i * 40}</div>
-                    {i === 0 && <div className="text-[9px] font-bold" style={{ color: C.ok }}>BEST PRICE</div>}
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
+        <img
+          src={appPreview}
+          alt="Viasetu app showing courier comparison with ratings, ETA, reliability and prices"
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
       </div>
     </div>
   </div>
