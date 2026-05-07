@@ -327,10 +327,12 @@ const Landing = () => {
             {ACTIVE_PARTNERS.map((p) => (
               <div
                 key={p.name}
-                className="rounded-xl p-5 flex flex-col items-center justify-center gap-3 transition-transform hover:scale-[1.03]"
+                className="rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-transform hover:scale-[1.03]"
                 style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, minHeight: 110 }}
               >
-                <img src={p.logo} alt={`${p.name} logo`} className="max-h-12 max-w-[140px] object-contain" loading="lazy" />
+                <div className="w-full h-14 flex items-center justify-center">
+                  <img src={p.logo} alt={`${p.name} logo`} className="max-h-full max-w-full object-contain" loading="lazy" />
+                </div>
                 <div className="text-[12px] font-semibold" style={{ color: C.bg }}>{p.name}</div>
               </div>
             ))}
