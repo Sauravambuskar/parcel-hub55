@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
-  Package, Search, ArrowRightLeft, Calendar, Scale, Truck,
-  CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
-  Linkedin, Twitter, Instagram, Globe, Smartphone,
+  Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
+  Linkedin, Twitter, Instagram,
 } from "lucide-react";
 
 // Brand tokens (kept inline for the landing page only — does not affect app theme)
@@ -19,6 +18,8 @@ const C = {
   ok: "#1A7A4A",
 };
 
+const FONT_STACK = 'Helvetica, "Helvetica Neue", Arial, sans-serif';
+
 /* ---------------- NAV ---------------- */
 const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrackClick: () => void }) => {
   const [open, setOpen] = useState(false);
@@ -29,11 +30,10 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const links = [
-    { href: "#hero", label: "Compare Couriers" },
-    { href: "#hero", label: "Track Shipment" },
-    { href: "#hero", label: "International" },
-    { href: "#how-it-works", label: "How It Works" },
-    { href: "#faq", label: "Blog" },
+    { href: "#hero", label: "Compare Couriers", onClick: undefined as undefined | (() => void) },
+    { href: "#track", label: "Track Shipment", onClick: undefined as undefined | (() => void) },
+    { href: "#how-it-works", label: "How It Works", onClick: undefined as undefined | (() => void) },
+    { href: "#faq", label: "FAQ", onClick: undefined as undefined | (() => void) },
   ];
   return (
     <header
@@ -41,9 +41,9 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
       style={{ background: scrolled ? "rgba(8,14,26,0.95)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
     >
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-1">
+        <a href="/" className="flex items-center">
           <span className="text-white font-bold text-[22px]">Via</span>
-          <span className="font-bold text-[22px]" style={{ color: C.teal }}>Setu<span style={{ color: C.teal }}>.</span></span>
+          <span className="font-bold text-[22px]" style={{ color: C.teal }}>setu</span>
         </a>
 
         <nav className="hidden lg:flex items-center gap-8">
@@ -79,7 +79,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
       {open && (
         <div className="fixed inset-0 z-50 md:hidden" style={{ background: C.bg }}>
           <div className="flex justify-between items-center px-6 h-16" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <span className="text-white font-bold text-[22px]">Via<span style={{ color: C.teal }}>Setu.</span></span>
+            <span className="text-white font-bold text-[22px]">Via<span style={{ color: C.teal }}>setu</span></span>
             <button onClick={() => setOpen(false)} className="text-white" aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
@@ -95,73 +95,31 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
   );
 };
 
-/* ---------------- BOOKING WIDGET ---------------- */
-const BookingWidget = ({ onGo }: { onGo: () => void }) => {
-  const [tab, setTab] = useState<"dom" | "intl" | "track">("dom");
-  const tabs = [
-    { k: "dom", label: "📦 Domestic" },
-    { k: "intl", label: "✈️ International" },
-    { k: "track", label: "📍 Track Parcel" },
-  ] as const;
-  const inputCls = "w-full h-12 rounded-lg px-4 text-[14px] outline-none transition-colors focus:border-[#00C8C8]";
-  const inputStyle = { background: C.card, border: `1px solid ${C.border}`, color: C.white } as const;
-
+/* ---------------- TRACK FORM ---------------- */
+const TrackForm = ({ onTrack }: { onTrack: (awb: string) => void }) => {
+  const [awb, setAwb] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (awb.trim()) onTrack(awb.trim());
+  };
   return (
-    <div className="rounded-2xl p-6 md:p-8 w-full" style={{ background: C.bg2, border: `1px solid ${C.border}`, boxShadow: "0 0 60px rgba(0,200,200,0.15)" }}>
-      <div className="flex gap-6 mb-6 overflow-x-auto" style={{ borderBottom: `1px solid ${C.border}` }}>
-        {tabs.map((t) => (
-          <button key={t.k} onClick={() => setTab(t.k)} className="pb-3 text-[14px] font-semibold whitespace-nowrap transition-colors"
-            style={{ color: tab === t.k ? C.teal : C.gray, borderBottom: tab === t.k ? `2px solid ${C.teal}` : "2px solid transparent" }}>
-            {t.label}
-          </button>
-        ))}
+    <form onSubmit={submit} className="rounded-2xl p-5 md:p-6" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
+      <label className="text-[12px] uppercase tracking-wider font-semibold" style={{ color: C.teal }}>
+        Track your parcel — no login needed
+      </label>
+      <div className="mt-3 flex flex-col sm:flex-row gap-3">
+        <input
+          value={awb}
+          onChange={(e) => setAwb(e.target.value)}
+          placeholder="Enter AWB / Tracking Number"
+          className="flex-1 h-12 rounded-lg px-4 text-[14px] outline-none focus:border-[#00C8C8]"
+          style={{ background: C.card, border: `1px solid ${C.border}`, color: C.white }}
+        />
+        <button type="submit" className="h-12 px-6 rounded-lg font-bold text-[14px] flex items-center justify-center gap-2 whitespace-nowrap" style={{ background: C.teal, color: C.bg }}>
+          <Search className="h-4 w-4" /> Track
+        </button>
       </div>
-
-      {tab === "dom" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-center">
-            <input placeholder="From Pincode / City" className={inputCls} style={inputStyle} />
-            <button aria-label="Swap" className="h-10 w-10 rounded-full flex items-center justify-center mx-auto" style={{ background: C.card, border: `1px solid ${C.border}`, color: C.teal }}>
-              <ArrowRightLeft className="h-4 w-4" />
-            </button>
-            <input placeholder="To Pincode / City" className={inputCls} style={inputStyle} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="relative"><Scale className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.gray }} /><input placeholder="Weight (kg)" className={inputCls + " pl-10"} style={inputStyle} /></div>
-            <div className="relative"><Package className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.gray }} /><input placeholder="Parcel Type" className={inputCls + " pl-10"} style={inputStyle} /></div>
-            <div className="relative"><Calendar className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.gray }} /><input placeholder="Pickup Date" className={inputCls + " pl-10"} style={inputStyle} /></div>
-          </div>
-          <button onClick={onGo} className="w-full h-14 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2 transition-transform hover:scale-[1.01]" style={{ background: C.teal, color: C.bg }}>
-            <Search className="h-5 w-5" /> Compare Courier Prices →
-          </button>
-        </div>
-      )}
-
-      {tab === "intl" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input placeholder="From India" className={inputCls} style={inputStyle} />
-            <input placeholder="To Country" className={inputCls} style={inputStyle} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input placeholder="Weight (kg)" className={inputCls} style={inputStyle} />
-            <input placeholder="Declared Value ₹" className={inputCls} style={inputStyle} />
-          </div>
-          <button onClick={onGo} className="w-full h-14 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2" style={{ background: C.teal, color: C.bg }}>
-            <Search className="h-5 w-5" /> Compare International Rates →
-          </button>
-        </div>
-      )}
-
-      {tab === "track" && (
-        <div className="space-y-4">
-          <input placeholder="Enter AWB / Tracking Number" className={inputCls + " h-14 text-base"} style={inputStyle} />
-          <button onClick={onGo} className="w-full h-14 rounded-lg font-bold text-[16px]" style={{ background: C.teal, color: C.bg }}>
-            Track My Parcel →
-          </button>
-        </div>
-      )}
-    </div>
+    </form>
   );
 };
 
@@ -177,7 +135,7 @@ const PhoneMockup = ({ children }: { children?: React.ReactNode }) => (
           {children || (
             <>
               <div className="text-xs mb-3" style={{ color: C.gray }}>Compare Results</div>
-              {["Delhivery", "DHL Express", "XpressBees", "India Post"].map((n, i) => (
+              {["Delhivery", "Shadowfax", "XpressBees", "UrbaneBolt"].map((n, i) => (
                 <div key={n} className="rounded-lg p-3 mb-2 flex items-center justify-between" style={{ background: C.card, border: `1px solid ${C.border}` }}>
                   <div>
                     <div className="text-sm font-semibold">{n}</div>
@@ -223,17 +181,15 @@ const Counter = ({ end, suffix = "" }: { end: number; suffix?: string }) => {
 };
 
 /* ---------------- FAQ ---------------- */
-const FAQ_ITEMS = [
-  ["How do I compare courier prices in India?", "Enter your pickup pincode, delivery pincode and parcel weight on ViaSetu. We instantly compare prices from 14+ couriers including DHL, FedEx, Delhivery, India Post and more — showing you the cheapest and fastest options side by side."],
-  ["Which is the cheapest courier service in India?", "Courier prices vary by route, weight and speed. India Post is often the cheapest for standard delivery while Delhivery and XpressBees offer competitive express rates. ViaSetu compares all options in real-time so you always get the best available price."],
-  ["Does ViaSetu offer doorstep pickup?", "Yes. ViaSetu schedules doorstep pickup from your home, office, hostel or any address across 21,000+ pincodes in India. No need to visit a courier shop."],
-  ["Can I send international parcels through ViaSetu?", "Yes. ViaSetu supports international courier booking to UAE, USA, UK, Singapore, Saudi Arabia and more. Compare international courier rates from DHL, FedEx and Aramex directly on the app."],
-  ["How do I track my parcel on ViaSetu?", "Enter your AWB or tracking number in the Track Parcel tab on ViaSetu. We provide unified real-time tracking across all courier partners in one dashboard."],
-  ["How much can I save using ViaSetu?", "ViaSetu users save an average of 20-40% compared to walk-in rates at local courier shops."],
-  ["Is ViaSetu available across all of India?", "Yes. ViaSetu covers 21,000+ pincodes across India including all metros, Tier 1, Tier 2 and Tier 3 cities."],
-  ["Which couriers are available on ViaSetu?", "DHL, FedEx, Aramex, Delhivery, India Post, XpressBees, Shadowfax, Shipyaari, Blue Dart, Porter, TSAW Drones, UniUni, Urbanbolt and Bigship."],
-  ["Is ViaSetu free to use?", "Yes. ViaSetu is completely free to download and use. You only pay for the courier service you book."],
-  ["What payment methods does ViaSetu accept?", "ViaSetu accepts all major payment methods including UPI (GPay, PhonePe, Paytm), credit cards, debit cards and net banking."],
+const FAQ_ITEMS: [string, string][] = [
+  ["How do I compare courier prices on Viasetu?", "Sign in and enter your pickup pincode, delivery pincode and parcel weight. Viasetu instantly compares prices from our integrated courier partners — Delhivery, Shadowfax, XpressBees, UrbaneBolt and Shree Maruti — and shows you the cheapest and fastest options side by side."],
+  ["Which is the cheapest courier service in India?", "Courier prices vary by route, weight and speed. Viasetu compares all integrated partners in real-time so you always get the best available price for your route."],
+  ["Does Viasetu offer doorstep pickup?", "Yes. Viasetu schedules doorstep pickup from your home, office, hostel or any address across thousands of pincodes in India. No need to visit a courier shop."],
+  ["How do I track my parcel on Viasetu?", "Just enter your AWB or tracking number on the home page — no login required. We provide unified real-time tracking across all our courier partners in one view."],
+  ["How much can I save using Viasetu?", "Viasetu users save an average of 20–40% compared to walk-in rates at local courier shops."],
+  ["Which couriers are available on Viasetu?", "Today: Delhivery, Shadowfax, XpressBees, UrbaneBolt and Shree Maruti. More partners (Blue Dart, DTDC, India Post, DHL, FedEx) are coming soon."],
+  ["Is Viasetu free to use?", "Yes. Viasetu is free to use. You only pay for the courier service you book."],
+  ["What payment methods does Viasetu accept?", "Viasetu accepts UPI (GPay, PhonePe, Paytm), credit cards, debit cards and net banking via Razorpay."],
 ];
 
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
@@ -251,7 +207,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
   );
 };
 
-/* ---------------- ROUTES ---------------- */
+/* ---------------- DATA ---------------- */
 const ROUTES = [
   "Mumbai to Delhi", "Delhi to Mumbai", "Pune to Delhi", "Delhi to Pune",
   "Mumbai to Bangalore", "Bangalore to Mumbai", "Chennai to Delhi", "Delhi to Chennai",
@@ -259,9 +215,9 @@ const ROUTES = [
   "Delhi to Kolkata", "Kolkata to Delhi", "Bangalore to Chennai", "Chennai to Bangalore",
   "Mumbai to Chennai", "Pune to Bangalore",
 ];
-const slug = (r: string) => r.toLowerCase().replace(/\s+/g, "-");
 
-const PARTNERS = ["DHL","FedEx","Aramex","Delhivery","India Post","XpressBees","Shadowfax","Shipyaari","Bigship","Blue Dart","Porter","TSAW","UniUni","Urbanbolt"];
+const ACTIVE_PARTNERS = ["Delhivery", "Shadowfax", "XpressBees", "UrbaneBolt", "Shree Maruti"];
+const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"];
 
 /* ---------------- MAIN ---------------- */
 const Landing = () => {
@@ -274,9 +230,10 @@ const Landing = () => {
 
   const goSend = () => navigate("/login");
   const goTrack = () => navigate("/tracking");
+  const trackAwb = (awb: string) => navigate("/tracking", { state: { awbNumber: awb } });
 
   return (
-    <div style={{ background: C.bg, color: C.white, fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
       <NavBar onSendClick={goSend} onTrackClick={goTrack} />
 
       {/* HERO */}
@@ -288,40 +245,65 @@ const Landing = () => {
               Compare Courier Prices &amp; Book Online — <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
             <h2 className="mt-5 text-[16px] md:text-[20px] font-normal" style={{ color: C.gray }}>
-              India's First Consumer Courier Aggregator — Compare 14+ Couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
+              India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h2>
-            <div className="mt-8"><BookingWidget onGo={goSend} /></div>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={goSend}
+                className="h-14 px-8 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
+                style={{ background: C.teal, color: C.bg }}
+              >
+                <Package className="h-5 w-5" /> Send a Parcel →
+              </button>
+              <a
+                href="#track"
+                className="h-14 px-8 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2 border-2"
+                style={{ borderColor: C.teal, color: C.teal }}
+              >
+                <Search className="h-5 w-5" /> Track a Parcel
+              </a>
+            </div>
+
+            <div id="track" className="mt-6">
+              <TrackForm onTrack={trackAwb} />
+            </div>
+
             <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2" style={{ color: C.gray }}>
               <span>⭐ Trusted by 10,000+ users</span>
               <span>·</span>
-              <span>📦 21,000+ pincodes covered</span>
+              <span>📦 Pan-India coverage</span>
               <span>·</span>
-              <span>🚚 14+ courier partners</span>
+              <span>🚚 5 active courier partners</span>
               <span>·</span>
               <span>💰 Avg. saving ₹180 per shipment</span>
             </div>
           </div>
           <div className="hidden lg:block">
             <PhoneMockup />
-            <div className="text-center mt-6">
-              <div className="text-[12px] uppercase tracking-wider mb-2" style={{ color: C.teal }}>Available Now</div>
-              <div className="flex justify-center gap-3">
-                <div className="px-4 py-2 rounded-lg text-sm" style={{ background: C.card, border: `1px solid ${C.border}` }}>📱 Android</div>
-                <div className="px-4 py-2 rounded-lg text-sm" style={{ background: C.card, border: `1px solid ${C.border}` }}>🍎 iOS</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* PARTNERS */}
-      <section id="partners" className="py-10 px-6" style={{ background: C.bg2 }}>
+      <section id="partners" className="py-12 px-6" style={{ background: C.bg2 }}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-6" style={{ color: C.teal }}>14+ Courier Partners — All In One App</div>
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-6" style={{ color: C.teal }}>Our Courier Partners</div>
           <div className="flex flex-wrap justify-center gap-x-12 gap-y-4">
-            {PARTNERS.map((p) => (
-              <div key={p} className="text-white font-semibold opacity-60 hover:opacity-100 transition-opacity text-[14px]" style={{ filter: "grayscale(100%)" }}>
+            {ACTIVE_PARTNERS.map((p) => (
+              <div key={p} className="text-white font-semibold text-[15px]">
                 {p}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-10 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {COMING_SOON_PARTNERS.map((p) => (
+              <div key={p} className="px-3 py-1.5 rounded-full text-[12px] flex items-center gap-2"
+                style={{ background: C.card, border: `1px dashed ${C.border}`, color: C.gray }}>
+                <span>{p}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>SOON</span>
               </div>
             ))}
           </div>
@@ -331,12 +313,12 @@ const Landing = () => {
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="py-20 px-6" style={{ background: C.bg }}>
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-[28px] md:text-[40px] font-bold text-white">How to Send a Parcel with ViaSetu</h2>
+          <h2 className="text-[28px] md:text-[40px] font-bold text-white">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
             {[
               { n: "01", icon: <Package className="h-7 w-7" />, t: "Enter Shipment Details", b: "Add your pickup pincode, delivery location, weight and parcel type. Takes 30 seconds." },
-              { n: "02", icon: <Search className="h-7 w-7" />, t: "Compare All Courier Prices", b: "See prices, delivery speed and reliability scores from 14+ couriers side by side. Instantly." },
+              { n: "02", icon: <Search className="h-7 w-7" />, t: "Compare All Courier Prices", b: "See prices, delivery speed and reliability scores from our partners side by side. Instantly." },
               { n: "03", icon: <CreditCard className="h-7 w-7" />, t: "Book & Pay Securely", b: "Pay via UPI, card or wallet. Your doorstep pickup is scheduled automatically." },
               { n: "04", icon: <MapPin className="h-7 w-7" />, t: "Track Every Shipment Live", b: "Real-time status updates from pickup to delivery — all couriers in one dashboard." },
             ].map((s) => (
@@ -348,6 +330,11 @@ const Landing = () => {
               </div>
             ))}
           </div>
+          <div className="mt-10">
+            <button onClick={goSend} className="h-14 px-8 rounded-lg font-bold text-[16px]" style={{ background: C.teal, color: C.bg }}>
+              Send a Parcel Now →
+            </button>
+          </div>
         </div>
       </section>
 
@@ -356,18 +343,17 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-[28px] md:text-[40px] font-bold text-white leading-tight">
-              Why 10,000+ Indians Choose ViaSetu to Send Their Parcels
+              Why 10,000+ Indians Choose Viasetu to Send Their Parcels
             </h2>
             <div className="mt-8 space-y-5">
               {[
-                ["Save 20–40% on Every Shipment", "Compare real-time prices across all major couriers. Stop overpaying at local courier shops."],
-                ["14+ Courier Partners in One App", "DHL, FedEx, Delhivery, India Post, Aramex and 10 more — all compared in 10 seconds."],
-                ["Doorstep Pickup Across 21,000+ Pincodes", "Schedule pickup from your home, office or hostel. No shop visits. No queues."],
+                ["Save 20–40% on Every Shipment", "Compare real-time prices across all integrated couriers. Stop overpaying at local courier shops."],
+                ["5 Trusted Courier Partners in One App", "Delhivery, Shadowfax, XpressBees, UrbaneBolt and Shree Maruti — compared in 10 seconds."],
+                ["Doorstep Pickup Across India", "Schedule pickup from your home, office or hostel. No shop visits. No queues."],
                 ["AI-Powered Delivery Predictions", "Know your parcel's estimated arrival with a confidence score — not just a vague date range."],
-                ["International Shipping Made Simple", "UAE, USA, UK, Singapore, Saudi Arabia and more — best international courier rates in one search."],
                 ["Unified Tracking for All Shipments", "Every parcel you've ever sent — tracked in one dashboard regardless of which courier carried it."],
               ].map(([t, b]) => (
-                <div key={t} className="flex gap-3 p-3 rounded-lg transition-all hover:border-l-2" style={{ borderLeft: "2px solid transparent" }}>
+                <div key={t} className="flex gap-3 p-3 rounded-lg" style={{ borderLeft: "2px solid transparent" }}>
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: C.teal }} />
                   <div>
                     <div className="text-white font-bold text-[15px]">{t}</div>
@@ -384,7 +370,7 @@ const Landing = () => {
       {/* PERSONAS */}
       <section id="user-stories" className="py-20 px-6" style={{ background: C.bg }}>
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-white">Who Uses ViaSetu? Anyone Who Ships a Parcel in India.</h2>
+          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-white">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
               { e: "🧁", t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
@@ -406,7 +392,7 @@ const Landing = () => {
       <section className="py-10 px-6" style={{ background: `linear-gradient(90deg, ${C.teal}, #007A7A)` }}>
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 divide-x divide-white/20">
           {[
-            { v: 14, s: "+", l: "Courier Partners" },
+            { v: 5, s: "+", l: "Active Courier Partners" },
             { v: 21000, s: "+", l: "Pincodes Covered" },
             { v: 40, s: "%", l: "Average Savings" },
             { v: 4, s: " Steps", l: "To Send Any Parcel" },
@@ -426,14 +412,23 @@ const Landing = () => {
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Compare prices and book courier pickup on India's most shipped routes</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10">
             {ROUTES.map((r) => (
-              <a key={r} href={`/courier/${slug(r)}`} aria-label={`${r} Courier`} className="px-4 py-2 rounded-full text-[13px] text-white text-center transition-colors hover:bg-[#00C8C8] hover:text-[#080E1A]"
-                style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              <button
+                key={r}
+                onClick={goSend}
+                aria-label={`Book ${r} Courier`}
+                className="px-4 py-2 rounded-full text-[13px] text-white text-center transition-colors hover:bg-[#00C8C8] hover:text-[#080E1A]"
+                style={{ background: C.card, border: `1px solid ${C.border}` }}
+              >
                 {r} Courier
-              </a>
+              </button>
             ))}
           </div>
           <p className="mt-8 text-[13px]" style={{ color: C.gray }}>
-            Can't find your route? <a href="#hero" className="underline" style={{ color: C.teal }}>Enter details above →</a> to compare any pincode to pincode combination across India.
+            Can't find your route?{" "}
+            <button onClick={goSend} className="underline" style={{ color: C.teal }}>
+              Open the booking app →
+            </button>{" "}
+            to compare any pincode-to-pincode combination across India.
           </p>
         </div>
       </section>
@@ -446,33 +441,13 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* DOWNLOAD CTA */}
-      <section id="download" className="py-20 px-6" style={{ background: `linear-gradient(180deg, ${C.bg2}, ${C.bg})` }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-[28px] md:text-[40px] font-bold text-white">Send Your First Parcel in Under 2 Minutes</h2>
-          <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Join thousands of Indians who've stopped overpaying at courier shops.</p>
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
-            <button className="h-12 px-6 rounded-lg font-bold flex items-center justify-center gap-2" style={{ background: C.teal, color: C.bg }}>
-              <Smartphone className="h-5 w-5" /> Download on Android
-            </button>
-            <button onClick={goSend} className="h-12 px-6 rounded-lg font-bold flex items-center justify-center gap-2 border-2" style={{ borderColor: C.white, color: C.white }}>
-              🍎 Download on iOS
-            </button>
-          </div>
-          <button onClick={goSend} className="mt-5 text-[14px] font-semibold" style={{ color: C.teal }}>
-            Or use ViaSetu on web →
-          </button>
-          <div className="mt-12"><PhoneMockup /></div>
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
           <div>
-            <div className="text-white font-bold text-[20px]">Via<span style={{ color: C.teal }}>Setu.</span></div>
+            <div className="text-white font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
             <div className="text-[13px] font-semibold mt-2 text-white">India's First Consumer Courier Aggregator</div>
-            <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from 14+ couriers, book doorstep pickup and track all shipments — all in one app.</p>
+            <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
             <div className="flex gap-4 mt-4">
               <a href="#" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
               <a href="#" aria-label="Twitter" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Twitter className="h-5 w-5" /></a>
@@ -482,8 +457,16 @@ const Landing = () => {
           <div>
             <h3 className="text-white font-bold text-[14px] mb-4">Our Services</h3>
             <ul className="space-y-2 text-[13px]">
-              {["Compare Courier Prices","Book Courier Online","International Shipping","Courier Tracking","Doorstep Pickup","Bulk Shipping (Coming Soon)"].map((x) => (
-                <li key={x}><a href="#hero" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x}</a></li>
+              {[
+                { label: "Compare Courier Prices", onClick: goSend },
+                { label: "Book Courier Online", onClick: goSend },
+                { label: "Courier Tracking", onClick: goTrack },
+                { label: "Doorstep Pickup", onClick: goSend },
+                { label: "Bulk Shipping (Coming Soon)", onClick: goSend },
+              ].map((x) => (
+                <li key={x.label}>
+                  <button onClick={x.onClick} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{x.label}</button>
+                </li>
               ))}
             </ul>
           </div>
@@ -491,7 +474,9 @@ const Landing = () => {
             <h3 className="text-white font-bold text-[14px] mb-4">Popular Routes</h3>
             <ul className="space-y-2 text-[13px]">
               {ROUTES.slice(0, 6).map((r) => (
-                <li key={r}><a href={`/courier/${slug(r)}`} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{r} Courier</a></li>
+                <li key={r}>
+                  <button onClick={goSend} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{r} Courier</button>
+                </li>
               ))}
             </ul>
           </div>
@@ -505,7 +490,7 @@ const Landing = () => {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-10 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
-          <span>© 2025 ViaSetu. All rights reserved.</span>
+          <span>© 2025 Viasetu. All rights reserved.</span>
           <span>Made with ❤️ for every Indian who ships a parcel.</span>
         </div>
       </footer>
