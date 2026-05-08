@@ -12,7 +12,7 @@ const BookingProgress = ({
   const progressPercentage = (currentStep - 1) / (totalSteps - 1) * 100;
   return <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground text-teal-300">
           Step {currentStep} of {totalSteps}
         </div>
         <div className="text-sm font-medium text-primary">
