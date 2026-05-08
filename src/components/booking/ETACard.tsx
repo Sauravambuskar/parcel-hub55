@@ -101,7 +101,7 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
   return (
     <div
       onClick={onSelect}
-      className={`relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+      className={`relative flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border cursor-pointer transition-all ${
         isSelected
           ? "border-primary bg-primary/10 ring-1 ring-primary"
           : "border-border bg-card hover:border-primary/40 hover:bg-accent/50"
@@ -126,12 +126,12 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
       </div>
 
       {/* Logo */}
-      <div className="w-9 h-9 bg-white rounded-md flex items-center justify-center overflow-hidden border border-border shrink-0">
+      <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-md flex items-center justify-center overflow-hidden border border-border shrink-0">
         {hasValidLogo ? (
           <img
             src={logo}
             alt={courierData.partner_name}
-            className="w-7 h-7 object-contain"
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -142,18 +142,18 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
       {/* Partner info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="font-semibold text-sm truncate">{courierData.partner_name}</p>
+          <p className="font-semibold text-xs sm:text-sm truncate">{courierData.partner_name}</p>
           {courierData.delivery_modes?.express && (
             <Zap className="h-3 w-3 text-warning shrink-0" />
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5 capitalize truncate">
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 capitalize truncate">
           {courierData.service_name.replace(/_/g, " ")}
         </p>
       </div>
 
       {/* Rating */}
-      <div className="w-[52px] text-center shrink-0">
+      <div className="w-[42px] text-center shrink-0">
         {rating != null ? (
           <div className="flex items-center justify-center gap-0.5">
             <Star className="h-3 w-3 text-warning fill-warning" />
@@ -165,15 +165,15 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
       </div>
 
       {/* ETA */}
-      <div className="w-[56px] text-center shrink-0">
-        <div className="flex items-center justify-center gap-1 text-sm font-medium text-foreground">
+      <div className="w-[40px] text-center shrink-0">
+        <div className="flex items-center justify-center gap-0.5 text-xs sm:text-sm font-medium text-foreground">
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span>{days}d</span>
         </div>
       </div>
 
-      {/* Confidence / Reliability */}
-      <div className="w-[62px] text-center shrink-0">
+      {/* Confidence / Reliability — hidden on mobile */}
+      <div className="hidden sm:block w-[62px] text-center shrink-0">
         {confidenceScore !== null && confidenceScore !== undefined ? (
           <div>
             <div className="w-10 h-1.5 rounded-full bg-muted mx-auto overflow-hidden">
@@ -193,8 +193,8 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
       </div>
 
       {/* Price */}
-      <div className="w-[68px] shrink-0 text-right">
-        <span className="text-sm font-bold bg-foreground text-background px-2 py-0.5 rounded">
+      <div className="w-[60px] sm:w-[68px] shrink-0 text-right">
+        <span className="text-xs sm:text-sm font-bold bg-foreground text-background px-1.5 sm:px-2 py-0.5 rounded">
           ₹{totalPrice}
         </span>
         <p className="text-[9px] text-muted-foreground mt-0.5">excl. GST</p>
