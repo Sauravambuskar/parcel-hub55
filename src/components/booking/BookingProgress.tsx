@@ -47,7 +47,7 @@ const BookingProgress = ({
                 
                 {/* Step Label - only show for current step on mobile */}
                 <span className={cn(
-                  "text-[10px] sm:text-xs mt-2 text-center px-1.5 py-0.5 rounded-md transition-colors duration-300 text-primary-foreground bg-primary-glow leading-tight max-w-full truncate",
+                  "text-[10px] sm:text-xs mt-2 text-center px-1.5 py-0.5 rounded-md transition-colors duration-300 text-primary-foreground bg-primary-glow leading-tight max-w-full",
                   isCurrent ? "font-semibold block" : "hidden sm:block",
                   isCompleted && "font-medium"
                 )}>
