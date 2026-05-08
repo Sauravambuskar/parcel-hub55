@@ -46,15 +46,17 @@ interface ETACardProps {
 
 /** Column header row rendered once above the list */
 export const ETACardHeader = () => (
-  <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-foreground bg-background rounded-lg border border-border select-none hover:bg-accent/50 transition-colors">
-    {/* Partner — spans radio + logo + name area */}
-    <div className="flex-1 min-w-0 text-left text-xs">Courier Partner</div>
+  <div className="flex items-center gap-2 px-2 sm:px-3 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-foreground bg-background rounded-lg border border-border select-none">
+    {/* Spacer for radio + logo */}
+    <div className="w-[60px] shrink-0" />
+    {/* Partner */}
+    <div className="flex-1 min-w-0 text-left">Partner</div>
     {/* Rating */}
-    <div className="w-[52px] text-center shrink-0">Rating</div>
+    <div className="w-[42px] text-center shrink-0">★</div>
     {/* ETA */}
-    <div className="w-[56px] text-center shrink-0">ETA</div>
-    {/* Confidence */}
-    <div className="w-[62px] text-center shrink-0 flex items-center justify-center gap-0.5">
+    <div className="w-[40px] text-center shrink-0">ETA</div>
+    {/* Confidence - hidden on mobile */}
+    <div className="hidden sm:flex w-[62px] text-center shrink-0 items-center justify-center gap-0.5">
       <span>Reliability</span>
       <TooltipProvider delayDuration={200}>
         <Tooltip>
@@ -68,7 +70,7 @@ export const ETACardHeader = () => (
       </TooltipProvider>
     </div>
     {/* Price */}
-    <div className="w-[68px] text-right shrink-0">Price</div>
+    <div className="w-[60px] sm:w-[68px] text-right shrink-0">Price</div>
   </div>
 );
 
