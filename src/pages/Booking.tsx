@@ -1199,7 +1199,7 @@ const Booking = () => {
             <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold text-gray-50">Book Delivery</h1>
+            <h1 className="text-xl font-semibold text-slate-700">Book Delivery</h1>
           </div>
         </header>
 
