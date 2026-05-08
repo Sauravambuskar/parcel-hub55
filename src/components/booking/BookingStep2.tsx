@@ -362,11 +362,6 @@ const BookingStep2 = ({
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">Pincode Information</h2>
-        <p className="text-muted-foreground">Enter pickup and delivery pincodes</p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
