@@ -16,6 +16,7 @@ export default function SEOPanel({ content, onChange }: Props) {
   const analysis = analyzeSeo(content);
   const ringColor = analysis.rating === 'good' ? 'text-green-600' : analysis.rating === 'ok' ? 'text-amber-600' : 'text-red-600';
   const barColor = analysis.rating === 'good' ? 'bg-green-500' : analysis.rating === 'ok' ? 'bg-amber-500' : 'bg-red-500';
+  void barColor;
 
   return (
     <div className="space-y-4">
@@ -24,7 +25,7 @@ export default function SEOPanel({ content, onChange }: Props) {
           <span className="text-sm font-medium">SEO Score</span>
           <span className={`text-lg font-bold ${ringColor}`}>{analysis.score}/100</span>
         </div>
-        <Progress value={analysis.score} className="h-2" indicatorClassName={barColor} />
+        <Progress value={analysis.score} className="h-2" />
         <ul className="space-y-1.5 text-xs">
           {analysis.checks.map((c) => (
             <li key={c.id} className="flex items-start gap-2">
