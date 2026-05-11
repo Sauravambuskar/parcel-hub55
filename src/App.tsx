@@ -77,6 +77,15 @@ const App = () => (
             <Route path="support" element={<SupportManagement />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<SystemSettings />} />
+            <Route path="cms" element={<ProtectedAdminRoute requireSuperAdmin><CMSDashboard /></ProtectedAdminRoute>} />
+            <Route path="cms/posts" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="post" /></ProtectedAdminRoute>} />
+            <Route path="cms/posts/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="post" /></ProtectedAdminRoute>} />
+            <Route path="cms/pages" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="page" /></ProtectedAdminRoute>} />
+            <Route path="cms/pages/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="page" /></ProtectedAdminRoute>} />
+            <Route path="cms/faqs" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="faq" /></ProtectedAdminRoute>} />
+            <Route path="cms/faqs/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="faq" /></ProtectedAdminRoute>} />
+            <Route path="cms/partners" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="partner" /></ProtectedAdminRoute>} />
+            <Route path="cms/partners/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="partner" /></ProtectedAdminRoute>} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

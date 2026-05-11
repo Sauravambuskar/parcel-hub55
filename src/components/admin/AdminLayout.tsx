@@ -13,7 +13,8 @@ import {
   Shield,
   Home,
   MapPin,
-  AlertTriangle
+  AlertTriangle,
+  FileEdit
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -40,6 +41,7 @@ const adminMenuItems = [
   { title: "Payment Reconciliation", url: "/admin/reconciliation", icon: AlertTriangle },
   { title: "Support Management", url: "/admin/support", icon: MessageSquare },
   { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Content (CMS)", url: "/admin/cms", icon: FileEdit, requireSuperAdmin: true },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
 ];
 
