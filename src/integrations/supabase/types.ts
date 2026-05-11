@@ -191,6 +191,207 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_authors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          id: string
+          linked_admin_user_id: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          linked_admin_user_id?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          id?: string
+          linked_admin_user_id?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_content: {
+        Row: {
+          author_id: string | null
+          body_html: string | null
+          canonical_url: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          faq_order: number | null
+          featured_image_alt: string | null
+          featured_image_url: string | null
+          focus_keyphrase: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
+          partner_code: string | null
+          published_at: string | null
+          robots: string | null
+          schema_json: Json | null
+          schema_type: string | null
+          seo_score: number | null
+          slug: string
+          status: Database["public"]["Enums"]["cms_content_status"]
+          tags: string[] | null
+          title: string
+          type: Database["public"]["Enums"]["cms_content_type"]
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          body_html?: string | null
+          canonical_url?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          faq_order?: number | null
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          focus_keyphrase?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          partner_code?: string | null
+          published_at?: string | null
+          robots?: string | null
+          schema_json?: Json | null
+          schema_type?: string | null
+          seo_score?: number | null
+          slug: string
+          status?: Database["public"]["Enums"]["cms_content_status"]
+          tags?: string[] | null
+          title: string
+          type: Database["public"]["Enums"]["cms_content_type"]
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          body_html?: string | null
+          canonical_url?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          faq_order?: number | null
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          focus_keyphrase?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          partner_code?: string | null
+          published_at?: string | null
+          robots?: string | null
+          schema_json?: Json | null
+          schema_type?: string | null
+          seo_score?: number | null
+          slug?: string
+          status?: Database["public"]["Enums"]["cms_content_status"]
+          tags?: string[] | null
+          title?: string
+          type?: Database["public"]["Enums"]["cms_content_type"]
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_content_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "cms_authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "cms_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          public_url: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          public_url: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          public_url?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       courier_scores: {
         Row: {
           avg_delay_days: number | null
@@ -692,6 +893,8 @@ export type Database = {
     }
     Enums: {
       admin_role: "super_admin" | "support"
+      cms_content_status: "draft" | "published" | "scheduled"
+      cms_content_type: "post" | "page" | "faq" | "partner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -820,6 +1023,8 @@ export const Constants = {
   public: {
     Enums: {
       admin_role: ["super_admin", "support"],
+      cms_content_status: ["draft", "published", "scheduled"],
+      cms_content_type: ["post", "page", "faq", "partner"],
     },
   },
 } as const
