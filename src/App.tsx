@@ -13,6 +13,12 @@ import History from "./pages/History";
 import OrderDetails from "./pages/OrderDetails";
 import Support from "./pages/Support";
 import Settings from "./pages/Settings";
+import Blog from "./pages/cms/Blog";
+import CmsArticle from "./pages/cms/CmsArticle";
+import FaqPage from "./pages/cms/FaqPage";
+import CMSDashboard from "./pages/admin/cms/CMSDashboard";
+import ContentList from "./components/admin/cms/ContentList";
+import ContentEditor from "./components/admin/cms/ContentEditor";
 
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -49,6 +55,13 @@ const App = () => (
           <Route path="/order/:orderId" element={<OrderDetails />} />
           <Route path="/support" element={<Support />} />
           <Route path="/settings" element={<Settings />} />
+
+          {/* Public CMS Routes */}
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<CmsArticle type="post" />} />
+          <Route path="/p/:slug" element={<CmsArticle type="page" />} />
+          <Route path="/courier/:slug" element={<CmsArticle type="partner" />} />
+          <Route path="/faq" element={<FaqPage />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
