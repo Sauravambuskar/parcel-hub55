@@ -1,49 +1,97 @@
-# Landing Page Refresh
+## ViaSetu CMS — SEO-First Content Management
 
-Scope: only `src/pages/Landing.tsx` and minor checks on `src/pages/Tracking.tsx` to ensure AWB tracking works without login. No backend, auth, or booking logic changes.
+A WordPress/Yoast-style CMS built into the existing `/admin` panel, backed by Supabase. Editors (super admins) can create blog posts, landing pages, FAQs, and courier partner pages — each with full SEO controls (meta title, meta description, focus keyphrase, slug, schema, featured image, alt text, author, category, tags, publish date).
 
-## Changes
+### 1. Content Types
 
-### 1. Branding & Typography
-- Replace all "ViaSetu" / "Via Setu" wordmarks with **Viasetu** (no space, no period). Includes: nav logo, mobile menu, footer logo, hero copy, FAQs, meta references in copy.
-- Switch landing page font to **Helvetica**: set `fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif'` on the page wrapper. (Other app pages stay on Inter.)
+All four types share the same SEO fields but have different bodies:
 
-### 2. Hero Simplification
-- Remove the full **BookingWidget** (Domestic/International/Track tabs + pincode/weight/parcel-type inputs).
-- Replace with a single, large **"Send a Parcel →"** button that navigates to `/login` (the entry point to the booking app).
-- Keep the headline, subheadline, trust badges row, and right-side phone mockup.
-- Add a secondary inline **"Track your parcel"** AWB mini-form in the hero (single input + button) that routes to `/tracking` with the AWB pre-filled — this gives a public tracking entry point right from the home page.
+| Type | Public route | Body fields |
+|------|-------------|-------------|
+| Blog post | `/blog/:slug` | Rich text, excerpt, category, tags, author, reading time |
+| Landing/SEO page | `/p/:slug` (e.g. `/p/courier-delhi-to-mumbai`) | Rich text + custom JSON-LD |
+| FAQ | feeds `/faq` and JSON-LD on Landing | Question, answer, order |
+| Courier partner page | `/courier/:slug` (e.g. `/courier/dhl`) | Linked partner, rich text, pros/cons |
 
-### 3. Public Tracking
-- Verify `/tracking` route is public (it is — defined outside the protected layout in `App.tsx`).
-- Update `Tracking.tsx` only if it currently blocks unauthenticated access (read shows it does not require auth for the search itself; will confirm and, if needed, remove any auth gate around the AWB lookup).
-- The hero AWB mini-form will `navigate('/tracking', { state: { awbNumber } })` so the page auto-searches.
+### 2. SEO Fields (Yoast-style, on every content type)
 
-### 4. Navbar
-- Remove **International** link.
-- Keep: Compare Couriers (anchors to hero), Track Shipment (routes to `/tracking`), How It Works, Blog/FAQ.
-- "Send a Parcel" button still routes to `/login`.
-- "Track Your Parcel" button routes to `/tracking`.
+- **Meta title** (≤60 chars, live counter + Google preview)
+- **Meta description** (≤160 chars, live counter)
+- **Focus keyphrase** + automated checks (in title? in slug? in first paragraph? in H2? density?)
+- **Slug** (auto-generated from title, editable, uniqueness check)
+- **Canonical URL** (optional override)
+- **Schema type** (Article / FAQPage / WebPage / Product) — auto-generates JSON-LD
+- **Featured image** + **Alt text** (required)
+- **Open Graph image** (defaults to featured)
+- **Robots** (index/noindex, follow/nofollow)
+- **Publish date**, **Author**, **Category**, **Tags**
+- **SEO score** (red/orange/green like Yoast) computed client-side from the checks above
 
-### 5. Partners Section
-- Replace `PARTNERS` list with **only the existing integrated partners**: Delhivery, Shadowfax, XpressBees, UrbaneBolt, Shree Maruti.
-- Add a separate row/badges labeled **"More partners coming soon"** with placeholder names (e.g. DTDC, Blue Dart, India Post, DHL, FedEx) styled as muted/"Coming Soon" chips.
+### 3. Editor UI (under `/admin/cms`)
 
-### 6. Popular Routes → Linked to App
-- Each route chip currently links to `/courier/{slug}` (a non-existent route).
-- Update all route chips and the footer "Popular Routes" list to link to `/login` (or `/booking` if user is already authed) so clicks funnel to the booking flow.
+```
+/admin/cms              → Dashboard: counts, recent edits, draft list
+/admin/cms/posts        → List + filters (status, category, author)
+/admin/cms/posts/new    → Editor
+/admin/cms/posts/:id    → Editor
+/admin/cms/pages        → Landing pages list + editor
+/admin/cms/faqs         → FAQ list + editor
+/admin/cms/partners     → Partner pages list + editor
+/admin/cms/categories   → Manage categories & tags
+/admin/cms/media        → Browse uploaded images
+```
 
-### 7. Removals
-- Remove **International** tab/section entirely (already covered in hero + nav). Also remove the "International Shipping Made Simple" item from the Why ViaSetu list and the international FAQ entry.
-- Remove the entire **Download** section (`#download` with Android/iOS buttons and phone mockup).
-- Remove the "Available Now / Android / iOS" badge block under the hero phone mockup.
-- Remove "International Shipping" link from footer Services list.
+Editor screen layout:
+- Left: title, slug, rich text body (TipTap), featured image picker
+- Right sidebar (collapsible panels): Publish, SEO (Yoast-style), Schema, Categories/Tags, Social preview
 
-### 8. Untouched
-- Auth, Supabase, edge functions, booking flow, all other routes.
-- `index.html` SEO/meta and JSON-LD remain (only references inside the React landing change).
+### 4. Public-facing Pages
 
-## Technical Notes
-- Single file edit: `src/pages/Landing.tsx` (~80% rewrite of JSX, same component structure).
-- Quick read of `src/pages/Tracking.tsx` to confirm the AWB lookup edge function call doesn't require an auth session; if it does, expose a public path.
-- No new dependencies. Helvetica is a system font — no font import needed.
+- `/blog` — paginated list, filter by category/tag
+- `/blog/:slug` — article, with JSON-LD Article schema, breadcrumbs, related posts
+- `/p/:slug` — landing pages
+- `/courier/:slug` — partner pages
+- `/faq` — grouped FAQs with FAQPage JSON-LD
+
+Each page uses **react-helmet-async** to inject `<title>`, meta tags, OG/Twitter tags, canonical, and JSON-LD into `<head>` at runtime. Sitemap (`/sitemap.xml`) regenerated dynamically from published content.
+
+### 5. Database (Supabase)
+
+New tables (all with RLS — public can SELECT only `status='published'`; super admins full access):
+
+- `cms_content` — unified table for all 4 types (`type`, `title`, `slug`, `body_html`, `excerpt`, `featured_image_url`, `featured_image_alt`, `meta_title`, `meta_description`, `focus_keyphrase`, `canonical_url`, `schema_type`, `schema_json`, `og_image_url`, `robots`, `status` [draft/published/scheduled], `published_at`, `author_id`, `category_id`, `tags[]`, `seo_score`, `view_count`)
+- `cms_categories` — `name`, `slug`, `description`
+- `cms_authors` — `name`, `slug`, `bio`, `avatar_url`, `linked_admin_user_id`
+- `cms_media` — uploaded image references with alt text
+
+Storage: new Supabase bucket `cms-media` (public read, super-admin write).
+
+### 6. Tech Choices
+
+- **Rich text editor**: TipTap (headings, lists, links, images, code, embeds, table) — outputs clean HTML
+- **Image uploads**: direct to Supabase Storage from the admin
+- **SEO checks**: client-side utility module computing the Yoast-style score
+- **Public meta tags**: `react-helmet-async`
+- **Sitemap**: edge function `generate-sitemap` queries published content and returns XML; route `/sitemap.xml` rewritten in `vercel.json` to call it
+- **Caching**: public pages fetch via Supabase anon key with `useQuery` (5-min stale time)
+
+### 7. Indexing & Discoverability
+
+- Auto-add new URLs to `sitemap.xml` (regenerated on publish)
+- Internal linking: blog posts surface on landing pages and partner pages
+- Breadcrumb JSON-LD on all CMS pages
+- RSS feed at `/rss.xml` (edge function)
+- Update `robots.txt` to reference dynamic sitemap
+
+### 8. Build Phases
+
+1. **Schema & storage**: migration for tables, RLS, `cms-media` bucket
+2. **Admin CMS shell**: routes, list views, navigation entry in `AdminLayout`
+3. **Editor + TipTap + image upload + Yoast-style SEO panel**
+4. **Public routes**: `/blog`, `/blog/:slug`, `/p/:slug`, `/courier/:slug`, `/faq` with helmet
+5. **Sitemap + RSS edge functions, `vercel.json` rewrites**
+6. **Seed initial content** (a few SEO landing pages for top routes + partner pages)
+
+### Note on SEO rendering
+
+You chose client-side rendering. Google does index JS, but for maximum SEO impact (especially for social previews and faster indexing), prerendering would help. We can add it later as a phase 7 if needed without changing the CMS itself.
