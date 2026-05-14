@@ -108,7 +108,11 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
           </div>
           <nav className="flex flex-col p-6 gap-5">
             {links.map((l) => (
-              <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
+              l.external ? (
+                <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</Link>
+              ) : (
+                <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
+              )
             ))}
             <button onClick={() => { setOpen(false); onTrackClick(); }} className="mt-4 h-12 rounded-lg border-2 font-semibold" style={{ borderColor: C.teal, color: C.teal }}>Track Your Parcel</button>
             <button onClick={() => { setOpen(false); onSendClick(); }} className="h-12 rounded-lg font-bold" style={{ background: C.teal, color: C.bg }}>Send a Parcel →</button>
