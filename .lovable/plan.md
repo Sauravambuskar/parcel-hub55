@@ -1,45 +1,98 @@
-## CMS editor improvements
+# Role-Based Sub-Users for ViaSetu Admin
 
-Six fixes/additions across the editor, tags input, and category picker.
+## Goal
 
-### 1. Bullet & numbered lists rendering
-Cause: editor uses `prose` classes, but `@tailwindcss/typography` is not enabled, so Tailwind's preflight strips list bullets. Fix by adding explicit list styles to the editor surface (and rendered article) so `<ul>` shows discs and `<ol>` shows numbers regardless of the typography plugin.
+Extend the existing admin system so the Super Admin can create sub-users with limited access, each with their own login URL and visible sections.
 
-### 2. Headings H1–H6
-Replace the two heading buttons (H2, H3) with a heading dropdown offering Paragraph + H1 through H6, each calling `toggleHeading({ level })`. Active level is highlighted.
+## Roles
 
-### 3. Add new category from the editor
-Next to the Category dropdown in `ContentEditor.tsx`, add a small "+ New" button that opens a dialog with a Name field, slugifies it, inserts into `cms_categories`, refreshes the list, and auto-selects the new category.
+| Role | Login URL | Visible Sections |
+|---|---|---|
+| `super_admin` (existing) | `/admin/login` | Everything |
+| `cms_editor` (new) | `/cms/login` | Content (CMS) only |
+| `operations` (new) | `/ops/login` | Order Monitoring, Real-Time Tracking, Reconciliation, Support Management, User Management |
 
-### 4. Enter key for tags
-Replace the comma-separated `Input` with a chip-style tag input: typing a tag and pressing Enter (or comma) adds it as a chip; Backspace on empty input removes the last; each chip has an × to remove. Stored as the same `tags: string[]`.
+- Email domain restriction is **removed** for sub-user creation. Super admin emails still keep `@viasetu.com` (existing rule untouched).
+- Permissions are fixed per role (no per-section toggles).
 
-### 5. Hyperlink for selected keyword
-Keep the link button but improve it: open a small dialog (instead of `window.prompt`) with URL + "Open in new tab" checkbox. If text is selected, wrap it in the link; if not, insert the URL as link text. Adds `target="_blank" rel="noopener"` when checked. Unlink button shown when caret is inside a link.
+## What changes
 
-### 6. Text formatting toolbar additions
-Add the missing common controls:
-- Underline (new `@tiptap/extension-underline`)
-- Strikethrough (already in StarterKit)
-- Inline code
-- Text alignment: left / center / right / justify (`@tiptap/extension-text-align`)
-- Text color + highlight (`@tiptap/extension-color`, `@tiptap/extension-highlight`, `@tiptap/extension-text-style`)
-- Horizontal rule
-- Clear formatting
+### 1. Database (migration)
 
-Group toolbar into sections separated by thin dividers: Headings · Bold/Italic/Underline/Strike/Code · Color/Highlight · Lists · Align · Quote/HR/Link/Image · Undo/Redo.
+Extend the existing `admin_role` enum:
 
-### Files to change
+```sql
+ALTER TYPE admin_role ADD VALUE 'cms_editor';
+ALTER TYPE admin_role ADD VALUE 'operations';
+```
 
-- `src/components/admin/cms/RichTextEditor.tsx` — new toolbar, extensions, link dialog, list CSS class.
-- `src/components/admin/cms/TagInput.tsx` (new) — chip tag input with Enter/Backspace.
-- `src/components/admin/cms/CategoryPicker.tsx` (new) — Select + "New" dialog wrapper, or inline in `ContentEditor.tsx`.
-- `src/components/admin/cms/ContentEditor.tsx` — wire new tag input, category creator.
-- `src/pages/cms/CmsArticle.tsx` — add the same list/heading CSS so published articles render bullets, headings, alignment, colors correctly on the public site.
-- `package.json` — add `@tiptap/extension-underline`, `@tiptap/extension-text-align`, `@tiptap/extension-color`, `@tiptap/extension-text-style`, `@tiptap/extension-highlight`.
+Add helper functions mirroring `is_super_admin`:
+- `is_cms_editor(uuid)` → role in (`super_admin`, `cms_editor`)
+- `is_operations(uuid)` → role in (`super_admin`, `operations`)
 
-### Notes
+Update existing RLS policies that reference `is_super_admin` for CMS tables (`cms_content`, `cms_categories`, `cms_authors`, `cms_media`) to use `is_cms_editor` instead, so CMS Editors can manage content. Operations gets read access on `bookings`, `support_tickets`, `ticket_messages`, `profiles` via new policies using `is_operations`.
 
-- No DB schema changes (`tags` is already `text[]`, `cms_categories` already has insert via super-admin RLS).
-- Editor output remains plain HTML — no migration needed for existing posts.
-- Public article styling will be updated to match so what authors see is what readers get.
+### 2. Edge function: `create-admin-user`
+
+- Drop the `@viasetu.com` check.
+- Accept `role` value of `super_admin` | `cms_editor` | `operations` (still super-admin-only to invoke).
+- Reset-password redirect chosen based on role: `/admin/reset-password` (super), `/cms/reset-password`, `/ops/reset-password`.
+
+### 3. Frontend routes (`src/App.tsx`)
+
+Add:
+- `/cms/login` → reuses existing AdminLogin component, redirects on success to `/admin/cms`
+- `/ops/login` → redirects on success to `/admin/orders`
+- `/cms/reset-password`, `/ops/reset-password` → reuse ResetPassword component
+
+`/admin` route group stays. Access is gated per-route by an enhanced `ProtectedAdminRoute`.
+
+### 4. `ProtectedAdminRoute` enhancement
+
+Replace `requireSuperAdmin?: boolean` with `allowedRoles?: AdminRole[]`. Default still allows any active admin. Each route in `App.tsx` declares the roles permitted:
+
+- CMS routes → `['super_admin', 'cms_editor']`
+- Orders / Tracking / Support / Reconciliation / Users → `['super_admin', 'operations']`
+- Admin Users / System Settings / Revenue / Analytics → `['super_admin']`
+
+If a logged-in sub-user hits a forbidden URL, redirect to their default landing page.
+
+### 5. `AdminLayout` sidebar
+
+Filter menu items by role using a new `allowedRoles` field on each menu entry. CMS Editor sees only "Content (CMS)". Operations sees Orders, Tracking, Users, Support, Reconciliation. Header title adapts ("CMS Panel" / "Operations Panel" / "Admin Panel").
+
+### 6. Admin Users management page
+
+In `AdminUserManagement.tsx`:
+- Role dropdown gains `cms_editor` and `operations` options.
+- Email field no longer enforces `@viasetu.com` (super admin can pick any domain).
+- Helper text clarifies which sections each role unlocks.
+
+### 7. Login pages
+
+`AdminLogin` already exists. Create thin wrappers `CmsLogin` and `OpsLogin` that reuse it but:
+- Show role-specific branding ("CMS Login" / "Operations Login")
+- After successful auth, verify the user's `admin_users.role` matches the expected group; otherwise sign out with an error.
+- Redirect to the role's default landing page.
+
+## Files
+
+**New**
+- `src/pages/cms/CmsLogin.tsx`
+- `src/pages/ops/OpsLogin.tsx`
+- supabase migration (enum values + helper functions + RLS updates)
+
+**Edited**
+- `src/App.tsx` (routes + per-route role guards)
+- `src/components/admin/ProtectedAdminRoute.tsx` (allowedRoles support, role-aware redirect)
+- `src/components/admin/AdminLayout.tsx` (sidebar filtering by role, dynamic header)
+- `src/pages/admin/AdminUserManagement.tsx` (role options, drop domain restriction)
+- `src/pages/admin/AdminLogin.tsx` (small refactor to accept expected role group + redirect target)
+- `supabase/functions/create-admin-user/index.ts` (remove domain check, accept new roles, role-based redirect)
+
+## Out of scope
+
+- No per-section permission toggles (fixed role mapping).
+- No 2FA changes.
+- No bulk-import of users.
+- Existing super admins and their access remain unchanged.

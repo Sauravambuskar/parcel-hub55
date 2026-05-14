@@ -5,6 +5,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const ALLOWED_ROLES = ["super_admin", "cms_editor", "operations", "support"] as const;
+type Role = typeof ALLOWED_ROLES[number];
+
+const resetPathByRole: Record<Role, string> = {
+  super_admin: "/admin/reset-password",
+  cms_editor: "/cms/reset-password",
+  operations: "/ops/reset-password",
+  support: "/ops/reset-password",
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,28 +24,16 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Verify the requesting user is a super admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
+    if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !user) throw new Error("Unauthorized");
 
-    if (userError || !user) {
-      throw new Error("Unauthorized");
-    }
-
-    // Check if user is super admin
     const { data: adminUser } = await supabaseAdmin
       .from("admin_users")
       .select("role")
@@ -44,98 +42,74 @@ Deno.serve(async (req) => {
       .single();
 
     if (!adminUser || adminUser.role !== "super_admin") {
-      throw new Error("Only super admins can create admin users");
+      throw new Error("Only super admins can create users");
     }
 
     const { email, role } = await req.json();
 
-    // Validate email domain
-    if (!email || typeof email !== "string" || !email.endsWith("@viasetu.com")) {
-      throw new Error("Only @viasetu.com email addresses are allowed");
+    if (!email || typeof email !== "string") {
+      throw new Error("Email is required");
+    }
+    // Basic email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      throw new Error("Invalid email format");
+    }
+    // Super admin role still restricted to @viasetu.com
+    if (role === "super_admin" && !email.trim().endsWith("@viasetu.com")) {
+      throw new Error("Super admin emails must be @viasetu.com");
     }
 
-    // Validate role
-    if (!role || !["super_admin", "support"].includes(role)) {
+    if (!role || !ALLOWED_ROLES.includes(role)) {
       throw new Error("Invalid role specified");
     }
 
-    // Check if user already exists
     const { data: existingAdmin } = await supabaseAdmin
       .from("admin_users")
       .select("id")
       .eq("email", email.trim())
       .single();
+    if (existingAdmin) throw new Error("User with this email already exists");
 
-    if (existingAdmin) {
-      throw new Error("User with this email already exists");
-    }
-
-    // Create auth user with temporary password
     const tempPassword = crypto.randomUUID() + "A1@";
-    
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email.trim(),
       password: tempPassword,
       email_confirm: true,
     });
+    if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
+    if (!authData.user) throw new Error("Failed to create user");
 
-    if (authError) {
-      throw new Error(`Failed to create auth user: ${authError.message}`);
-    }
-
-    if (!authData.user) {
-      throw new Error("Failed to create user");
-    }
-
-    // Add to admin_users table
     const { error: insertError } = await supabaseAdmin
       .from("admin_users")
       .insert({
         user_id: authData.user.id,
         email: email.trim(),
-        role: role,
+        role,
         is_active: true,
         created_by: user.id,
       });
 
     if (insertError) {
-      // Rollback: delete the auth user if admin_users insert fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       throw new Error(`Failed to create admin user: ${insertError.message}`);
     }
 
-    // Send password reset email
+    const redirectPath = resetPathByRole[role as Role] ?? "/admin/reset-password";
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(
       email.trim(),
-      {
-        redirectTo: `${req.headers.get("origin")}/admin/reset-password`,
-      }
+      { redirectTo: `${req.headers.get("origin")}${redirectPath}` }
     );
-
-    if (resetError) {
-      console.error("Failed to send password reset email:", resetError);
-    }
+    if (resetError) console.error("Failed to send password reset email:", resetError);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Admin user created successfully",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      JSON.stringify({ success: true, message: "User created successfully" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({
-        error: error.message || "An error occurred",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
+      JSON.stringify({ error: (error as Error).message || "An error occurred" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }
 });

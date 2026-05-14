@@ -19,6 +19,8 @@ import FaqPage from "./pages/cms/FaqPage";
 import CMSDashboard from "./pages/admin/cms/CMSDashboard";
 import ContentList from "./components/admin/cms/ContentList";
 import ContentEditor from "./components/admin/cms/ContentEditor";
+import CmsLogin from "./pages/cms/CmsLogin";
+import OpsLogin from "./pages/ops/OpsLogin";
 
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -66,26 +68,30 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/reset-password" element={<ResetPassword />} />
+          <Route path="/cms/login" element={<CmsLogin />} />
+          <Route path="/cms/reset-password" element={<ResetPassword />} />
+          <Route path="/ops/login" element={<OpsLogin />} />
+          <Route path="/ops/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="tracking" element={<RealTimeTracking />} />
-            <Route path="orders" element={<OrderMonitoring />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="admin-users" element={<ProtectedAdminRoute requireSuperAdmin><AdminUserManagement /></ProtectedAdminRoute>} />
-            <Route path="revenue" element={<RevenueManagement />} />
-            <Route path="reconciliation" element={<Reconciliation />} />
-            <Route path="support" element={<SupportManagement />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="settings" element={<SystemSettings />} />
-            <Route path="cms" element={<ProtectedAdminRoute requireSuperAdmin><CMSDashboard /></ProtectedAdminRoute>} />
-            <Route path="cms/posts" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="post" /></ProtectedAdminRoute>} />
-            <Route path="cms/posts/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="post" /></ProtectedAdminRoute>} />
-            <Route path="cms/pages" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="page" /></ProtectedAdminRoute>} />
-            <Route path="cms/pages/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="page" /></ProtectedAdminRoute>} />
-            <Route path="cms/faqs" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="faq" /></ProtectedAdminRoute>} />
-            <Route path="cms/faqs/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="faq" /></ProtectedAdminRoute>} />
-            <Route path="cms/partners" element={<ProtectedAdminRoute requireSuperAdmin><ContentList type="partner" /></ProtectedAdminRoute>} />
-            <Route path="cms/partners/:id" element={<ProtectedAdminRoute requireSuperAdmin><ContentEditor type="partner" /></ProtectedAdminRoute>} />
+            <Route path="dashboard" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminDashboard /></ProtectedAdminRoute>} />
+            <Route path="tracking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><RealTimeTracking /></ProtectedAdminRoute>} />
+            <Route path="orders" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><OrderMonitoring /></ProtectedAdminRoute>} />
+            <Route path="users" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><UserManagement /></ProtectedAdminRoute>} />
+            <Route path="admin-users" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminUserManagement /></ProtectedAdminRoute>} />
+            <Route path="revenue" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><RevenueManagement /></ProtectedAdminRoute>} />
+            <Route path="reconciliation" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><Reconciliation /></ProtectedAdminRoute>} />
+            <Route path="support" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><SupportManagement /></ProtectedAdminRoute>} />
+            <Route path="analytics" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><Analytics /></ProtectedAdminRoute>} />
+            <Route path="settings" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><SystemSettings /></ProtectedAdminRoute>} />
+            <Route path="cms" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><CMSDashboard /></ProtectedAdminRoute>} />
+            <Route path="cms/posts" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentList type="post" /></ProtectedAdminRoute>} />
+            <Route path="cms/posts/:id" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentEditor type="post" /></ProtectedAdminRoute>} />
+            <Route path="cms/pages" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentList type="page" /></ProtectedAdminRoute>} />
+            <Route path="cms/pages/:id" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentEditor type="page" /></ProtectedAdminRoute>} />
+            <Route path="cms/faqs" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentList type="faq" /></ProtectedAdminRoute>} />
+            <Route path="cms/faqs/:id" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentEditor type="faq" /></ProtectedAdminRoute>} />
+            <Route path="cms/partners" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentList type="partner" /></ProtectedAdminRoute>} />
+            <Route path="cms/partners/:id" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentEditor type="partner" /></ProtectedAdminRoute>} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
