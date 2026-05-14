@@ -883,11 +883,13 @@ export type Database = {
       }
     }
     Functions: {
+      can_manage_cms: { Args: { _user_id: string }; Returns: boolean }
       get_admin_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["admin_role"]
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_operations: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       mask_doc_number: { Args: { doc: string }; Returns: string }
     }
