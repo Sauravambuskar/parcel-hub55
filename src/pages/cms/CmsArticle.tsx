@@ -39,7 +39,7 @@ export default function CmsArticle({ type }: Props) {
       {post.featured_image_url && (
         <img src={post.featured_image_url} alt={post.featured_image_alt || post.title} className="w-full rounded-lg mb-6" />
       )}
-      <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: post.body_html || '' }} />
+      <div className="cms-content" dangerouslySetInnerHTML={{ __html: post.body_html || '' }} />
       {post.tags && post.tags.length > 0 && (
         <div className="mt-8 pt-6 border-t flex flex-wrap gap-2">
           {post.tags.map(t => <span key={t} className="text-xs px-2 py-1 rounded bg-muted">#{t}</span>)}
