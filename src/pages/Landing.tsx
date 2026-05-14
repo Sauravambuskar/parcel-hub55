@@ -47,11 +47,11 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const links = [
-    { href: "#hero", label: "Compare Couriers", onClick: undefined as undefined | (() => void) },
-    { href: "#track", label: "Track Shipment", onClick: undefined as undefined | (() => void) },
-    { href: "#how-it-works", label: "How It Works", onClick: undefined as undefined | (() => void) },
-    { href: "#blog", label: "Blog", onClick: undefined as undefined | (() => void) },
-    { href: "#faq", label: "FAQ", onClick: undefined as undefined | (() => void) },
+    { href: "#hero", label: "Compare Couriers", external: false },
+    { href: "#track", label: "Track Shipment", external: false },
+    { href: "#how-it-works", label: "How It Works", external: false },
+    { href: "/blog", label: "Blog", external: true },
+    { href: "/faq", label: "FAQ", external: true },
   ];
   return (
     <header
@@ -66,9 +66,15 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
 
         <nav className="hidden lg:flex items-center gap-8">
           {links.map((l) => (
-            <a key={l.label} href={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
-              {l.label}
-            </a>
+            l.external ? (
+              <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.label} href={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+                {l.label}
+              </a>
+            )
           ))}
         </nav>
 
@@ -102,7 +108,11 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
           </div>
           <nav className="flex flex-col p-6 gap-5">
             {links.map((l) => (
-              <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
+              l.external ? (
+                <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</Link>
+              ) : (
+                <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
+              )
             ))}
             <button onClick={() => { setOpen(false); onTrackClick(); }} className="mt-4 h-12 rounded-lg border-2 font-semibold" style={{ borderColor: C.teal, color: C.teal }}>Track Your Parcel</button>
             <button onClick={() => { setOpen(false); onSendClick(); }} className="h-12 rounded-lg font-bold" style={{ background: C.teal, color: C.bg }}>Send a Parcel →</button>
