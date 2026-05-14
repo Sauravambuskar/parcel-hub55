@@ -34,11 +34,33 @@ export default function ContentEditor({ type }: Props) {
   });
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [authors, setAuthors] = useState<Array<{ id: string; name: string }>>([]);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [creatingCat, setCreatingCat] = useState(false);
+
+  const loadCategories = () =>
+    supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
 
   useEffect(() => {
-    supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
+    loadCategories();
     supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
   }, []);
+
+  const createCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    setCreatingCat(true);
+    const { data: row, error } = await supabase.from('cms_categories')
+      .insert({ name, slug: slugify(name) }).select('id,name').single();
+    setCreatingCat(false);
+    if (error) { toast.error(error.message); return; }
+    await loadCategories();
+    patch({ category_id: row.id });
+    setNewCatName('');
+    setCatDialogOpen(false);
+    toast.success('Category created');
+  };
+
 
   useEffect(() => {
     if (isNew) return;
