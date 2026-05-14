@@ -7,12 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import RichTextEditor from '@/components/admin/cms/RichTextEditor';
 import MediaUpload, { uploadCmsImage } from '@/components/admin/cms/MediaUpload';
 import SEOPanel from '@/components/admin/cms/SEOPanel';
+import TagInput from '@/components/admin/cms/TagInput';
 import { CONTENT_TYPE_LABELS, CONTENT_TYPE_PATHS, slugify, type CmsContent, type CmsContentType } from '@/lib/cms/types';
 import { analyzeSeo } from '@/lib/cms/seo-score';
-import { Loader2, Save, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, ExternalLink, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
