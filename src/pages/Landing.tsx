@@ -47,11 +47,11 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const links = [
-    { href: "#hero", label: "Compare Couriers", onClick: undefined as undefined | (() => void) },
-    { href: "#track", label: "Track Shipment", onClick: undefined as undefined | (() => void) },
-    { href: "#how-it-works", label: "How It Works", onClick: undefined as undefined | (() => void) },
-    { href: "#blog", label: "Blog", onClick: undefined as undefined | (() => void) },
-    { href: "#faq", label: "FAQ", onClick: undefined as undefined | (() => void) },
+    { href: "#hero", label: "Compare Couriers", external: false },
+    { href: "#track", label: "Track Shipment", external: false },
+    { href: "#how-it-works", label: "How It Works", external: false },
+    { href: "/blog", label: "Blog", external: true },
+    { href: "/faq", label: "FAQ", external: true },
   ];
   return (
     <header
