@@ -16,6 +16,7 @@ import BookingStep2 from "@/components/booking/BookingStep2";
 import AddressStep from "@/components/booking/AddressStep";
 import BookingStep5 from "@/components/booking/BookingStep5";
 import PageBackground from "@/components/PageBackground";
+import PageSeo from "@/components/PageSeo";
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
 import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
@@ -1192,6 +1193,7 @@ const Booking = () => {
     }
   };
   return <PageBackground variant="logistics" opacity={0.7}>
+      <PageSeo title="Book a Courier — Compare 14+ Couriers Online | ViaSetu" description="Compare real-time prices and ETAs from 14+ couriers and book doorstep pickup across 21,000+ pincodes in India." path="/booking" />
       <div className="min-h-screen relative z-10">
         {/* Header */}
         <header className="backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-50 bg-primary-glow">

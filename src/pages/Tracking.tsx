@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
+import PageSeo from "@/components/PageSeo";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
@@ -393,6 +394,7 @@ const Tracking = () => {
 
   return (
     <div className="min-h-screen relative">
+      <PageSeo title="Track Parcel — Unified Courier Tracking | ViaSetu" description="Track shipments from Delhivery, XpressBees, Shadowfax, Shree Maruti and other couriers in one place by AWB number." path="/tracking" />
       <PageBackground variant="logistics" opacity={0.75} />
       
       {/* Header */}
