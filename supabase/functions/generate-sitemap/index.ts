@@ -34,14 +34,7 @@ Deno.serve(async () => {
     faq: "/faq",
   };
 
-  const staticUrls = [
-    { loc: "/", priority: "1.0" },
-    { loc: "/blog", priority: "0.8" },
-    { loc: "/faq", priority: "0.7" },
-    { loc: "/tracking", priority: "0.8" },
-  ];
-
-  const urls = staticUrls.map(u => `<url><loc>${SITE}${u.loc}</loc><priority>${u.priority}</priority></url>`).join("");
+  const urls = STATIC_URLS.map(u => `<url><loc>${SITE}${u.loc}</loc><priority>${u.priority}</priority></url>`).join("");
   const dyn = (data || [])
     .filter(r => r.type !== "faq")
     .map(r => `<url><loc>${SITE}${typePath[r.type]}/${r.slug}</loc><lastmod>${new Date(r.updated_at).toISOString()}</lastmod><priority>0.7</priority></url>`)
