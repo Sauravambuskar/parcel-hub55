@@ -331,3 +331,34 @@ All colors MUST be HSL.
     inset: 0 !important;
   }
 }
+
+/* CMS rich content rendering (used in editor + public article) */
+.cms-content { line-height: 1.7; color: hsl(var(--foreground)); }
+.cms-content h1 { font-size: 2.25rem; font-weight: 700; margin: 1.5rem 0 1rem; line-height: 1.2; }
+.cms-content h2 { font-size: 1.875rem; font-weight: 700; margin: 1.4rem 0 0.9rem; line-height: 1.25; }
+.cms-content h3 { font-size: 1.5rem; font-weight: 600; margin: 1.3rem 0 0.75rem; }
+.cms-content h4 { font-size: 1.25rem; font-weight: 600; margin: 1.2rem 0 0.6rem; }
+.cms-content h5 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.cms-content h6 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.cms-content p { margin: 0.75rem 0; }
+.cms-content ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
+.cms-content ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
+.cms-content li { margin: 0.25rem 0; }
+.cms-content li > p { margin: 0; }
+.cms-content blockquote { border-left: 4px solid hsl(var(--primary)); padding: 0.25rem 1rem; color: hsl(var(--muted-foreground)); margin: 1rem 0; font-style: italic; }
+.cms-content a { color: hsl(var(--primary)); text-decoration: underline; }
+.cms-content code { background: hsl(var(--muted)); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+.cms-content pre { background: hsl(var(--muted)); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+.cms-content pre code { background: transparent; padding: 0; }
+.cms-content img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+.cms-content hr { border: 0; border-top: 1px solid hsl(var(--border)); margin: 1.5rem 0; }
+.cms-content mark { background: #fef08a; padding: 0 0.15em; border-radius: 2px; }
+.cms-content [style*="text-align"] { display: block; }
+.cms-editor .ProseMirror { min-height: 400px; padding: 1rem; outline: none; }
+.cms-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
