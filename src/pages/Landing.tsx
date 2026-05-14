@@ -248,14 +248,22 @@ const Landing = () => {
   }, [navigate]);
 
   useEffect(() => {
-    supabase
-      .from("cms_content")
-      .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
-      .eq("type", "post")
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(3)
-      .then(({ data }) => setCmsPosts((data as never) || []));
+    const load = () => {
+      supabase
+        .from("cms_content")
+        .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
+        .eq("type", "post")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(3)
+        .then(({ data }) => setCmsPosts((data as never) || []));
+    };
+    load();
+    const channel = supabase
+      .channel("public:cms_content:landing")
+      .on("postgres_changes", { event: "*", schema: "public", table: "cms_content", filter: "type=eq.post" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const goSend = () => navigate("/login");
