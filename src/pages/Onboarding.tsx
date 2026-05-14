@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, MapPin, Clock, ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PageSeo from "@/components/PageSeo";
 
 const Onboarding = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -49,6 +50,7 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary-glow/5 flex items-center justify-center p-4">
+      <PageSeo title="Welcome to ViaSetu — Get Started" description="A quick tour of ViaSetu — compare couriers, book pickups and track parcels across India." path="/onboarding" noindex />
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="flex justify-between items-center">

@@ -13,6 +13,7 @@ import {
   Star,
   Send
 } from "lucide-react";
+import PageSeo from "@/components/PageSeo";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import PageBackground from "@/components/PageBackground";
