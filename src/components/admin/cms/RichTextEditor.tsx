@@ -3,12 +3,24 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Highlight } from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Bold, Italic, List, ListOrdered, Quote, Heading2, Heading3,
-  Link as LinkIcon, Image as ImageIcon, Undo, Redo, Code,
+  Bold, Italic, UnderlineIcon, Strikethrough, List, ListOrdered, Quote,
+  Link as LinkIcon, Image as ImageIcon, Undo, Redo, Code, Code2,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, RemoveFormatting,
+  Highlighter, Link2Off,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
   value: string;
@@ -16,22 +28,29 @@ interface Props {
   onInsertImage?: () => Promise<string | null>;
 }
 
+const COLORS = ['#000000', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899'];
+
 export default function RichTextEditor({ value, onChange, onInsertImage }: Props) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'underline text-primary' } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
+      Underline,
+      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'underline text-primary', rel: 'noopener' } }),
       Image,
       Placeholder.configure({ placeholder: 'Write your content...' }),
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: false }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
-    editorProps: {
-      attributes: {
-        class: 'prose prose-slate max-w-none min-h-[400px] p-4 focus:outline-none',
-      },
-    },
+    editorProps: { attributes: { class: 'cms-content' } },
   });
+
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkNewTab, setLinkNewTab] = useState(true);
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
@@ -42,14 +61,26 @@ export default function RichTextEditor({ value, onChange, onInsertImage }: Props
 
   if (!editor) return null;
 
-  const setLink = () => {
-    const url = window.prompt('URL');
-    if (url === null) return;
-    if (url === '') {
+  const openLink = () => {
+    const prev = (editor.getAttributes('link').href as string) || '';
+    setLinkUrl(prev);
+    setLinkNewTab(((editor.getAttributes('link').target as string) || '_blank') === '_blank');
+    setLinkOpen(true);
+  };
+
+  const applyLink = () => {
+    if (!linkUrl) {
       editor.chain().focus().unsetLink().run();
+      setLinkOpen(false);
       return;
     }
-    editor.chain().focus().setLink({ href: url }).run();
+    const attrs: Record<string, string | null> = { href: linkUrl, target: linkNewTab ? '_blank' : null };
+    if (editor.state.selection.empty) {
+      editor.chain().focus().insertContent(`<a href="${linkUrl}"${linkNewTab ? ' target="_blank" rel="noopener"' : ''}>${linkUrl}</a>`).run();
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink(attrs as { href: string }).run();
+    }
+    setLinkOpen(false);
   };
 
   const insertImage = async () => {
@@ -62,31 +93,105 @@ export default function RichTextEditor({ value, onChange, onInsertImage }: Props
     }
   };
 
-  const ToolBtn = ({ active, onClick, children }: { active?: boolean; onClick: () => void; children: React.ReactNode }) => (
-    <Button type="button" variant={active ? 'default' : 'ghost'} size="sm" onClick={onClick} className="h-8 w-8 p-0">
+  const ToolBtn = ({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) => (
+    <Button type="button" title={title} variant={active ? 'default' : 'ghost'} size="sm" onClick={onClick} className="h-8 w-8 p-0">
       {children}
     </Button>
   );
 
+  const Sep = () => <div className="w-px h-6 bg-border mx-0.5" />;
+
+  const headingValue = (() => {
+    for (let l = 1; l <= 6; l++) if (editor.isActive('heading', { level: l })) return `h${l}`;
+    return 'p';
+  })();
+
+  const setHeading = (v: string) => {
+    if (v === 'p') editor.chain().focus().setParagraph().run();
+    else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 | 4 | 5 | 6 }).run();
+  };
+
   return (
-    <div className="border rounded-md bg-background">
-      <div className="flex flex-wrap items-center gap-1 border-b p-2">
-        <ToolBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><Code className="h-4 w-4" /></ToolBtn>
-        <ToolBtn active={editor.isActive('link')} onClick={setLink}><LinkIcon className="h-4 w-4" /></ToolBtn>
-        <ToolBtn onClick={insertImage}><ImageIcon className="h-4 w-4" /></ToolBtn>
+    <div className="border rounded-md bg-background cms-editor">
+      <div className="flex flex-wrap items-center gap-0.5 border-b p-2 sticky top-0 bg-background z-10">
+        <Select value={headingValue} onValueChange={setHeading}>
+          <SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="p">Paragraph</SelectItem>
+            <SelectItem value="h1">Heading 1</SelectItem>
+            <SelectItem value="h2">Heading 2</SelectItem>
+            <SelectItem value="h3">Heading 3</SelectItem>
+            <SelectItem value="h4">Heading 4</SelectItem>
+            <SelectItem value="h5">Heading 5</SelectItem>
+            <SelectItem value="h6">Heading 6</SelectItem>
+          </SelectContent>
+        </Select>
+        <Sep />
+        <ToolBtn title="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Underline" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Inline code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="h-4 w-4" /></ToolBtn>
+        <Sep />
+        {/* Color picker */}
+        <div className="relative group">
+          <Button type="button" title="Text color" variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <span className="inline-block h-4 w-4 rounded-sm border" style={{ background: (editor.getAttributes('textStyle').color as string) || '#000' }} />
+          </Button>
+          <div className="hidden group-hover:flex absolute z-20 top-8 left-0 bg-popover border rounded-md p-1 shadow-md gap-1">
+            {COLORS.map(c => (
+              <button key={c} type="button" className="h-5 w-5 rounded border" style={{ background: c }}
+                onClick={() => editor.chain().focus().setColor(c).run()} />
+            ))}
+            <button type="button" className="h-5 w-5 rounded border text-[10px]" onClick={() => editor.chain().focus().unsetColor().run()}>×</button>
+          </div>
+        </div>
+        <ToolBtn title="Highlight" active={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight().run()}><Highlighter className="h-4 w-4" /></ToolBtn>
+        <Sep />
+        <ToolBtn title="Bulleted list" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Numbered list" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="h-4 w-4" /></ToolBtn>
+        <Sep />
+        <ToolBtn title="Align left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeft className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Align center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenter className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Align right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRight className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Justify" active={editor.isActive({ textAlign: 'justify' })} onClick={() => editor.chain().focus().setTextAlign('justify').run()}><AlignJustify className="h-4 w-4" /></ToolBtn>
+        <Sep />
+        <ToolBtn title="Quote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Code block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><Code2 className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Link" active={editor.isActive('link')} onClick={openLink}><LinkIcon className="h-4 w-4" /></ToolBtn>
+        {editor.isActive('link') && (
+          <ToolBtn title="Remove link" onClick={() => editor.chain().focus().unsetLink().run()}><Link2Off className="h-4 w-4" /></ToolBtn>
+        )}
+        <ToolBtn title="Insert image" onClick={insertImage}><ImageIcon className="h-4 w-4" /></ToolBtn>
+        <ToolBtn title="Clear formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><RemoveFormatting className="h-4 w-4" /></ToolBtn>
         <div className="ml-auto flex gap-1">
-          <ToolBtn onClick={() => editor.chain().focus().undo().run()}><Undo className="h-4 w-4" /></ToolBtn>
-          <ToolBtn onClick={() => editor.chain().focus().redo().run()}><Redo className="h-4 w-4" /></ToolBtn>
+          <ToolBtn title="Undo" onClick={() => editor.chain().focus().undo().run()}><Undo className="h-4 w-4" /></ToolBtn>
+          <ToolBtn title="Redo" onClick={() => editor.chain().focus().redo().run()}><Redo className="h-4 w-4" /></ToolBtn>
         </div>
       </div>
       <EditorContent editor={editor} />
+
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Insert link</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="link-url">URL</Label>
+              <Input id="link-url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://example.com"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyLink(); } }} autoFocus />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="link-newtab" checked={linkNewTab} onCheckedChange={(v) => setLinkNewTab(!!v)} />
+              <Label htmlFor="link-newtab" className="cursor-pointer">Open in new tab</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkOpen(false)}>Cancel</Button>
+            <Button onClick={applyLink}>Apply</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

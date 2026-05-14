@@ -7,12 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import RichTextEditor from '@/components/admin/cms/RichTextEditor';
 import MediaUpload, { uploadCmsImage } from '@/components/admin/cms/MediaUpload';
 import SEOPanel from '@/components/admin/cms/SEOPanel';
+import TagInput from '@/components/admin/cms/TagInput';
 import { CONTENT_TYPE_LABELS, CONTENT_TYPE_PATHS, slugify, type CmsContent, type CmsContentType } from '@/lib/cms/types';
 import { analyzeSeo } from '@/lib/cms/seo-score';
-import { Loader2, Save, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, ExternalLink, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -32,11 +34,33 @@ export default function ContentEditor({ type }: Props) {
   });
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [authors, setAuthors] = useState<Array<{ id: string; name: string }>>([]);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [creatingCat, setCreatingCat] = useState(false);
+
+  const loadCategories = () =>
+    supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
 
   useEffect(() => {
-    supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
+    loadCategories();
     supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
   }, []);
+
+  const createCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    setCreatingCat(true);
+    const { data: row, error } = await supabase.from('cms_categories')
+      .insert({ name, slug: slugify(name) }).select('id,name').single();
+    setCreatingCat(false);
+    if (error) { toast.error(error.message); return; }
+    await loadCategories();
+    patch({ category_id: row.id });
+    setNewCatName('');
+    setCatDialogOpen(false);
+    toast.success('Category created');
+  };
+
 
   useEffect(() => {
     if (isNew) return;
@@ -170,13 +194,18 @@ export default function ContentEditor({ type }: Props) {
                 <>
                   <div>
                     <Label>Category</Label>
-                    <Select value={data.category_id || 'none'} onValueChange={(v) => patch({ category_id: v === 'none' ? null : v })}>
-                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1">
+                      <Select value={data.category_id || 'none'} onValueChange={(v) => patch({ category_id: v === 'none' ? null : v })}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="icon" title="New category" onClick={() => setCatDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label>Author</Label>
@@ -189,10 +218,10 @@ export default function ContentEditor({ type }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Tags (comma-separated)</Label>
-                    <Input value={(data.tags || []).join(', ')}
-                      onChange={(e) => patch({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} />
+                    <Label>Tags</Label>
+                    <TagInput value={data.tags || []} onChange={(tags) => patch({ tags })} />
                   </div>
+
                 </>
               )}
               {type === 'partner' && (
@@ -230,6 +259,23 @@ export default function ContentEditor({ type }: Props) {
           </Card>
         </div>
       </div>
+
+      <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>New category</DialogTitle></DialogHeader>
+          <div>
+            <Label htmlFor="cat-name">Name</Label>
+            <Input id="cat-name" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createCategory(); } }} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatDialogOpen(false)}>Cancel</Button>
+            <Button onClick={createCategory} disabled={creatingCat || !newCatName.trim()}>
+              {creatingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
