@@ -6,6 +6,7 @@ import type { CmsContent, CmsContentType } from '@/lib/cms/types';
 import { CONTENT_TYPE_PATHS } from '@/lib/cms/types';
 import { Loader2 } from 'lucide-react';
 import NotFound from '@/pages/NotFound';
+import PublicSiteLayout from '@/components/site/PublicSiteLayout';
 
 interface Props { type: CmsContentType }
 
@@ -14,37 +15,58 @@ export default function CmsArticle({ type }: Props) {
   const [post, setPost] = useState<CmsContent | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = async () => {
     if (!slug) return;
-    supabase.from('cms_content')
+    const { data } = await supabase.from('cms_content')
       .select('*')
       .eq('type', type).eq('slug', slug).eq('status', 'published')
-      .maybeSingle()
-      .then(({ data }) => { setPost(data as unknown as CmsContent | null); setLoading(false); });
+      .maybeSingle();
+    setPost(data as unknown as CmsContent | null);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    const channel = supabase
+      .channel(`public:cms_content:${type}:${slug}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cms_content', filter: `type=eq.${type}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, type]);
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (loading) return (
+    <PublicSiteLayout>
+      <div className="flex justify-center p-16"><Loader2 className="h-6 w-6 animate-spin" /></div>
+    </PublicSiteLayout>
+  );
   if (!post) return <NotFound />;
 
   return (
-    <article className="container mx-auto px-4 py-8 max-w-3xl">
-      <SeoHead content={post} url={`${CONTENT_TYPE_PATHS[type]}/${post.slug}`} />
-      <nav className="text-sm text-muted-foreground mb-4">
-        <Link to="/" className="hover:underline">Home</Link> /{' '}
-        <Link to={CONTENT_TYPE_PATHS[type]} className="hover:underline capitalize">{type}</Link> /{' '}
-        <span>{post.title}</span>
-      </nav>
-      <h1 className="text-4xl font-bold mb-2">{post.title}</h1>
-      {post.published_at && <p className="text-sm text-muted-foreground mb-6">{new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>}
-      {post.featured_image_url && (
-        <img src={post.featured_image_url} alt={post.featured_image_alt || post.title} className="w-full rounded-lg mb-6" />
-      )}
-      <div className="cms-content" dangerouslySetInnerHTML={{ __html: post.body_html || '' }} />
-      {post.tags && post.tags.length > 0 && (
-        <div className="mt-8 pt-6 border-t flex flex-wrap gap-2">
-          {post.tags.map(t => <span key={t} className="text-xs px-2 py-1 rounded bg-muted">#{t}</span>)}
-        </div>
-      )}
-    </article>
+    <PublicSiteLayout>
+      <article className="container mx-auto px-4 py-10 max-w-3xl">
+        <SeoHead content={post} url={`${CONTENT_TYPE_PATHS[type]}/${post.slug}`} />
+        <nav className="text-sm mb-4" style={{ color: '#5A6B80' }}>
+          <Link to="/" className="hover:underline">Home</Link> /{' '}
+          <Link to={CONTENT_TYPE_PATHS[type]} className="hover:underline capitalize">{type === 'post' ? 'blog' : type}</Link> /{' '}
+          <span>{post.title}</span>
+        </nav>
+        <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#0B1220' }}>{post.title}</h1>
+        {post.published_at && (
+          <p className="text-sm mb-6" style={{ color: '#5A6B80' }}>
+            {new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        )}
+        {post.featured_image_url && (
+          <img src={post.featured_image_url} alt={post.featured_image_alt || post.title} className="w-full rounded-xl mb-8" />
+        )}
+        <div className="cms-content prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: post.body_html || '' }} />
+        {post.tags && post.tags.length > 0 && (
+          <div className="mt-10 pt-6 border-t flex flex-wrap gap-2">
+            {post.tags.map(t => <span key={t} className="text-xs px-2 py-1 rounded bg-muted">#{t}</span>)}
+          </div>
+        )}
+      </article>
+    </PublicSiteLayout>
   );
 }
