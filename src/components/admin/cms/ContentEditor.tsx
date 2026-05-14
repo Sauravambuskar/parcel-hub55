@@ -194,13 +194,18 @@ export default function ContentEditor({ type }: Props) {
                 <>
                   <div>
                     <Label>Category</Label>
-                    <Select value={data.category_id || 'none'} onValueChange={(v) => patch({ category_id: v === 'none' ? null : v })}>
-                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1">
+                      <Select value={data.category_id || 'none'} onValueChange={(v) => patch({ category_id: v === 'none' ? null : v })}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="icon" title="New category" onClick={() => setCatDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label>Author</Label>
@@ -213,10 +218,10 @@ export default function ContentEditor({ type }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Tags (comma-separated)</Label>
-                    <Input value={(data.tags || []).join(', ')}
-                      onChange={(e) => patch({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} />
+                    <Label>Tags</Label>
+                    <TagInput value={data.tags || []} onChange={(tags) => patch({ tags })} />
                   </div>
+
                 </>
               )}
               {type === 'partner' && (
