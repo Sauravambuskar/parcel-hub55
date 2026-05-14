@@ -1,0 +1,21 @@
+# ViaSetu
+
+> India's first consumer courier aggregator. Compare prices from 14+ courier partners (DHL, FedEx, Delhivery, India Post, Blue Dart, XpressBees, Shadowfax and more), book doorstep pickup across 21,000+ pincodes, and track every parcel in one app.
+
+ViaSetu helps individuals and small businesses save 20-40% on courier costs by comparing real-time rates and ETAs from major Indian couriers. Pickup is scheduled to your home or office; payment is online (UPI, cards, net banking — no COD); GST-compliant invoices and shipping labels are generated automatically.
+
+## Pages
+
+- [Home](/): Landing page — what ViaSetu is and why it saves you money.
+- [App home](/home): Logged-in dashboard for booking and tracking.
+- [Book a courier](/booking): Compare 14+ couriers and book a pickup in minutes.
+- [Track parcel](/tracking): Unified tracking across all courier partners by AWB.
+- [Order history](/history): Your past shipments, invoices and labels.
+- [Support](/support): Contact ViaSetu support.
+- [FAQ](/faq): Common questions about pricing, pickup, tracking and refunds.
+- [Blog](/blog): Courier tips, shipping guides and logistics news.
+
+## Optional
+
+- [Login](/login): Phone OTP login.
+- [Settings](/settings): Profile, notifications, language preferences.

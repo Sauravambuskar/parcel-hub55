@@ -2,6 +2,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const SITE = "https://www.viasetu.com";
 
+const STATIC_URLS = [
+  { loc: "/", priority: "1.0" },
+  { loc: "/home", priority: "0.9" },
+  { loc: "/login", priority: "0.6" },
+  { loc: "/onboarding", priority: "0.5" },
+  { loc: "/booking", priority: "0.9" },
+  { loc: "/tracking", priority: "0.9" },
+  { loc: "/history", priority: "0.6" },
+  { loc: "/support", priority: "0.6" },
+  { loc: "/settings", priority: "0.4" },
+  { loc: "/blog", priority: "0.7" },
+  { loc: "/faq", priority: "0.7" },
+];
+
 Deno.serve(async () => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
