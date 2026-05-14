@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { deriveUserId, setAuthSession, isAuthenticated } from "@/lib/auth";
 import PageBackground from "@/components/PageBackground";
+import PageSeo from "@/components/PageSeo";
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -169,6 +170,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <PageSeo title="Login — ViaSetu Courier Aggregator" description="Log in to ViaSetu with your phone number to compare couriers, book pickups and track parcels across India." path="/login" noindex />
       <PageBackground variant="parcels" opacity={0.7} />
 
       <div className="w-full max-w-md mx-auto space-y-6 relative z-10">

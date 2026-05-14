@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import PageSeo from "@/components/PageSeo";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -183,6 +184,7 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen pb-24 md:pb-4 relative">
+      <PageSeo title="Settings — Profile & Preferences | ViaSetu" description="Manage your ViaSetu profile, notifications, language and theme preferences." path="/settings" noindex />
       <PageBackground variant="warehouse" opacity={0.8} />
       
       <div className="p-4 max-w-2xl mx-auto space-y-4 relative z-10">

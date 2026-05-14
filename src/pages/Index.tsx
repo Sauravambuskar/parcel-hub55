@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import BottomNav from "@/components/BottomNav";
 import PageBackground from "@/components/PageBackground";
+import PageSeo from "@/components/PageSeo";
 import { CURRENT_ENV, setEnvironment, isLovablePreview } from "@/config/environment";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +91,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24 md:pb-4 relative">
+      <PageSeo title="ViaSetu Home — Book & Track Couriers" description="Your ViaSetu dashboard to book new shipments, track parcels and view recent orders across India's top couriers." path="/home" noindex />
       <PageBackground variant="logistics" opacity={0.75} />
 
       <div className="p-4 max-w-4xl mx-auto space-y-6 relative z-10">

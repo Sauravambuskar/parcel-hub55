@@ -13,6 +13,7 @@ import {
   Star,
   Send
 } from "lucide-react";
+import PageSeo from "@/components/PageSeo";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import PageBackground from "@/components/PageBackground";
@@ -76,6 +77,7 @@ const Support = () => {
 
   return (
     <div className="min-h-screen relative">
+      <PageSeo title="Support & Help — Contact ViaSetu" description="Get help with your courier booking, tracking, refunds or account. Reach ViaSetu support by phone, chat or email." path="/support" />
       <PageBackground variant="parcels" opacity={0.8} />
       
       {/* Header */}

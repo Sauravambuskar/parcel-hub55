@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
+import PageSeo from "@/components/PageSeo";
 import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
@@ -224,6 +225,7 @@ const History = () => {
 
   return (
     <div className="min-h-screen relative">
+      <PageSeo title="Order History — My Shipments | ViaSetu" description="View your past ViaSetu shipments, download invoices and labels, and reorder past bookings." path="/history" noindex />
       <PageBackground variant="shipping" opacity={0.75} />
       
       <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
