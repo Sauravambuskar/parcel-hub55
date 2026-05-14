@@ -89,8 +89,10 @@ function AdminSidebar() {
   };
 
   const filteredMenuItems = adminMenuItems.filter(
-    (item) => !item.requireSuperAdmin || userRole === "super_admin"
+    (item) => !userRole || item.allowedRoles.includes(userRole as Role)
   );
+
+  const panelTitle = panelTitleByRole[userRole as Role] ?? "Admin Panel";
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
@@ -98,7 +100,7 @@ function AdminSidebar() {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            {!collapsed && <span className="font-semibold">Admin Panel</span>}
+            {!collapsed && <span className="font-semibold">{panelTitle}</span>}
           </div>
         </div>
 
