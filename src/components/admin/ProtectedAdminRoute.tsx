@@ -3,27 +3,43 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
+export type AdminRole = "super_admin" | "cms_editor" | "operations" | "support";
+
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
+  /** Legacy prop: equivalent to allowedRoles=['super_admin'] */
   requireSuperAdmin?: boolean;
+  /** Restrict access to these roles only. Defaults to any active admin. */
+  allowedRoles?: AdminRole[];
 }
 
-const ProtectedAdminRoute = ({ children, requireSuperAdmin = false }: ProtectedAdminRouteProps) => {
+// Default landing page for each role when redirected
+const roleLanding: Record<AdminRole, string> = {
+  super_admin: "/admin/dashboard",
+  cms_editor: "/admin/cms",
+  operations: "/admin/orders",
+  support: "/admin/orders",
+};
+
+const ProtectedAdminRoute = ({ children, requireSuperAdmin = false, allowedRoles }: ProtectedAdminRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [redirectTo, setRedirectTo] = useState<string>("/admin/login");
+
+  const effectiveAllowed: AdminRole[] | undefined =
+    allowedRoles ?? (requireSuperAdmin ? ["super_admin"] : undefined);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-
         if (!session) {
+          setRedirectTo("/admin/login");
           setIsAuthorized(false);
           setLoading(false);
           return;
         }
 
-        // Check if user is an admin
         const { data: adminUser, error } = await supabase
           .from("admin_users")
           .select("*")
@@ -32,13 +48,16 @@ const ProtectedAdminRoute = ({ children, requireSuperAdmin = false }: ProtectedA
           .single();
 
         if (error || !adminUser) {
+          setRedirectTo("/admin/login");
           setIsAuthorized(false);
           setLoading(false);
           return;
         }
 
-        // If super admin is required, check the role
-        if (requireSuperAdmin && adminUser.role !== "super_admin") {
+        const role = adminUser.role as AdminRole;
+        if (effectiveAllowed && !effectiveAllowed.includes(role)) {
+          // Authenticated but wrong role: send to their own landing
+          setRedirectTo(roleLanding[role] ?? "/admin/login");
           setIsAuthorized(false);
           setLoading(false);
           return;
@@ -46,24 +65,18 @@ const ProtectedAdminRoute = ({ children, requireSuperAdmin = false }: ProtectedA
 
         setIsAuthorized(true);
         setLoading(false);
-      } catch (error) {
-        console.error("Auth check error:", error);
+      } catch (err) {
+        console.error("Auth check error:", err);
         setIsAuthorized(false);
         setLoading(false);
       }
     };
 
     checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAuth();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [requireSuperAdmin]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => checkAuth());
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requireSuperAdmin, JSON.stringify(allowedRoles)]);
 
   if (loading) {
     return (
@@ -74,7 +87,7 @@ const ProtectedAdminRoute = ({ children, requireSuperAdmin = false }: ProtectedA
   }
 
   if (!isAuthorized) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   return <>{children}</>;

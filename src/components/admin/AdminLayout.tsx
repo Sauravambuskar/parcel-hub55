@@ -31,19 +31,28 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
 
-const adminMenuItems = [
-  { title: "Dashboard", url: "/admin/dashboard", icon: Home },
-  { title: "Real-Time Tracking", url: "/admin/tracking", icon: MapPin },
-  { title: "Order Monitoring", url: "/admin/orders", icon: Package },
-  { title: "User & Partner Management", url: "/admin/users", icon: Users },
-  { title: "Admin Users", url: "/admin/admin-users", icon: Shield, requireSuperAdmin: true },
-  { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign },
-  { title: "Payment Reconciliation", url: "/admin/reconciliation", icon: AlertTriangle },
-  { title: "Support Management", url: "/admin/support", icon: MessageSquare },
-  { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Content (CMS)", url: "/admin/cms", icon: FileEdit, requireSuperAdmin: true },
-  { title: "System Settings", url: "/admin/settings", icon: Settings },
+type Role = "super_admin" | "cms_editor" | "operations" | "support";
+
+const adminMenuItems: { title: string; url: string; icon: any; allowedRoles: Role[] }[] = [
+  { title: "Dashboard", url: "/admin/dashboard", icon: Home, allowedRoles: ["super_admin"] },
+  { title: "Real-Time Tracking", url: "/admin/tracking", icon: MapPin, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Order Monitoring", url: "/admin/orders", icon: Package, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "User & Partner Management", url: "/admin/users", icon: Users, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Admin Users", url: "/admin/admin-users", icon: Shield, allowedRoles: ["super_admin"] },
+  { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign, allowedRoles: ["super_admin"] },
+  { title: "Payment Reconciliation", url: "/admin/reconciliation", icon: AlertTriangle, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Support Management", url: "/admin/support", icon: MessageSquare, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3, allowedRoles: ["super_admin"] },
+  { title: "Content (CMS)", url: "/admin/cms", icon: FileEdit, allowedRoles: ["super_admin", "cms_editor"] },
+  { title: "System Settings", url: "/admin/settings", icon: Settings, allowedRoles: ["super_admin"] },
 ];
+
+const panelTitleByRole: Record<Role, string> = {
+  super_admin: "Admin Panel",
+  cms_editor: "CMS Panel",
+  operations: "Operations Panel",
+  support: "Operations Panel",
+};
 
 function AdminSidebar() {
   const { state } = useSidebar();
