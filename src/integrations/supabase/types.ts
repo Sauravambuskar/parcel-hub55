@@ -892,7 +892,7 @@ export type Database = {
       mask_doc_number: { Args: { doc: string }; Returns: string }
     }
     Enums: {
-      admin_role: "super_admin" | "support"
+      admin_role: "super_admin" | "support" | "cms_editor" | "operations"
       cms_content_status: "draft" | "published" | "scheduled"
       cms_content_type: "post" | "page" | "faq" | "partner"
     }
@@ -1022,7 +1022,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      admin_role: ["super_admin", "support"],
+      admin_role: ["super_admin", "support", "cms_editor", "operations"],
       cms_content_status: ["draft", "published", "scheduled"],
       cms_content_type: ["post", "page", "faq", "partner"],
     },
