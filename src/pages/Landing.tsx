@@ -230,11 +230,23 @@ const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"]
 /* ---------------- MAIN ---------------- */
 const Landing = () => {
   const navigate = useNavigate();
+  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
 
   useEffect(() => {
     const authRaw = localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth");
     if (authRaw) navigate("/home");
   }, [navigate]);
+
+  useEffect(() => {
+    supabase
+      .from("cms_content")
+      .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
+      .eq("type", "post")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setCmsPosts((data as never) || []));
+  }, []);
 
   const goSend = () => navigate("/login");
   const goTrack = () => navigate("/tracking");
