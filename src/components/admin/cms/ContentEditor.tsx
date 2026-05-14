@@ -259,6 +259,23 @@ export default function ContentEditor({ type }: Props) {
           </Card>
         </div>
       </div>
+
+      <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>New category</DialogTitle></DialogHeader>
+          <div>
+            <Label htmlFor="cat-name">Name</Label>
+            <Input id="cat-name" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createCategory(); } }} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatDialogOpen(false)}>Cancel</Button>
+            <Button onClick={createCategory} disabled={creatingCat || !newCatName.trim()}>
+              {creatingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
