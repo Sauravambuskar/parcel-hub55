@@ -66,9 +66,15 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
 
         <nav className="hidden lg:flex items-center gap-8">
           {links.map((l) => (
-            <a key={l.label} href={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
-              {l.label}
-            </a>
+            l.external ? (
+              <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.label} href={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+                {l.label}
+              </a>
+            )
           ))}
         </nav>
 
