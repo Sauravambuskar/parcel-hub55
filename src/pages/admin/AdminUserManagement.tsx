@@ -8,21 +8,34 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Shield, Trash2 } from "lucide-react";
+import { UserPlus, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const emailSchema = z.string().email("Invalid email address").refine(
-  (email) => email.endsWith("@viasetu.com"),
-  { message: "Only @viasetu.com email addresses are allowed for admin users" }
-);
+const emailSchema = z.string().email("Invalid email address");
+
+type AdminRole = "super_admin" | "cms_editor" | "operations" | "support";
 
 type AdminUser = {
   id: string;
   email: string;
-  role: "super_admin" | "support";
+  role: AdminRole;
   created_at: string;
   is_active: boolean;
+};
+
+const roleLabels: Record<AdminRole, string> = {
+  super_admin: "Super Admin",
+  cms_editor: "CMS Editor",
+  operations: "Operations",
+  support: "Support (legacy)",
+};
+
+const roleDescriptions: Record<AdminRole, string> = {
+  super_admin: "Full access to all sections.",
+  cms_editor: "Can manage Content (CMS) only. Logs in via /cms/login.",
+  operations: "Can manage Orders, Tracking, Users, Support, Reconciliation. Logs in via /ops/login.",
+  support: "Legacy role — same access as Operations.",
 };
 
 const AdminUserManagement = () => {
@@ -30,7 +43,7 @@ const AdminUserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"support" | "super_admin">("support");
+  const [newUserRole, setNewUserRole] = useState<AdminRole>("operations");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   useEffect(() => {
@@ -46,10 +59,7 @@ const AdminUserManagement = () => {
         .select("role")
         .eq("user_id", session.user.id)
         .single();
-      
-      if (data) {
-        setCurrentUserRole(data.role);
-      }
+      if (data) setCurrentUserRole(data.role);
     }
   };
 
@@ -60,9 +70,8 @@ const AdminUserManagement = () => {
         .from("admin_users")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
-      setAdminUsers(data || []);
+      setAdminUsers((data ?? []) as AdminUser[]);
     } catch (error) {
       console.error("Error fetching admin users:", error);
       toast.error("Failed to load admin users");
@@ -73,43 +82,29 @@ const AdminUserManagement = () => {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate email
     const emailValidation = emailSchema.safeParse(newUserEmail);
     if (!emailValidation.success) {
       toast.error(emailValidation.error.errors[0].message);
       return;
     }
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("You must be logged in to create admin users");
         return;
       }
-
       const response = await supabase.functions.invoke("create-admin-user", {
-        body: {
-          email: newUserEmail.trim(),
-          role: newUserRole,
-        },
+        body: { email: newUserEmail.trim(), role: newUserRole },
       });
+      if (response.error) throw response.error;
+      if (response.data?.error) { toast.error(response.data.error); return; }
 
-      if (response.error) {
-        throw response.error;
-      }
-
-      if (response.data?.error) {
-        toast.error(response.data.error);
-        return;
-      }
-
-      toast.success(`Admin user created successfully. A password reset email has been sent to ${newUserEmail}`);
+      toast.success(`User created. A password reset email has been sent to ${newUserEmail}`);
       setIsAddDialogOpen(false);
       setNewUserEmail("");
-      setNewUserRole("support");
+      setNewUserRole("operations");
       fetchAdminUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating admin user:", error);
       toast.error(error.message || "Failed to create admin user");
     }
@@ -121,9 +116,7 @@ const AdminUserManagement = () => {
         .from("admin_users")
         .update({ is_active: !currentStatus })
         .eq("id", userId);
-
       if (error) throw error;
-
       toast.success(`User ${!currentStatus ? "activated" : "deactivated"} successfully`);
       fetchAdminUsers();
     } catch (error) {
@@ -139,21 +132,21 @@ const AdminUserManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Admin User Management</h2>
-          <p className="text-muted-foreground">Manage admin and support team members</p>
+          <p className="text-muted-foreground">Create role-based sub-users for CMS and Operations</p>
         </div>
         {isSuperAdmin && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Add Admin User
+                Add User
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Admin User</DialogTitle>
+                <DialogTitle>Create Sub-User</DialogTitle>
                 <DialogDescription>
-                  Create a new admin or support user. Only @viasetu.com emails are allowed.
+                  Create a role-based user. Any email domain is allowed for sub-users.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddUser} className="space-y-4">
@@ -162,7 +155,7 @@ const AdminUserManagement = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="user@viasetu.com"
+                    placeholder="user@example.com"
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
                     required
@@ -170,22 +163,17 @@ const AdminUserManagement = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={newUserRole} onValueChange={(value: "support" | "super_admin") => setNewUserRole(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={newUserRole} onValueChange={(v: AdminRole) => setNewUserRole(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="support">Support</SelectItem>
+                      <SelectItem value="cms_editor">CMS Editor</SelectItem>
+                      <SelectItem value="operations">Operations</SelectItem>
                       <SelectItem value="super_admin">Super Admin</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Support: Limited access for customer support. Super Admin: Full access to all features.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{roleDescriptions[newUserRole]}</p>
                 </div>
-                <Button type="submit" className="w-full">
-                  Create User
-                </Button>
+                <Button type="submit" className="w-full">Create User</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -196,19 +184,19 @@ const AdminUserManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Admin Users
+            Users
           </CardTitle>
           <CardDescription>
-            {isSuperAdmin 
-              ? "Manage all admin and support users with @viasetu.com email addresses"
-              : "View admin users (Super admin privileges required to manage users)"}
+            {isSuperAdmin
+              ? "Manage all admin, CMS, and operations users"
+              : "View users (Super admin privileges required to manage users)"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : adminUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No admin users found</div>
+            <div className="text-center py-8 text-muted-foreground">No users found</div>
           ) : (
             <Table>
               <TableHeader>
@@ -226,7 +214,7 @@ const AdminUserManagement = () => {
                     <TableCell className="font-medium">{user.email}</TableCell>
                     <TableCell>
                       <Badge variant={user.role === "super_admin" ? "default" : "secondary"}>
-                        {user.role === "super_admin" ? "Super Admin" : "Support"}
+                        {roleLabels[user.role] ?? user.role}
                       </Badge>
                     </TableCell>
                     <TableCell>

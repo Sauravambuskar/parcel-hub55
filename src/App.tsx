@@ -19,6 +19,8 @@ import FaqPage from "./pages/cms/FaqPage";
 import CMSDashboard from "./pages/admin/cms/CMSDashboard";
 import ContentList from "./components/admin/cms/ContentList";
 import ContentEditor from "./components/admin/cms/ContentEditor";
+import CmsLogin from "./pages/cms/CmsLogin";
+import OpsLogin from "./pages/ops/OpsLogin";
 
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
