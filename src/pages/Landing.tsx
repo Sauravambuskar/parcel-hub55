@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
   Linkedin, Twitter, Instagram,
@@ -229,11 +230,23 @@ const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"]
 /* ---------------- MAIN ---------------- */
 const Landing = () => {
   const navigate = useNavigate();
+  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
 
   useEffect(() => {
     const authRaw = localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth");
     if (authRaw) navigate("/home");
   }, [navigate]);
+
+  useEffect(() => {
+    supabase
+      .from("cms_content")
+      .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
+      .eq("type", "post")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setCmsPosts((data as never) || []));
+  }, []);
 
   const goSend = () => navigate("/login");
   const goTrack = () => navigate("/tracking");
@@ -471,62 +484,61 @@ const Landing = () => {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                tag: "Shipping Guide",
-                img: parcelsBg,
-                title: "How to Pack Fragile Items for Safe Delivery",
-                excerpt: "Bubble wrap, double-boxing, and labelling tips that prevent damage during transit.",
-                read: "5 min read",
-              },
-              {
-                tag: "Compare Couriers",
-                img: logisticsBg,
-                title: "Delhivery vs XpressBees vs Shadowfax: Which to Choose?",
-                excerpt: "A practical breakdown of pricing, TAT and serviceability across India's top partners.",
-                read: "7 min read",
-              },
-              {
-                tag: "Cost Saving",
-                img: shippingBg,
-                title: "5 Ways to Reduce Your Courier Costs in 2026",
-                excerpt: "Volumetric weight, surface vs air, and pickup batching — small changes, big savings.",
-                read: "4 min read",
-              },
-            ].map((p) => (
-              <article
-                key={p.title}
-                className="rounded-2xl overflow-hidden flex flex-col cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
-                style={{ background: C.card, border: `1px solid ${C.border}` }}
-              >
-                <div className="h-44 w-full overflow-hidden">
-                  <img src={p.img} alt={p.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <span
-                    className="self-start text-[11px] font-semibold px-2 py-1 rounded-full mb-3"
-                    style={{ background: `${C.teal}15`, color: C.teal }}
-                  >
-                    {p.tag}
-                  </span>
-                  <h3 className="text-[18px] font-bold text-[#0B1220] mb-2 leading-snug">{p.title}</h3>
-                  <p className="text-[14px] mb-4 flex-1" style={{ color: C.gray }}>{p.excerpt}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px]" style={{ color: C.gray }}>{p.read}</span>
-                    <span className="text-[13px] font-semibold" style={{ color: C.teal }}>Read more →</span>
+            {(cmsPosts.length > 0
+              ? cmsPosts.map((p) => ({
+                  slug: p.slug,
+                  tag: (p.tags && p.tags[0]) || "Article",
+                  img: p.featured_image_url || logisticsBg,
+                  alt: p.featured_image_alt || p.title,
+                  title: p.title,
+                  excerpt: p.excerpt || "",
+                  read: "5 min read",
+                }))
+              : [
+                  { slug: null, tag: "Shipping Guide", img: parcelsBg, alt: "Packing fragile items", title: "How to Pack Fragile Items for Safe Delivery", excerpt: "Bubble wrap, double-boxing, and labelling tips that prevent damage during transit.", read: "5 min read" },
+                  { slug: null, tag: "Compare Couriers", img: logisticsBg, alt: "Compare couriers", title: "Delhivery vs XpressBees vs Shadowfax: Which to Choose?", excerpt: "A practical breakdown of pricing, TAT and serviceability across India's top partners.", read: "7 min read" },
+                  { slug: null, tag: "Cost Saving", img: shippingBg, alt: "Reduce courier costs", title: "5 Ways to Reduce Your Courier Costs in 2026", excerpt: "Volumetric weight, surface vs air, and pickup batching — small changes, big savings.", read: "4 min read" },
+                ]
+            ).map((p) => {
+              const Card = (
+                <article
+                  className="rounded-2xl overflow-hidden flex flex-col cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg h-full"
+                  style={{ background: C.card, border: `1px solid ${C.border}` }}
+                >
+                  <div className="h-44 w-full overflow-hidden">
+                    <img src={p.img} alt={p.alt} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
                   </div>
-                </div>
-              </article>
-            ))}
+                  <div className="p-5 flex flex-col flex-1">
+                    <span
+                      className="self-start text-[11px] font-semibold px-2 py-1 rounded-full mb-3"
+                      style={{ background: `${C.teal}15`, color: C.teal }}
+                    >
+                      {p.tag}
+                    </span>
+                    <h3 className="text-[18px] font-bold text-[#0B1220] mb-2 leading-snug">{p.title}</h3>
+                    <p className="text-[14px] mb-4 flex-1" style={{ color: C.gray }}>{p.excerpt}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px]" style={{ color: C.gray }}>{p.read}</span>
+                      <span className="text-[13px] font-semibold" style={{ color: C.teal }}>Read more →</span>
+                    </div>
+                  </div>
+                </article>
+              );
+              return p.slug ? (
+                <Link key={p.slug} to={`/blog/${p.slug}`}>{Card}</Link>
+              ) : (
+                <div key={p.title}>{Card}</div>
+              );
+            })}
           </div>
           <div className="text-center mt-10">
-            <a
-              href="#blog"
+            <Link
+              to="/blog"
               className="inline-block px-6 h-11 leading-[44px] rounded-lg font-semibold text-[14px] border-2 transition-colors hover:bg-[#00C8C8]/10"
               style={{ borderColor: C.teal, color: C.teal }}
             >
               View all articles
-            </a>
+            </Link>
           </div>
         </div>
       </section>
