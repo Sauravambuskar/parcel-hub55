@@ -190,6 +190,14 @@ const BookingReviewStep = ({
           </p>
         </div>
 
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <p className="text-xs text-amber-900">
+            <strong>Cancellation policy:</strong> Once an order is placed and accepted by the
+            courier it usually cannot be cancelled. You can still request a cancellation — if the
+            courier has already picked up the shipment, our team will reach out to help resolve it.
+          </p>
+        </div>
+
         {/* Action Buttons */}
         <div className="space-y-2">
           <Button

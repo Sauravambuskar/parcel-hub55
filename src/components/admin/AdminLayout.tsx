@@ -14,7 +14,8 @@ import {
   Home,
   MapPin,
   AlertTriangle,
-  FileEdit
+  FileEdit,
+  AlertOctagon
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -42,6 +43,7 @@ const adminMenuItems: { title: string; url: string; icon: any; allowedRoles: Rol
   { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign, allowedRoles: ["super_admin"] },
   { title: "Payment Reconciliation", url: "/admin/reconciliation", icon: AlertTriangle, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Support Management", url: "/admin/support", icon: MessageSquare, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Dispute Resolution", url: "/admin/disputes", icon: AlertOctagon, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3, allowedRoles: ["super_admin"] },
   { title: "Content (CMS)", url: "/admin/cms", icon: FileEdit, allowedRoles: ["super_admin", "cms_editor"] },
   { title: "System Settings", url: "/admin/settings", icon: Settings, allowedRoles: ["super_admin"] },
