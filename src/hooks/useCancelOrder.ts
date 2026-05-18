@@ -207,9 +207,38 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
       return true;
     } catch (err: any) {
       console.error("Cancel order error:", err);
+      const rawMsg: string = err?.message || "Could not cancel the order. Please try again.";
+
+      // If partner has already moved the shipment forward, raise an admin dispute
+      // so the customer doesn't hit a dead end.
+      if (isPartnerRejection(rawMsg) && bookingId && userId) {
+        try {
+          await (supabase as any)
+            .from("cancellation_disputes")
+            .insert({
+              booking_id: bookingId,
+              user_id: userId,
+              reason,
+              partner_error: rawMsg,
+              partner_status_at_attempt: currentStatus || null,
+              previous_booking_status: currentStatus || null,
+              status: "open",
+            });
+          toast({
+            title: "Cancellation request received",
+            description:
+              "The courier has already accepted this shipment so we couldn't cancel it instantly. Our team will contact you shortly to help resolve.",
+          });
+          options?.onDisputeRaised?.();
+          return false;
+        } catch (disputeErr) {
+          console.error("Failed to raise dispute:", disputeErr);
+        }
+      }
+
       toast({
         title: "Cancellation Failed",
-        description: err.message || "Could not cancel the order. Please try again.",
+        description: rawMsg,
         variant: "destructive",
       });
       return false;
