@@ -34,6 +34,8 @@ const Analytics = () => {
     fetchData();
   }, []);
 
+  useRealtimeTable(["bookings", "profiles"], () => fetchData(), { channelName: "admin-analytics", debounceMs: 800 });
+
   const fetchData = async () => {
     try {
       setLoading(true);
