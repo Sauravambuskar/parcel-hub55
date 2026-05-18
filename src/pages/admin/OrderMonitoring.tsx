@@ -93,6 +93,8 @@ const OrderMonitoring = () => {
     fetchBookings();
   }, []);
 
+  useRealtimeTable("bookings", () => fetchBookings(), { channelName: "admin-order-monitoring" });
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
