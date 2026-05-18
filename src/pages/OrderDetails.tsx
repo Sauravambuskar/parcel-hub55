@@ -115,12 +115,15 @@ const OrderDetails = () => {
 
   const handleCancelConfirm = async (reason: CancelReason) => {
     if (!bookingMeta) return;
+    const auth = getAuthSession();
     await cancelOrder({
       orderId: bookingMeta.id,
       bookingSource: bookingMeta.booking_source,
       bookingId: bookingMeta.id,
       reason,
       awb: bookingMeta.awb,
+      userId: auth?.user_id || null,
+      currentStatus: bookingMeta.status,
     });
   };
 
