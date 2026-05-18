@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserPlus, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const emailSchema = z.string().email("Invalid email address");
 
