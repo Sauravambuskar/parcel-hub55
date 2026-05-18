@@ -31,6 +31,8 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
+  useRealtimeTable(["profiles", "bookings"], () => fetchUsers(), { channelName: "admin-user-mgmt" });
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
