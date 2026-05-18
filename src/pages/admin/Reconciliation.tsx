@@ -90,6 +90,14 @@ const Reconciliation = () => {
     }
   };
 
+  useRealtimeTable(
+    "bookings",
+    () => { if (items.length > 0) fetchData(); },
+    { channelName: "admin-reconciliation" }
+  );
+
+
+
   const handleRefund = async (item: ReconcileItem) => {
     setActioning(item.payment_id);
     try {
