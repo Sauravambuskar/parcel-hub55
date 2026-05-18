@@ -191,6 +191,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cancellation_disputes: {
+        Row: {
+          admin_notes: Json
+          assigned_admin: string | null
+          booking_id: string
+          created_at: string
+          id: string
+          partner_error: string | null
+          partner_status_at_attempt: string | null
+          previous_booking_status: string | null
+          reason: string
+          refund_id: string | null
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: Json
+          assigned_admin?: string | null
+          booking_id: string
+          created_at?: string
+          id?: string
+          partner_error?: string | null
+          partner_status_at_attempt?: string | null
+          previous_booking_status?: string | null
+          reason: string
+          refund_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: Json
+          assigned_admin?: string | null
+          booking_id?: string
+          created_at?: string
+          id?: string
+          partner_error?: string | null
+          partner_status_at_attempt?: string | null
+          previous_booking_status?: string | null
+          reason?: string
+          refund_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cms_authors: {
         Row: {
           avatar_url: string | null
