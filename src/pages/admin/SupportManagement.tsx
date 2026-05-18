@@ -52,6 +52,16 @@ const SupportManagement = () => {
 
   useEffect(() => { fetchTickets(); }, []);
 
+  useRealtimeTable("support_tickets", () => fetchTickets(), { channelName: "admin-support-tickets" });
+  useRealtimeTable(
+    "ticket_messages",
+    () => {
+      if (selectedTicket) fetchMessages(selectedTicket.id);
+      fetchTickets();
+    },
+    { channelName: "admin-ticket-messages" }
+  );
+
   const fetchTickets = async () => {
     try {
       setLoading(true);
