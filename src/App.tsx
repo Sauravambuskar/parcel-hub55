@@ -36,6 +36,7 @@ import Reconciliation from "./pages/admin/Reconciliation";
 import SupportManagement from "./pages/admin/SupportManagement";
 import Analytics from "./pages/admin/Analytics";
 import SystemSettings from "./pages/admin/SystemSettings";
+import DisputeResolution from "./pages/admin/DisputeResolution";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="revenue" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><RevenueManagement /></ProtectedAdminRoute>} />
             <Route path="reconciliation" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><Reconciliation /></ProtectedAdminRoute>} />
             <Route path="support" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><SupportManagement /></ProtectedAdminRoute>} />
+            <Route path="disputes" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><DisputeResolution /></ProtectedAdminRoute>} />
             <Route path="analytics" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><Analytics /></ProtectedAdminRoute>} />
             <Route path="settings" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><SystemSettings /></ProtectedAdminRoute>} />
             <Route path="cms" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><CMSDashboard /></ProtectedAdminRoute>} />

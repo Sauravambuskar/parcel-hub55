@@ -1,98 +1,70 @@
-# Role-Based Sub-Users for ViaSetu Admin
+# Dispute Resolution + Dashboard Status Fix
 
-## Goal
+## Problem 1 — Dashboard shows 0 for everything
 
-Extend the existing admin system so the Super Admin can create sub-users with limited access, each with their own login URL and visible sections.
+Bookings in the DB use uppercase statuses (`CREATED`, `CANCELLED`, plus partner-reported ones like `MANIFESTED`, `IN_TRANSIT`, `DELIVERED`, `RTO`, etc.), but `AdminDashboard.tsx` filters by lowercase literals (`"pending"`, `"in_transit"`, `"delivered"`). Result: counts are always 0.
 
-## Roles
+## Problem 2 — No dispute / cancellation flow
 
-| Role | Login URL | Visible Sections |
-|---|---|---|
-| `super_admin` (existing) | `/admin/login` | Everything |
-| `cms_editor` (new) | `/cms/login` | Content (CMS) only |
-| `operations` (new) | `/ops/login` | Order Monitoring, Real-Time Tracking, Reconciliation, Support Management, User Management |
+Today when a customer hits "Cancel" and the courier API rejects it (e.g. `READY_FOR_DISPATCH`, `PICKED_UP`), they just see a toast and the request disappears. Admin has no record, no way to follow up, and no way to reinstate an order if they manually resolve it with the partner.
 
-- Email domain restriction is **removed** for sub-user creation. Super admin emails still keep `@viasetu.com` (existing rule untouched).
-- Permissions are fixed per role (no per-section toggles).
+## What we'll build
 
-## What changes
+### 1. Cancellation policy notice at booking time
+- On Booking Review step, add a clear notice: *"Orders generally cannot be cancelled once placed and handed to the courier. You can request cancellation, but if the courier has already accepted it, our team will reach out to resolve."*
+- Same line shown in the post-payment confirmation screen.
 
-### 1. Database (migration)
+### 2. New `cancellation_disputes` table (one row per failed-cancel attempt)
+Fields: booking_id, user_id, reason (customer-provided), partner_error (raw message), partner_status_at_attempt, status (`open` | `in_progress` | `resolved_cancelled` | `resolved_reinstated` | `closed`), admin_notes, assigned_admin, resolved_at, refund_id.
+RLS: customer can view own; admins (`is_admin`) can view/update all.
 
-Extend the existing `admin_role` enum:
+### 3. Customer side — graceful failure
+- When `useCancelOrder` catches a partner rejection, instead of just a destructive toast, open a "Request Admin Help" dialog. Customer confirms reason → we insert a row into `cancellation_disputes` with status `open`.
+- Customer sees a "Cancellation requested — our team will contact you" badge on the order in History/OrderDetails.
+- Optional toggle: send themselves a confirmation (already covered by existing toast).
 
-```sql
-ALTER TYPE admin_role ADD VALUE 'cms_editor';
-ALTER TYPE admin_role ADD VALUE 'operations';
-```
+### 4. Admin Dispute Resolution page (`/admin/disputes`)
+- New sidebar entry under AdminLayout.
+- Lists all disputes, filter by status, search by tracking ID / phone.
+- Drawer per dispute showing: customer name + phone (click-to-call / WhatsApp link), full booking summary, partner error, timeline.
+- Admin actions:
+  - **Contact customer** — logs a note with timestamp.
+  - **Force cancel & refund** — calls existing partner cancel function (retry), and if successful triggers `razorpay-refund`. Marks dispute `resolved_cancelled`.
+  - **Reinstate order** — clears the dispute, sets booking status back to its prior value (`CREATED` / partner-reported), marks dispute `resolved_reinstated`. Customer's order returns to normal in their app.
+  - **Close without action** — with mandatory note.
 
-Add helper functions mirroring `is_super_admin`:
-- `is_cms_editor(uuid)` → role in (`super_admin`, `cms_editor`)
-- `is_operations(uuid)` → role in (`super_admin`, `operations`)
+### 5. Notifications
+- On dispute creation: insert a row in a lightweight `admin_notifications` view (or just realtime subscribe to `cancellation_disputes` on the admin dashboard → red badge on sidebar "Disputes" entry).
+- Customer gets a toast + the order card shows status pill "Cancellation under review".
+- (SMS/email out of scope unless you want it — current project doesn't send transactional SMS for this.)
 
-Update existing RLS policies that reference `is_super_admin` for CMS tables (`cms_content`, `cms_categories`, `cms_authors`, `cms_media`) to use `is_cms_editor` instead, so CMS Editors can manage content. Operations gets read access on `bookings`, `support_tickets`, `ticket_messages`, `profiles` via new policies using `is_operations`.
+### 6. Dashboard fixes
+- Normalize status comparisons to lowercase in `AdminDashboard.tsx`.
+- Expand the "Order Status Overview" card from 3 tiles to a full breakdown driven by actual data: **Created, Confirmed/Manifested, Picked Up, In Transit, Out for Delivery, Delivered, Cancelled, RTO, Disputed (open)**. Each tile is clickable → filters Orders page.
+- Add "Open Disputes" stat card to the top KPI row.
 
-### 2. Edge function: `create-admin-user`
+## Technical section
 
-- Drop the `@viasetu.com` check.
-- Accept `role` value of `super_admin` | `cms_editor` | `operations` (still super-admin-only to invoke).
-- Reset-password redirect chosen based on role: `/admin/reset-password` (super), `/cms/reset-password`, `/ops/reset-password`.
+**Files to add**
+- `supabase/migrations/<new>.sql` — `cancellation_disputes` table + RLS + realtime publication.
+- `src/pages/admin/DisputeResolution.tsx`
+- `src/components/admin/DisputeDetailDrawer.tsx`
+- `src/components/booking/CancellationPolicyNotice.tsx`
 
-### 3. Frontend routes (`src/App.tsx`)
+**Files to edit**
+- `src/hooks/useCancelOrder.ts` — on partner failure, create dispute row instead of (or in addition to) destructive toast; expose `onPartnerRejection` callback.
+- `src/components/booking/CancelOrderDialog.tsx` — show two-step UX: try cancel → if rejected, switch to "Request admin help" view.
+- `src/components/booking/BookingReviewStep.tsx` + post-confirmation screen — add policy notice.
+- `src/pages/OrderDetails.tsx` + `src/pages/History.tsx` — show dispute badge when an open dispute exists.
+- `src/pages/admin/AdminDashboard.tsx` — fix status filters (lowercase compare), add expanded status breakdown grid, add Open Disputes KPI.
+- `src/components/admin/AdminLayout.tsx` — add "Disputes" nav item with unread badge.
+- `src/App.tsx` — route `/admin/disputes`.
 
-Add:
-- `/cms/login` → reuses existing AdminLogin component, redirects on success to `/admin/cms`
-- `/ops/login` → redirects on success to `/admin/orders`
-- `/cms/reset-password`, `/ops/reset-password` → reuse ResetPassword component
+**Status mapping table** (used by both dashboard and dispute UI) added to `src/lib/booking-status.ts` so all surfaces share one canonical list.
 
-`/admin` route group stays. Access is gated per-route by an enhanced `ProtectedAdminRoute`.
+**No new secrets, no new partner integrations.** Refund path reuses `razorpay-refund`; reinstate is a pure DB update.
 
-### 4. `ProtectedAdminRoute` enhancement
-
-Replace `requireSuperAdmin?: boolean` with `allowedRoles?: AdminRole[]`. Default still allows any active admin. Each route in `App.tsx` declares the roles permitted:
-
-- CMS routes → `['super_admin', 'cms_editor']`
-- Orders / Tracking / Support / Reconciliation / Users → `['super_admin', 'operations']`
-- Admin Users / System Settings / Revenue / Analytics → `['super_admin']`
-
-If a logged-in sub-user hits a forbidden URL, redirect to their default landing page.
-
-### 5. `AdminLayout` sidebar
-
-Filter menu items by role using a new `allowedRoles` field on each menu entry. CMS Editor sees only "Content (CMS)". Operations sees Orders, Tracking, Users, Support, Reconciliation. Header title adapts ("CMS Panel" / "Operations Panel" / "Admin Panel").
-
-### 6. Admin Users management page
-
-In `AdminUserManagement.tsx`:
-- Role dropdown gains `cms_editor` and `operations` options.
-- Email field no longer enforces `@viasetu.com` (super admin can pick any domain).
-- Helper text clarifies which sections each role unlocks.
-
-### 7. Login pages
-
-`AdminLogin` already exists. Create thin wrappers `CmsLogin` and `OpsLogin` that reuse it but:
-- Show role-specific branding ("CMS Login" / "Operations Login")
-- After successful auth, verify the user's `admin_users.role` matches the expected group; otherwise sign out with an error.
-- Redirect to the role's default landing page.
-
-## Files
-
-**New**
-- `src/pages/cms/CmsLogin.tsx`
-- `src/pages/ops/OpsLogin.tsx`
-- supabase migration (enum values + helper functions + RLS updates)
-
-**Edited**
-- `src/App.tsx` (routes + per-route role guards)
-- `src/components/admin/ProtectedAdminRoute.tsx` (allowedRoles support, role-aware redirect)
-- `src/components/admin/AdminLayout.tsx` (sidebar filtering by role, dynamic header)
-- `src/pages/admin/AdminUserManagement.tsx` (role options, drop domain restriction)
-- `src/pages/admin/AdminLogin.tsx` (small refactor to accept expected role group + redirect target)
-- `supabase/functions/create-admin-user/index.ts` (remove domain check, accept new roles, role-based redirect)
-
-## Out of scope
-
-- No per-section permission toggles (fixed role mapping).
-- No 2FA changes.
-- No bulk-import of users.
-- Existing super admins and their access remain unchanged.
+## Out of scope (ask if you want them)
+- Bulk dispute export
+- SMS/email notifications to customer on status change
+- Customer-side chat thread inside the app (we just log admin notes for now)

@@ -63,8 +63,21 @@ const extractCancelError = (data: any, error: any): string =>
   error?.message ||
   "Failed to cancel order";
 
+const PARTNER_REJECTION_PATTERNS = [
+  "READY_FOR_DISPATCH", "MANIFESTED", "READY TO SHIP",
+  "PICKED_UP", "PICKED UP", "IN_TRANSIT", "IN TRANSIT",
+  "OUT_FOR_DELIVERY", "OUT FOR DELIVERY", "REACHED_HUB",
+  "DELIVERED", "RTO", "RETURN",
+];
+
+const isPartnerRejection = (raw: string): boolean => {
+  const upper = String(raw || "").toUpperCase();
+  return PARTNER_REJECTION_PATTERNS.some((p) => upper.includes(p));
+};
+
 interface UseCancelOrderOptions {
   onSuccess?: () => void;
+  onDisputeRaised?: () => void;
 }
 
 export const useCancelOrder = (options?: UseCancelOrderOptions) => {
@@ -77,12 +90,16 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
     bookingId,
     reason,
     awb,
+    userId,
+    currentStatus,
   }: {
     orderId: string;
     bookingSource: string;
     bookingId?: string;
     reason: CancelReason;
     awb?: string | null;
+    userId?: string | null;
+    currentStatus?: string | null;
   }) => {
     setCancelling(true);
     try {
@@ -190,9 +207,38 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
       return true;
     } catch (err: any) {
       console.error("Cancel order error:", err);
+      const rawMsg: string = err?.message || "Could not cancel the order. Please try again.";
+
+      // If partner has already moved the shipment forward, raise an admin dispute
+      // so the customer doesn't hit a dead end.
+      if (isPartnerRejection(rawMsg) && bookingId && userId) {
+        try {
+          await (supabase as any)
+            .from("cancellation_disputes")
+            .insert({
+              booking_id: bookingId,
+              user_id: userId,
+              reason,
+              partner_error: rawMsg,
+              partner_status_at_attempt: currentStatus || null,
+              previous_booking_status: currentStatus || null,
+              status: "open",
+            });
+          toast({
+            title: "Cancellation request received",
+            description:
+              "The courier has already accepted this shipment so we couldn't cancel it instantly. Our team will contact you shortly to help resolve.",
+          });
+          options?.onDisputeRaised?.();
+          return false;
+        } catch (disputeErr) {
+          console.error("Failed to raise dispute:", disputeErr);
+        }
+      }
+
       toast({
         title: "Cancellation Failed",
-        description: err.message || "Could not cancel the order. Please try again.",
+        description: rawMsg,
         variant: "destructive",
       });
       return false;

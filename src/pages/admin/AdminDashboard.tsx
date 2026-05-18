@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, RefreshCw, Calendar, Truck } from "lucide-react";
+import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, RefreshCw, Calendar, Truck, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
+import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
 
 interface DashboardStats {
   totalOrders: number;
@@ -22,6 +23,8 @@ interface DashboardStats {
   deliveredOrders: number;
   avgOrderValue: number;
   platformFees: number;
+  openDisputes: number;
+  buckets: Record<StatusBucket, number>;
 }
 
 interface RecentBooking {
@@ -55,6 +58,11 @@ const AdminDashboard = () => {
     deliveredOrders: 0,
     avgOrderValue: 0,
     platformFees: 0,
+    openDisputes: 0,
+    buckets: {
+      created: 0, confirmed: 0, picked_up: 0, in_transit: 0,
+      out_for_delivery: 0, delivered: 0, cancelled: 0, rto: 0, other: 0,
+    },
   });
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
 
@@ -96,13 +104,19 @@ const AdminDashboard = () => {
       const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
       const monthlyRevenue = monthlyBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
       
-      const pendingOrders = bookings?.filter(b => b.status === "pending" || !b.status).length || 0;
-      const inTransitOrders = bookings?.filter(b => b.status === "in_transit" || b.status === "in transit").length || 0;
-      const deliveredOrders = bookings?.filter(b => b.status === "delivered").length || 0;
+      const buckets = bucketCounts(bookings || []);
+      const pendingOrders = buckets.created;
+      const inTransitOrders = buckets.in_transit + buckets.picked_up + buckets.out_for_delivery + buckets.confirmed;
+      const deliveredOrders = buckets.delivered;
 
       // Platform Revenue = sum of real platform_fee column on collected bookings
       const collectedBookings = bookings?.filter(b => b.payment_status !== "cop_pending") || [];
       const platformFees = collectedBookings.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
+
+      const { count: openDisputes } = await (supabase as any)
+        .from("cancellation_disputes")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open");
 
       setStats({
         totalOrders: bookings?.length || 0,
@@ -116,6 +130,8 @@ const AdminDashboard = () => {
         deliveredOrders,
         avgOrderValue: bookings && bookings.length > 0 ? Math.round(totalRevenue / bookings.length) : 0,
         platformFees,
+        openDisputes: openDisputes || 0,
+        buckets,
       });
 
       // Set recent bookings (last 10)
@@ -186,12 +202,14 @@ const AdminDashboard = () => {
       color: "text-purple-600",
       bgColor: "bg-purple-50"
     },
-  ];
-
-  const orderStatusCards = [
-    { title: "Pending", value: stats.pendingOrders, color: "text-yellow-600", bgColor: "bg-yellow-100" },
-    { title: "In Transit", value: stats.inTransitOrders, color: "text-blue-600", bgColor: "bg-blue-100" },
-    { title: "Delivered", value: stats.deliveredOrders, color: "text-green-600", bgColor: "bg-green-100" },
+    {
+      title: "Open Disputes",
+      value: stats.openDisputes.toString(),
+      subValue: stats.openDisputes > 0 ? "Needs follow-up" : "All clear",
+      icon: AlertTriangle,
+      color: stats.openDisputes > 0 ? "text-red-600" : "text-green-600",
+      bgColor: stats.openDisputes > 0 ? "bg-red-50" : "bg-green-50",
+    },
   ];
 
   return (
@@ -229,7 +247,7 @@ const AdminDashboard = () => {
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -253,16 +271,26 @@ const AdminDashboard = () => {
           <CardDescription>Current distribution of orders by status</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {orderStatusCards.map((status) => (
-              <div 
-                key={status.title} 
-                className={`p-4 rounded-lg ${status.bgColor} text-center`}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {STATUS_BUCKETS.map((b) => (
+              <button
+                key={b.key}
+                onClick={() => navigate(`/admin/orders?status=${b.key}`)}
+                className={`p-4 rounded-lg ${b.color} text-left hover:opacity-80 transition-opacity`}
               >
-                <p className="text-3xl font-bold">{loading ? "..." : status.value}</p>
-                <p className={`text-sm font-medium ${status.color}`}>{status.title}</p>
-              </div>
+                <p className="text-3xl font-bold">{loading ? "…" : stats.buckets[b.key]}</p>
+                <p className="text-xs font-medium mt-1">{b.label}</p>
+              </button>
             ))}
+            <button
+              onClick={() => navigate("/admin/disputes")}
+              className={`p-4 rounded-lg text-left hover:opacity-80 transition-opacity ${
+                stats.openDisputes > 0 ? "bg-red-100 text-red-800" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <p className="text-3xl font-bold">{loading ? "…" : stats.openDisputes}</p>
+              <p className="text-xs font-medium mt-1">Open Disputes</p>
+            </button>
           </div>
         </CardContent>
       </Card>
