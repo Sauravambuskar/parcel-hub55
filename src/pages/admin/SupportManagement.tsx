@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MessageSquare, Clock, AlertCircle, CheckCircle, User, Search, RefreshCw, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format } from "date-fns";
 
 interface Ticket {
@@ -50,6 +51,16 @@ const SupportManagement = () => {
   const { toast } = useToast();
 
   useEffect(() => { fetchTickets(); }, []);
+
+  useRealtimeTable("support_tickets", () => fetchTickets(), { channelName: "admin-support-tickets" });
+  useRealtimeTable(
+    "ticket_messages",
+    () => {
+      if (selectedTicket) fetchMessages(selectedTicket.id);
+      fetchTickets();
+    },
+    { channelName: "admin-ticket-messages" }
+  );
 
   const fetchTickets = async () => {
     try {

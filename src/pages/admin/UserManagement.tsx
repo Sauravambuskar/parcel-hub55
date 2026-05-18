@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, UserCheck, UserX, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format } from "date-fns";
 
 interface UserData {
@@ -29,6 +30,8 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useRealtimeTable(["profiles", "bookings"], () => fetchUsers(), { channelName: "admin-user-mgmt" });
 
   const fetchUsers = async () => {
     try {

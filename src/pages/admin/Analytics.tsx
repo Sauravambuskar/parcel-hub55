@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BarChart3, TrendingUp, Users, Package, Clock, MapPin, Download, IndianRupee, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfWeek, startOfMonth, subMonths, subDays } from "date-fns";
 
 interface Booking {
@@ -32,6 +33,8 @@ const Analytics = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useRealtimeTable(["bookings", "profiles"], () => fetchData(), { channelName: "admin-analytics", debounceMs: 800 });
 
   const fetchData = async () => {
     try {

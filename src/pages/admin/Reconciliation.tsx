@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,14 @@ const Reconciliation = () => {
       setLoading(false);
     }
   };
+
+  useRealtimeTable(
+    "bookings",
+    () => { if (items.length > 0) fetchData(); },
+    { channelName: "admin-reconciliation" }
+  );
+
+
 
   const handleRefund = async (item: ReconcileItem) => {
     setActioning(item.payment_id);

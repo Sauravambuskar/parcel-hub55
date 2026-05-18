@@ -75,6 +75,11 @@ const AdminDashboard = () => {
         { event: "*", schema: "public", table: "bookings" },
         () => fetchDashboardData(),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cancellation_disputes" },
+        () => fetchDashboardData(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
