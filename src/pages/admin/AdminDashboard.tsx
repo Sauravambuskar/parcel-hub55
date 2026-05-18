@@ -202,12 +202,14 @@ const AdminDashboard = () => {
       color: "text-purple-600",
       bgColor: "bg-purple-50"
     },
-  ];
-
-  const orderStatusCards = [
-    { title: "Pending", value: stats.pendingOrders, color: "text-yellow-600", bgColor: "bg-yellow-100" },
-    { title: "In Transit", value: stats.inTransitOrders, color: "text-blue-600", bgColor: "bg-blue-100" },
-    { title: "Delivered", value: stats.deliveredOrders, color: "text-green-600", bgColor: "bg-green-100" },
+    {
+      title: "Open Disputes",
+      value: stats.openDisputes.toString(),
+      subValue: stats.openDisputes > 0 ? "Needs follow-up" : "All clear",
+      icon: AlertTriangle,
+      color: stats.openDisputes > 0 ? "text-red-600" : "text-green-600",
+      bgColor: stats.openDisputes > 0 ? "bg-red-50" : "bg-green-50",
+    },
   ];
 
   return (
@@ -245,7 +247,7 @@ const AdminDashboard = () => {
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
