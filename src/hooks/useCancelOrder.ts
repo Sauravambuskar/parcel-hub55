@@ -63,8 +63,21 @@ const extractCancelError = (data: any, error: any): string =>
   error?.message ||
   "Failed to cancel order";
 
+const PARTNER_REJECTION_PATTERNS = [
+  "READY_FOR_DISPATCH", "MANIFESTED", "READY TO SHIP",
+  "PICKED_UP", "PICKED UP", "IN_TRANSIT", "IN TRANSIT",
+  "OUT_FOR_DELIVERY", "OUT FOR DELIVERY", "REACHED_HUB",
+  "DELIVERED", "RTO", "RETURN",
+];
+
+const isPartnerRejection = (raw: string): boolean => {
+  const upper = String(raw || "").toUpperCase();
+  return PARTNER_REJECTION_PATTERNS.some((p) => upper.includes(p));
+};
+
 interface UseCancelOrderOptions {
   onSuccess?: () => void;
+  onDisputeRaised?: () => void;
 }
 
 export const useCancelOrder = (options?: UseCancelOrderOptions) => {
@@ -77,12 +90,16 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
     bookingId,
     reason,
     awb,
+    userId,
+    currentStatus,
   }: {
     orderId: string;
     bookingSource: string;
     bookingId?: string;
     reason: CancelReason;
     awb?: string | null;
+    userId?: string | null;
+    currentStatus?: string | null;
   }) => {
     setCancelling(true);
     try {
