@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
+import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
 
 interface DashboardStats {
   totalOrders: number;
@@ -22,6 +23,8 @@ interface DashboardStats {
   deliveredOrders: number;
   avgOrderValue: number;
   platformFees: number;
+  openDisputes: number;
+  buckets: Record<StatusBucket, number>;
 }
 
 interface RecentBooking {
@@ -55,6 +58,11 @@ const AdminDashboard = () => {
     deliveredOrders: 0,
     avgOrderValue: 0,
     platformFees: 0,
+    openDisputes: 0,
+    buckets: {
+      created: 0, confirmed: 0, picked_up: 0, in_transit: 0,
+      out_for_delivery: 0, delivered: 0, cancelled: 0, rto: 0, other: 0,
+    },
   });
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
 
@@ -96,13 +104,19 @@ const AdminDashboard = () => {
       const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
       const monthlyRevenue = monthlyBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
       
-      const pendingOrders = bookings?.filter(b => b.status === "pending" || !b.status).length || 0;
-      const inTransitOrders = bookings?.filter(b => b.status === "in_transit" || b.status === "in transit").length || 0;
-      const deliveredOrders = bookings?.filter(b => b.status === "delivered").length || 0;
+      const buckets = bucketCounts(bookings || []);
+      const pendingOrders = buckets.created;
+      const inTransitOrders = buckets.in_transit + buckets.picked_up + buckets.out_for_delivery + buckets.confirmed;
+      const deliveredOrders = buckets.delivered;
 
       // Platform Revenue = sum of real platform_fee column on collected bookings
       const collectedBookings = bookings?.filter(b => b.payment_status !== "cop_pending") || [];
       const platformFees = collectedBookings.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
+
+      const { count: openDisputes } = await (supabase as any)
+        .from("cancellation_disputes")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open");
 
       setStats({
         totalOrders: bookings?.length || 0,
@@ -116,6 +130,8 @@ const AdminDashboard = () => {
         deliveredOrders,
         avgOrderValue: bookings && bookings.length > 0 ? Math.round(totalRevenue / bookings.length) : 0,
         platformFees,
+        openDisputes: openDisputes || 0,
+        buckets,
       });
 
       // Set recent bookings (last 10)
