@@ -190,6 +190,13 @@ const BookingReviewStep = ({
           </p>
         </div>
 
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
+          <p className="text-xs text-foreground">
+            <strong>Pickup ETA:</strong> Once your order is placed, it will be picked up within
+            the next 24–48 hours. Sit back and relax — we'll keep you posted.
+          </p>
+        </div>
+
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
           <p className="text-xs text-amber-900">
             <strong>Cancellation policy:</strong> Once an order is placed and accepted by the
