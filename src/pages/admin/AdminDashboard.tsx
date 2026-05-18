@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, RefreshCw, Calendar, Truck } from "lucide-react";
+import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, RefreshCw, Calendar, Truck, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -271,16 +271,26 @@ const AdminDashboard = () => {
           <CardDescription>Current distribution of orders by status</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {orderStatusCards.map((status) => (
-              <div 
-                key={status.title} 
-                className={`p-4 rounded-lg ${status.bgColor} text-center`}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {STATUS_BUCKETS.map((b) => (
+              <button
+                key={b.key}
+                onClick={() => navigate(`/admin/orders?status=${b.key}`)}
+                className={`p-4 rounded-lg ${b.color} text-left hover:opacity-80 transition-opacity`}
               >
-                <p className="text-3xl font-bold">{loading ? "..." : status.value}</p>
-                <p className={`text-sm font-medium ${status.color}`}>{status.title}</p>
-              </div>
+                <p className="text-3xl font-bold">{loading ? "…" : stats.buckets[b.key]}</p>
+                <p className="text-xs font-medium mt-1">{b.label}</p>
+              </button>
             ))}
+            <button
+              onClick={() => navigate("/admin/disputes")}
+              className={`p-4 rounded-lg text-left hover:opacity-80 transition-opacity ${
+                stats.openDisputes > 0 ? "bg-red-100 text-red-800" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <p className="text-3xl font-bold">{loading ? "…" : stats.openDisputes}</p>
+              <p className="text-xs font-medium mt-1">Open Disputes</p>
+            </button>
           </div>
         </CardContent>
       </Card>
