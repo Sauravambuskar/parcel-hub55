@@ -1,70 +1,46 @@
-# Dispute Resolution + Dashboard Status Fix
+## Goal
+Send an email to `uday@viasetu.com` every time an order is successfully placed (Razorpay verified + partner booking succeeded), containing all key order details.
 
-## Problem 1 — Dashboard shows 0 for everything
+## What the email will include
+- Order ID (Prayog order ID / AWB)
+- Courier partner + service (Air/Surface)
+- Pickup address (sender name, phone, city, pincode, full address)
+- Delivery address (receiver name, phone, city, pincode, full address)
+- Package: goods type, weight, dimensions, declared value
+- Pricing: Base Fare, GST, Total (₹)
+- Customer phone + booking timestamp
+- Direct link to the order in the admin dashboard
 
-Bookings in the DB use uppercase statuses (`CREATED`, `CANCELLED`, plus partner-reported ones like `MANIFESTED`, `IN_TRANSIT`, `DELIVERED`, `RTO`, etc.), but `AdminDashboard.tsx` filters by lowercase literals (`"pending"`, `"in_transit"`, `"delivered"`). Result: counts are always 0.
+## Trigger point
+In `supabase/functions/confirm-booking-or-refund/index.ts`, immediately after a booking row is written with `payment_status = 'paid'` and a successful partner booking (AWB present). One email per order, keyed by `idempotencyKey = new-order-${booking.id}` so retries never duplicate.
 
-## Problem 2 — No dispute / cancellation flow
+## Implementation
 
-Today when a customer hits "Cancel" and the courier API rejects it (e.g. `READY_FOR_DISPATCH`, `PICKED_UP`), they just see a toast and the request disappears. Admin has no record, no way to follow up, and no way to reinstate an order if they manually resolve it with the partner.
+1. **Email domain** — Set up Lovable Emails sender domain (`notify.viasetu.com`) via the email-setup dialog. Required before any send.
+2. **Email infrastructure** — Run `setup_email_infra` (creates pgmq queues, cron dispatcher, send-log tables).
+3. **Scaffold transactional email** — Run `scaffold_transactional_email` to create the `send-transactional-email` Edge Function + unsubscribe page.
+4. **New React Email template** — `supabase/functions/_shared/transactional-email-templates/new-order-admin.tsx`
+   - Branded with ViaSetu cyan/black palette.
+   - Sections: Header, Order summary, Pickup → Delivery (two-column), Package, Pricing breakdown, "View in admin" button.
+   - Register in `registry.ts`.
+5. **Trigger wiring** — In `confirm-booking-or-refund/index.ts`, after the booking is finalized successfully, invoke `send-transactional-email` with:
+   - `templateName: 'new-order-admin'`
+   - `recipientEmail: 'uday@viasetu.com'` (kept as a constant `ADMIN_NOTIFICATION_EMAIL` at top of file for easy edit; later can move to `system_settings`)
+   - `idempotencyKey: 'new-order-' + booking.id`
+   - `templateData`: all the order fields listed above.
+   - Wrapped in try/catch — email failure must NEVER fail the booking confirmation.
 
-## What we'll build
+## Files
+- **New**: `supabase/functions/_shared/transactional-email-templates/new-order-admin.tsx`
+- **Edit**: `supabase/functions/_shared/transactional-email-templates/registry.ts` (add the new template)
+- **Edit**: `supabase/functions/confirm-booking-or-refund/index.ts` (invoke send-transactional-email on success)
+- Tool-generated: `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression` Edge Functions + unsubscribe page.
 
-### 1. Cancellation policy notice at booking time
-- On Booking Review step, add a clear notice: *"Orders generally cannot be cancelled once placed and handed to the courier. You can request cancellation, but if the courier has already accepted it, our team will reach out to resolve."*
-- Same line shown in the post-payment confirmation screen.
+## Out of scope (can be added later)
+- Multiple recipients / per-admin preferences UI in Settings.
+- SMS or WhatsApp notifications.
+- Per-status notifications (delivered, RTO, etc.).
+- In-app realtime toast for admins.
 
-### 2. New `cancellation_disputes` table (one row per failed-cancel attempt)
-Fields: booking_id, user_id, reason (customer-provided), partner_error (raw message), partner_status_at_attempt, status (`open` | `in_progress` | `resolved_cancelled` | `resolved_reinstated` | `closed`), admin_notes, assigned_admin, resolved_at, refund_id.
-RLS: customer can view own; admins (`is_admin`) can view/update all.
-
-### 3. Customer side — graceful failure
-- When `useCancelOrder` catches a partner rejection, instead of just a destructive toast, open a "Request Admin Help" dialog. Customer confirms reason → we insert a row into `cancellation_disputes` with status `open`.
-- Customer sees a "Cancellation requested — our team will contact you" badge on the order in History/OrderDetails.
-- Optional toggle: send themselves a confirmation (already covered by existing toast).
-
-### 4. Admin Dispute Resolution page (`/admin/disputes`)
-- New sidebar entry under AdminLayout.
-- Lists all disputes, filter by status, search by tracking ID / phone.
-- Drawer per dispute showing: customer name + phone (click-to-call / WhatsApp link), full booking summary, partner error, timeline.
-- Admin actions:
-  - **Contact customer** — logs a note with timestamp.
-  - **Force cancel & refund** — calls existing partner cancel function (retry), and if successful triggers `razorpay-refund`. Marks dispute `resolved_cancelled`.
-  - **Reinstate order** — clears the dispute, sets booking status back to its prior value (`CREATED` / partner-reported), marks dispute `resolved_reinstated`. Customer's order returns to normal in their app.
-  - **Close without action** — with mandatory note.
-
-### 5. Notifications
-- On dispute creation: insert a row in a lightweight `admin_notifications` view (or just realtime subscribe to `cancellation_disputes` on the admin dashboard → red badge on sidebar "Disputes" entry).
-- Customer gets a toast + the order card shows status pill "Cancellation under review".
-- (SMS/email out of scope unless you want it — current project doesn't send transactional SMS for this.)
-
-### 6. Dashboard fixes
-- Normalize status comparisons to lowercase in `AdminDashboard.tsx`.
-- Expand the "Order Status Overview" card from 3 tiles to a full breakdown driven by actual data: **Created, Confirmed/Manifested, Picked Up, In Transit, Out for Delivery, Delivered, Cancelled, RTO, Disputed (open)**. Each tile is clickable → filters Orders page.
-- Add "Open Disputes" stat card to the top KPI row.
-
-## Technical section
-
-**Files to add**
-- `supabase/migrations/<new>.sql` — `cancellation_disputes` table + RLS + realtime publication.
-- `src/pages/admin/DisputeResolution.tsx`
-- `src/components/admin/DisputeDetailDrawer.tsx`
-- `src/components/booking/CancellationPolicyNotice.tsx`
-
-**Files to edit**
-- `src/hooks/useCancelOrder.ts` — on partner failure, create dispute row instead of (or in addition to) destructive toast; expose `onPartnerRejection` callback.
-- `src/components/booking/CancelOrderDialog.tsx` — show two-step UX: try cancel → if rejected, switch to "Request admin help" view.
-- `src/components/booking/BookingReviewStep.tsx` + post-confirmation screen — add policy notice.
-- `src/pages/OrderDetails.tsx` + `src/pages/History.tsx` — show dispute badge when an open dispute exists.
-- `src/pages/admin/AdminDashboard.tsx` — fix status filters (lowercase compare), add expanded status breakdown grid, add Open Disputes KPI.
-- `src/components/admin/AdminLayout.tsx` — add "Disputes" nav item with unread badge.
-- `src/App.tsx` — route `/admin/disputes`.
-
-**Status mapping table** (used by both dashboard and dispute UI) added to `src/lib/booking-status.ts` so all surfaces share one canonical list.
-
-**No new secrets, no new partner integrations.** Refund path reuses `razorpay-refund`; reinstate is a pure DB update.
-
-## Out of scope (ask if you want them)
-- Bulk dispute export
-- SMS/email notifications to customer on status change
-- Customer-side chat thread inside the app (we just log admin notes for now)
+## Prerequisite the user must do
+Approve the email-domain setup dialog and add the DNS records at the viasetu.com registrar so `notify.viasetu.com` can verify. Sending starts as soon as DNS propagates — code is fully deployed before then.
