@@ -213,17 +213,18 @@ export const useCancelOrder = (options?: UseCancelOrderOptions) => {
       // so the customer doesn't hit a dead end.
       if (isPartnerRejection(rawMsg) && bookingId && userId) {
         try {
-          await (supabase as any)
-            .from("cancellation_disputes")
-            .insert({
+          const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
+          const { error: disputeFnErr } = await supabase.functions.invoke('raise-cancellation-dispute', {
+            body: {
               booking_id: bookingId,
-              user_id: userId,
               reason,
               partner_error: rawMsg,
               partner_status_at_attempt: currentStatus || null,
               previous_booking_status: currentStatus || null,
-              status: "open",
-            });
+            },
+            headers: authRaw ? { 'x-prayog-auth': authRaw } : undefined,
+          });
+          if (disputeFnErr) throw disputeFnErr;
           toast({
             title: "Cancellation request received",
             description:
