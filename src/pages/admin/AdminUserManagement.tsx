@@ -52,6 +52,8 @@ const AdminUserManagement = () => {
     fetchCurrentUserRole();
   }, []);
 
+  useRealtimeTable("admin_users", () => fetchAdminUsers(), { channelName: "admin-users-mgmt" });
+
   const fetchCurrentUserRole = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
