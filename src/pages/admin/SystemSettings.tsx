@@ -39,7 +39,7 @@ interface EmailConfig {
 }
 
 const SystemSettings = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [emailCfg, setEmailCfg] = useState<EmailConfig>({
     enabled: true, admin_recipient: "uday@viasetu.com", cc_recipients: "",
@@ -59,21 +59,32 @@ const SystemSettings = () => {
 
   useEffect(() => { fetchSettings(); }, []);
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (showSpinner = false) => {
+    const timeout = new AbortController();
+    const timeoutId = window.setTimeout(() => timeout.abort(), 5000);
+
     try {
-      setLoading(true);
-      const { data, error } = await supabase.from("system_settings").select("*");
+      if (showSpinner) setLoading(true);
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("key,value")
+        .abortSignal(timeout.signal);
       if (error) throw error;
 
       (data || []).forEach((row: any) => {
         if (row.key === "platform") setPlatform(row.value as PlatformSettings);
         if (row.key === "pricing") setPricing(row.value as PricingSettings);
         if (row.key === "operations") setOperations(row.value as OperationsSettings);
-        if (row.key === "email_config") setEmailCfg({ ...emailCfg, ...(row.value as EmailConfig) });
+        if (row.key === "email_config") setEmailCfg((current) => ({ ...current, ...(row.value as EmailConfig) }));
       });
     } catch (error: any) {
-      toast({ title: "Error loading settings", description: error.message, variant: "destructive" });
+      if (showSpinner) {
+        toast({ title: "Error loading settings", description: error.message, variant: "destructive" });
+      } else {
+        console.warn("Settings background refresh failed", error);
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -94,14 +105,6 @@ const SystemSettings = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -109,8 +112,8 @@ const SystemSettings = () => {
           <h2 className="text-3xl font-bold tracking-tight">System & App Settings</h2>
           <p className="text-muted-foreground">Configure platform settings, pricing, and operational parameters</p>
         </div>
-        <Button variant="outline" onClick={fetchSettings}>
-          <RefreshCw className="h-4 w-4 mr-2" />Refresh
+        <Button variant="outline" onClick={() => fetchSettings(true)} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}Refresh
         </Button>
       </div>
 
