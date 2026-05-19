@@ -8,6 +8,7 @@ import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, Re
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
 import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
 
@@ -68,35 +69,32 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    const channel = supabase
-      .channel("admin-dashboard-bookings")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        () => fetchDashboardData(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "cancellation_disputes" },
-        () => fetchDashboardData(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
+
+  // Debounced realtime — one refresh per burst of writes instead of one per row.
+  useRealtimeTable(
+    ["bookings", "cancellation_disputes"],
+    () => fetchDashboardData(),
+    { channelName: "admin-dashboard", debounceMs: 2500 },
+  );
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch all bookings
-      const { data: bookings, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
+
+      // Stats only need numeric/status columns — skip wide address text fields.
+      const statsCols = "id,created_at,status,payment_status,courier_price,platform_fee";
+      // Recent table needs route + courier display columns.
+      const recentCols =
+        "id,tracking_id,sender_name,receiver_name,sender_city,receiver_city,courier_name,courier_price,status,created_at,urgency";
+
+      const [{ data: bookings, error }, { data: recent, error: recentErr }] = await Promise.all([
+        supabase.from("bookings").select(statsCols).order("created_at", { ascending: false }).limit(1000),
+        supabase.from("bookings").select(recentCols).order("created_at", { ascending: false }).limit(10),
+      ]);
 
       if (error) throw error;
+      if (recentErr) throw recentErr;
 
       const today = startOfDay(new Date());
       const monthStart = startOfMonth(new Date());
@@ -139,8 +137,8 @@ const AdminDashboard = () => {
         buckets,
       });
 
-      // Set recent bookings (last 10)
-      setRecentBookings(bookings?.slice(0, 10) || []);
+      // Recent bookings (separate query with display columns)
+      setRecentBookings((recent as RecentBooking[]) || []);
 
     } catch (error: any) {
       toast({

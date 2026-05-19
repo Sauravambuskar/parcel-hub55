@@ -93,15 +93,18 @@ const OrderMonitoring = () => {
     fetchBookings();
   }, []);
 
-  useRealtimeTable("bookings", () => fetchBookings(), { channelName: "admin-order-monitoring" });
+  useRealtimeTable("bookings", () => fetchBookings(), { channelName: "admin-order-monitoring", debounceMs: 2500 });
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      // Cap to recent 1000 orders — anything older is reachable via search/filters
+      // (the details dialog itself loads the full row lazily if needed).
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(1000);
 
       if (error) throw error;
       setBookings(data || []);
