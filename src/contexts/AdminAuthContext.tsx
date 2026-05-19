@@ -58,7 +58,9 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         return;
       }
 
-      refresh();
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        refresh();
+      }
     });
 
     return () => subscription.unsubscribe();
