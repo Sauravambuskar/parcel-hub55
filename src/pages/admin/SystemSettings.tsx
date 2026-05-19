@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Percent, Bell, RefreshCw, Loader2 } from "lucide-react";
+import { Settings, Percent, Bell, RefreshCw, Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,9 +30,21 @@ interface OperationsSettings {
   auto_assign_orders: boolean;
 }
 
+interface EmailConfig {
+  enabled: boolean;
+  admin_recipient: string;
+  cc_recipients: string;
+  sender_name: string;
+  sender_email: string;
+}
+
 const SystemSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [emailCfg, setEmailCfg] = useState<EmailConfig>({
+    enabled: true, admin_recipient: "uday@viasetu.com", cc_recipients: "",
+    sender_name: "ViaSetu Orders", sender_email: "onboarding@resend.dev",
+  });
   const [platform, setPlatform] = useState<PlatformSettings>({
     name: "ViaSetu", support_email: "support@viasetu.com", contact_phone: "",
     maintenance_mode: false, allow_registrations: true,
@@ -57,6 +69,7 @@ const SystemSettings = () => {
         if (row.key === "platform") setPlatform(row.value as PlatformSettings);
         if (row.key === "pricing") setPricing(row.value as PricingSettings);
         if (row.key === "operations") setOperations(row.value as OperationsSettings);
+        if (row.key === "email_config") setEmailCfg({ ...emailCfg, ...(row.value as EmailConfig) });
       });
     } catch (error: any) {
       toast({ title: "Error loading settings", description: error.message, variant: "destructive" });
