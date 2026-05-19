@@ -1,20 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-export type AdminRole = "super_admin" | "cms_editor" | "operations" | "support";
-
-type AdminUser = {
-  role: AdminRole;
-  email: string;
-};
-
-type AdminAuthState = {
-  loading: boolean;
-  adminUser: AdminUser | null;
-  refresh: () => Promise<void>;
-};
-
-const AdminAuthContext = createContext<AdminAuthState | undefined>(undefined);
+import { AdminAuthContext, AdminRole, AdminUser } from "@/contexts/useAdminAuth";
 
 const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
@@ -71,12 +57,4 @@ const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
 };
 
-const useAdminAuth = () => {
-  const ctx = useContext(AdminAuthContext);
-  if (!ctx) {
-    throw new Error("useAdminAuth must be used within AdminAuthProvider");
-  }
-  return ctx;
-};
-
-export { AdminAuthProvider, useAdminAuth };
+export { AdminAuthProvider };
