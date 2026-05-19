@@ -1,0 +1,1 @@
+UPDATE public.bookings SET admin_email_sent_at = NULL WHERE id = 'e5a584d5-5d81-4bed-9d64-12d010acb465';
