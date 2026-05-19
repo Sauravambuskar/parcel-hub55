@@ -11,6 +11,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-prayog-auth, x-environment",
 };
 
+// Successful booking states that warrant an admin notification.
+const SUCCESS_STATES = new Set([
+  "CREATED", "MANIFESTED", "BOOKED", "PICKUP_PENDING", "IN_TRANSIT", "SUCCESS",
+]);
+
+function triggerAdminEmail(booking: any) {
+  try {
+    if (!booking?.id) return;
+    const status = String(booking.status || "").toUpperCase();
+    if (!SUCCESS_STATES.has(status)) return;
+    if (booking.admin_email_sent_at) return;
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-admin-email`;
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+      },
+      body: JSON.stringify({ booking_id: booking.id }),
+    }).catch((e) => console.error("[save-booking] admin email trigger failed:", e));
+  } catch (e) {
+    console.error("[save-booking] triggerAdminEmail err:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -87,6 +112,7 @@ Deno.serve(async (req) => {
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
+        if (updated) triggerAdminEmail(updated);
         return new Response(JSON.stringify({ booking: updated, updated: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -106,6 +132,9 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    // Fire-and-forget admin notification email on success.
+    triggerAdminEmail(data);
 
     return new Response(JSON.stringify({ booking: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

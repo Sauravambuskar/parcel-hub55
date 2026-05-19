@@ -46,6 +46,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          admin_email_sent_at: string | null
           base_fare: number | null
           booking_source: string | null
           courier_name: string
@@ -94,6 +95,7 @@ export type Database = {
           width: string | null
         }
         Insert: {
+          admin_email_sent_at?: string | null
           base_fare?: number | null
           booking_source?: string | null
           courier_name: string
@@ -142,6 +144,7 @@ export type Database = {
           width?: string | null
         }
         Update: {
+          admin_email_sent_at?: string | null
           base_fare?: number | null
           booking_source?: string | null
           courier_name?: string

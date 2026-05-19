@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.raise-cancellation-dispute]
 verify_jwt = false
+
+[functions.send-order-admin-email]
+verify_jwt = false
