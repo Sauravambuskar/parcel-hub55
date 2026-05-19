@@ -119,7 +119,8 @@ Deno.serve(async (req) => {
     const recipient = overrideRecipient || cfg.admin_recipient || "uday@viasetu.com";
     const senderName = cfg.sender_name || "ViaSetu Orders";
     const senderEmail = cfg.sender_email || "onboarding@resend.dev";
-    const cc = (cfg.cc_recipients || "")
+    const skipCc = body?.skip_cc === true;
+    const cc = skipCc ? [] : (cfg.cc_recipients || "")
       .split(",").map((s: string) => s.trim()).filter(Boolean);
 
     // Idempotency
