@@ -34,18 +34,20 @@ const Analytics = () => {
     fetchData();
   }, []);
 
-  useRealtimeTable(["bookings", "profiles"], () => fetchData(), { channelName: "admin-analytics", debounceMs: 800 });
+  useRealtimeTable(["bookings", "profiles"], () => fetchData(), { channelName: "admin-analytics", debounceMs: 2500 });
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Narrow column projection — Analytics only uses these columns.
+      const cols = "id,courier_name,courier_price,status,created_at,sender_city,receiver_city,delivery_time,urgency";
       const [bookingsRes, profilesRes] = await Promise.all([
-        supabase.from("bookings").select("*").order("created_at", { ascending: false }),
+        supabase.from("bookings").select(cols).order("created_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
       ]);
 
       if (bookingsRes.error) throw bookingsRes.error;
-      setBookings(bookingsRes.data || []);
+      setBookings((bookingsRes.data as Booking[]) || []);
       setUserCount(profilesRes.count || 0);
     } catch (error: any) {
       toast({ title: "Error loading analytics", description: error.message, variant: "destructive" });
