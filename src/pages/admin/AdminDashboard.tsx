@@ -8,6 +8,7 @@ import { Users, Package, IndianRupee, TrendingUp, Search, MapPin, Clock, Eye, Re
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
 import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
 
