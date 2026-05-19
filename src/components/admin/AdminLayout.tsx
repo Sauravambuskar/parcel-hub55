@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useAdminAuth } from "@/contexts/useAdminAuth";
 import { 
   Users, 
   Package, 
