@@ -118,6 +118,7 @@ const SystemSettings = () => {
         <TabsList>
           <TabsTrigger value="general">General Settings</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Commission</TabsTrigger>
+          <TabsTrigger value="email">Email Configuration</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -213,7 +214,51 @@ const SystemSettings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications">
+        <TabsContent value="email">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" />Order Notification Emails</CardTitle>
+              <CardDescription>Sent to admin whenever a new order is successfully placed. Powered by Resend.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch checked={emailCfg.enabled} onCheckedChange={(v) => setEmailCfg({ ...emailCfg, enabled: v })} />
+                <Label>Enable admin order notifications</Label>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Admin Recipient Email *</Label>
+                  <Input type="email" value={emailCfg.admin_recipient}
+                    onChange={(e) => setEmailCfg({ ...emailCfg, admin_recipient: e.target.value })}
+                    placeholder="admin@viasetu.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>CC Recipients (comma-separated)</Label>
+                  <Input value={emailCfg.cc_recipients}
+                    onChange={(e) => setEmailCfg({ ...emailCfg, cc_recipients: e.target.value })}
+                    placeholder="ops@viasetu.com, accounts@viasetu.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sender Name</Label>
+                  <Input value={emailCfg.sender_name}
+                    onChange={(e) => setEmailCfg({ ...emailCfg, sender_name: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sender Email</Label>
+                  <Input type="email" value={emailCfg.sender_email}
+                    onChange={(e) => setEmailCfg({ ...emailCfg, sender_email: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">
+                    Use <code>onboarding@resend.dev</code> until you verify a domain in Resend.
+                  </p>
+                </div>
+              </div>
+              <Button onClick={() => saveSetting("email_config", emailCfg)} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Save Email Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" />Notification Settings</CardTitle>
