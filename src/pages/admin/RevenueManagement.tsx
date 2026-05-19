@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, startOfWeek, subMonths } from "date-fns";
 
 interface Booking {
