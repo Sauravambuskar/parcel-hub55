@@ -1,45 +1,53 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Onboarding from "./pages/Onboarding";
-import Booking from "./pages/Booking";
-import Tracking from "./pages/Tracking";
-import History from "./pages/History";
-import OrderDetails from "./pages/OrderDetails";
-import Support from "./pages/Support";
-import Settings from "./pages/Settings";
-import Blog from "./pages/cms/Blog";
-import CmsArticle from "./pages/cms/CmsArticle";
-import FaqPage from "./pages/cms/FaqPage";
-import CMSDashboard from "./pages/admin/cms/CMSDashboard";
-import ContentList from "./components/admin/cms/ContentList";
-import ContentEditor from "./components/admin/cms/ContentEditor";
-import CmsLogin from "./pages/cms/CmsLogin";
-import OpsLogin from "./pages/ops/OpsLogin";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
-import NotFound from "./pages/NotFound";
-import AdminLogin from "./pages/admin/AdminLogin";
-import ResetPassword from "./pages/admin/ResetPassword";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import RealTimeTracking from "./pages/admin/RealTimeTracking";
-import UserManagement from "./pages/admin/UserManagement";
-import AdminUserManagement from "./pages/admin/AdminUserManagement";
-import OrderMonitoring from "./pages/admin/OrderMonitoring";
-import RevenueManagement from "./pages/admin/RevenueManagement";
-import Reconciliation from "./pages/admin/Reconciliation";
-import SupportManagement from "./pages/admin/SupportManagement";
-import Analytics from "./pages/admin/Analytics";
-import SystemSettings from "./pages/admin/SystemSettings";
-import DisputeResolution from "./pages/admin/DisputeResolution";
-import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
+const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Booking = lazy(() => import("./pages/Booking"));
+const Tracking = lazy(() => import("./pages/Tracking"));
+const History = lazy(() => import("./pages/History"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const Support = lazy(() => import("./pages/Support"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Blog = lazy(() => import("./pages/cms/Blog"));
+const CmsArticle = lazy(() => import("./pages/cms/CmsArticle"));
+const FaqPage = lazy(() => import("./pages/cms/FaqPage"));
+const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
+const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
+const ContentEditor = lazy(() => import("./components/admin/cms/ContentEditor"));
+const CmsLogin = lazy(() => import("./pages/cms/CmsLogin"));
+const OpsLogin = lazy(() => import("./pages/ops/OpsLogin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const ResetPassword = lazy(() => import("./pages/admin/ResetPassword"));
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const RealTimeTracking = lazy(() => import("./pages/admin/RealTimeTracking"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const AdminUserManagement = lazy(() => import("./pages/admin/AdminUserManagement"));
+const OrderMonitoring = lazy(() => import("./pages/admin/OrderMonitoring"));
+const RevenueManagement = lazy(() => import("./pages/admin/RevenueManagement"));
+const Reconciliation = lazy(() => import("./pages/admin/Reconciliation"));
+const SupportManagement = lazy(() => import("./pages/admin/SupportManagement"));
+const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const SystemSettings = lazy(() => import("./pages/admin/SystemSettings"));
+const DisputeResolution = lazy(() => import("./pages/admin/DisputeResolution"));
+const ProtectedAdminRoute = lazy(() => import("./components/admin/ProtectedAdminRoute"));
 
 const queryClient = new QueryClient();
+
+const AppLoading = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -47,6 +55,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <Suspense fallback={<AppLoading />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Index />} />
@@ -73,6 +82,9 @@ const App = () => (
           <Route path="/cms/reset-password" element={<ResetPassword />} />
           <Route path="/ops/login" element={<OpsLogin />} />
           <Route path="/ops/reset-password" element={<ResetPassword />} />
+          <Route path="/admin-users" element={<Navigate to="/admin/admin-users" replace />} />
+          <Route path="/admin-orders" element={<Navigate to="/admin/orders" replace />} />
+          <Route path="/admin-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
             <Route path="dashboard" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminDashboard /></ProtectedAdminRoute>} />
             <Route path="tracking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><RealTimeTracking /></ProtectedAdminRoute>} />
@@ -99,6 +111,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
