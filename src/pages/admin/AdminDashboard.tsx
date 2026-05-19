@@ -137,8 +137,8 @@ const AdminDashboard = () => {
         buckets,
       });
 
-      // Set recent bookings (last 10)
-      setRecentBookings(bookings?.slice(0, 10) || []);
+      // Recent bookings (separate query with display columns)
+      setRecentBookings((recent as RecentBooking[]) || []);
 
     } catch (error: any) {
       toast({
