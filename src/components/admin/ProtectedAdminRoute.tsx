@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { AdminRole, useAdminAuth } from "@/contexts/AdminAuthContext";
+import { AdminRole, useAdminAuth } from "@/contexts/useAdminAuth";
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
