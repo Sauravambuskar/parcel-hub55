@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 
 const Index = lazy(() => import("./pages/Index"));
 const Landing = lazy(() => import("./pages/Landing"));
@@ -85,7 +86,8 @@ const App = () => (
           <Route path="/admin-users" element={<Navigate to="/admin/admin-users" replace />} />
           <Route path="/admin-orders" element={<Navigate to="/admin/orders" replace />} />
           <Route path="/admin-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+          <Route path="/admin" element={<AdminAuthProvider><ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute></AdminAuthProvider>}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminDashboard /></ProtectedAdminRoute>} />
             <Route path="tracking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><RealTimeTracking /></ProtectedAdminRoute>} />
             <Route path="orders" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><OrderMonitoring /></ProtectedAdminRoute>} />
