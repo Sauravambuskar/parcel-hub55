@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const recipient = cfg.admin_recipient || "uday@viasetu.com";
+    const recipient = overrideRecipient || cfg.admin_recipient || "uday@viasetu.com";
     const senderName = cfg.sender_name || "ViaSetu Orders";
     const senderEmail = cfg.sender_email || "onboarding@resend.dev";
     const cc = (cfg.cc_recipients || "")
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (booking.admin_email_sent_at) {
+    if (booking.admin_email_sent_at && !force) {
       return new Response(JSON.stringify({ skipped: "already_sent" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
