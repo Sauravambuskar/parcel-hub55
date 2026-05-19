@@ -16,7 +16,7 @@ type AdminAuthState = {
 
 const AdminAuthContext = createContext<AdminAuthState | undefined>(undefined);
 
-export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
@@ -71,10 +71,12 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
 };
 
-export const useAdminAuth = () => {
+const useAdminAuth = () => {
   const ctx = useContext(AdminAuthContext);
   if (!ctx) {
     throw new Error("useAdminAuth must be used within AdminAuthProvider");
   }
   return ctx;
 };
+
+export { AdminAuthProvider, useAdminAuth };
