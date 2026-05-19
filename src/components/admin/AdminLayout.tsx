@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { 
   Users, 
   Package, 
@@ -61,25 +61,8 @@ function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const collapsed = state === "collapsed";
-  const [userRole, setUserRole] = useState<string>("");
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data } = await supabase
-          .from("admin_users")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .single();
-        
-        if (data) {
-          setUserRole(data.role);
-        }
-      }
-    };
-    fetchUserRole();
-  }, []);
+  const { adminUser } = useAdminAuth();
+  const userRole = adminUser?.role;
 
   const isActive = (path: string) => location.pathname === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -91,7 +74,7 @@ function AdminSidebar() {
   };
 
   const filteredMenuItems = adminMenuItems.filter(
-    (item) => !userRole || item.allowedRoles.includes(userRole as Role)
+    (item) => userRole && item.allowedRoles.includes(userRole as Role)
   );
 
   const panelTitle = panelTitleByRole[userRole as Role] ?? "Admin Panel";
