@@ -11,7 +11,9 @@ export function useRealtimeTable(
   onChange: () => void,
   options: { channelName?: string; enabled?: boolean; debounceMs?: number } = {}
 ) {
-  const { channelName, enabled = true, debounceMs = 400 } = options;
+  // Default debounce bumped to 1500ms so a burst of writes across an admin
+  // workflow doesn't refetch the full table dozens of times per second.
+  const { channelName, enabled = true, debounceMs = 1500 } = options;
   const cbRef = useRef(onChange);
   cbRef.current = onChange;
 
