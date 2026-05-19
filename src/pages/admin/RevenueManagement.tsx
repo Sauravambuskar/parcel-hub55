@@ -54,32 +54,28 @@ const RevenueManagement = () => {
 
   useEffect(() => {
     fetchBookings();
-
-    // Realtime: refresh on any booking insert/update so revenue stays in sync
-    const channel = supabase
-      .channel("admin-revenue-bookings")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        () => fetchBookings(),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
+
+  // Debounced realtime refresh — avoids re-pulling all rows on every write.
+  useRealtimeTable("bookings", () => fetchBookings(), {
+    channelName: "admin-revenue",
+    debounceMs: 2500,
+  });
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      // Only financial/display columns are used here; skip wide text fields.
+      const cols =
+        "id,tracking_id,courier_name,courier_price,status,created_at,sender_name,receiver_name,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
       const { data, error } = await supabase
         .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(cols)
+        .order("created_at", { ascending: false })
+        .limit(2000);
 
       if (error) throw error;
-      setBookings(data || []);
+      setBookings((data as Booking[]) || []);
     } catch (error: any) {
       toast({
         title: "Error fetching data",
