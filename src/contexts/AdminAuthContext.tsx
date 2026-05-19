@@ -60,3 +60,5 @@ const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export { AdminAuthProvider };
+export { useAdminAuth } from "@/contexts/useAdminAuth";
+export type { AdminRole, AdminUser } from "@/contexts/useAdminAuth";
