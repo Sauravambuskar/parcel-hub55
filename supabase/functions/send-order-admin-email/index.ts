@@ -93,7 +93,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { booking_id } = await req.json();
+    const body = await req.json();
+    const { booking_id, force } = body || {};
+    const overrideRecipient = req.headers.get("x-override-recipient") || body?.override_recipient || null;
     if (!booking_id) {
       return new Response(JSON.stringify({ error: "booking_id required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
