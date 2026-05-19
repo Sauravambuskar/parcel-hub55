@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminAuthContext, AdminRole, AdminUser } from "@/contexts/useAdminAuth";
+import { AdminAuthContext } from "@/contexts/useAdminAuth";
+import type { AdminRole, AdminUser } from "@/contexts/useAdminAuth";
 
-const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
