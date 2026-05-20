@@ -85,7 +85,7 @@ function AdminSidebar() {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            {!collapsed && <span className="font-semibold">{panelTitle}</span>}
+            {!collapsed && <span className="font-semibold text-lg">{panelTitle}</span>}
           </div>
         </div>
 
