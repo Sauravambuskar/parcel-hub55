@@ -15,7 +15,9 @@ const C = {
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
 const links = [
-  { href: "/", label: "Home" },
+  { href: "/#hero", label: "Compare Couriers" },
+  { href: "/#track", label: "Track Shipment" },
+  { href: "/#how-it-works", label: "How It Works" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];
