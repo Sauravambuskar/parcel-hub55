@@ -90,7 +90,7 @@ function AdminSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-semibold uppercase tracking-wide">Administration</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredMenuItems.map((item) => (
