@@ -110,10 +110,10 @@ function AdminSidebar() {
         <div className="mt-auto p-4 border-t">
           <Button 
             variant="ghost" 
-            className="w-full justify-start" 
+            className="w-full justify-start text-base" 
             onClick={handleLogout}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             {!collapsed && <span className="ml-2">Logout</span>}
           </Button>
         </div>
