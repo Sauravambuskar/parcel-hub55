@@ -85,20 +85,20 @@ function AdminSidebar() {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            {!collapsed && <span className="font-semibold">{panelTitle}</span>}
+            {!collapsed && <span className="font-semibold text-lg">{panelTitle}</span>}
           </div>
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-semibold uppercase tracking-wide">Administration</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5" />
+                      {!collapsed && <span className="text-base">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -110,10 +110,10 @@ function AdminSidebar() {
         <div className="mt-auto p-4 border-t">
           <Button 
             variant="ghost" 
-            className="w-full justify-start" 
+            className="w-full justify-start text-base" 
             onClick={handleLogout}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             {!collapsed && <span className="ml-2">Logout</span>}
           </Button>
         </div>
