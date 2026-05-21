@@ -174,6 +174,33 @@ const AdminDashboard = () => {
     return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const refreshStatuses = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-refresh-order-statuses", {
+        body: {},
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      const checked = data?.checked ?? 0;
+      const updated = data?.updated ?? 0;
+      const errs = (data?.errors || []).length;
+      toast({
+        title: "Statuses refreshed",
+        description: `Checked ${checked} active orders · ${updated} updated${errs ? ` · ${errs} errors` : ""}`,
+      });
+      await fetchDashboardData();
+    } catch (e: any) {
+      toast({
+        title: "Refresh failed",
+        description: e?.message || "Could not refresh order statuses",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const statCards = [
     { 
       title: "Today's Orders", 
