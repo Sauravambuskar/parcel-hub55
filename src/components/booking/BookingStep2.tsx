@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, MoreHorizontal, Info } from "lucide-react";
+import { MapPin, CheckCircle, Package, Loader2, FileText, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,12 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
-import { computeBaseFare, computeChargeableKg, VOLUMETRIC_DIVISOR } from "@/lib/pricing";
+import { computeBaseFare, computeChargeableKg } from "@/lib/pricing";
 
 const goodsTypes = [
   { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
-  { id: 'box', label: 'Box / Parcel', icon: Package, weightHint: '250g - 2kg' },
-  { id: 'others', label: 'Others', icon: MoreHorizontal, weightHint: 'Specify below' },
+  { id: 'box', label: 'Box / Parcel', icon: Package, weightHint: 'Specify contents' },
 ];
 
 interface PricingData {
@@ -158,7 +157,7 @@ const BookingStep2 = ({
   const isValid = pickupPincode && deliveryPincode && goodsType
     && (!weightRequired || packageWeight)
     && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height))
-    && (goodsType !== 'others' || customGoodsType.trim());
+    && (goodsType !== 'box' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
@@ -438,7 +437,7 @@ const BookingStep2 = ({
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label>Type of Good *</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {goodsTypes.map((type) => {
                 const Icon = type.icon;
                 const isSelected = goodsType === type.id;
@@ -461,16 +460,19 @@ const BookingStep2 = ({
                 );
               })}
             </div>
-            {goodsType === 'others' && (
+            {goodsType === 'box' && (
               <div className="space-y-2 mt-3">
-                <Label htmlFor="custom-goods-type">Please specify the type of good *</Label>
+                <Label htmlFor="custom-goods-type">Goods specification — what's inside the box? *</Label>
                 <Input
                   id="custom-goods-type"
                   value={customGoodsType}
                   onChange={(e) => setCustomGoodsType(e.target.value)}
-                  placeholder="e.g., Electronics, Clothing, Food items"
-                  maxLength={50}
+                  placeholder="e.g., Electronics, Clothing, Books, Cosmetics"
+                  maxLength={80}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  Required by courier partners. Please describe the contents accurately.
+                </p>
               </div>
             )}
           </div>
@@ -522,12 +524,11 @@ const BookingStep2 = ({
             </p>
           )}
 
-          {/* Chargeable weight breakdown — appears as soon as we can compute it.
-              This is what couriers actually bill on, so showing it up-front
-              prevents surprise pricing downstream. */}
+          {/* Chargeable weight — the single number couriers bill on.
+              Dead vs volumetric internals are hidden from the user. */}
           {(() => {
             const deadKg = (parseFloat(packageWeight) || 0) / 1000;
-            const { volumetricKg, chargeableKg } = computeChargeableKg(
+            const { chargeableKg } = computeChargeableKg(
               deadKg,
               dimensions.length,
               dimensions.width,
@@ -540,43 +541,16 @@ const BookingStep2 = ({
             );
             if (!shouldShow) return null;
             const fmt = (kg: number) => `${Math.round(kg * 1000).toLocaleString()} g`;
-            const usingVolumetric = !isDocuments && volumetricKg > deadKg;
             return (
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Dead weight</span>
-                  <span className="font-medium">{fmt(deadKg)}</span>
-                </div>
-                {!isDocuments && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Volumetric weight
-                      <span className="text-xs ml-1 text-muted-foreground/70">
-                        (L×B×H ÷ {VOLUMETRIC_DIVISOR})
-                      </span>
-                    </span>
-                    <span className="font-medium">{fmt(volumetricKg)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t border-primary/20 pt-1.5">
-                  <span className="font-semibold">Chargeable weight</span>
-                  <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
-                </div>
-                {usingVolumetric && (
-                  <p className="text-[11px] text-amber-700 flex items-start gap-1 pt-1">
-                    <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    <span>
-                      Volumetric weight is higher than dead weight, so couriers
-                      will bill on the volumetric weight. Pricing below reflects
-                      this.
-                    </span>
-                  </p>
-                )}
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex justify-between items-center text-sm">
+                <span className="font-semibold">Chargeable weight</span>
+                <span className="font-bold text-primary text-base">{fmt(chargeableKg)}</span>
               </div>
             );
           })()}
         </CardContent>
       </Card>
+
 
 
       {isServiceable && (
