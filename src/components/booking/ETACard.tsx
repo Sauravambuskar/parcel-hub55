@@ -188,6 +188,8 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
             </Tooltip>
           </TooltipProvider>
         )}
+      </div>
+
 
       {/* Rating */}
       <div className="w-[42px] text-center shrink-0">
