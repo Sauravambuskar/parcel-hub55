@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
-import { computeBaseFare } from "@/lib/pricing";
+import { computeBaseFare, computeChargeableKg, VOLUMETRIC_DIVISOR } from "@/lib/pricing";
 
 const goodsTypes = [
   { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
@@ -193,11 +193,22 @@ const BookingStep2 = ({
         return;
       }
       const weightKg = weightG / 1000;
+      // Compute chargeable weight (max of dead vs volumetric, rounded up
+      // to next 0.5 kg) and quote partners on THAT — otherwise we'd
+      // under-charge on bulky-but-light parcels (e.g. 300 g box at 50×50×20
+      // = 5 kg volumetric → partner bills us for 5 kg).
+      const { chargeableKg } = computeChargeableKg(
+        weightKg,
+        dimensions.length,
+        dimensions.width,
+        dimensions.height,
+        { isDocument: isDocuments },
+      );
 
       const partnerPayload = {
         pickup_pincode: pickupPincode,
         delivery_pincode: deliveryPincode,
-        weight_kg: weightKg,
+        weight_kg: chargeableKg > 0 ? chargeableKg : weightKg,
         length_cm: parseFloat(dimensions.length) || 10,
         width_cm: parseFloat(dimensions.width) || 10,
         height_cm: parseFloat(dimensions.height) || 10,
@@ -510,8 +521,63 @@ const BookingStep2 = ({
               📄 Dimensions not required for documents/envelopes.
             </p>
           )}
+
+          {/* Chargeable weight breakdown — appears as soon as we can compute it.
+              This is what couriers actually bill on, so showing it up-front
+              prevents surprise pricing downstream. */}
+          {(() => {
+            const deadKg = (parseFloat(packageWeight) || 0) / 1000;
+            const { volumetricKg, chargeableKg } = computeChargeableKg(
+              deadKg,
+              dimensions.length,
+              dimensions.width,
+              dimensions.height,
+              { isDocument: isDocuments },
+            );
+            const shouldShow = deadKg > 0 && (
+              isDocuments ||
+              (dimensions.length && dimensions.width && dimensions.height)
+            );
+            if (!shouldShow) return null;
+            const fmt = (kg: number) => `${Math.round(kg * 1000).toLocaleString()} g`;
+            const usingVolumetric = !isDocuments && volumetricKg > deadKg;
+            return (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dead weight</span>
+                  <span className="font-medium">{fmt(deadKg)}</span>
+                </div>
+                {!isDocuments && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Volumetric weight
+                      <span className="text-xs ml-1 text-muted-foreground/70">
+                        (L×B×H ÷ {VOLUMETRIC_DIVISOR})
+                      </span>
+                    </span>
+                    <span className="font-medium">{fmt(volumetricKg)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-primary/20 pt-1.5">
+                  <span className="font-semibold">Chargeable weight</span>
+                  <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
+                </div>
+                {usingVolumetric && (
+                  <p className="text-[11px] text-amber-700 flex items-start gap-1 pt-1">
+                    <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Volumetric weight is higher than dead weight, so couriers
+                      will bill on the volumetric weight. Pricing below reflects
+                      this.
+                    </span>
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
+
 
       {isServiceable && (
         <Alert className="border-green-500/50 bg-green-500/10">

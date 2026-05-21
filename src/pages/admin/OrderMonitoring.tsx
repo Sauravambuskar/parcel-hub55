@@ -47,6 +47,9 @@ interface Booking {
   receiver_pincode: string;
   goods_type: string;
   package_weight: string;
+  dead_weight_g?: number | null;
+  volumetric_weight_g?: number | null;
+  chargeable_weight_g?: number | null;
   urgency: string;
   delivery_time: string;
   shipment_value: number | null;
@@ -758,9 +761,25 @@ const OrderMonitoring = () => {
                       <span className="font-medium capitalize">{selectedBooking.goods_type}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Weight</span>
+                      <span className="text-muted-foreground">Weight (chargeable)</span>
                       <span className="font-medium">{selectedBooking.package_weight} kg</span>
                     </div>
+                    {(selectedBooking.dead_weight_g != null || selectedBooking.volumetric_weight_g != null || selectedBooking.chargeable_weight_g != null) && (
+                      <div className="rounded-md border border-primary/20 bg-primary/5 p-2 space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Dead</span>
+                          <span>{selectedBooking.dead_weight_g ?? '—'} g</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Volumetric</span>
+                          <span>{selectedBooking.volumetric_weight_g ?? '—'} g</span>
+                        </div>
+                        <div className="flex justify-between font-semibold">
+                          <span>Chargeable (billed)</span>
+                          <span className="text-primary">{selectedBooking.chargeable_weight_g ?? '—'} g</span>
+                        </div>
+                      </div>
+                    )}
                     {(selectedBooking.length || selectedBooking.width || selectedBooking.height) && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Dimensions</span>
