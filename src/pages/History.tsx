@@ -298,9 +298,21 @@ const History = () => {
                       <h3 className="font-semibold text-lg text-white">
                         {order.shipments?.[0]?.awbNumber || order.orderId}
                       </h3>
-                      <Badge className={getStatusColor(order.orderStatus)}>
-                        {order.orderStatus || 'Unknown'}
-                      </Badge>
+                      {(() => {
+                        // Prefer DB status when terminal — Prayog doesn't know
+                        // about direct-partner cancellations/refunds, so its
+                        // orderStatus can stay stale at "CREATED" forever.
+                        const dbStatus = bookingsMap[order.orderId]?.status;
+                        const terminal = ['CANCELLED', 'CANCELED', 'DELIVERED', 'RTO', 'FAILED'];
+                        const displayStatus = (dbStatus && terminal.includes(dbStatus.toUpperCase()))
+                          ? dbStatus
+                          : (order.orderStatus || dbStatus || 'Unknown');
+                        return (
+                          <Badge className={getStatusColor(displayStatus)}>
+                            {displayStatus}
+                          </Badge>
+                        );
+                      })()}
                       {bookingsMap[order.orderId]?.payment_status === 'cop_pending' && (
                         <Badge className="bg-yellow-500/90 text-yellow-950 border-0 text-xs">
                           💵 COP Pending
@@ -475,7 +487,10 @@ const History = () => {
                   {/* Cancel button */}
                   {(() => {
                     const bm = bookingsMap[order.orderId];
-                    if (bm && isCancellable(order.orderStatus || bm.status)) {
+                    // Must be cancellable per BOTH local DB and Prayog state —
+                    // local DB is the source of truth for direct-partner orders
+                    // (Prayog isn't notified when we cancel directly).
+                    if (bm && isCancellable(bm.status) && isCancellable(order.orderStatus || bm.status)) {
                       return (
                         <Button
                           variant="outline"
