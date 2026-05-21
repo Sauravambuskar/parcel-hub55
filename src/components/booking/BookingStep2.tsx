@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
-import { computeBaseFare } from "@/lib/pricing";
+import { computeBaseFare, computeChargeableKg, VOLUMETRIC_DIVISOR } from "@/lib/pricing";
 
 const goodsTypes = [
   { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
