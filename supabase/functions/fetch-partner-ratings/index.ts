@@ -249,6 +249,23 @@ For each, provide:
       }
     }
 
+    // Merge courier_scores (avg_delay_days, reliability_score) so the UI can
+    // explain WHY a partner looks unreliable. Matched by courier_id == partner_code.
+    try {
+      const { data: scores } = await supabase
+        .from("courier_scores")
+        .select("courier_id, avg_delay_days, reliability_score")
+        .in("courier_id", partnerCodes);
+      const scoreMap = new Map((scores || []).map((s: any) => [s.courier_id, s]));
+      for (const r of results) {
+        const s: any = scoreMap.get(r.partner_code);
+        r.avg_delay_days = s?.avg_delay_days ?? null;
+        r.reliability_score = s?.reliability_score ?? null;
+      }
+    } catch (scoreErr) {
+      console.error("courier_scores lookup error:", scoreErr);
+    }
+
     return new Response(
       JSON.stringify({ ratings: results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
