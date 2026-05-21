@@ -193,11 +193,22 @@ const BookingStep2 = ({
         return;
       }
       const weightKg = weightG / 1000;
+      // Compute chargeable weight (max of dead vs volumetric, rounded up
+      // to next 0.5 kg) and quote partners on THAT — otherwise we'd
+      // under-charge on bulky-but-light parcels (e.g. 300 g box at 50×50×20
+      // = 5 kg volumetric → partner bills us for 5 kg).
+      const { chargeableKg } = computeChargeableKg(
+        weightKg,
+        dimensions.length,
+        dimensions.width,
+        dimensions.height,
+        { isDocument: isDocuments },
+      );
 
       const partnerPayload = {
         pickup_pincode: pickupPincode,
         delivery_pincode: deliveryPincode,
-        weight_kg: weightKg,
+        weight_kg: chargeableKg > 0 ? chargeableKg : weightKg,
         length_cm: parseFloat(dimensions.length) || 10,
         width_cm: parseFloat(dimensions.width) || 10,
         height_cm: parseFloat(dimensions.height) || 10,
