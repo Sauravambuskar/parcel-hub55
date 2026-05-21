@@ -1,53 +1,50 @@
 ## Goal
-On Step 3 ETA cards, if a courier looks unreliable, show a small warning with the AI-aggregated reason so the user understands the low score before choosing.
 
-## Trigger
-A partner is flagged "low reliability" when EITHER:
-- `partner_ratings.rating < 4.0`, OR
-- `courier_scores.avg_delay_days > 1`
+Add a Refresh button to the "Order Status Overview" card on `/admin/dashboard`. Clicking it pulls the latest tracking from each partner for every active (non-terminal) order and updates `bookings.status` in the DB, so the bucket counts reflect reality.
 
-## What we show
-A subtle amber chip under the partner name:
-```
-⚠ Lower reliability  ⓘ
-```
-Hover/tap reveals a tooltip with the top 1–2 `cons` from `partner_ratings` (e.g. "Frequent delivery delays", "Patchy customer support"). If no cons are available, fall back to a generic line: "Mixed customer feedback on recent shipments."
+## What to build
 
-The chip is informational only — it does not block selection or re-rank partners.
+### 1. New edge function: `admin-refresh-order-statuses`
 
-## Changes
+`supabase/functions/admin-refresh-order-statuses/index.ts`
 
-### 1. `usePartnerRatings.ts`
-Hook already returns `rating` and `cons[]` from `partner_ratings`. Extend the request/response shape so each entry also carries `avg_delay_days` joined from `courier_scores` (matched by `partner_code` ↔ `courier_id`). One extra read inside `fetch-partner-ratings` edge function.
+- POST, CORS + `x-environment` header forwarded.
+- Auth: require caller is an admin. Use the user's JWT to look up `admin_users.is_active` via service-role client; reject otherwise.
+- Body (optional): `{ booking_ids?: string[], limit?: number }`. Default behaviour: select all `bookings` whose `status` bucket is NOT in `{delivered, cancelled, rto}` and that have a `prayog_awb` or `tracking_id`, limit 200, ordered newest first.
+- For each booking, look up the partner tracking function by `booking_source` using the same map as `OrderMonitoring.tsx`:
+  - `shadowfax_direct` → `shadowfax-tracking`
+  - `delhivery_direct` → `delhivery-tracking`
+  - `urbanebolt_direct` → `urbanebolt-tracking`
+  - `xpressbees_direct` → `xpressbees-tracking`
+  - `shree_maruti_direct` → `shree-maruti-tracking`
+  - Skip `prayog`-sourced bookings (no direct tracking fn) — return as `skipped`.
+- Invoke the tracking function with `{ waybill, awb, client_request_id, order_id }`. Throttle with a small concurrency limiter (e.g. 5 parallel) to avoid hammering partner APIs.
+- From the response take `statuses[0]` (already sorted newest-first by each tracking fn). Derive new status text = `statuses[0].subcategory || statuses[0].status || category`.
+- Compare bucket of new vs old via shared status mapping. Update `bookings.status` only when the text actually changes. Use service role.
+- Return `{ checked, updated, skipped, errors: [{id, reason}] }`.
 
-### 2. `fetch-partner-ratings` edge function
-After loading partner_ratings, look up `courier_scores` rows for the same partner codes and attach `avg_delay_days` and `reliability_score` to each returned rating object. No schema changes.
+Note: bucket-mapping logic must match `src/lib/booking-status.ts`. Duplicate the small `bucketOfStatus` function in `supabase/functions/_shared/booking-status.ts` and import from both places later if convenient; for this change, inline a copy inside the edge function to avoid touching the frontend module.
 
-### 3. `ETACard.tsx`
-- Accept new optional props: `cons?: string[]`, `avgDelayDays?: number`.
-- Compute `isLowReliability = (rating != null && rating < 4) || (avgDelayDays != null && avgDelayDays > 1)`.
-- When true, render an amber chip below the partner name. Use shadcn `Tooltip` to show top 2 cons (joined with " · "), or fallback text.
-- No layout shift when chip is absent.
+### 2. UI change: `src/pages/admin/AdminDashboard.tsx`
 
-### 4. `BookingStep5.tsx` (parent of ETA cards)
-Pass `cons` and `avg_delay_days` from `ratings.get(partner_code)` into each `<ETACard>`.
+In the "Order Status Overview" `CardHeader` (around line 272):
+- Wrap title + a Refresh button in a flex row.
+- Button uses existing `RefreshCw` icon (already imported) with `animate-spin` when loading.
+- Handler `refreshStatuses()`:
+  - calls `supabase.functions.invoke("admin-refresh-order-statuses", { body: {}, headers: { "x-environment": CURRENT_ENV } })`
+  - on success toast: `Refreshed N orders, M updated` (skips/errors shown as muted detail).
+  - on done, call existing `fetchDashboardData()` to repaint counts.
+- Local `refreshing` state separate from `loading`.
+
+No changes to existing single-order tracking flow in `OrderMonitoring.tsx`.
 
 ## Out of scope
-- Changing ranking/sort logic in SmartRanking.
-- Showing the warning in the comparison table or AI Recommends row (user asked only for the ETA card).
-- Editing the AI prompt that generates cons.
 
-## Technical note
-```text
-partner_ratings ──► rating, cons[]
-courier_scores  ──► avg_delay_days
-        │
-        ▼
-  fetch-partner-ratings (merge)
-        │
-        ▼
-  usePartnerRatings hook
-        │
-        ▼
-  BookingStep5 → ETACard → amber chip + tooltip
-```
+- Realtime push of tracking updates (still polled-on-click).
+- Backfilling history of status changes.
+- Touching Prayog-sourced orders (no direct tracking fn available).
+
+## Files
+
+- New: `supabase/functions/admin-refresh-order-statuses/index.ts`
+- Edited: `src/pages/admin/AdminDashboard.tsx`

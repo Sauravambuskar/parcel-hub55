@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
 import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
+import { CURRENT_ENV } from "@/config/environment";
 
 interface DashboardStats {
   totalOrders: number;
@@ -47,6 +48,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [trackingSearch, setTrackingSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 0,
     todayOrders: 0,
@@ -172,6 +174,33 @@ const AdminDashboard = () => {
     return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const refreshStatuses = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-refresh-order-statuses", {
+        body: {},
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      const checked = data?.checked ?? 0;
+      const updated = data?.updated ?? 0;
+      const errs = (data?.errors || []).length;
+      toast({
+        title: "Statuses refreshed",
+        description: `Checked ${checked} active orders · ${updated} updated${errs ? ` · ${errs} errors` : ""}`,
+      });
+      await fetchDashboardData();
+    } catch (e: any) {
+      toast({
+        title: "Refresh failed",
+        description: e?.message || "Could not refresh order statuses",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const statCards = [
     { 
       title: "Today's Orders", 
@@ -269,9 +298,20 @@ const AdminDashboard = () => {
 
       {/* Order Status Overview */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Order Status Overview</CardTitle>
-          <CardDescription>Current distribution of orders by status</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+          <div>
+            <CardTitle className="text-lg">Order Status Overview</CardTitle>
+            <CardDescription>Current distribution of orders by status</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshStatuses}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
