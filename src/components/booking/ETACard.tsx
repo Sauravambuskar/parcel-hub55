@@ -162,7 +162,32 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
         <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 capitalize truncate">
           {courierData.service_name.replace(/_/g, " ")}
         </p>
-      </div>
+        {isLowReliability && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium text-amber-800 leading-none"
+                >
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  Lower reliability
+                  <Info className="h-2.5 w-2.5 opacity-70" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                <p className="font-semibold mb-0.5">Why this flag?</p>
+                <p>{reliabilityReason}</p>
+                {avgDelayDays != null && avgDelayDays > 1 && (
+                  <p className="mt-1 text-muted-foreground">
+                    Avg. delay: {avgDelayDays.toFixed(1)} day{avgDelayDays >= 2 ? "s" : ""} on this route history.
+                  </p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
       {/* Rating */}
       <div className="w-[42px] text-center shrink-0">
