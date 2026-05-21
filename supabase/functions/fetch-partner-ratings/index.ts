@@ -21,6 +21,8 @@ interface RatingResult {
   cons: string[];
   badges: string[];
   rating_source: string;
+  avg_delay_days?: number | null;
+  reliability_score?: number | null;
 }
 
 Deno.serve(async (req) => {
