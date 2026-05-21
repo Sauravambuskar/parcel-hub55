@@ -69,6 +69,11 @@ interface Booking {
   prayog_awb?: string;
   booking_source?: string | null;
   label_url?: string | null;
+  failure_reason?: string | null;
+  failure_step?: string | null;
+  partner_error_raw?: string | null;
+  refund_id?: string | null;
+  refund_reason?: string | null;
 }
 
 const OrderMonitoring = () => {
