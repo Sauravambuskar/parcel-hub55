@@ -298,9 +298,20 @@ const AdminDashboard = () => {
 
       {/* Order Status Overview */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Order Status Overview</CardTitle>
-          <CardDescription>Current distribution of orders by status</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+          <div>
+            <CardTitle className="text-lg">Order Status Overview</CardTitle>
+            <CardDescription>Current distribution of orders by status</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshStatuses}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
