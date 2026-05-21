@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Package, MapPin, IndianRupee, Truck, CreditCard } from "lucide-react";
+import { computeChargeableKg } from "@/lib/pricing";
 
 interface BookingReviewStepProps {
   senderData: {
