@@ -437,7 +437,7 @@ const BookingStep2 = ({
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label>Type of Good *</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {goodsTypes.map((type) => {
                 const Icon = type.icon;
                 const isSelected = goodsType === type.id;
@@ -460,16 +460,19 @@ const BookingStep2 = ({
                 );
               })}
             </div>
-            {goodsType === 'others' && (
+            {goodsType === 'box' && (
               <div className="space-y-2 mt-3">
-                <Label htmlFor="custom-goods-type">Please specify the type of good *</Label>
+                <Label htmlFor="custom-goods-type">Goods specification — what's inside the box? *</Label>
                 <Input
                   id="custom-goods-type"
                   value={customGoodsType}
                   onChange={(e) => setCustomGoodsType(e.target.value)}
-                  placeholder="e.g., Electronics, Clothing, Food items"
-                  maxLength={50}
+                  placeholder="e.g., Electronics, Clothing, Books, Cosmetics"
+                  maxLength={80}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  Required by courier partners. Please describe the contents accurately.
+                </p>
               </div>
             )}
           </div>
