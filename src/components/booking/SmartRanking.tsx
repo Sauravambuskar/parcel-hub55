@@ -130,15 +130,15 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
 
   return (
     <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
+      <CardContent className="p-5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">AI Recommends</h3>
+          <h3 className="font-semibold text-lg leading-none">AI Recommends</h3>
           <Badge variant="secondary" className="text-xs">
             Based on {ratings.size > 0 ? "real reviews" : "analysis"}
           </Badge>
         </div>
-        
+
         <p className="text-sm text-muted-foreground mb-4">
           Top picks for your shipment based on ratings, price & delivery speed
         </p>
@@ -148,69 +148,60 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
             <button
               key={ranked.partner.partner_id}
               onClick={() => handleSelect(ranked)}
-              className="text-left p-3 rounded-lg border bg-background hover:border-primary hover:bg-primary/5 transition-all group"
+              className="text-left p-4 rounded-lg border bg-background hover:border-primary hover:bg-primary/5 transition-all group flex flex-col gap-3"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  {index === 0 && <TrendingUp className="h-4 w-4 text-warning" />}
-                  {index === 1 && <ThumbsUp className="h-4 w-4 text-primary" />}
-                  {index === 2 && <Zap className="h-4 w-4 text-green-500" />}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {index === 0 && <TrendingUp className="h-4 w-4 text-warning shrink-0" />}
+                  {index === 1 && <ThumbsUp className="h-4 w-4 text-primary shrink-0" />}
+                  {index === 2 && <Zap className="h-4 w-4 text-green-500 shrink-0" />}
                   <span className="font-medium text-sm truncate">
                     {ranked.partner.partner_name}
                   </span>
                 </div>
                 {ranked.rating && (
-                  <span className="text-xs font-semibold text-warning">
+                  <span className="text-xs font-semibold text-warning shrink-0">
                     ★ {ranked.rating.rating.toFixed(1)}
                   </span>
                 )}
               </div>
-              
-              <p className="text-xs text-muted-foreground mb-2">
+
+              <p className="text-xs text-muted-foreground leading-snug">
                 {ranked.reason}
               </p>
 
-              <div className="flex flex-wrap gap-1">
-                {/* Compute badges based on actual shipment prices */}
               {(() => {
                 const service = ranked.partner.services[0];
                 const price = computeBaseFare(service?.rate?.price?.amount || 0);
-                  const deliveryDays = normalizeTatDays(service?.tat_days, service?.service_name);
-                  const computedBadges: string[] = [];
-                  
-                  // Budget Friendly: only if this partner has the lowest price
-                  if (price === minPrice) {
-                    computedBadges.push("Budget Friendly");
-                  }
-                  // Fastest: only if this partner has the fastest delivery
-                  if (deliveryDays === minDelivery) {
-                    computedBadges.push("Fastest");
-                  }
-                  // Top Rated: if rating >= 4.0
-                  if ((ranked.rating?.rating || 0) >= 4.0) {
-                    computedBadges.push("Top Rated");
-                  }
-                  
-                  // Add other AI badges that aren't price/speed related (max 2 total)
-                  const priceBadges = ["Budget Friendly", "Best Value", "Cheapest", "Affordable"];
-                  const speedBadges = ["Fastest", "Quick Delivery", "Fastest Delivery"];
-                  const ratingBadges = ["Top Rated", "Highly Rated"];
-                  const excludeBadges = [...priceBadges, ...speedBadges, ...ratingBadges];
-                  
-                  const otherBadges = (ranked.rating?.badges || [])
-                    .filter(b => !excludeBadges.some(ex => b.toLowerCase().includes(ex.toLowerCase())));
-                  
-                  const finalBadges = [...computedBadges, ...otherBadges].slice(0, 2);
-                  
-                  return finalBadges.map((badge, i) => (
-                    <Badge key={i} variant="outline" className="text-[10px] py-0">
-                      {badge}
-                    </Badge>
-                  ));
-                })()}
-              </div>
+                const deliveryDays = normalizeTatDays(service?.tat_days, service?.service_name);
+                const computedBadges: string[] = [];
 
-              <div className="mt-2 pt-2 border-t flex items-center justify-between">
+                if (price === minPrice) computedBadges.push("Budget Friendly");
+                if (deliveryDays === minDelivery) computedBadges.push("Fastest");
+                if ((ranked.rating?.rating || 0) >= 4.0) computedBadges.push("Top Rated");
+
+                const priceBadges = ["Budget Friendly", "Best Value", "Cheapest", "Affordable"];
+                const speedBadges = ["Fastest", "Quick Delivery", "Fastest Delivery"];
+                const ratingBadges = ["Top Rated", "Highly Rated"];
+                const excludeBadges = [...priceBadges, ...speedBadges, ...ratingBadges];
+
+                const otherBadges = (ranked.rating?.badges || [])
+                  .filter(b => !excludeBadges.some(ex => b.toLowerCase().includes(ex.toLowerCase())));
+
+                const finalBadges = [...computedBadges, ...otherBadges].slice(0, 2);
+                if (finalBadges.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-1.5">
+                    {finalBadges.map((badge, i) => (
+                      <Badge key={i} variant="outline" className="text-[10px] leading-none py-1 px-1.5">
+                        {badge}
+                      </Badge>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
                   ₹{computeBaseFare(ranked.partner.services[0]?.rate?.price?.amount || 0)}
                 </span>
@@ -218,6 +209,7 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
                   {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days
                 </span>
               </div>
+
             </button>
           ))}
         </div>
