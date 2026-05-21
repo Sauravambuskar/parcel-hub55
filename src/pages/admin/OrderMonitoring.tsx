@@ -47,6 +47,9 @@ interface Booking {
   receiver_pincode: string;
   goods_type: string;
   package_weight: string;
+  dead_weight_g?: number | null;
+  volumetric_weight_g?: number | null;
+  chargeable_weight_g?: number | null;
   urgency: string;
   delivery_time: string;
   shipment_value: number | null;
