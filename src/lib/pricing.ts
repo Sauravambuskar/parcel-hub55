@@ -44,3 +44,51 @@ export function computePriceBreakdown(cardPrice: number): PriceBreakdown {
     zoneFee: ZONE_FEE,
   };
 }
+
+// ─── Chargeable weight (dead vs volumetric) ───────────────────────────
+// All Indian express partners (Delhivery, XpressBees, Shadowfax, UrbaneBolt,
+// Shree Maruti) bill on max(dead, volumetric) using a 5000 divisor. We round
+// the final chargeable weight UP to the next 0.5 kg slab so we never quote
+// below what the partner will actually invoice us.
+export const VOLUMETRIC_DIVISOR = 5000;
+export const WEIGHT_SLAB_KG = 0.5;
+
+export function computeVolumetricKg(
+  lengthCm: number | string,
+  widthCm: number | string,
+  heightCm: number | string,
+): number {
+  const l = Number(lengthCm) || 0;
+  const w = Number(widthCm) || 0;
+  const h = Number(heightCm) || 0;
+  if (l <= 0 || w <= 0 || h <= 0) return 0;
+  return (l * w * h) / VOLUMETRIC_DIVISOR;
+}
+
+export interface ChargeableWeight {
+  deadKg: number;
+  volumetricKg: number;
+  chargeableKg: number; // rounded up to next 0.5 kg slab
+}
+
+export function computeChargeableKg(
+  deadKg: number,
+  lengthCm: number | string,
+  widthCm: number | string,
+  heightCm: number | string,
+  opts?: { isDocument?: boolean },
+): ChargeableWeight {
+  const dead = Math.max(0, Number(deadKg) || 0);
+  // Documents/envelopes: no dimensions, chargeable == dead (typically 0.25 kg).
+  if (opts?.isDocument) {
+    return { deadKg: dead, volumetricKg: 0, chargeableKg: dead };
+  }
+  const vol = computeVolumetricKg(lengthCm, widthCm, heightCm);
+  const raw = Math.max(dead, vol);
+  // Round UP to next WEIGHT_SLAB_KG (0.5 kg).
+  const chargeable = raw <= 0
+    ? 0
+    : Math.ceil(raw / WEIGHT_SLAB_KG) * WEIGHT_SLAB_KG;
+  return { deadKg: dead, volumetricKg: vol, chargeableKg: chargeable };
+}
+
