@@ -520,13 +520,29 @@ const Booking = () => {
       }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
       const orderId = timestamp + randomPart;
 
-      // Calculate volumetric weight (use defaults for documents)
+      // Calculate volumetric + chargeable weight. Chargeable weight is what
+      // we send to the partner booking APIs and persist as `package_weight` so
+      // pricing, manifest, and reconciliation all line up (partners bill on
+      // max(dead, volumetric) — see src/lib/pricing.ts).
       const isDocuments = goodsType === 'documents';
       const length = parseFloat(dimensions?.length) || (isDocuments ? 30 : 10);
       const width = parseFloat(dimensions?.width) || (isDocuments ? 22 : 10);
       const height = parseFloat(dimensions?.height) || (isDocuments ? 2 : 10);
       const volumetricWeight = length * width * height / 5000;
-      const physicalWeight = weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1;
+      const deadWeightKg = weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1;
+      const { chargeableKg } = computeChargeableKg(
+        deadWeightKg,
+        length,
+        width,
+        height,
+        { isDocument: isDocuments },
+      );
+      // physicalWeight is the weight sent to partners + saved on the row.
+      // Renamed semantically to chargeable, kept the variable name to limit churn.
+      const physicalWeight = chargeableKg > 0 ? chargeableKg : deadWeightKg;
+      const deadWeightG = Math.round(deadWeightKg * 1000);
+      const volumetricWeightG = Math.round(volumetricWeight * 1000);
+      const chargeableWeightG = Math.round(physicalWeight * 1000);
       const baseAmount = selectedService?.rate?.price?.amount || 0;
 
       // Prepare Prayog API payload
