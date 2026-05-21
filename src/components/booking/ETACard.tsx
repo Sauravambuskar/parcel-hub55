@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Truck, Clock, Check, Zap, Star, Info } from "lucide-react";
+import { Truck, Clock, Check, Zap, Star, Info, AlertTriangle } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { useState } from "react";
 import { computeBaseFare } from "@/lib/pricing";
