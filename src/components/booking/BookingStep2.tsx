@@ -521,8 +521,63 @@ const BookingStep2 = ({
               📄 Dimensions not required for documents/envelopes.
             </p>
           )}
+
+          {/* Chargeable weight breakdown — appears as soon as we can compute it.
+              This is what couriers actually bill on, so showing it up-front
+              prevents surprise pricing downstream. */}
+          {(() => {
+            const deadKg = (parseFloat(packageWeight) || 0) / 1000;
+            const { volumetricKg, chargeableKg } = computeChargeableKg(
+              deadKg,
+              dimensions.length,
+              dimensions.width,
+              dimensions.height,
+              { isDocument: isDocuments },
+            );
+            const shouldShow = deadKg > 0 && (
+              isDocuments ||
+              (dimensions.length && dimensions.width && dimensions.height)
+            );
+            if (!shouldShow) return null;
+            const fmt = (kg: number) => `${Math.round(kg * 1000).toLocaleString()} g`;
+            const usingVolumetric = !isDocuments && volumetricKg > deadKg;
+            return (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dead weight</span>
+                  <span className="font-medium">{fmt(deadKg)}</span>
+                </div>
+                {!isDocuments && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Volumetric weight
+                      <span className="text-xs ml-1 text-muted-foreground/70">
+                        (L×B×H ÷ {VOLUMETRIC_DIVISOR})
+                      </span>
+                    </span>
+                    <span className="font-medium">{fmt(volumetricKg)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-primary/20 pt-1.5">
+                  <span className="font-semibold">Chargeable weight</span>
+                  <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
+                </div>
+                {usingVolumetric && (
+                  <p className="text-[11px] text-amber-700 flex items-start gap-1 pt-1">
+                    <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Volumetric weight is higher than dead weight, so couriers
+                      will bill on the volumetric weight. Pricing below reflects
+                      this.
+                    </span>
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
+
 
       {isServiceable && (
         <Alert className="border-green-500/50 bg-green-500/10">
