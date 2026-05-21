@@ -47,6 +47,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [trackingSearch, setTrackingSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 0,
     todayOrders: 0,
