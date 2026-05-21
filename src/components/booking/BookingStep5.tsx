@@ -285,6 +285,8 @@ const BookingStep5 = ({
                 platformFee={platformFee}
                 rank={index + 1}
                 rating={partnerRating?.rating ?? null}
+                cons={partnerRating?.cons ?? []}
+                avgDelayDays={partnerRating?.avg_delay_days ?? null}
               />
             );
           })}
