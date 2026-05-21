@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Truck, Clock, Check, Zap, Star, Info } from "lucide-react";
+import { Truck, Clock, Check, Zap, Star, Info, AlertTriangle } from "lucide-react";
 import { getPartnerLogo } from "@/config/partnerLogos";
 import { useState } from "react";
 import { computeBaseFare } from "@/lib/pricing";
@@ -42,6 +42,8 @@ interface ETACardProps {
   platformFee?: number;
   rank?: number;
   rating?: number | null;
+  cons?: string[];
+  avgDelayDays?: number | null;
 }
 
 /** Column header row rendered once above the list */
@@ -89,7 +91,7 @@ export const ETACardSkeleton = () => (
   </div>
 );
 
-const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating }: ETACardProps) => {
+const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating, cons, avgDelayDays }: ETACardProps) => {
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
@@ -97,6 +99,16 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
 
   const days = etaData?.adjusted_days ?? courierData.tat_days;
   const confidenceScore = etaData?.confidence_score;
+
+  // Flag low reliability when either the AI rating or the on-time delay
+  // score looks weak. Reason is sourced from AI-aggregated cons.
+  const isLowReliability =
+    (rating != null && rating < 4) ||
+    (avgDelayDays != null && avgDelayDays > 1);
+  const reliabilityReasons = (cons || []).filter((c) => c && c.trim()).slice(0, 2);
+  const reliabilityReason = reliabilityReasons.length > 0
+    ? reliabilityReasons.join(" · ")
+    : "Mixed customer feedback on recent shipments.";
 
   return (
     <div
@@ -150,7 +162,34 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
         <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 capitalize truncate">
           {courierData.service_name.replace(/_/g, " ")}
         </p>
+        {isLowReliability && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium text-amber-800 leading-none"
+                >
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  Lower reliability
+                  <Info className="h-2.5 w-2.5 opacity-70" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                <p className="font-semibold mb-0.5">Why this flag?</p>
+                <p>{reliabilityReason}</p>
+                {avgDelayDays != null && avgDelayDays > 1 && (
+                  <p className="mt-1 text-muted-foreground">
+                    Avg. delay: {avgDelayDays.toFixed(1)} day{avgDelayDays >= 2 ? "s" : ""} on this route history.
+                  </p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
+
 
       {/* Rating */}
       <div className="w-[42px] text-center shrink-0">
