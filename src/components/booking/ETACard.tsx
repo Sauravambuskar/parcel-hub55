@@ -91,7 +91,7 @@ export const ETACardSkeleton = () => (
   </div>
 );
 
-const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating }: ETACardProps) => {
+const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating, cons, avgDelayDays }: ETACardProps) => {
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
@@ -99,6 +99,16 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
 
   const days = etaData?.adjusted_days ?? courierData.tat_days;
   const confidenceScore = etaData?.confidence_score;
+
+  // Flag low reliability when either the AI rating or the on-time delay
+  // score looks weak. Reason is sourced from AI-aggregated cons.
+  const isLowReliability =
+    (rating != null && rating < 4) ||
+    (avgDelayDays != null && avgDelayDays > 1);
+  const reliabilityReasons = (cons || []).filter((c) => c && c.trim()).slice(0, 2);
+  const reliabilityReason = reliabilityReasons.length > 0
+    ? reliabilityReasons.join(" · ")
+    : "Mixed customer feedback on recent shipments.";
 
   return (
     <div
