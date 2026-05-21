@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, subDays } from "date-fns";
 import { STATUS_BUCKETS, bucketCounts, type StatusBucket } from "@/lib/booking-status";
+import { CURRENT_ENV } from "@/config/environment";
 
 interface DashboardStats {
   totalOrders: number;
