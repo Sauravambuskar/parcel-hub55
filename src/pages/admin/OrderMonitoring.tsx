@@ -77,6 +77,8 @@ interface Booking {
 }
 
 const OrderMonitoring = () => {
+  const { adminUser } = useAdminAuth();
+  const isSuperAdmin = adminUser?.role === "super_admin";
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
