@@ -16,6 +16,7 @@ import { CURRENT_ENV } from "@/config/environment";
 import { useCancelOrder, isCancellable } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useAdminAuth } from "@/contexts/useAdminAuth";
 
 // Map booking_source -> partner edge function names
 const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
