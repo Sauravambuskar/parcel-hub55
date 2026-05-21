@@ -1,86 +1,53 @@
-
-# Dead vs Volumetric Weight — Chargeable Weight Fix
-
 ## Goal
-Stop under-charging customers when a parcel's volumetric weight exceeds its dead weight. Use **chargeable weight = ceil_to_500g(max(deadKg, volumetricKg))** as the single source of truth for all serviceability quotes, payments, partner bookings, and admin reporting.
+On Step 3 ETA cards, if a courier looks unreliable, show a small warning with the AI-aggregated reason so the user understands the low score before choosing.
 
-Formula:
-```
-volumetricKg = (L_cm × B_cm × H_cm) / 5000
-chargeableKg_raw = max(deadKg, volumetricKg)
-chargeableKg = ceil(chargeableKg_raw × 2) / 2     // round up to next 0.5 kg
-```
+## Trigger
+A partner is flagged "low reliability" when EITHER:
+- `partner_ratings.rating < 4.0`, OR
+- `courier_scores.avg_delay_days > 1`
 
-Documents/envelopes are exempt (fixed 250 g, no dimensions).
+## What we show
+A subtle amber chip under the partner name:
+```
+⚠ Lower reliability  ⓘ
+```
+Hover/tap reveals a tooltip with the top 1–2 `cons` from `partner_ratings` (e.g. "Frequent delivery delays", "Patchy customer support"). If no cons are available, fall back to a generic line: "Mixed customer feedback on recent shipments."
+
+The chip is informational only — it does not block selection or re-rank partners.
 
 ## Changes
 
-### 1. `src/lib/pricing.ts` — shared math
-Add constants and helpers:
-- `VOLUMETRIC_DIVISOR = 5000`
-- `WEIGHT_SLAB_KG = 0.5`
-- `computeVolumetricKg(L, B, H)`
-- `computeChargeableKg(deadKg, L, B, H, { isDocument })` — returns `{ deadKg, volumetricKg, chargeableKg }`
+### 1. `usePartnerRatings.ts`
+Hook already returns `rating` and `cons[]` from `partner_ratings`. Extend the request/response shape so each entry also carries `avg_delay_days` joined from `courier_scores` (matched by `partner_code` ↔ `courier_id`). One extra read inside `fetch-partner-ratings` edge function.
 
-### 2. `src/components/booking/BookingStep2.tsx`
-- After dimensions are entered (non-documents), live-compute and display a small breakdown card:
-  ```
-  Dead weight        300 g
-  Volumetric weight  5,000 g   (50×50×20 ÷ 5000)
-  Chargeable weight  5,000 g   ← used for pricing
-  ```
-- Extend existing weight disclaimer to also warn about dimension accuracy.
-- In `handleContinue`, send `weight_kg: chargeableKg` (not deadKg) to every `*-serviceability` call.
-- Pass the full weight triple up via a new prop `onWeightBreakdown({ deadG, volumetricG, chargeableG })` so the parent `Booking.tsx` can persist it.
+### 2. `fetch-partner-ratings` edge function
+After loading partner_ratings, look up `courier_scores` rows for the same partner codes and attach `avg_delay_days` and `reliability_score` to each returned rating object. No schema changes.
 
-### 3. `src/pages/Booking.tsx`
-- Store `weightBreakdown` in booking state.
-- Forward to `BookingReviewStep` and to the `save-booking`/partner-booking payloads.
+### 3. `ETACard.tsx`
+- Accept new optional props: `cons?: string[]`, `avgDelayDays?: number`.
+- Compute `isLowReliability = (rating != null && rating < 4) || (avgDelayDays != null && avgDelayDays > 1)`.
+- When true, render an amber chip below the partner name. Use shadcn `Tooltip` to show top 2 cons (joined with " · "), or fallback text.
+- No layout shift when chip is absent.
 
-### 4. `src/components/booking/BookingReviewStep.tsx`
-- Show the same 3-row breakdown in the review summary, just above the price block, so the customer sees chargeable weight before paying.
-
-### 5. Edge functions — partner booking payloads
-For each of the 5 `*-booking` functions (`delhivery-booking`, `shadowfax-booking`, `xpressbees-booking`, `urbanebolt-booking`, `shree-maruti-booking`):
-- Accept `chargeable_weight_kg` in the request body.
-- Send chargeable weight (in kg or g per partner contract) as the shipment weight to the partner. Dimensions still forwarded as-is so partners that re-derive volumetric match our number.
-
-`save-booking` persists the three weight fields on the row.
-
-### 6. Database migration
-Add to `bookings`:
-- `dead_weight_g` integer
-- `volumetric_weight_g` integer
-- `chargeable_weight_g` integer
-
-Backfill: leave NULL for historic rows (no data to derive).
-
-### 7. Admin `OrderMonitoring.tsx`
-In the order detail panel, render a "Weight breakdown" row:
-```
-Dead: 300 g · Volumetric: 5,000 g · Chargeable (billed): 5,000 g
-```
-Visible to all admin roles (helps support explain pricing disputes).
+### 4. `BookingStep5.tsx` (parent of ETA cards)
+Pass `cons` and `avg_delay_days` from `ratings.get(partner_code)` into each `<ETACard>`.
 
 ## Out of scope
-- Recomputing/re-billing historic orders.
-- Per-partner divisor variants (locked to 5000 for all).
-- Auto-detecting dimension mismatch at pickup (partner-side; we already warn user).
+- Changing ranking/sort logic in SmartRanking.
+- Showing the warning in the comparison table or AI Recommends row (user asked only for the ETA card).
+- Editing the AI prompt that generates cons.
 
-## Technical notes
-
+## Technical note
 ```text
-Customer enters: dead=300g, dims=50×50×20cm
-                              │
-                              ▼
-        computeChargeableKg() ──► dead=0.3 vol=5.0 → 5.0 → round→5.0kg
-                              │
-        ┌─────────────────────┼──────────────────────┐
-        ▼                     ▼                      ▼
-  Step2 UI display    Serviceability quote    Partner booking
-                              │                      │
-                              ▼                      ▼
-                        Review + pay         DB: chargeable_weight_g
+partner_ratings ──► rating, cons[]
+courier_scores  ──► avg_delay_days
+        │
+        ▼
+  fetch-partner-ratings (merge)
+        │
+        ▼
+  usePartnerRatings hook
+        │
+        ▼
+  BookingStep5 → ETACard → amber chip + tooltip
 ```
-
-Rate-card lookups in `_shared/rate-cards.ts` already use weight slabs, so passing 5.0 kg instead of 0.3 kg picks the correct slab automatically — no rate-card changes needed.
