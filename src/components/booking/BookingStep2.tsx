@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, CheckCircle, Package, Loader2, FileText, Mail, AlertTriangle, MoreHorizontal, Info } from "lucide-react";
+import { MapPin, CheckCircle, Package, Loader2, FileText, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,12 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_ENV } from "@/config/environment";
 import { cn } from "@/lib/utils";
-import { computeBaseFare, computeChargeableKg, VOLUMETRIC_DIVISOR } from "@/lib/pricing";
+import { computeBaseFare, computeChargeableKg } from "@/lib/pricing";
 
 const goodsTypes = [
   { id: 'documents', label: 'Documents / Envelope', icon: FileText, weightHint: 'Up to 250g' },
-  { id: 'box', label: 'Box / Parcel', icon: Package, weightHint: '250g - 2kg' },
-  { id: 'others', label: 'Others', icon: MoreHorizontal, weightHint: 'Specify below' },
+  { id: 'box', label: 'Box / Parcel', icon: Package, weightHint: 'Specify contents' },
 ];
 
 interface PricingData {
