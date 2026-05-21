@@ -66,6 +66,7 @@ export type Database = {
           package_weight: string
           packaging_amount: number | null
           packaging_required: boolean | null
+          partner_error_raw: string | null
           payment_id: string | null
           payment_status: string | null
           platform_fee: number | null
@@ -115,6 +116,7 @@ export type Database = {
           package_weight: string
           packaging_amount?: number | null
           packaging_required?: boolean | null
+          partner_error_raw?: string | null
           payment_id?: string | null
           payment_status?: string | null
           platform_fee?: number | null
@@ -164,6 +166,7 @@ export type Database = {
           package_weight?: string
           packaging_amount?: number | null
           packaging_required?: boolean | null
+          partner_error_raw?: string | null
           payment_id?: string | null
           payment_status?: string | null
           platform_fee?: number | null
