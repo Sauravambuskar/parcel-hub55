@@ -155,6 +155,10 @@ Deno.serve(async (req) => {
         label_url: b.label_url || null,
         awb: b.prayog_awb || b.tracking_id || null,
         refund_id: b.refund_id || null,
+        refund_reason: b.refund_reason || null,
+        failure_reason: b.failure_reason || null,
+        failure_step: b.failure_step || null,
+        partner_error_raw: b.partner_error_raw || null,
       },
     };
 
