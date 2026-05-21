@@ -49,9 +49,11 @@ export type Database = {
           admin_email_sent_at: string | null
           base_fare: number | null
           booking_source: string | null
+          chargeable_weight_g: number | null
           courier_name: string
           courier_price: number
           created_at: string
+          dead_weight_g: number | null
           delivery_time: string
           failure_reason: string | null
           failure_step: string | null
@@ -93,15 +95,18 @@ export type Database = {
           updated_at: string
           urgency: string
           user_id: string
+          volumetric_weight_g: number | null
           width: string | null
         }
         Insert: {
           admin_email_sent_at?: string | null
           base_fare?: number | null
           booking_source?: string | null
+          chargeable_weight_g?: number | null
           courier_name: string
           courier_price: number
           created_at?: string
+          dead_weight_g?: number | null
           delivery_time: string
           failure_reason?: string | null
           failure_step?: string | null
@@ -143,15 +148,18 @@ export type Database = {
           updated_at?: string
           urgency: string
           user_id: string
+          volumetric_weight_g?: number | null
           width?: string | null
         }
         Update: {
           admin_email_sent_at?: string | null
           base_fare?: number | null
           booking_source?: string | null
+          chargeable_weight_g?: number | null
           courier_name?: string
           courier_price?: number
           created_at?: string
+          dead_weight_g?: number | null
           delivery_time?: string
           failure_reason?: string | null
           failure_step?: string | null
@@ -193,6 +201,7 @@ export type Database = {
           updated_at?: string
           urgency?: string
           user_id?: string
+          volumetric_weight_g?: number | null
           width?: string | null
         }
         Relationships: []

@@ -1,57 +1,86 @@
+
+# Dead vs Volumetric Weight — Chargeable Weight Fix
+
 ## Goal
+Stop under-charging customers when a parcel's volumetric weight exceeds its dead weight. Use **chargeable weight = ceil_to_500g(max(deadKg, volumetricKg))** as the single source of truth for all serviceability quotes, payments, partner bookings, and admin reporting.
 
-When a booking fails after payment, capture the **exact partner API error** and show it to the **super admin** in the admin order details. Consumers continue to see the existing friendly message ("Partner couldn't accept the booking. Payment refunded.").
+Formula:
+```
+volumetricKg = (L_cm × B_cm × H_cm) / 5000
+chargeableKg_raw = max(deadKg, volumetricKg)
+chargeableKg = ceil(chargeableKg_raw × 2) / 2     // round up to next 0.5 kg
+```
 
-## Problem
+Documents/envelopes are exempt (fixed 250 g, no dimensions).
 
-Today, `confirm-booking-or-refund` receives the raw partner error via the `error_detail` request field, but it only stores it inside the Razorpay refund `notes`. The `bookings` row keeps only the generic `failure_reason` string. So when an admin opens a failed order, there is no way to see what Delhivery / Shadowfax / XpressBees actually returned — exactly what happened with the May 19 and May 20 orders.
+## Changes
 
-## Plan
+### 1. `src/lib/pricing.ts` — shared math
+Add constants and helpers:
+- `VOLUMETRIC_DIVISOR = 5000`
+- `WEIGHT_SLAB_KG = 0.5`
+- `computeVolumetricKg(L, B, H)`
+- `computeChargeableKg(deadKg, L, B, H, { isDocument })` — returns `{ deadKg, volumetricKg, chargeableKg }`
 
-### 1. Database — store raw partner error
+### 2. `src/components/booking/BookingStep2.tsx`
+- After dimensions are entered (non-documents), live-compute and display a small breakdown card:
+  ```
+  Dead weight        300 g
+  Volumetric weight  5,000 g   (50×50×20 ÷ 5000)
+  Chargeable weight  5,000 g   ← used for pricing
+  ```
+- Extend existing weight disclaimer to also warn about dimension accuracy.
+- In `handleContinue`, send `weight_kg: chargeableKg` (not deadKg) to every `*-serviceability` call.
+- Pass the full weight triple up via a new prop `onWeightBreakdown({ deadG, volumetricG, chargeableG })` so the parent `Booking.tsx` can persist it.
 
-Add one nullable column to `bookings`:
+### 3. `src/pages/Booking.tsx`
+- Store `weightBreakdown` in booking state.
+- Forward to `BookingReviewStep` and to the `save-booking`/partner-booking payloads.
 
-- `partner_error_raw text` — full error payload/message returned by the partner API (truncated server-side to ~2000 chars).
+### 4. `src/components/booking/BookingReviewStep.tsx`
+- Show the same 3-row breakdown in the review summary, just above the price block, so the customer sees chargeable weight before paying.
 
-No RLS changes needed (super admin already has `SELECT` via `is_admin`).
+### 5. Edge functions — partner booking payloads
+For each of the 5 `*-booking` functions (`delhivery-booking`, `shadowfax-booking`, `xpressbees-booking`, `urbanebolt-booking`, `shree-maruti-booking`):
+- Accept `chargeable_weight_kg` in the request body.
+- Send chargeable weight (in kg or g per partner contract) as the shipment weight to the partner. Dimensions still forwarded as-is so partners that re-derive volumetric match our number.
 
-### 2. Edge function — `confirm-booking-or-refund`
+`save-booking` persists the three weight fields on the row.
 
-- Persist `error_detail` (already received in the request body) into the new `partner_error_raw` column on both the UPDATE and INSERT paths.
-- Keep `failure_reason` as the friendly, consumer-facing sentence (unchanged).
-- Truncate to 2000 chars before writing.
+### 6. Database migration
+Add to `bookings`:
+- `dead_weight_g` integer
+- `volumetric_weight_g` integer
+- `chargeable_weight_g` integer
 
-### 3. Edge function — `get-booking-detail`
+Backfill: leave NULL for historic rows (no data to derive).
 
-- Add `partner_error_raw`, `failure_reason`, `failure_step`, `refund_reason`, `refund_id` to the `_booking` payload it already returns, so the admin detail UI can render them. Consumer-facing fields stay unchanged.
+### 7. Admin `OrderMonitoring.tsx`
+In the order detail panel, render a "Weight breakdown" row:
+```
+Dead: 300 g · Volumetric: 5,000 g · Chargeable (billed): 5,000 g
+```
+Visible to all admin roles (helps support explain pricing disputes).
 
-### 4. Admin UI — `src/pages/admin/OrderMonitoring.tsx`
-
-In the order detail drawer/dialog, when `status === 'FAILED'` (or cancelled with `failure_step`), render a new **"Failure diagnostics (admin only)"** section visible only when `adminUser.role === 'super_admin'`:
-
-- Failure step (`failure_step`)
-- Friendly reason (`failure_reason`)
-- **Raw partner response** (`partner_error_raw`) inside a monospace `<pre>` with copy button
-- Refund id + refund status
-
-Non-super-admin roles (operations / support) see only the friendly reason — same as the consumer.
-
-### 5. Consumer UI
-
-No change. `History` / `OrderDetails` continue to display `failure_reason` only.
+## Out of scope
+- Recomputing/re-billing historic orders.
+- Per-partner divisor variants (locked to 5000 for all).
+- Auto-detecting dimension mismatch at pickup (partner-side; we already warn user).
 
 ## Technical notes
 
 ```text
-bookings
-  + partner_error_raw  text  null
+Customer enters: dead=300g, dims=50×50×20cm
+                              │
+                              ▼
+        computeChargeableKg() ──► dead=0.3 vol=5.0 → 5.0 → round→5.0kg
+                              │
+        ┌─────────────────────┼──────────────────────┐
+        ▼                     ▼                      ▼
+  Step2 UI display    Serviceability quote    Partner booking
+                              │                      │
+                              ▼                      ▼
+                        Review + pay         DB: chargeable_weight_g
 ```
 
-Files touched:
-- migration: add column
-- `supabase/functions/confirm-booking-or-refund/index.ts` — write `partner_error_raw`
-- `supabase/functions/get-booking-detail/index.ts` — expose admin fields
-- `src/pages/admin/OrderMonitoring.tsx` — render super-admin-only diagnostics block
-
-Out of scope: backfilling the two existing failed orders (their raw error was never stored and edge logs are gone). Going forward, every new failure will carry the raw partner response.
+Rate-card lookups in `_shared/rate-cards.ts` already use weight slabs, so passing 5.0 kg instead of 0.3 kg picks the correct slab automatically — no rate-card changes needed.
