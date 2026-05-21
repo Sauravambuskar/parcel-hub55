@@ -159,6 +159,11 @@ Deno.serve(async (req) => {
       return "manifest";
     })();
 
+    // Raw partner error (kept verbatim for admin diagnostics, truncated to 2000 chars).
+    const partnerErrorRaw = error_detail
+      ? String(error_detail).slice(0, 2000)
+      : null;
+
     if (existing) {
       // A row already exists (PAYMENT_RECEIVED row from verify-payment, or
       // a previous attempt). Mark it FAILED + refund details.
@@ -171,6 +176,7 @@ Deno.serve(async (req) => {
           refund_reason: reason || "booking_failed_after_payment",
           failure_reason: friendlyReason,
           failure_step: failureStep,
+          partner_error_raw: partnerErrorRaw,
         })
         .eq("id", existing.id)
         .select()
@@ -192,6 +198,7 @@ Deno.serve(async (req) => {
         refund_reason: reason || "booking_failed_after_payment",
         failure_reason: friendlyReason,
         failure_step: failureStep,
+        partner_error_raw: partnerErrorRaw,
       };
       const { data: inserted, error: insertErr } = await supabase
         .from("bookings")

@@ -16,6 +16,7 @@ import { CURRENT_ENV } from "@/config/environment";
 import { useCancelOrder, isCancellable } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { useAdminAuth } from "@/contexts/useAdminAuth";
 
 // Map booking_source -> partner edge function names
 const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
@@ -68,9 +69,16 @@ interface Booking {
   prayog_awb?: string;
   booking_source?: string | null;
   label_url?: string | null;
+  failure_reason?: string | null;
+  failure_step?: string | null;
+  partner_error_raw?: string | null;
+  refund_id?: string | null;
+  refund_reason?: string | null;
 }
 
 const OrderMonitoring = () => {
+  const { adminUser } = useAdminAuth();
+  const isSuperAdmin = adminUser?.role === "super_admin";
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -572,6 +580,65 @@ const OrderMonitoring = () => {
                   <p className="font-medium">{format(new Date(selectedBooking.created_at), "dd MMM yyyy, HH:mm")}</p>
                 </div>
               </div>
+
+              {/* Failure Diagnostics — visible to everyone, raw payload super-admin only */}
+              {(selectedBooking.failure_reason || selectedBooking.failure_step || selectedBooking.partner_error_raw) && (
+                <Card className="border-destructive/40 bg-destructive/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      Failure Diagnostics
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    {selectedBooking.failure_step && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Failed at step</span>
+                        <span className="font-mono">{selectedBooking.failure_step}</span>
+                      </div>
+                    )}
+                    {selectedBooking.failure_reason && (
+                      <div>
+                        <p className="text-muted-foreground mb-1">Customer-facing reason</p>
+                        <p className="font-medium">{selectedBooking.failure_reason}</p>
+                      </div>
+                    )}
+                    {selectedBooking.refund_id && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Refund ID</span>
+                        <span className="font-mono text-xs">{selectedBooking.refund_id}</span>
+                      </div>
+                    )}
+                    {isSuperAdmin ? (
+                      selectedBooking.partner_error_raw ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-muted-foreground">Raw partner response (super admin)</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                navigator.clipboard.writeText(selectedBooking.partner_error_raw || "");
+                                toast({ title: "Copied to clipboard" });
+                              }}
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <pre className="bg-background border rounded p-2 text-xs whitespace-pre-wrap break-words max-h-60 overflow-auto">
+{selectedBooking.partner_error_raw}
+                          </pre>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">
+                          No raw partner response stored for this booking (failed before the new diagnostics column was added).
+                        </p>
+                      )
+                    ) : null}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Price Breakdown - Admin Only View */}
               <Card className="border-primary/20">
