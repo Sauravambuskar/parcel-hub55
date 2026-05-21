@@ -132,11 +132,12 @@ const BookingReviewStep = ({
             </div>
           </div>
 
-          {/* Dead vs volumetric vs chargeable breakdown — single source of truth for billing. */}
+          {/* Chargeable weight — single source of truth for billing.
+              Dead/volumetric breakdown intentionally hidden from the user. */}
           {(() => {
             const isDocuments = packageDetails.goodsType === 'documents';
             const deadKg = (parseFloat(packageDetails.weight) || 0) / 1000;
-            const { volumetricKg, chargeableKg } = computeChargeableKg(
+            const { chargeableKg } = computeChargeableKg(
               deadKg,
               packageDetails.dimensions.length,
               packageDetails.dimensions.width,
@@ -145,28 +146,10 @@ const BookingReviewStep = ({
             );
             if (deadKg <= 0) return null;
             const fmt = (kg: number) => `${Math.round(kg * 1000).toLocaleString()} g`;
-            const usingVol = !isDocuments && volumetricKg > deadKg;
             return (
-              <div className="ml-7 mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Dead weight</span>
-                  <span>{fmt(deadKg)}</span>
-                </div>
-                {!isDocuments && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Volumetric weight</span>
-                    <span>{fmt(volumetricKg)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t border-primary/20 pt-1.5">
-                  <span className="font-semibold">Chargeable weight (billed)</span>
-                  <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
-                </div>
-                {usingVol && (
-                  <p className="text-[11px] text-amber-700 pt-1">
-                    Your parcel is bulky — courier will bill on volumetric weight.
-                  </p>
-                )}
+              <div className="ml-7 mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 flex justify-between items-center text-xs">
+                <span className="font-semibold">Chargeable weight (billed)</span>
+                <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
               </div>
             );
           })()}
