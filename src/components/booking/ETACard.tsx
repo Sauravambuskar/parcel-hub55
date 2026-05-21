@@ -42,6 +42,8 @@ interface ETACardProps {
   platformFee?: number;
   rank?: number;
   rating?: number | null;
+  cons?: string[];
+  avgDelayDays?: number | null;
 }
 
 /** Column header row rendered once above the list */
