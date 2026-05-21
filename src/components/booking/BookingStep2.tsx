@@ -157,7 +157,7 @@ const BookingStep2 = ({
   const isValid = pickupPincode && deliveryPincode && goodsType
     && (!weightRequired || packageWeight)
     && (!dimensionsRequired || (dimensions.length && dimensions.width && dimensions.height))
-    && (goodsType !== 'others' || customGoodsType.trim());
+    && (goodsType !== 'box' || customGoodsType.trim());
 
   const handleContinue = async () => {
     if (!isValid) return;
