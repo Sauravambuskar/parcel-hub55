@@ -503,15 +503,23 @@ const Landing = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {(cmsPosts.length > 0
-              ? cmsPosts.map((p) => ({
-                  slug: p.slug,
-                  tag: (p.tags && p.tags[0]) || "Article",
-                  img: p.featured_image_url || logisticsBg,
-                  alt: p.featured_image_alt || p.title,
-                  title: p.title,
-                  excerpt: p.excerpt || "",
-                  read: "5 min read",
-                }))
+              ? cmsPosts.map((p) => {
+                  const stripped = (p.body_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                  const derived = p.excerpt && p.excerpt.trim()
+                    ? p.excerpt.trim()
+                    : (stripped ? (stripped.length > 160 ? stripped.slice(0, 157) + "…" : stripped) : "Read the full article for more.");
+                  const words = stripped ? stripped.split(" ").length : 0;
+                  const mins = Math.max(1, Math.round(words / 200));
+                  return {
+                    slug: p.slug,
+                    tag: (p.tags && p.tags[0]) || "Article",
+                    img: p.featured_image_url || logisticsBg,
+                    alt: p.featured_image_alt || p.title,
+                    title: p.title,
+                    excerpt: derived,
+                    read: `${mins} min read`,
+                  };
+                })
               : [
                   { slug: null, tag: "Shipping Guide", img: parcelsBg, alt: "Packing fragile items", title: "How to Pack Fragile Items for Safe Delivery", excerpt: "Bubble wrap, double-boxing, and labelling tips that prevent damage during transit.", read: "5 min read" },
                   { slug: null, tag: "Compare Couriers", img: logisticsBg, alt: "Compare couriers", title: "Delhivery vs XpressBees vs Shadowfax: Which to Choose?", excerpt: "A practical breakdown of pricing, TAT and serviceability across India's top partners.", read: "7 min read" },
