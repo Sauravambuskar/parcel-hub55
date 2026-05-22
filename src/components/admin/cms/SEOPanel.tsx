@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,10 +14,12 @@ interface Props {
 }
 
 export default function SEOPanel({ content, onChange }: Props) {
-  const analysis = analyzeSeo(content);
+  const analysis = useMemo(() => analyzeSeo(content), [
+    content.title, content.slug, content.body_html, content.excerpt,
+    content.meta_title, content.meta_description, content.focus_keyphrase,
+    content.featured_image_url, content.featured_image_alt,
+  ]);
   const ringColor = analysis.rating === 'good' ? 'text-green-600' : analysis.rating === 'ok' ? 'text-amber-600' : 'text-red-600';
-  const barColor = analysis.rating === 'good' ? 'bg-green-500' : analysis.rating === 'ok' ? 'bg-amber-500' : 'bg-red-500';
-  void barColor;
 
   return (
     <div className="space-y-4">

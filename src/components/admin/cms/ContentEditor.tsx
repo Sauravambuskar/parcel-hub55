@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -62,20 +62,36 @@ export default function ContentEditor({ type }: Props) {
   };
 
 
+  // Track whether the user has manually edited the slug so auto-sync stops touching it.
+  const slugTouchedRef = useRef(false);
+  // Guard so we never re-hydrate from DB after first load (would wipe in-progress edits).
+  const hydratedRef = useRef(false);
+
   useEffect(() => {
-    if (isNew) return;
+    if (isNew) { hydratedRef.current = true; return; }
+    if (hydratedRef.current) return;
     supabase.from('cms_content').select('*').eq('id', id!).single().then(({ data, error }) => {
       if (error) { toast.error(error.message); navigate(-1); return; }
       setData(data as unknown as CmsContent);
+      slugTouchedRef.current = true; // existing record — never auto-overwrite
+      hydratedRef.current = true;
       setLoading(false);
     });
   }, [id, isNew, navigate]);
 
-  const patch = (p: Partial<CmsContent>) => setData((d) => ({ ...d, ...p }));
+  const patch = useCallback((p: Partial<CmsContent>) => setData((d) => ({ ...d, ...p })), []);
 
   const handleTitleChange = (title: string) => {
-    const auto = isNew && (!data.slug || data.slug === slugify(data.title || ''));
-    patch({ title, ...(auto ? { slug: slugify(title) } : {}) });
+    if (isNew && !slugTouchedRef.current) {
+      patch({ title, slug: slugify(title) });
+    } else {
+      patch({ title });
+    }
+  };
+
+  const handleSlugChange = (raw: string) => {
+    slugTouchedRef.current = true;
+    patch({ slug: slugify(raw) });
   };
 
   const ensureUniqueSlug = async (base: string, excludeId?: string): Promise<string> => {
@@ -100,14 +116,20 @@ export default function ContentEditor({ type }: Props) {
     try {
       const seo = analyzeSeo(data);
       const uniqueSlug = await ensureUniqueSlug(slugify(data.slug), isNew ? undefined : id!);
-      if (uniqueSlug !== data.slug) patch({ slug: uniqueSlug });
+      const nowIso = new Date().toISOString();
+      const willPublish = publish === true;
+      const newPublishedAt = willPublish && !data.published_at ? nowIso : data.published_at;
+      const newStatus = publish === undefined
+        ? (data.status || 'draft')
+        : (willPublish ? 'published' : 'draft');
+
       const payload: Record<string, unknown> = {
         ...data,
         slug: uniqueSlug,
         type,
         seo_score: seo.score,
-        ...(publish !== undefined ? { status: publish ? 'published' : 'draft' } : {}),
-        ...(publish && !data.published_at ? { published_at: new Date().toISOString() } : {}),
+        status: newStatus,
+        published_at: newPublishedAt,
       };
       delete payload.id;
       delete payload.created_at;
@@ -116,13 +138,16 @@ export default function ContentEditor({ type }: Props) {
       if (isNew) {
         const { data: row, error } = await supabase.from('cms_content').insert(payload as never).select('id').single();
         if (error) { toast.error(error.message); return; }
-        toast.success('Created');
+        // Sync local state so a remount/re-fetch doesn't surprise the user.
+        patch({ slug: uniqueSlug, status: newStatus as CmsContent['status'], published_at: newPublishedAt as string | null });
+        toast.success(willPublish ? 'Published' : 'Created');
+        hydratedRef.current = true; // route changes but data already current
         navigate(`/admin/cms/${type}s/${row.id}`, { replace: true });
       } else {
         const { error } = await supabase.from('cms_content').update(payload as never).eq('id', id!);
         if (error) { toast.error(error.message); return; }
-        toast.success(publish ? 'Published' : 'Saved');
-        if (publish !== undefined) patch({ status: publish ? 'published' : 'draft' });
+        patch({ slug: uniqueSlug, status: newStatus as CmsContent['status'], published_at: newPublishedAt as string | null });
+        toast.success(willPublish ? 'Published' : 'Saved');
       }
     } finally {
       setSaving(false);
@@ -169,7 +194,7 @@ export default function ContentEditor({ type }: Props) {
                 <Label htmlFor="slug">Slug</Label>
                 <div className="flex items-center gap-1 text-sm">
                   <span className="text-muted-foreground">{CONTENT_TYPE_PATHS[type]}/</span>
-                  <Input id="slug" value={data.slug || ''} onChange={(e) => patch({ slug: slugify(e.target.value) })} />
+                  <Input id="slug" value={data.slug || ''} onChange={(e) => handleSlugChange(e.target.value)} />
                 </div>
               </div>
               <div>
