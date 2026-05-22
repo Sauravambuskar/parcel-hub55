@@ -8,8 +8,8 @@ const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -30,14 +30,19 @@ const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setAdminUser({ role: data.role as AdminRole, email: data.email });
+      setAdminUser((prev) => {
+        const next = { role: data.role as AdminRole, email: data.email };
+        if (prev && prev.role === next.role && prev.email === next.email) return prev;
+        return next;
+      });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    refresh();
+    let hasLoadedOnce = false;
+    refresh(true).finally(() => { hasLoadedOnce = true; });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -46,9 +51,18 @@ const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        refresh();
+      if (event === "USER_UPDATED") {
+        // Refresh quietly if we're already loaded so we don't unmount the page.
+        refresh(!hasLoadedOnce);
+        return;
       }
+
+      if (event === "SIGNED_IN" && !hasLoadedOnce) {
+        refresh(true);
+      }
+      // Ignore SIGNED_IN after initial load and TOKEN_REFRESHED — these fire
+      // on tab refocus / token rotation. Flipping `loading` here would unmount
+      // ProtectedAdminRoute's children and wipe in-progress editor state.
     });
 
     return () => subscription.unsubscribe();
