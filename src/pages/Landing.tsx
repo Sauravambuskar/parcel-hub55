@@ -240,7 +240,7 @@ const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"]
 /* ---------------- MAIN ---------------- */
 const Landing = () => {
   const navigate = useNavigate();
-  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
+  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; body_html: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
 
   useEffect(() => {
     const authRaw = localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth");
@@ -251,7 +251,7 @@ const Landing = () => {
     const load = () => {
       supabase
         .from("cms_content")
-        .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
+        .select("slug,title,excerpt,body_html,featured_image_url,featured_image_alt,tags")
         .eq("type", "post")
         .eq("status", "published")
         .order("published_at", { ascending: false })
@@ -503,15 +503,23 @@ const Landing = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {(cmsPosts.length > 0
-              ? cmsPosts.map((p) => ({
-                  slug: p.slug,
-                  tag: (p.tags && p.tags[0]) || "Article",
-                  img: p.featured_image_url || logisticsBg,
-                  alt: p.featured_image_alt || p.title,
-                  title: p.title,
-                  excerpt: p.excerpt || "",
-                  read: "5 min read",
-                }))
+              ? cmsPosts.map((p) => {
+                  const stripped = (p.body_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                  const derived = p.excerpt && p.excerpt.trim()
+                    ? p.excerpt.trim()
+                    : (stripped ? (stripped.length > 160 ? stripped.slice(0, 157) + "…" : stripped) : "Read the full article for more.");
+                  const words = stripped ? stripped.split(" ").length : 0;
+                  const mins = Math.max(1, Math.round(words / 200));
+                  return {
+                    slug: p.slug,
+                    tag: (p.tags && p.tags[0]) || "Article",
+                    img: p.featured_image_url || logisticsBg,
+                    alt: p.featured_image_alt || p.title,
+                    title: p.title,
+                    excerpt: derived,
+                    read: `${mins} min read`,
+                  };
+                })
               : [
                   { slug: null, tag: "Shipping Guide", img: parcelsBg, alt: "Packing fragile items", title: "How to Pack Fragile Items for Safe Delivery", excerpt: "Bubble wrap, double-boxing, and labelling tips that prevent damage during transit.", read: "5 min read" },
                   { slug: null, tag: "Compare Couriers", img: logisticsBg, alt: "Compare couriers", title: "Delhivery vs XpressBees vs Shadowfax: Which to Choose?", excerpt: "A practical breakdown of pricing, TAT and serviceability across India's top partners.", read: "7 min read" },
@@ -534,7 +542,7 @@ const Landing = () => {
                       {p.tag}
                     </span>
                     <h3 className="text-[18px] font-bold text-[#0B1220] mb-2 leading-snug">{p.title}</h3>
-                    <p className="text-[14px] mb-4 flex-1" style={{ color: C.gray }}>{p.excerpt}</p>
+                    <p className="text-[14px] mb-4 flex-1 line-clamp-3" style={{ color: C.gray }}>{p.excerpt}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px]" style={{ color: C.gray }}>{p.read}</span>
                       <span className="text-[13px] font-semibold" style={{ color: C.teal }}>Read more →</span>
