@@ -78,34 +78,54 @@ export default function ContentEditor({ type }: Props) {
     patch({ title, ...(auto ? { slug: slugify(title) } : {}) });
   };
 
+  const ensureUniqueSlug = async (base: string, excludeId?: string): Promise<string> => {
+    let slug = base;
+    let n = 1;
+    while (n < 100) {
+      let q = supabase.from('cms_content').select('id').eq('type', type).eq('slug', slug).limit(1);
+      if (excludeId) q = q.neq('id', excludeId);
+      const { data: rows } = await q;
+      if (!rows || rows.length === 0) return slug;
+      n += 1;
+      slug = `${base}-${n}`;
+    }
+    return `${base}-${Date.now()}`;
+  };
+
   const save = async (publish?: boolean) => {
+    if (saving) return;
     if (!data.title?.trim()) { toast.error('Title required'); return; }
     if (!data.slug?.trim()) { toast.error('Slug required'); return; }
     setSaving(true);
-    const seo = analyzeSeo(data);
-    const payload: Record<string, unknown> = {
-      ...data,
-      type,
-      seo_score: seo.score,
-      ...(publish !== undefined ? { status: publish ? 'published' : 'draft' } : {}),
-      ...(publish && !data.published_at ? { published_at: new Date().toISOString() } : {}),
-    };
-    delete payload.id;
-    delete payload.created_at;
-    delete payload.updated_at;
+    try {
+      const seo = analyzeSeo(data);
+      const uniqueSlug = await ensureUniqueSlug(slugify(data.slug), isNew ? undefined : id!);
+      if (uniqueSlug !== data.slug) patch({ slug: uniqueSlug });
+      const payload: Record<string, unknown> = {
+        ...data,
+        slug: uniqueSlug,
+        type,
+        seo_score: seo.score,
+        ...(publish !== undefined ? { status: publish ? 'published' : 'draft' } : {}),
+        ...(publish && !data.published_at ? { published_at: new Date().toISOString() } : {}),
+      };
+      delete payload.id;
+      delete payload.created_at;
+      delete payload.updated_at;
 
-    if (isNew) {
-      const { data: row, error } = await supabase.from('cms_content').insert(payload as never).select('id').single();
+      if (isNew) {
+        const { data: row, error } = await supabase.from('cms_content').insert(payload as never).select('id').single();
+        if (error) { toast.error(error.message); return; }
+        toast.success('Created');
+        navigate(`/admin/cms/${type}s/${row.id}`, { replace: true });
+      } else {
+        const { error } = await supabase.from('cms_content').update(payload as never).eq('id', id!);
+        if (error) { toast.error(error.message); return; }
+        toast.success(publish ? 'Published' : 'Saved');
+        if (publish !== undefined) patch({ status: publish ? 'published' : 'draft' });
+      }
+    } finally {
       setSaving(false);
-      if (error) { toast.error(error.message); return; }
-      toast.success('Created');
-      navigate(`/admin/cms/${type}s/${row.id}`, { replace: true });
-    } else {
-      const { error } = await supabase.from('cms_content').update(payload as never).eq('id', id!);
-      setSaving(false);
-      if (error) { toast.error(error.message); return; }
-      toast.success(publish ? 'Published' : 'Saved');
-      if (publish !== undefined) patch({ status: publish ? 'published' : 'draft' });
     }
   };
 
