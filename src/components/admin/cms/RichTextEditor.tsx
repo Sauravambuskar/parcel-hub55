@@ -31,7 +31,11 @@ interface Props {
 const COLORS = ['#000000', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899'];
 
 export default function RichTextEditor({ value, onChange, onInsertImage }: Props) {
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
       Underline,
@@ -44,20 +48,26 @@ export default function RichTextEditor({ value, onChange, onInsertImage }: Props
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content: value || '',
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onUpdate: ({ editor }) => onChangeRef.current(editor.getHTML()),
     editorProps: { attributes: { class: 'cms-content' } },
-  });
+  }, []);
 
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkNewTab, setLinkNewTab] = useState(true);
 
+  // Sync external value changes (e.g., initial DB load) without ever wiping
+  // the user's in-progress edits on re-renders or window focus changes.
+  const lastExternalRef = useRef<string>(value || '');
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', { emitUpdate: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor]);
+    if (!editor) return;
+    const incoming = value || '';
+    if (incoming === lastExternalRef.current) return;
+    lastExternalRef.current = incoming;
+    if (editor.isFocused) return;
+    if (incoming === editor.getHTML()) return;
+    editor.commands.setContent(incoming, { emitUpdate: false });
+  }, [value, editor]);
 
   if (!editor) return null;
 
