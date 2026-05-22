@@ -542,7 +542,7 @@ const Landing = () => {
                       {p.tag}
                     </span>
                     <h3 className="text-[18px] font-bold text-[#0B1220] mb-2 leading-snug">{p.title}</h3>
-                    <p className="text-[14px] mb-4 flex-1" style={{ color: C.gray }}>{p.excerpt}</p>
+                    <p className="text-[14px] mb-4 flex-1 line-clamp-3" style={{ color: C.gray }}>{p.excerpt}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px]" style={{ color: C.gray }}>{p.read}</span>
                       <span className="text-[13px] font-semibold" style={{ color: C.teal }}>Read more →</span>
