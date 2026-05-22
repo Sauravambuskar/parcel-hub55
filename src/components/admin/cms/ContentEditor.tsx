@@ -116,14 +116,20 @@ export default function ContentEditor({ type }: Props) {
     try {
       const seo = analyzeSeo(data);
       const uniqueSlug = await ensureUniqueSlug(slugify(data.slug), isNew ? undefined : id!);
-      if (uniqueSlug !== data.slug) patch({ slug: uniqueSlug });
+      const nowIso = new Date().toISOString();
+      const willPublish = publish === true;
+      const newPublishedAt = willPublish && !data.published_at ? nowIso : data.published_at;
+      const newStatus = publish === undefined
+        ? (data.status || 'draft')
+        : (willPublish ? 'published' : 'draft');
+
       const payload: Record<string, unknown> = {
         ...data,
         slug: uniqueSlug,
         type,
         seo_score: seo.score,
-        ...(publish !== undefined ? { status: publish ? 'published' : 'draft' } : {}),
-        ...(publish && !data.published_at ? { published_at: new Date().toISOString() } : {}),
+        status: newStatus,
+        published_at: newPublishedAt,
       };
       delete payload.id;
       delete payload.created_at;
@@ -132,13 +138,16 @@ export default function ContentEditor({ type }: Props) {
       if (isNew) {
         const { data: row, error } = await supabase.from('cms_content').insert(payload as never).select('id').single();
         if (error) { toast.error(error.message); return; }
-        toast.success('Created');
+        // Sync local state so a remount/re-fetch doesn't surprise the user.
+        patch({ slug: uniqueSlug, status: newStatus as CmsContent['status'], published_at: newPublishedAt as string | null });
+        toast.success(willPublish ? 'Published' : 'Created');
+        hydratedRef.current = true; // route changes but data already current
         navigate(`/admin/cms/${type}s/${row.id}`, { replace: true });
       } else {
         const { error } = await supabase.from('cms_content').update(payload as never).eq('id', id!);
         if (error) { toast.error(error.message); return; }
-        toast.success(publish ? 'Published' : 'Saved');
-        if (publish !== undefined) patch({ status: publish ? 'published' : 'draft' });
+        patch({ slug: uniqueSlug, status: newStatus as CmsContent['status'], published_at: newPublishedAt as string | null });
+        toast.success(willPublish ? 'Published' : 'Saved');
       }
     } finally {
       setSaving(false);
