@@ -240,7 +240,7 @@ const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"]
 /* ---------------- MAIN ---------------- */
 const Landing = () => {
   const navigate = useNavigate();
-  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
+  const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; body_html: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
 
   useEffect(() => {
     const authRaw = localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth");
