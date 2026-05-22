@@ -251,7 +251,7 @@ const Landing = () => {
     const load = () => {
       supabase
         .from("cms_content")
-        .select("slug,title,excerpt,featured_image_url,featured_image_alt,tags")
+        .select("slug,title,excerpt,body_html,featured_image_url,featured_image_alt,tags")
         .eq("type", "post")
         .eq("status", "published")
         .order("published_at", { ascending: false })
