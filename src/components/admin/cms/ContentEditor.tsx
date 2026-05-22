@@ -62,20 +62,36 @@ export default function ContentEditor({ type }: Props) {
   };
 
 
+  // Track whether the user has manually edited the slug so auto-sync stops touching it.
+  const slugTouchedRef = useRef(false);
+  // Guard so we never re-hydrate from DB after first load (would wipe in-progress edits).
+  const hydratedRef = useRef(false);
+
   useEffect(() => {
-    if (isNew) return;
+    if (isNew) { hydratedRef.current = true; return; }
+    if (hydratedRef.current) return;
     supabase.from('cms_content').select('*').eq('id', id!).single().then(({ data, error }) => {
       if (error) { toast.error(error.message); navigate(-1); return; }
       setData(data as unknown as CmsContent);
+      slugTouchedRef.current = true; // existing record — never auto-overwrite
+      hydratedRef.current = true;
       setLoading(false);
     });
   }, [id, isNew, navigate]);
 
-  const patch = (p: Partial<CmsContent>) => setData((d) => ({ ...d, ...p }));
+  const patch = useCallback((p: Partial<CmsContent>) => setData((d) => ({ ...d, ...p })), []);
 
   const handleTitleChange = (title: string) => {
-    const auto = isNew && (!data.slug || data.slug === slugify(data.title || ''));
-    patch({ title, ...(auto ? { slug: slugify(title) } : {}) });
+    if (isNew && !slugTouchedRef.current) {
+      patch({ title, slug: slugify(title) });
+    } else {
+      patch({ title });
+    }
+  };
+
+  const handleSlugChange = (raw: string) => {
+    slugTouchedRef.current = true;
+    patch({ slug: slugify(raw) });
   };
 
   const ensureUniqueSlug = async (base: string, excludeId?: string): Promise<string> => {
