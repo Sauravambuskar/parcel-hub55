@@ -20,7 +20,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Minus, RemoveFormatting,
   Highlighter, Link2Off,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   value: string;
