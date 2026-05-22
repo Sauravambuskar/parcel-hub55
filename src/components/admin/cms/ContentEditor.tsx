@@ -194,7 +194,7 @@ export default function ContentEditor({ type }: Props) {
                 <Label htmlFor="slug">Slug</Label>
                 <div className="flex items-center gap-1 text-sm">
                   <span className="text-muted-foreground">{CONTENT_TYPE_PATHS[type]}/</span>
-                  <Input id="slug" value={data.slug || ''} onChange={(e) => patch({ slug: slugify(e.target.value) })} />
+                  <Input id="slug" value={data.slug || ''} onChange={(e) => handleSlugChange(e.target.value)} />
                 </div>
               </div>
               <div>
