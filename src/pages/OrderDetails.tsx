@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Ban } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
-import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
-import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+import { isCancellable } from "@/hooks/useCancelOrder";
 
 interface OrderAddress {
   type: string;
@@ -98,14 +97,6 @@ const OrderDetails = () => {
     status: string;
     awb?: string | null;
   } | null>(null);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
-  const { cancelOrder, cancelling } = useCancelOrder({
-    onSuccess: () => {
-      setShowCancelDialog(false);
-      fetchOrderDetails();
-    },
-  });
 
   useEffect(() => {
     if (orderId) {
@@ -113,19 +104,6 @@ const OrderDetails = () => {
     }
   }, [orderId]);
 
-  const handleCancelConfirm = async (reason: CancelReason) => {
-    if (!bookingMeta) return;
-    const auth = getAuthSession();
-    await cancelOrder({
-      orderId: bookingMeta.id,
-      bookingSource: bookingMeta.booking_source,
-      bookingId: bookingMeta.id,
-      reason,
-      awb: bookingMeta.awb,
-      userId: auth?.user_id || null,
-      currentStatus: bookingMeta.status,
-    });
-  };
 
   const fetchOrderDetails = async () => {
     setLoading(true);
@@ -500,18 +478,21 @@ const OrderDetails = () => {
             </span>
           </div>
 
-          {/* Cancel button */}
+          {/* Cancellation notice — customers must email support */}
           {bookingMeta && isCancellable(order.orderStatus || bookingMeta.status) && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="mt-3"
-              onClick={() => setShowCancelDialog(true)}
-            >
-              <Ban className="h-4 w-4 mr-2" />
-              Cancel Order
-            </Button>
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 flex gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-900">
+                <strong>Need to cancel this order?</strong> Orders cannot be cancelled from the
+                app once placed. Please email{' '}
+                <a href="mailto:support@viasetu.com" className="font-semibold underline">
+                  support@viasetu.com
+                </a>{' '}
+                with your order ID and we'll get back to you within a few hours.
+              </p>
+            </div>
           )}
+
         </Card>
 
         {/* Refund Status Indicator */}
@@ -812,12 +793,6 @@ const OrderDetails = () => {
         </div>
       </div>
 
-      <CancelOrderDialog
-        open={showCancelDialog}
-        onOpenChange={setShowCancelDialog}
-        onConfirm={handleCancelConfirm}
-        cancelling={cancelling}
-      />
     </div>
   );
 };

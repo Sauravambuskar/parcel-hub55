@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy, Ban } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Eye, Navigation, Truck, FileDown, Edit, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +11,6 @@ import { getAuthSession } from "@/lib/auth";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
 import PageSeo from "@/components/PageSeo";
-import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
-import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 
 interface OrderAddress {
   type: string;
@@ -100,15 +98,8 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<any>(null);
   const [bookingsMap, setBookingsMap] = useState<Record<string, { id: string; booking_source: string; status: string; awb?: string | null; payment_status?: string | null }>>({});
-  const [cancelTarget, setCancelTarget] = useState<{ orderId: string; bookingId: string; bookingSource: string; awb?: string | null } | null>(null);
   const [partialFailure, setPartialFailure] = useState<string | null>(null);
 
-  const { cancelOrder, cancelling } = useCancelOrder({
-    onSuccess: () => {
-      setCancelTarget(null);
-      fetchOrders();
-    },
-  });
 
   useEffect(() => {
     fetchOrders();
@@ -484,32 +475,6 @@ const History = () => {
                     <Copy className="h-4 w-4 mr-1" />
                     Repeat
                   </Button>
-                  {/* Cancel button */}
-                  {(() => {
-                    const bm = bookingsMap[order.orderId];
-                    // Must be cancellable per BOTH local DB and Prayog state —
-                    // local DB is the source of truth for direct-partner orders
-                    // (Prayog isn't notified when we cancel directly).
-                    if (bm && isCancellable(bm.status) && isCancellable(order.orderStatus || bm.status)) {
-                      return (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
-                          onClick={() => setCancelTarget({
-                            orderId: order.orderId,
-                            bookingId: bm.id,
-                            bookingSource: bm.booking_source,
-                            awb: bm.awb,
-                          })}
-                        >
-                          <Ban className="h-4 w-4 mr-1" />
-                          Cancel
-                        </Button>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </Card>
             );
@@ -517,24 +482,6 @@ const History = () => {
         )}
       </div>
 
-      <CancelOrderDialog
-        open={!!cancelTarget}
-        onOpenChange={(open) => { if (!open) setCancelTarget(null); }}
-        onConfirm={async (reason) => {
-          if (!cancelTarget) return;
-          const auth = (() => { try { return JSON.parse(localStorage.getItem("auth_session") || "{}"); } catch { return {}; } })();
-          await cancelOrder({
-            orderId: cancelTarget.orderId,
-            bookingSource: cancelTarget.bookingSource,
-            bookingId: cancelTarget.bookingId,
-            reason,
-            awb: cancelTarget.awb,
-            userId: auth?.user_id || null,
-            currentStatus: bookingsMap[cancelTarget.orderId]?.status || null,
-          });
-        }}
-        cancelling={cancelling}
-      />
     </div>
   );
 };

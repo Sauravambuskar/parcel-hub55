@@ -13,8 +13,7 @@ import { getAuthSession } from "@/lib/auth";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
 import PageSeo from "@/components/PageSeo";
-import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
-import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+import { isCancellable } from "@/hooks/useCancelOrder";
 
 interface TrackingStatus {
   trackingId: string;
@@ -70,14 +69,7 @@ const Tracking = () => {
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
   const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string; awb?: string | null } | null>(null);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const { cancelOrder, cancelling } = useCancelOrder({
-    onSuccess: () => {
-      setShowCancelDialog(false);
-      if (currentAwb) fetchTrackingData(currentAwb);
-    },
-  });
 
   useEffect(() => {
     if (initialAwbNumber) {
@@ -565,18 +557,23 @@ const Tracking = () => {
           </CardContent>
         </Card>
 
+        {/* Cancellation notice — customers must email support */}
+        {bookingMeta && isCancellable(latestStatus?.category || bookingMeta.status) && (
+          <div className="rounded-lg border border-amber-300/60 bg-amber-50/90 p-3 flex gap-2">
+            <Ban className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-900">
+              <strong>Need to cancel this order?</strong> Orders cannot be cancelled from the
+              app once placed. Please email{' '}
+              <a href="mailto:support@viasetu.com" className="font-semibold underline">
+                support@viasetu.com
+              </a>{' '}
+              with your AWB number and we'll get back to you within a few hours.
+            </p>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          {bookingMeta && isCancellable(latestStatus?.category || bookingMeta.status) && (
-            <Button
-              variant="outline"
-              className="w-full col-span-2 bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20"
-              onClick={() => setShowCancelDialog(true)}
-            >
-              <Ban className="h-4 w-4 mr-2" />
-              Cancel Order
-            </Button>
-          )}
           <Button variant="outline" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/support')}>
             Get Help
           </Button>
@@ -585,25 +582,6 @@ const Tracking = () => {
           </Button>
         </div>
       </div>
-
-      <CancelOrderDialog
-        open={showCancelDialog}
-        onOpenChange={setShowCancelDialog}
-        onConfirm={async (reason) => {
-          if (!bookingMeta) return;
-          const auth = getAuthSession();
-          await cancelOrder({
-            orderId: bookingMeta.orderId,
-            bookingSource: bookingMeta.booking_source,
-            bookingId: bookingMeta.id,
-            reason,
-            awb: bookingMeta.awb,
-            userId: auth?.user_id || null,
-            currentStatus: bookingMeta.status,
-          });
-        }}
-        cancelling={cancelling}
-      />
     </div>
   );
 };

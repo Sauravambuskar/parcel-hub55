@@ -3,7 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, IndianRupee, Truck, CreditCard } from "lucide-react";
+import { Package, MapPin, IndianRupee, Truck, CreditCard, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { computeChargeableKg } from "@/lib/pricing";
 
 interface BookingReviewStepProps {
@@ -52,6 +62,7 @@ const BookingReviewStep = ({
   onBack,
 }: BookingReviewStepProps) => {
   const [submitting] = useState(false);
+  const [showCancelWarning, setShowCancelWarning] = useState(false);
 
   // Calculate GST at 18% on the base fare (which includes hidden platform fee)
   const baseFareRounded = Math.round(courierDetails.baseFare);
@@ -221,18 +232,24 @@ const BookingReviewStep = ({
           </p>
         </div>
 
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <p className="text-xs text-amber-900">
-            <strong>Cancellation policy:</strong> Once an order is placed and accepted by the
-            courier it usually cannot be cancelled. You can still request a cancellation — if the
-            courier has already picked up the shipment, our team will reach out to help resolve it.
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 flex gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <p className="text-xs text-foreground">
+            <strong>No cancellation after booking:</strong> Once you pay and place this order,
+            it cannot be cancelled from the app. If you absolutely need to cancel afterwards,
+            please email{' '}
+            <a href="mailto:support@viasetu.com" className="font-semibold underline">
+              support@viasetu.com
+            </a>{' '}
+            and our team will try to help — cancellation is not guaranteed once the courier
+            has accepted the shipment.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-2">
           <Button
-            onClick={onConfirm}
+            onClick={() => setShowCancelWarning(true)}
             className="w-full"
             disabled={submitting}
           >
@@ -244,6 +261,35 @@ const BookingReviewStep = ({
           </Button>
         </div>
       </CardContent>
+
+      <AlertDialog open={showCancelWarning} onOpenChange={setShowCancelWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Orders cannot be cancelled once placed
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Please confirm all details are correct. Once you proceed to pay and the order is
+              placed, it cannot be cancelled from the app. If you need to cancel after booking,
+              email <span className="font-semibold">support@viasetu.com</span> — our team will
+              try to help, but cancellation is not guaranteed once the courier accepts the
+              shipment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review again</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowCancelWarning(false);
+                onConfirm();
+              }}
+            >
+              Yes, place order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
