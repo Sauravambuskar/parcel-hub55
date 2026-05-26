@@ -98,14 +98,6 @@ const OrderDetails = () => {
     status: string;
     awb?: string | null;
   } | null>(null);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
-  const { cancelOrder, cancelling } = useCancelOrder({
-    onSuccess: () => {
-      setShowCancelDialog(false);
-      fetchOrderDetails();
-    },
-  });
 
   useEffect(() => {
     if (orderId) {
