@@ -491,24 +491,11 @@ const History = () => {
         )}
       </div>
 
-      <CancelOrderDialog
-        open={!!cancelTarget}
-        onOpenChange={(open) => { if (!open) setCancelTarget(null); }}
-        onConfirm={async (reason) => {
-          if (!cancelTarget) return;
-          const auth = (() => { try { return JSON.parse(localStorage.getItem("auth_session") || "{}"); } catch { return {}; } })();
-          await cancelOrder({
-            orderId: cancelTarget.orderId,
-            bookingSource: cancelTarget.bookingSource,
-            bookingId: cancelTarget.bookingId,
-            reason,
-            awb: cancelTarget.awb,
-            userId: auth?.user_id || null,
-            currentStatus: bookingsMap[cancelTarget.orderId]?.status || null,
-          });
-        }}
-        cancelling={cancelling}
-      />
+    </div>
+  );
+};
+
+export default History;
     </div>
   );
 };
