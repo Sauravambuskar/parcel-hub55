@@ -62,6 +62,7 @@ const BookingReviewStep = ({
   onBack,
 }: BookingReviewStepProps) => {
   const [submitting] = useState(false);
+  const [showCancelWarning, setShowCancelWarning] = useState(false);
 
   // Calculate GST at 18% on the base fare (which includes hidden platform fee)
   const baseFareRounded = Math.round(courierDetails.baseFare);
