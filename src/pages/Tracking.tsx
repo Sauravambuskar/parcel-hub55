@@ -13,8 +13,7 @@ import { getAuthSession } from "@/lib/auth";
 import TrackingSearchIllustration from "@/components/illustrations/TrackingSearchIllustration";
 import PageBackground from "@/components/PageBackground";
 import PageSeo from "@/components/PageSeo";
-import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
-import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+import { isCancellable } from "@/hooks/useCancelOrder";
 
 interface TrackingStatus {
   trackingId: string;
