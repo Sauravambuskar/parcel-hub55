@@ -20,6 +20,7 @@ import PageSeo from "@/components/PageSeo";
 import DisclaimerStep from "@/components/booking/DisclaimerStep";
 import BookingReviewStep from "@/components/booking/BookingReviewStep";
 import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
+import { extractInvokeError } from "@/lib/invoke-error";
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState("");
