@@ -484,32 +484,6 @@ const History = () => {
                     <Copy className="h-4 w-4 mr-1" />
                     Repeat
                   </Button>
-                  {/* Cancel button */}
-                  {(() => {
-                    const bm = bookingsMap[order.orderId];
-                    // Must be cancellable per BOTH local DB and Prayog state —
-                    // local DB is the source of truth for direct-partner orders
-                    // (Prayog isn't notified when we cancel directly).
-                    if (bm && isCancellable(bm.status) && isCancellable(order.orderStatus || bm.status)) {
-                      return (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
-                          onClick={() => setCancelTarget({
-                            orderId: order.orderId,
-                            bookingId: bm.id,
-                            bookingSource: bm.booking_source,
-                            awb: bm.awb,
-                          })}
-                        >
-                          <Ban className="h-4 w-4 mr-1" />
-                          Cancel
-                        </Button>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </Card>
             );
