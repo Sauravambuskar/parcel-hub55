@@ -69,14 +69,7 @@ const Tracking = () => {
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
   const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string; awb?: string | null } | null>(null);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const { cancelOrder, cancelling } = useCancelOrder({
-    onSuccess: () => {
-      setShowCancelDialog(false);
-      if (currentAwb) fetchTrackingData(currentAwb);
-    },
-  });
 
   useEffect(() => {
     if (initialAwbNumber) {
