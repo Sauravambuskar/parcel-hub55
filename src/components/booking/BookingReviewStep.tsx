@@ -3,7 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, IndianRupee, Truck, CreditCard } from "lucide-react";
+import { Package, MapPin, IndianRupee, Truck, CreditCard, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { computeChargeableKg } from "@/lib/pricing";
 
 interface BookingReviewStepProps {
