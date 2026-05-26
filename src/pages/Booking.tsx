@@ -723,7 +723,7 @@ const Booking = () => {
               body: {
                 payment_id: paymentDetails.razorpay_payment_id,
                 reason: 'shadowfax_booking_failed',
-                error_detail: String(sfxResult?.error || sfxError?.message || 'unknown'),
+                error_detail: await extractInvokeError(sfxResult, sfxError),
                 booking_row: failedBookingRow,
               },
               headers: { ...(prayogAuthRawSfx ? { 'x-prayog-auth': prayogAuthRawSfx } : {}), 'x-environment': CURRENT_ENV },
@@ -791,7 +791,7 @@ const Booking = () => {
               body: {
                 payment_id: paymentDetails.razorpay_payment_id,
                 reason: 'delhivery_booking_failed',
-                error_detail: String(dlvResult?.error || dlvError?.message || 'unknown'),
+                error_detail: await extractInvokeError(dlvResult, dlvError),
                 booking_row: failedBookingRow,
               },
               headers: { ...(prayogAuthRawDlv ? { 'x-prayog-auth': prayogAuthRawDlv } : {}), 'x-environment': CURRENT_ENV },
@@ -860,7 +860,7 @@ const Booking = () => {
               body: {
                 payment_id: paymentDetails.razorpay_payment_id,
                 reason: 'urbanebolt_booking_failed',
-                error_detail: String(ubResult?.error || ubError?.message || 'unknown'),
+                error_detail: await extractInvokeError(ubResult, ubError),
                 booking_row: failedBookingRow,
               },
               headers: { ...(prayogAuthRawUb ? { 'x-prayog-auth': prayogAuthRawUb } : {}), 'x-environment': CURRENT_ENV },
@@ -929,7 +929,7 @@ const Booking = () => {
               body: {
                 payment_id: paymentDetails.razorpay_payment_id,
                 reason: 'xpressbees_booking_failed',
-                error_detail: String(xbResult?.error || xbError?.message || 'unknown'),
+                error_detail: await extractInvokeError(xbResult, xbError),
                 booking_row: failedBookingRow,
               },
               headers: { ...(prayogAuthRawXb ? { 'x-prayog-auth': prayogAuthRawXb } : {}), 'x-environment': CURRENT_ENV },
@@ -998,7 +998,7 @@ const Booking = () => {
               body: {
                 payment_id: paymentDetails.razorpay_payment_id,
                 reason: 'shree_maruti_booking_failed',
-                error_detail: String(smResult?.error || smError?.message || 'unknown'),
+                error_detail: await extractInvokeError(smResult, smError),
                 booking_row: failedBookingRow,
               },
               headers: { ...(prayogAuthRawSm ? { 'x-prayog-auth': prayogAuthRawSm } : {}), 'x-environment': CURRENT_ENV },
@@ -1113,7 +1113,7 @@ const Booking = () => {
             body: {
               payment_id: paymentDetails.razorpay_payment_id,
               reason: 'unexpected_error',
-              error_detail: String(error?.message || error).slice(0, 250),
+              error_detail: await extractInvokeError(null, error),
               booking_row: {
                 sender_name: senderData.name, sender_phone: senderData.phone,
                 sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
