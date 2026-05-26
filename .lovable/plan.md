@@ -1,50 +1,42 @@
 ## Goal
 
-Add a Refresh button to the "Order Status Overview" card on `/admin/dashboard`. Clicking it pulls the latest tracking from each partner for every active (non-terminal) order and updates `bookings.status` in the DB, so the bucket counts reflect reality.
+Stop users from cancelling an order after it's been placed. Make the no-cancellation policy crystal clear BEFORE they pay, and direct them to email [support@viasetu.com](mailto:support@viasetu.com) if they truly need to cancel after booking.
 
-## What to build
+## Changes
 
-### 1. New edge function: `admin-refresh-order-statuses`
+### 1. Pre-booking confirmation prompt (`BookingReviewStep.tsx`)
 
-`supabase/functions/admin-refresh-order-statuses/index.ts`
+- Replace the existing soft "Cancellation policy" amber notice with a stronger one: "Orders once placed cannot be cancelled. If you need to cancel after booking, email [support@viasetu.com](mailto:support@viasetu.com)."
+- Intercept the `Pay Now` button click with an `AlertDialog` confirmation: "Orders cannot be cancelled once placed. Are you sure you want to proceed?" with Cancel / "Yes, place order" actions. Only on confirm do we call `onConfirm()` (which opens the payment modal).
 
-- POST, CORS + `x-environment` header forwarded.
-- Auth: require caller is an admin. Use the user's JWT to look up `admin_users.is_active` via service-role client; reject otherwise.
-- Body (optional): `{ booking_ids?: string[], limit?: number }`. Default behaviour: select all `bookings` whose `status` bucket is NOT in `{delivered, cancelled, rto}` and that have a `prayog_awb` or `tracking_id`, limit 200, ordered newest first.
-- For each booking, look up the partner tracking function by `booking_source` using the same map as `OrderMonitoring.tsx`:
-  - `shadowfax_direct` → `shadowfax-tracking`
-  - `delhivery_direct` → `delhivery-tracking`
-  - `urbanebolt_direct` → `urbanebolt-tracking`
-  - `xpressbees_direct` → `xpressbees-tracking`
-  - `shree_maruti_direct` → `shree-maruti-tracking`
-  - Skip `prayog`-sourced bookings (no direct tracking fn) — return as `skipped`.
-- Invoke the tracking function with `{ waybill, awb, client_request_id, order_id }`. Throttle with a small concurrency limiter (e.g. 5 parallel) to avoid hammering partner APIs.
-- From the response take `statuses[0]` (already sorted newest-first by each tracking fn). Derive new status text = `statuses[0].subcategory || statuses[0].status || category`.
-- Compare bucket of new vs old via shared status mapping. Update `bookings.status` only when the text actually changes. Use service role.
-- Return `{ checked, updated, skipped, errors: [{id, reason}] }`.
+### 2. Remove customer cancel UI
 
-Note: bucket-mapping logic must match `src/lib/booking-status.ts`. Duplicate the small `bucketOfStatus` function in `supabase/functions/_shared/booking-status.ts` and import from both places later if convenient; for this change, inline a copy inside the edge function to avoid touching the frontend module.
+Strip the cancel button and `CancelOrderDialog` from customer-facing screens:
 
-### 2. UI change: `src/pages/admin/AdminDashboard.tsx`
+- `src/pages/History.tsx` — remove cancel button, `useCancelOrder`, `CancelOrderDialog`, related state.
+- `src/pages/OrderDetails.tsx` — same.
+- `src/pages/Tracking.tsx` — same.
 
-In the "Order Status Overview" `CardHeader` (around line 272):
-- Wrap title + a Refresh button in a flex row.
-- Button uses existing `RefreshCw` icon (already imported) with `animate-spin` when loading.
-- Handler `refreshStatuses()`:
-  - calls `supabase.functions.invoke("admin-refresh-order-statuses", { body: {}, headers: { "x-environment": CURRENT_ENV } })`
-  - on success toast: `Refreshed N orders, M updated` (skips/errors shown as muted detail).
-  - on done, call existing `fetchDashboardData()` to repaint counts.
-- Local `refreshing` state separate from `loading`.
+In place of the cancel button on OrderDetails and Tracking, show a small inline note: "Need to cancel? Email [support@viasetu.com](mailto:support@viasetu.com)" with a `mailto:` link and inform user that we will respond in a few hours.
 
-No changes to existing single-order tracking flow in `OrderMonitoring.tsx`.
+### 3. Keep admin cancel intact
 
-## Out of scope
+`src/pages/admin/OrderMonitoring.tsx` keeps using `useCancelOrder` + `CancelOrderDialog` so support staff can still cancel on behalf of a customer after an email request. No change there.
 
-- Realtime push of tracking updates (still polled-on-click).
-- Backfilling history of status changes.
-- Touching Prayog-sourced orders (no direct tracking fn available).
+### 4. Leftover files
 
-## Files
+- `src/components/booking/CancellationPolicyNotice.tsx` — no longer referenced; leave file in place (unused) to avoid scope creep, OR delete. Will delete since nothing imports it.
+- `src/hooks/useCancelOrder.ts` and `src/components/booking/CancelOrderDialog.tsx` — keep (admin still uses them).
 
-- New: `supabase/functions/admin-refresh-order-statuses/index.ts`
-- Edited: `src/pages/admin/AdminDashboard.tsx`
+### Out of scope
+
+- No backend / edge-function changes. Partner cancel endpoints remain available for admin use.
+- No changes to refund logic.
+
+## Files touched
+
+- edit: `src/components/booking/BookingReviewStep.tsx`
+- edit: `src/pages/History.tsx`
+- edit: `src/pages/OrderDetails.tsx`
+- edit: `src/pages/Tracking.tsx`
+- delete: `src/components/booking/CancellationPolicyNotice.tsx` (unused after edits)
