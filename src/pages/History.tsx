@@ -496,8 +496,6 @@ const History = () => {
 };
 
 export default History;
-    </div>
-  );
-};
+
 
 export default History;
