@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Ban } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Calendar, Truck, Weight, Box, Navigation, Download, FileText, Printer, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
-import { useCancelOrder, isCancellable, type CancelReason } from "@/hooks/useCancelOrder";
-import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
+import { isCancellable } from "@/hooks/useCancelOrder";
 
 interface OrderAddress {
   type: string;
