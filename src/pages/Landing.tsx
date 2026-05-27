@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
@@ -241,11 +242,12 @@ const COMING_SOON_PARTNERS = ["Blue Dart", "DTDC", "India Post", "DHL", "FedEx"]
 const Landing = () => {
   const navigate = useNavigate();
   const [cmsPosts, setCmsPosts] = useState<Array<{ slug: string; title: string; excerpt: string | null; body_html: string | null; featured_image_url: string | null; featured_image_alt: string | null; tags: string[] | null }>>([]);
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     const authRaw = localStorage.getItem("auth_session") || localStorage.getItem("prayog_auth");
-    if (authRaw) navigate("/home");
-  }, [navigate]);
+    setIsAuthed(!!authRaw);
+  }, []);
 
   useEffect(() => {
     const load = () => {
@@ -269,6 +271,14 @@ const Landing = () => {
   const goSend = () => navigate("/login");
   const goTrack = () => navigate("/tracking");
   const trackAwb = (awb: string) => navigate("/tracking", { state: { awbNumber: awb } });
+
+  if (isAuthed) {
+    return (
+      <Suspense fallback={<div className="min-h-screen" />}>
+        <AuthedHome />
+      </Suspense>
+    );
+  }
 
   return (
     <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
