@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin/
+Disallow: /login
+Disallow: /onboarding
+Disallow: /history
+Disallow: /settings
 
 Sitemap: https://www.viasetu.com/sitemap.xml
