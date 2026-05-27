@@ -36,7 +36,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate("/home");
+      navigate("/");
     }
   }, [navigate]);
 
@@ -60,7 +60,7 @@ const Login = () => {
         ? `Good to see you again, ${nameToUse}`
         : `Nice to meet you, ${nameToUse}`,
     });
-    navigate("/home");
+    navigate("/");
   };
 
   const handleContinue = async () => {

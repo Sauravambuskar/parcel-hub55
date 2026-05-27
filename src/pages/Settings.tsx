@@ -192,7 +192,7 @@ const Settings = () => {
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/home')} className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="text-white hover:bg-white/10">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-xl font-semibold text-white">{t('settings.title')}</h1>
