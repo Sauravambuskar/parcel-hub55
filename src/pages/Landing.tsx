@@ -273,7 +273,11 @@ const Landing = () => {
   const trackAwb = (awb: string) => navigate("/tracking", { state: { awbNumber: awb } });
 
   if (isAuthed) {
-    return <AuthedHome />;
+    return (
+      <Suspense fallback={<div className="min-h-screen" />}>
+        <AuthedHome />
+      </Suspense>
+    );
   }
 
   return (
