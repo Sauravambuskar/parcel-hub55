@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
@@ -270,6 +271,10 @@ const Landing = () => {
   const goSend = () => navigate("/login");
   const goTrack = () => navigate("/tracking");
   const trackAwb = (awb: string) => navigate("/tracking", { state: { awbNumber: awb } });
+
+  if (isAuthed) {
+    return <AuthedHome />;
+  }
 
   return (
     <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
