@@ -1,42 +1,52 @@
-## Goal
+## Problem
 
-Stop users from cancelling an order after it's been placed. Make the no-cancellation policy crystal clear BEFORE they pay, and direct them to email [support@viasetu.com](mailto:support@viasetu.com) if they truly need to cancel after booking.
+On the admin Revenue and Order Monitoring screens, the per-order split does not add up to the amount the customer paid.
 
-## Changes
+Example — order `VIAS0000000017`:
+- Stored: `courier_price=192`, `base_fare=163`, `platform_fee=88`, `gst=29`
+- Shown: Total ₹192, Partner Payable ₹163, Platform Revenue ₹88 → 163+88+29 = 280 ≠ 192
 
-### 1. Pre-booking confirmation prompt (`BookingReviewStep.tsx`)
+## Root cause
 
-- Replace the existing soft "Cancellation policy" amber notice with a stronger one: "Orders once placed cannot be cancelled. If you need to cancel after booking, email [support@viasetu.com](mailto:support@viasetu.com)."
-- Intercept the `Pay Now` button click with an `AlertDialog` confirmation: "Orders cannot be cancelled once placed. Are you sure you want to proceed?" with Cancel / "Yes, place order" actions. Only on confirm do we call `onConfirm()` (which opens the payment modal).
+The pricing model (`src/lib/pricing.ts`) is:
 
-### 2. Remove customer cancel UI
+```
+baseFare    = round(cardPrice * 1.5) + 50     ← markup is INSIDE baseFare
+platformFee = baseFare - cardPrice            ← already embedded in baseFare
+gst         = round(baseFare * 0.18)
+total       = baseFare + gst                  ← stored as courier_price
+```
 
-Strip the cancel button and `CancelOrderDialog` from customer-facing screens:
+So `base_fare` ≠ what we owe the courier. The amount actually payable to the partner is the **card price** = `base_fare − platform_fee`.
 
-- `src/pages/History.tsx` — remove cancel button, `useCancelOrder`, `CancelOrderDialog`, related state.
-- `src/pages/OrderDetails.tsx` — same.
-- `src/pages/Tracking.tsx` — same.
+Both admin screens treat `base_fare` as Partner Payable, double-counting the ₹88 platform fee.
 
-In place of the cancel button on OrderDetails and Tracking, show a small inline note: "Need to cancel? Email [support@viasetu.com](mailto:support@viasetu.com)" with a `mailto:` link and inform user that we will respond in a few hours.
+Correct split for VIAS0000000017: Partner ₹75 + Platform ₹88 + GST ₹29 = ₹192 ✓
 
-### 3. Keep admin cancel intact
+## Fix
 
-`src/pages/admin/OrderMonitoring.tsx` keeps using `useCancelOrder` + `CancelOrderDialog` so support staff can still cancel on behalf of a customer after an email request. No change there.
+Change the `partnerPayable` derivation in two places to subtract `platform_fee` from `base_fare`:
 
-### 4. Leftover files
+1. **`src/pages/admin/RevenueManagement.tsx`** — `breakdownOf()` (around line 35-47)
+   - New: `partnerPayable = max(0, base_fare - platform_fee)` when `base_fare > 0`
+   - Fallback (no `base_fare` stored): `total - platform_fee - gst - packaging - insurance` (unchanged)
+   - This automatically corrects: Stats cards (Amount Payable to Partners), Transactions table, Price Breakdown tab, Monthly Reports, Analytics tab, and CSV export.
 
-- `src/components/booking/CancellationPolicyNotice.tsx` — no longer referenced; leave file in place (unused) to avoid scope creep, OR delete. Will delete since nothing imports it.
-- `src/hooks/useCancelOrder.ts` and `src/components/booking/CancelOrderDialog.tsx` — keep (admin still uses them).
+2. **`src/pages/admin/OrderMonitoring.tsx`** — `calculatePriceBreakdown()` (around line 191-212)
+   - Same correction. Rename `baseFare` → `partnerPayable` in the returned object and update the two display labels at lines ~660-664 to read from `partnerPayable`.
 
-### Out of scope
+3. **Sanity assertion** — add a small console.warn in `breakdownOf` when `|partnerPayable + platformRevenue + gst + packaging + insurance − total| > 1` so any future pricing drift is visible to admins in devtools.
 
-- No backend / edge-function changes. Partner cancel endpoints remain available for admin use.
-- No changes to refund logic.
+## Out of scope
 
-## Files touched
+- No DB migration. Stored columns are correct; only the admin presentation layer is wrong.
+- Razorpay reconciliation page (`Reconciliation.tsx`) is unaffected — it compares Razorpay-captured amount vs `courier_price`, both of which are already the gross total.
+- Customer-facing pricing (`pricing.ts`, booking review, invoice) is correct and unchanged.
 
-- edit: `src/components/booking/BookingReviewStep.tsx`
-- edit: `src/pages/History.tsx`
-- edit: `src/pages/OrderDetails.tsx`
-- edit: `src/pages/Tracking.tsx`
-- delete: `src/components/booking/CancellationPolicyNotice.tsx` (unused after edits)
+## Validation
+
+After the fix, for every booking in the table the invariant must hold (±₹1 rounding):
+```
+partnerPayable + platformRevenue + gst + packaging + insurance == courier_price
+```
+Spot-check: VIAS0000000017 → 75 + 88 + 29 = 192 ✓; VIAS0000000014 → 72 + 120 + 35 = 227 ✓.
