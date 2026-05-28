@@ -195,13 +195,15 @@ const OrderMonitoring = () => {
     const gst = Number(booking.gst) || 0;
     const insurance = Number(booking.insurance_amount) || 0;
     const packaging = Number(booking.packaging_amount) || 0;
-    // Partner payable = real base_fare when stored, else derive from total
-    const baseFare = booking.base_fare != null && Number(booking.base_fare) > 0
-      ? Number(booking.base_fare)
+    const baseFareCol = Number(booking.base_fare) || 0;
+    // base_fare in DB embeds the platform markup (baseFare = round(card*1.5)+50).
+    // True partner payable = base_fare - platform_fee (the card price).
+    const partnerPayable = baseFareCol > 0
+      ? Math.max(0, baseFareCol - platformFee)
       : Math.max(0, courierPrice - platformFee - gst - insurance - packaging);
 
     return {
-      baseFare,
+      partnerPayable,
       platformFee,
       prayogCommission,
       gst,
