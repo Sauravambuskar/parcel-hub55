@@ -660,7 +660,7 @@ const OrderMonitoring = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Partner Payable (Courier)</span>
-                          <span className="font-medium">₹{breakdown.baseFare.toLocaleString()}</span>
+                          <span className="font-medium">₹{breakdown.partnerPayable.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Platform Revenue</span>
