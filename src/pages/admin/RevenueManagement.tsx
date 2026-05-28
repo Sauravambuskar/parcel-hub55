@@ -32,17 +32,35 @@ interface Booking {
 const num = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
 
 // Real per-booking financial breakdown sourced from DB columns.
+// IMPORTANT: base_fare in DB already includes the platform markup
+// (baseFare = round(cardPrice * 1.5) + 50, see src/lib/pricing.ts).
+// So Partner Payable (what we owe the courier) = base_fare - platform_fee,
+// NOT base_fare itself. Otherwise platform_fee gets double-counted and
+// partner + platform + gst exceeds the total customer paid.
 const breakdownOf = (b: Booking) => {
   const total = num(b.courier_price);
   const platformRevenue = num(b.platform_fee);
   const gst = num(b.gst);
   const packaging = num(b.packaging_amount);
   const insurance = num(b.insurance_amount);
-  // What we owe the courier partner. Prefer base_fare when present, otherwise derive.
-  const derivedPartner = total - platformRevenue - gst - packaging - insurance;
-  const partnerPayable = b.base_fare != null && num(b.base_fare) > 0
-    ? num(b.base_fare)
-    : Math.max(0, derivedPartner);
+  const baseFare = num(b.base_fare);
+  // Card price (true partner cost) is base_fare minus the embedded platform fee.
+  // Fallback when base_fare is missing: derive from total.
+  const partnerPayable = baseFare > 0
+    ? Math.max(0, baseFare - platformRevenue)
+    : Math.max(0, total - platformRevenue - gst - packaging - insurance);
+
+  if (total > 0) {
+    const sum = partnerPayable + platformRevenue + gst + packaging + insurance;
+    if (Math.abs(sum - total) > 1) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[reconcile] booking ${b.id} split mismatch: ${sum} vs total ${total}`,
+        { partnerPayable, platformRevenue, gst, packaging, insurance, total },
+      );
+    }
+  }
+
   return { total, platformRevenue, gst, packaging, insurance, partnerPayable };
 };
 
