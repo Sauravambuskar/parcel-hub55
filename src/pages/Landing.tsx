@@ -636,9 +636,9 @@ const Landing = () => {
                 { label: "Press", href: "#" },
                 { label: "Careers", href: "#" },
                 { label: "Contact Us", href: "mailto:support@viasetu.com" },
-                { label: "Privacy Policy", href: "/privacy" },
-                { label: "Terms & Conditions", href: "/terms" },
-                { label: "Refund Policy", href: "/privacy" },
+                { label: "Privacy Policy", href: "/Privacypolicy" },
+                { label: "Terms & Conditions", href: "/Termsandconditions" },
+                { label: "Refund Policy", href: "/Privacypolicy" },
               ].map((x) => (
                 <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
               ))}
