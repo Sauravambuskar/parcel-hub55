@@ -122,7 +122,10 @@ function SiteFooter() {
       </div>
       <div className="max-w-7xl mx-auto mt-8 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
         <span>© 2025 Viasetu. All rights reserved.</span>
-        <span>Made with ❤️ for every Indian who ships a parcel.</span>
+        <div className="flex items-center gap-4">
+          <Link to="/terms" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>Terms & Conditions</Link>
+          <span>Made with ❤️ for every Indian who ships a parcel.</span>
+        </div>
       </div>
     </footer>
   );

@@ -629,8 +629,18 @@ const Landing = () => {
           <div>
             <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
             <ul className="space-y-2 text-[13px]">
-              {["About Us","How It Works","Courier Partners","Press","Careers","Contact Us","Privacy Policy","Terms of Service","Refund Policy"].map((x) => (
-                <li key={x}><a href="#" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x}</a></li>
+              {[
+                { label: "About Us", href: "#" },
+                { label: "How It Works", href: "#how-it-works" },
+                { label: "Courier Partners", href: "#" },
+                { label: "Press", href: "#" },
+                { label: "Careers", href: "#" },
+                { label: "Contact Us", href: "mailto:support@viasetu.com" },
+                { label: "Privacy Policy", href: "#" },
+                { label: "Terms & Conditions", href: "/terms" },
+                { label: "Refund Policy", href: "#" },
+              ].map((x) => (
+                <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
               ))}
             </ul>
           </div>
