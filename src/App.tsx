@@ -21,6 +21,7 @@ const Blog = lazy(() => import("./pages/cms/Blog"));
 const CmsArticle = lazy(() => import("./pages/cms/CmsArticle"));
 const FaqPage = lazy(() => import("./pages/cms/FaqPage"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
 const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
 const ContentEditor = lazy(() => import("./components/admin/cms/ContentEditor"));
@@ -78,6 +79,8 @@ const App = () => (
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/terms" replace />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
