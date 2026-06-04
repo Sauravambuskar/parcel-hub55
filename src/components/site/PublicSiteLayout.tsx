@@ -22,6 +22,15 @@ const links = [
   { href: "/faq", label: "FAQ" },
 ];
 
+const ROUTES = [
+  "Delhi to Mumbai",
+  "Bangalore to Hyderabad",
+  "Mumbai to Pune",
+  "Chennai to Bangalore",
+  "Delhi to Bangalore",
+  "Kolkata to Delhi",
+];
+
 function SiteHeader() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -92,11 +101,15 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const navigate = useNavigate();
+  const goSend = () => navigate("/login");
+  const goTrack = () => navigate("/tracking");
   return (
-    <footer className="px-6 pt-12 pb-8 mt-16" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
-      <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
+    <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
+      <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
         <div>
-          <div className="font-bold text-[20px]" style={{ color: C.text }}>Via<span style={{ color: C.teal }}>setu</span></div>
+          <div className="text-[#0B1220] font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
+          <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
           <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
           <div className="flex gap-4 mt-4">
             <a href="#" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
@@ -105,28 +118,53 @@ function SiteFooter() {
           </div>
         </div>
         <div>
-          <h3 className="font-bold text-[14px] mb-4" style={{ color: C.text }}>Explore</h3>
+          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Our Services</h3>
           <ul className="space-y-2 text-[13px]">
-            {links.map((l) => (
-              <li key={l.label}><Link to={l.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{l.label}</Link></li>
+            {[
+              { label: "Compare Courier Prices", onClick: goSend },
+              { label: "Book Courier Online", onClick: goSend },
+              { label: "Courier Tracking", onClick: goTrack },
+              { label: "Doorstep Pickup", onClick: goSend },
+              { label: "Bulk Shipping (Coming Soon)", onClick: goSend },
+            ].map((x) => (
+              <li key={x.label}>
+                <button onClick={x.onClick} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{x.label}</button>
+              </li>
             ))}
           </ul>
         </div>
         <div>
-          <h3 className="font-bold text-[14px] mb-4" style={{ color: C.text }}>Get Started</h3>
+          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Popular Routes</h3>
           <ul className="space-y-2 text-[13px]">
-            <li><Link to="/login" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>Send a Parcel</Link></li>
-            <li><Link to="/tracking" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>Track Your Parcel</Link></li>
+            {ROUTES.map((r) => (
+              <li key={r}>
+                <button onClick={goSend} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{r} Courier</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
+          <ul className="space-y-2 text-[13px]">
+            {[
+              { label: "About Us", href: "/" },
+              { label: "How It Works", href: "/#how-it-works" },
+              { label: "Courier Partners", href: "/" },
+              { label: "Press", href: "/" },
+              { label: "Careers", href: "/" },
+              { label: "Contact Us", href: "mailto:support@viasetu.com" },
+              { label: "Privacy Policy", href: "/Privacypolicy" },
+              { label: "Terms & Conditions", href: "/Termsandconditions" },
+              { label: "Refund Policy", href: "/Privacypolicy" },
+            ].map((x) => (
+              <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
+            ))}
           </ul>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-8 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
+      <div className="max-w-7xl mx-auto mt-10 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
         <span>© 2025 Viasetu. All rights reserved.</span>
-        <div className="flex items-center gap-4">
-          <Link to="/terms" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>Terms & Conditions</Link>
-          <Link to="/privacy" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>Privacy Policy</Link>
-          <span>Made with ❤️ for every Indian who ships a parcel.</span>
-        </div>
+        <span>Made with ❤️ for every Indian who ships a parcel.</span>
       </div>
     </footer>
   );

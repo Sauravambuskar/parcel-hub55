@@ -77,10 +77,12 @@ const App = () => (
           <Route path="/p/:slug" element={<CmsArticle type="page" />} />
           <Route path="/courier/:slug" element={<CmsArticle type="partner" />} />
           <Route path="/faq" element={<FaqPage />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/terms-and-conditions" element={<Navigate to="/terms" replace />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+          <Route path="/Termsandconditions" element={<Terms />} />
+          <Route path="/terms" element={<Navigate to="/Termsandconditions" replace />} />
+          <Route path="/terms-and-conditions" element={<Navigate to="/Termsandconditions" replace />} />
+          <Route path="/Privacypolicy" element={<Privacy />} />
+          <Route path="/privacy" element={<Navigate to="/Privacypolicy" replace />} />
+          <Route path="/privacy-policy" element={<Navigate to="/Privacypolicy" replace />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
