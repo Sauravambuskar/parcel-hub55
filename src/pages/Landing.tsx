@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import PageSeo from "@/components/PageSeo";
 const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
