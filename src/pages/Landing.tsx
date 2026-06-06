@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import PageSeo from "@/components/PageSeo";
 const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -282,6 +283,11 @@ const Landing = () => {
 
   return (
     <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
+      <PageSeo
+        title="Best Courier Service in India | Compare & Book — ViaSetu"
+        description="Compare prices from 14+ couriers, book doorstep pickup and track every parcel in one app. Save 20-40% on every shipment."
+        path="/"
+      />
       <NavBar onSendClick={goSend} onTrackClick={goTrack} />
 
       {/* HERO */}
