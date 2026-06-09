@@ -4,9 +4,10 @@
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 
-// ViaSetu's place of supply (HQ state). Intra-state => CGST+SGST,
-// inter-state => IGST. Change this single constant if accounts revises.
-export const PLACE_OF_SUPPLY_STATE = "Karnataka";
+// ViaSetu's place of supply (GST-registered state — Maharashtra, Pune).
+// Intra-state => CGST+SGST, inter-state => IGST.
+// Change this single constant if accounts revises.
+export const PLACE_OF_SUPPLY_STATE = "Maharashtra";
 
 export interface ExportBooking {
   id: string;
