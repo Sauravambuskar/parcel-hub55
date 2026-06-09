@@ -347,7 +347,7 @@ const RevenueManagement = () => {
         </div>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -355,15 +355,40 @@ const RevenueManagement = () => {
               <SelectItem value="week">This Week</SelectItem>
               <SelectItem value="month">This Month</SelectItem>
               <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="all">All Time (Till Date)</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={fetchBookings}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           </Button>
-          <Button variant="outline" onClick={handleExportReport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={exporting}>
+                <Download className={`h-4 w-4 mr-2 ${exporting ? "animate-pulse" : ""}`} />
+                {exporting ? "Exporting…" : "Export"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Excel — Accounts Report</span>
+                  <span className="text-xs text-muted-foreground">
+                    Line items + GST split for bookkeeping
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCsv}>
+                <FileText className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span className="font-medium">CSV — Quick Export</span>
+                  <span className="text-xs text-muted-foreground">
+                    Basic columns for spreadsheets
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
