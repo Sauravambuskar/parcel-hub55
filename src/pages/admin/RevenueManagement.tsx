@@ -257,7 +257,7 @@ const RevenueManagement = () => {
   const periodGrand = totalCollections || 1;
   const pct = (n: number) => `${((n / periodGrand) * 100).toFixed(1)}%`;
 
-  const handleExportReport = () => {
+  const handleExportCsv = () => {
     const headers = [
       "Order ID", "Date", "Courier", "Total",
       "Partner Payable", "Platform Revenue", "GST", "Packaging", "Insurance", "Status",
@@ -280,6 +280,46 @@ const RevenueManagement = () => {
     a.download = `revenue-report-${dateRange}.csv`;
     a.click();
     toast({ title: "Report exported successfully" });
+  };
+
+  const [exporting, setExporting] = useState(false);
+  const rangeLabel = (() => {
+    switch (dateRange) {
+      case "today": return "Today";
+      case "week": return "This Week";
+      case "month": return "This Month";
+      case "year": return "This Year";
+      case "all": return "All Time";
+      default: return dateRange;
+    }
+  })();
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      // For "All Time" we page through every booking so historical orders
+      // beyond the 2000-row in-memory cache are all included.
+      const source: Booking[] = dateRange === "all"
+        ? await fetchAllBookings()
+        : filteredBookings;
+      if (source.length === 0) {
+        toast({ title: "Nothing to export", description: "No bookings in this range." });
+        return;
+      }
+      downloadAccountsWorkbook(source as ExportBooking[], { rangeLabel });
+      toast({
+        title: "Accounts report ready",
+        description: `${source.length} orders exported to Excel.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Export failed",
+        description: e?.message || "Could not generate Excel report.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const getStatusColor = (status: string | null) => {
