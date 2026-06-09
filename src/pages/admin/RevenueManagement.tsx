@@ -108,9 +108,9 @@ const RevenueManagement = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      // Only financial/display columns are used here; skip wide text fields.
+      // Wide column set so the Excel export has everything it needs.
       const cols =
-        "id,tracking_id,courier_name,courier_price,status,created_at,sender_name,receiver_name,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
+        "id,tracking_id,prayog_order_id,prayog_awb,payment_id,refund_id,booking_source,courier_name,courier_price,status,created_at,sender_name,sender_city,sender_state,sender_pincode,receiver_name,receiver_city,receiver_state,receiver_pincode,goods_type,package_weight,chargeable_weight_g,length,width,height,shipment_value,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
       const { data, error } = await supabase
         .from("bookings")
         .select(cols)
@@ -118,7 +118,7 @@ const RevenueManagement = () => {
         .limit(2000);
 
       if (error) throw error;
-      setBookings((data as Booking[]) || []);
+      setBookings((data as unknown as Booking[]) || []);
     } catch (error: any) {
       toast({
         title: "Error fetching data",
@@ -130,7 +130,31 @@ const RevenueManagement = () => {
     }
   };
 
+  // Pull every booking (paged) for the lifetime accounts export.
+  const fetchAllBookings = async (): Promise<Booking[]> => {
+    const cols =
+      "id,tracking_id,prayog_order_id,prayog_awb,payment_id,refund_id,booking_source,courier_name,courier_price,status,created_at,sender_name,sender_city,sender_state,sender_pincode,receiver_name,receiver_city,receiver_state,receiver_pincode,goods_type,package_weight,chargeable_weight_g,length,width,height,shipment_value,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
+    const pageSize = 1000;
+    let from = 0;
+    const all: Booking[] = [];
+    // hard ceiling so a runaway loop can't hang the browser
+    for (let i = 0; i < 200; i++) {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(cols)
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      const batch = (data as unknown as Booking[]) || [];
+      all.push(...batch);
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
+  };
+
   const getFilteredBookings = () => {
+    if (dateRange === "all") return bookings;
     const now = new Date();
     let startDate: Date;
     switch (dateRange) {
