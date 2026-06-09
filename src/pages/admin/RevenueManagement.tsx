@@ -5,21 +5,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw, FileSpreadsheet, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, startOfWeek, subMonths } from "date-fns";
+import { downloadAccountsWorkbook, type ExportBooking } from "@/lib/accounts-export";
 
 interface Booking {
   id: string;
   tracking_id: string | null;
+  prayog_order_id?: string | null;
+  prayog_awb?: string | null;
+  payment_id?: string | null;
+  refund_id?: string | null;
+  booking_source?: string | null;
   courier_name: string;
   courier_price: number;
   status: string | null;
   created_at: string;
   sender_name: string;
+  sender_city?: string | null;
+  sender_state?: string | null;
+  sender_pincode?: string | null;
   receiver_name: string;
+  receiver_city?: string | null;
+  receiver_state?: string | null;
+  receiver_pincode?: string | null;
+  goods_type?: string | null;
+  package_weight?: string | null;
+  chargeable_weight_g?: number | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
+  shipment_value?: number | null;
   base_fare?: number | null;
   platform_fee?: number | null;
   prayog_commission?: number | null;
@@ -83,9 +108,9 @@ const RevenueManagement = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      // Only financial/display columns are used here; skip wide text fields.
+      // Wide column set so the Excel export has everything it needs.
       const cols =
-        "id,tracking_id,courier_name,courier_price,status,created_at,sender_name,receiver_name,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
+        "id,tracking_id,prayog_order_id,prayog_awb,payment_id,refund_id,booking_source,courier_name,courier_price,status,created_at,sender_name,sender_city,sender_state,sender_pincode,receiver_name,receiver_city,receiver_state,receiver_pincode,goods_type,package_weight,chargeable_weight_g,length,width,height,shipment_value,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
       const { data, error } = await supabase
         .from("bookings")
         .select(cols)
@@ -93,7 +118,7 @@ const RevenueManagement = () => {
         .limit(2000);
 
       if (error) throw error;
-      setBookings((data as Booking[]) || []);
+      setBookings((data as unknown as Booking[]) || []);
     } catch (error: any) {
       toast({
         title: "Error fetching data",
@@ -105,7 +130,31 @@ const RevenueManagement = () => {
     }
   };
 
+  // Pull every booking (paged) for the lifetime accounts export.
+  const fetchAllBookings = async (): Promise<Booking[]> => {
+    const cols =
+      "id,tracking_id,prayog_order_id,prayog_awb,payment_id,refund_id,booking_source,courier_name,courier_price,status,created_at,sender_name,sender_city,sender_state,sender_pincode,receiver_name,receiver_city,receiver_state,receiver_pincode,goods_type,package_weight,chargeable_weight_g,length,width,height,shipment_value,base_fare,platform_fee,prayog_commission,gst,packaging_amount,insurance_amount,payment_status";
+    const pageSize = 1000;
+    let from = 0;
+    const all: Booking[] = [];
+    // hard ceiling so a runaway loop can't hang the browser
+    for (let i = 0; i < 200; i++) {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(cols)
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      const batch = (data as unknown as Booking[]) || [];
+      all.push(...batch);
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
+  };
+
   const getFilteredBookings = () => {
+    if (dateRange === "all") return bookings;
     const now = new Date();
     let startDate: Date;
     switch (dateRange) {
@@ -208,7 +257,7 @@ const RevenueManagement = () => {
   const periodGrand = totalCollections || 1;
   const pct = (n: number) => `${((n / periodGrand) * 100).toFixed(1)}%`;
 
-  const handleExportReport = () => {
+  const handleExportCsv = () => {
     const headers = [
       "Order ID", "Date", "Courier", "Total",
       "Partner Payable", "Platform Revenue", "GST", "Packaging", "Insurance", "Status",
@@ -231,6 +280,46 @@ const RevenueManagement = () => {
     a.download = `revenue-report-${dateRange}.csv`;
     a.click();
     toast({ title: "Report exported successfully" });
+  };
+
+  const [exporting, setExporting] = useState(false);
+  const rangeLabel = (() => {
+    switch (dateRange) {
+      case "today": return "Today";
+      case "week": return "This Week";
+      case "month": return "This Month";
+      case "year": return "This Year";
+      case "all": return "All Time";
+      default: return dateRange;
+    }
+  })();
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      // For "All Time" we page through every booking so historical orders
+      // beyond the 2000-row in-memory cache are all included.
+      const source: Booking[] = dateRange === "all"
+        ? await fetchAllBookings()
+        : filteredBookings;
+      if (source.length === 0) {
+        toast({ title: "Nothing to export", description: "No bookings in this range." });
+        return;
+      }
+      downloadAccountsWorkbook(source as ExportBooking[], { rangeLabel });
+      toast({
+        title: "Accounts report ready",
+        description: `${source.length} orders exported to Excel.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Export failed",
+        description: e?.message || "Could not generate Excel report.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const getStatusColor = (status: string | null) => {
@@ -258,7 +347,7 @@ const RevenueManagement = () => {
         </div>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -266,15 +355,40 @@ const RevenueManagement = () => {
               <SelectItem value="week">This Week</SelectItem>
               <SelectItem value="month">This Month</SelectItem>
               <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="all">All Time (Till Date)</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={fetchBookings}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           </Button>
-          <Button variant="outline" onClick={handleExportReport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={exporting}>
+                <Download className={`h-4 w-4 mr-2 ${exporting ? "animate-pulse" : ""}`} />
+                {exporting ? "Exporting…" : "Export"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Excel — Accounts Report</span>
+                  <span className="text-xs text-muted-foreground">
+                    Line items + GST split for bookkeeping
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCsv}>
+                <FileText className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span className="font-medium">CSV — Quick Export</span>
+                  <span className="text-xs text-muted-foreground">
+                    Basic columns for spreadsheets
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
