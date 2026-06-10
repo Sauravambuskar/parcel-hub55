@@ -12,16 +12,16 @@ interface Props { type: CmsContentType }
 
 export default function CmsArticle({ type }: Props) {
   const { slug } = useParams();
-  const [post, setPost] = useState<CmsContent | null>(null);
+  const [post, setPost] = useState<CmsContent & { cms_authors?: { name: string } | null }>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!slug) return;
     const { data } = await supabase.from('cms_content')
-      .select('*')
+      .select('*, cms_authors(name)')
       .eq('type', type).eq('slug', slug).eq('status', 'published')
       .maybeSingle();
-    setPost(data as unknown as CmsContent | null);
+    setPost(data as unknown as (CmsContent & { cms_authors?: { name: string } | null }) | null);
     setLoading(false);
   };
 
@@ -52,9 +52,13 @@ export default function CmsArticle({ type }: Props) {
           <span>{post.title}</span>
         </nav>
         <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#0B1220' }}>{post.title}</h1>
-        {post.published_at && (
-          <p className="text-sm mb-6" style={{ color: '#5A6B80' }}>
-            {new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+        {(post.published_at || post.cms_authors?.name) && (
+          <p className="text-sm mb-6 flex items-center gap-2 flex-wrap" style={{ color: '#5A6B80' }}>
+            {post.cms_authors?.name && <span className="font-medium">By {post.cms_authors.name}</span>}
+            {post.cms_authors?.name && post.published_at && <span>·</span>}
+            {post.published_at && (
+              <span>{new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            )}
           </p>
         )}
         {post.featured_image_url && (
