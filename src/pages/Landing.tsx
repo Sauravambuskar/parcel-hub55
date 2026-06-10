@@ -62,9 +62,8 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
       style={{ background: scrolled ? "rgba(255,255,255,0.92)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
     >
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-        <a href="/" className="flex items-center">
-          <span className="text-[#0B1220] font-bold text-[22px]">Via</span>
-          <span className="font-bold text-[22px]" style={{ color: C.teal }}>setu</span>
+        <a href="/" className="flex items-center" aria-label="ViaSetu home">
+          <Logo size="md" />
         </a>
 
         <nav className="hidden lg:flex items-center gap-8">
