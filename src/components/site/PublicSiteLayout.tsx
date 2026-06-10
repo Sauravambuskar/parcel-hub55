@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, Linkedin, Twitter, Instagram } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const C = {
   bg: "#FFFFFF",
@@ -46,9 +47,8 @@ function SiteHeader() {
       style={{ background: scrolled ? "rgba(255,255,255,0.92)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
     >
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <span className="font-bold text-[22px]" style={{ color: C.text }}>Via</span>
-          <span className="font-bold text-[22px]" style={{ color: C.teal }}>setu</span>
+        <Link to="/" className="flex items-center" aria-label="ViaSetu home">
+          <Logo size="md" />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8">
@@ -84,7 +84,7 @@ function SiteHeader() {
       {open && (
         <div className="fixed inset-0 z-50 md:hidden" style={{ background: C.bg }}>
           <div className="flex justify-between items-center px-6 h-16" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <span className="font-bold text-[22px]" style={{ color: C.text }}>Via<span style={{ color: C.teal }}>setu</span></span>
+            <Logo size="md" />
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
@@ -108,7 +108,7 @@ function SiteFooter() {
     <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
       <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
         <div>
-          <div className="text-[#0B1220] font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
+          <Logo size="md" />
           <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
           <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
           <div className="flex gap-4 mt-4">
