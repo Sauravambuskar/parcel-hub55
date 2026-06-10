@@ -278,13 +278,18 @@ export default function ContentEditor({ type }: Props) {
                   </div>
                   <div>
                     <Label>Author</Label>
-                    <Select value={data.author_id || 'none'} onValueChange={(v) => patch({ author_id: v === 'none' ? null : v })}>
-                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {authors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1">
+                      <Select value={data.author_id || 'none'} onValueChange={(v) => patch({ author_id: v === 'none' ? null : v })}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {authors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="icon" title="New author" onClick={() => setAuthorDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label>Tags</Label>
