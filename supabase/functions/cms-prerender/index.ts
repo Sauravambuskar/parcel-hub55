@@ -59,7 +59,8 @@ Deno.serve(async (req) => {
         title = data.meta_title || data.title || title;
         description = (data.meta_description || data.excerpt || stripHtml(data.body_html || "").slice(0, 160) || description).slice(0, 300);
         image = data.og_image_url || data.featured_image_url || image;
-        canonical = data.canonical_url || `${SITE}/blog/${data.slug}`;
+        // Canonical is ALWAYS the live URL for this slug — never the stored override.
+        canonical = `${SITE}/blog/${data.slug}`;
         publishedAt = data.published_at;
         updatedAt = data.updated_at;
       }
