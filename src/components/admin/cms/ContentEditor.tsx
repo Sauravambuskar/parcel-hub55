@@ -350,6 +350,23 @@ export default function ContentEditor({ type }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={authorDialogOpen} onOpenChange={setAuthorDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>New author</DialogTitle></DialogHeader>
+          <div>
+            <Label htmlFor="author-name">Name</Label>
+            <Input id="author-name" value={newAuthorName} onChange={(e) => setNewAuthorName(e.target.value)} autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createAuthor(); } }} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthorDialogOpen(false)}>Cancel</Button>
+            <Button onClick={createAuthor} disabled={creatingAuthor || !newAuthorName.trim()}>
+              {creatingAuthor ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
