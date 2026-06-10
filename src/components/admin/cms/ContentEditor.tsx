@@ -37,9 +37,15 @@ export default function ContentEditor({ type }: Props) {
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [creatingCat, setCreatingCat] = useState(false);
+  const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
+  const [newAuthorName, setNewAuthorName] = useState('');
+  const [creatingAuthor, setCreatingAuthor] = useState(false);
 
   const loadCategories = () =>
     supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
+  const loadAuthors = () =>
+    supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
+
 
   useEffect(() => {
     loadCategories();
