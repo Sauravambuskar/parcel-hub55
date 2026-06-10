@@ -950,6 +950,10 @@ export type Database = {
     }
     Functions: {
       can_manage_cms: { Args: { _user_id: string }; Returns: boolean }
+      generate_canonical_url: {
+        Args: { content_slug: string; content_type: string }
+        Returns: string
+      }
       get_admin_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["admin_role"]
