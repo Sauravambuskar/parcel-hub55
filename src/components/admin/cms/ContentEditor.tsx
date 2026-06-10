@@ -37,14 +37,36 @@ export default function ContentEditor({ type }: Props) {
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [creatingCat, setCreatingCat] = useState(false);
+  const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
+  const [newAuthorName, setNewAuthorName] = useState('');
+  const [creatingAuthor, setCreatingAuthor] = useState(false);
 
   const loadCategories = () =>
     supabase.from('cms_categories').select('id,name').order('name').then(({ data }) => setCategories(data || []));
+  const loadAuthors = () =>
+    supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
+
 
   useEffect(() => {
     loadCategories();
-    supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
+    loadAuthors();
   }, []);
+
+  const createAuthor = async () => {
+    const name = newAuthorName.trim();
+    if (!name) return;
+    setCreatingAuthor(true);
+    const { data: row, error } = await supabase.from('cms_authors')
+      .insert({ name, slug: slugify(name) }).select('id,name').single();
+    setCreatingAuthor(false);
+    if (error) { toast.error(error.message); return; }
+    await loadAuthors();
+    patch({ author_id: row.id });
+    setNewAuthorName('');
+    setAuthorDialogOpen(false);
+    toast.success('Author created');
+  };
+
 
   const createCategory = async () => {
     const name = newCatName.trim();
@@ -256,13 +278,18 @@ export default function ContentEditor({ type }: Props) {
                   </div>
                   <div>
                     <Label>Author</Label>
-                    <Select value={data.author_id || 'none'} onValueChange={(v) => patch({ author_id: v === 'none' ? null : v })}>
-                      <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {authors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1">
+                      <Select value={data.author_id || 'none'} onValueChange={(v) => patch({ author_id: v === 'none' ? null : v })}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {authors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="icon" title="New author" onClick={() => setAuthorDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label>Tags</Label>
@@ -319,6 +346,23 @@ export default function ContentEditor({ type }: Props) {
             <Button variant="outline" onClick={() => setCatDialogOpen(false)}>Cancel</Button>
             <Button onClick={createCategory} disabled={creatingCat || !newCatName.trim()}>
               {creatingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={authorDialogOpen} onOpenChange={setAuthorDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>New author</DialogTitle></DialogHeader>
+          <div>
+            <Label htmlFor="author-name">Name</Label>
+            <Input id="author-name" value={newAuthorName} onChange={(e) => setNewAuthorName(e.target.value)} autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createAuthor(); } }} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthorDialogOpen(false)}>Cancel</Button>
+            <Button onClick={createAuthor} disabled={creatingAuthor || !newAuthorName.trim()}>
+              {creatingAuthor ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
