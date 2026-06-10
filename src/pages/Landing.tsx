@@ -105,7 +105,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
       {open && (
         <div className="fixed inset-0 z-50 md:hidden" style={{ background: C.bg }}>
           <div className="flex justify-between items-center px-6 h-16" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <span className="text-[#0B1220] font-bold text-[22px]">Via<span style={{ color: C.teal }}>setu</span></span>
+            <Logo size="md" />
             <button onClick={() => setOpen(false)} className="text-[#0B1220]" aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
