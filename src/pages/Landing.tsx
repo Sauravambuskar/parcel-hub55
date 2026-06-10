@@ -597,7 +597,7 @@ const Landing = () => {
       <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
           <div>
-            <div className="text-[#0B1220] font-bold text-[20px]">Via<span style={{ color: C.teal }}>setu</span></div>
+            <Logo size="md" />
             <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
             <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
             <div className="flex gap-4 mt-4">
