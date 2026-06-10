@@ -49,8 +49,24 @@ export default function ContentEditor({ type }: Props) {
 
   useEffect(() => {
     loadCategories();
-    supabase.from('cms_authors').select('id,name').order('name').then(({ data }) => setAuthors(data || []));
+    loadAuthors();
   }, []);
+
+  const createAuthor = async () => {
+    const name = newAuthorName.trim();
+    if (!name) return;
+    setCreatingAuthor(true);
+    const { data: row, error } = await supabase.from('cms_authors')
+      .insert({ name, slug: slugify(name) }).select('id,name').single();
+    setCreatingAuthor(false);
+    if (error) { toast.error(error.message); return; }
+    await loadAuthors();
+    patch({ author_id: row.id });
+    setNewAuthorName('');
+    setAuthorDialogOpen(false);
+    toast.success('Author created');
+  };
+
 
   const createCategory = async () => {
     const name = newCatName.trim();
