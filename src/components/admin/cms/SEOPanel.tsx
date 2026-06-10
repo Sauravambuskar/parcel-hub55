@@ -59,9 +59,15 @@ export default function SEOPanel({ content, onChange }: Props) {
             onChange={(e) => onChange({ meta_description: e.target.value })} rows={3} maxLength={180} />
         </div>
         <div>
-          <Label htmlFor="canonical_url">Canonical URL (optional)</Label>
-          <Input id="canonical_url" value={content.canonical_url || ''}
-            onChange={(e) => onChange({ canonical_url: e.target.value })} placeholder="https://www.viasetu.com/..." />
+          <Label>Canonical URL</Label>
+          <div className="flex items-center rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            <span className="truncate" title={content.canonical_url || ''}>
+              {content.canonical_url || 'Auto-generated on save from the slug above'}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Canonical URLs are managed automatically and stay in sync with the live URL whenever the slug changes.
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
