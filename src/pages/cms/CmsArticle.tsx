@@ -12,16 +12,16 @@ interface Props { type: CmsContentType }
 
 export default function CmsArticle({ type }: Props) {
   const { slug } = useParams();
-  const [post, setPost] = useState<CmsContent | null>(null);
+  const [post, setPost] = useState<CmsContent & { cms_authors?: { name: string } | null }>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!slug) return;
     const { data } = await supabase.from('cms_content')
-      .select('*')
+      .select('*, cms_authors(name)')
       .eq('type', type).eq('slug', slug).eq('status', 'published')
       .maybeSingle();
-    setPost(data as unknown as CmsContent | null);
+    setPost(data as unknown as (CmsContent & { cms_authors?: { name: string } | null }) | null);
     setLoading(false);
   };
 
