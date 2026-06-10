@@ -52,9 +52,13 @@ export default function CmsArticle({ type }: Props) {
           <span>{post.title}</span>
         </nav>
         <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#0B1220' }}>{post.title}</h1>
-        {post.published_at && (
-          <p className="text-sm mb-6" style={{ color: '#5A6B80' }}>
-            {new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+        {(post.published_at || post.cms_authors?.name) && (
+          <p className="text-sm mb-6 flex items-center gap-2 flex-wrap" style={{ color: '#5A6B80' }}>
+            {post.cms_authors?.name && <span className="font-medium">By {post.cms_authors.name}</span>}
+            {post.cms_authors?.name && post.published_at && <span>·</span>}
+            {post.published_at && (
+              <span>{new Date(post.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            )}
           </p>
         )}
         {post.featured_image_url && (
