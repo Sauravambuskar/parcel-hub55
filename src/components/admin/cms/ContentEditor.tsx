@@ -134,6 +134,8 @@ export default function ContentEditor({ type }: Props) {
       delete payload.id;
       delete payload.created_at;
       delete payload.updated_at;
+      // canonical_url is managed by a DB trigger from (type, slug). Never send it from the client.
+      delete payload.canonical_url;
 
       if (isNew) {
         const { data: row, error } = await supabase.from('cms_content').insert(payload as never).select('id').single();
