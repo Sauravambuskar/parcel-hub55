@@ -15,6 +15,6 @@
       ],
       "destination": "https://tksfdvnogzsweteetjjw.supabase.co/functions/v1/cms-prerender?slug=:slug"
     },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|__l5e/).*)", "destination": "/index.html" }
   ]
 }
