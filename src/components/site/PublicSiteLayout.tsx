@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle } from "lucide-react";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -20,11 +20,13 @@ const plainLinks = [
   { href: "/#track", label: "Track Shipment" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/about", label: "About Us" },
+  { href: "/#partners", label: "Courier Partners" },
 ];
 
 const resourceItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/contact", label: "Contact Us", icon: Mail },
 ];
 
 const ROUTES = [
@@ -251,7 +253,7 @@ function SiteFooter() {
               { label: "Courier Partners", href: "/" },
               { label: "Press", href: "/" },
               { label: "Careers", href: "/" },
-              { label: "Contact Us", href: "mailto:support@viasetu.com" },
+              { label: "Contact Us", href: "/contact" },
               { label: "Privacy Policy", href: "/Privacypolicy" },
               { label: "Terms & Conditions", href: "/Termsandconditions" },
               { label: "Refund Policy", href: "/Privacypolicy" },
