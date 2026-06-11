@@ -95,24 +95,35 @@ export default function FaqPage() {
 
   return (
     <PublicSiteLayout>
-      <div className="container mx-auto px-4 py-10 max-w-3xl">
+      <div className="container mx-auto px-4 py-16 max-w-6xl">
         <Helmet>
           <title>FAQ — Frequently Asked Questions | ViaSetu</title>
           <meta name="description" content="Answers to common questions about ViaSetu courier booking, pricing, tracking, cancellation, refunds and more." />
           <link rel="canonical" href="https://viasetu.lovable.app/faq" />
           <script type="application/ld+json">{JSON.stringify(schema)}</script>
         </Helmet>
-        <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#0B1220' }}>Frequently Asked Questions</h1>
-        <p className="text-muted-foreground mb-6">Quick answers about booking, pricing, pickup, tracking and refunds on ViaSetu.</p>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-3" style={{ color: '#0B1220' }}>FAQs</h1>
+        <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">Quick answers about booking, pricing, pickup, tracking and refunds on ViaSetu.</p>
         {loading ? (
           <div className="flex justify-center p-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : (
-          <Accordion type="single" collapsible className="space-y-2">
+          <Accordion
+            type="single"
+            collapsible
+            className="grid grid-cols-1 md:grid-cols-2 md:gap-x-12"
+          >
             {displayFaqs.map(f => (
-              <AccordionItem key={f.id} value={f.id} className="border rounded-md px-4">
-                <AccordionTrigger className="text-left">{f.title}</AccordionTrigger>
+              <AccordionItem
+                key={f.id}
+                value={f.id}
+                className="border-0 border-b border-border h-fit [&[data-state=open]_.faq-icon]:rotate-45"
+              >
+                <AccordionTrigger className="text-left text-base md:text-lg font-semibold py-5 hover:no-underline [&>svg]:hidden gap-4" style={{ color: '#0B1220' }}>
+                  <span>{f.title}</span>
+                  <span className="faq-icon shrink-0 text-2xl font-light text-muted-foreground transition-transform duration-200 leading-none">+</span>
+                </AccordionTrigger>
                 <AccordionContent>
-                  <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: f.body_html || '' }} />
+                  <div className="prose prose-slate max-w-none pb-2" dangerouslySetInnerHTML={{ __html: f.body_html || '' }} />
                 </AccordionContent>
               </AccordionItem>
             ))}
