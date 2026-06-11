@@ -105,7 +105,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     { href: "#hero", label: "Compare Couriers", external: false },
     { href: "#track", label: "Track Shipment", external: false },
     { href: "#how-it-works", label: "How It Works", external: false },
-    { href: "#partners", label: "Courier Partners", external: false },
+    { href: "/courier-partners", label: "Courier Partners", external: true },
     { href: "/about", label: "About Us", external: true },
   ];
   return (
