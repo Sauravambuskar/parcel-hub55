@@ -6,7 +6,7 @@ const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
-  Linkedin, Twitter, Instagram, BookOpen, HelpCircle,
+  Linkedin, Twitter, Instagram, BookOpen, HelpCircle, Mail,
 } from "lucide-react";
 
 
@@ -44,6 +44,7 @@ import appPreview2 from "@/assets/app-preview-2.png";
 const resourceItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/contact", label: "Contact Us", icon: Mail },
 ];
 
 function ResourcesDropdown() {
@@ -104,6 +105,7 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     { href: "#hero", label: "Compare Couriers", external: false },
     { href: "#track", label: "Track Shipment", external: false },
     { href: "#how-it-works", label: "How It Works", external: false },
+    { href: "#partners", label: "Courier Partners", external: false },
     { href: "/about", label: "About Us", external: true },
   ];
   return (
@@ -721,7 +723,7 @@ const Landing = () => {
                 { label: "Courier Partners", href: "#" },
                 { label: "Press", href: "#" },
                 { label: "Careers", href: "#" },
-                { label: "Contact Us", href: "mailto:support@viasetu.com" },
+                { label: "Contact Us", href: "/contact" },
                 { label: "Privacy Policy", href: "/Privacypolicy" },
                 { label: "Terms & Conditions", href: "/Termsandconditions" },
                 { label: "Refund Policy", href: "/Privacypolicy" },
