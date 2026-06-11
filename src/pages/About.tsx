@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import aboutHero from "@/assets/about-hero.jpg";
+import aboutTeam from "@/assets/about-team.jpg";
+import aboutTech from "@/assets/about-tech.jpg";
 
 const C = {
   bg: "#FFFFFF",
