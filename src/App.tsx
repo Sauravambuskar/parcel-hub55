@@ -24,6 +24,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
 const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
@@ -83,7 +84,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/about-us" element={<Navigate to="/about" replace />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/courier-partners" element={<CourierPartners />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/Termsandconditions" element={<Terms />} />
           <Route path="/terms" element={<Navigate to="/Termsandconditions" replace />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/Termsandconditions" replace />} />
