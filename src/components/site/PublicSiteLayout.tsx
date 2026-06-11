@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail } from "lucide-react";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -26,6 +26,7 @@ const plainLinks = [
 const resourceItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/careers", label: "Careers", icon: Briefcase },
   { href: "/contact", label: "Contact Us", icon: Mail },
 ];
 
@@ -252,7 +253,6 @@ function SiteFooter() {
               { label: "How It Works", href: "/#how-it-works" },
               { label: "Courier Partners", href: "/courier-partners" },
               { label: "Press", href: "/" },
-              { label: "Careers", href: "/" },
               { label: "Contact Us", href: "/contact" },
               { label: "Privacy Policy", href: "/Privacypolicy" },
               { label: "Terms & Conditions", href: "/Termsandconditions" },

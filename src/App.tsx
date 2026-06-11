@@ -26,6 +26,7 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
+const Careers = lazy(() => import("./pages/Careers"));
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
 const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
 const ContentEditor = lazy(() => import("./components/admin/cms/ContentEditor"));
@@ -85,6 +86,7 @@ const App = () => (
           <Route path="/about-us" element={<Navigate to="/about" replace />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/Termsandconditions" element={<Terms />} />
           <Route path="/terms" element={<Navigate to="/Termsandconditions" replace />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/Termsandconditions" replace />} />
