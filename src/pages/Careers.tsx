@@ -84,7 +84,7 @@ export default function Careers() {
       <PageSeo
         title="Careers at ViaSetu — Join India's Courier Aggregator"
         description="Help us build India's first consumer courier aggregator. Open roles in engineering, design, operations, support and marketing."
-        canonical="/careers"
+        path="/careers"
       />
 
       {/* Hero */}
