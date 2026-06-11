@@ -3,25 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PublicSiteLayout from "@/components/site/PublicSiteLayout";
 import {
-  Handshake,
-  Network,
-  TrendingUp,
+  Truck,
+  Globe,
   ShieldCheck,
   Zap,
-  BarChart3,
-  Settings,
-  CheckCircle2,
+  MapPin,
+  Star,
   ArrowRight,
   Phone,
   Mail,
-  Building2,
-  Globe,
-  Clock,
-  FileCheck,
-  Cpu,
-  Layers,
-  Headphones,
+  CheckCircle2,
 } from "lucide-react";
+import delhiveryLogo from "@/assets/delhivery-logo.jpg";
+import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
+import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
+import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
+import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
 
 const C = {
   bg: "#FFFFFF",
@@ -32,132 +29,103 @@ const C = {
   border: "#E2E8F0",
 };
 
-const benefits = [
+const partners = [
   {
-    icon: TrendingUp,
-    title: "Incremental Revenue",
-    text: "Access a growing base of individual senders and small businesses who book daily on ViaSetu — without spending on customer acquisition.",
+    name: "Delhivery",
+    logo: delhiveryLogo,
+    tagline: "India's Largest Supply Chain Company",
+    description:
+      "Delhivery is India's leading integrated logistics provider, covering 18,500+ pin codes with express parcel, freight, cross-border and warehousing services. ViaSetu integrates directly with Delhivery for real-time booking, label generation and tracking.",
+    highlights: [
+      { icon: MapPin, text: "18,500+ Pin codes covered" },
+      { icon: Zap, text: "Express & same-day delivery" },
+      { icon: Globe, text: "Cross-border shipping" },
+      { icon: ShieldCheck, text: "Insurance & COD support" },
+    ],
+    services: ["Surface", "Air Express", "Same-Day Metro", "B2B Freight"],
   },
   {
-    icon: Zap,
-    title: "Zero Acquisition Cost",
-    text: "We bring the demand to you. Focus on pickups and deliveries while we handle marketing, pricing and customer onboarding.",
+    name: "Shadowfax",
+    logo: shadowfaxLogo,
+    tagline: "Last-Mile Delivery Specialist",
+    description:
+      "Shadowfax is India's fastest-growing last-mile logistics platform, trusted by leading e-commerce and D2C brands. ViaSetu leverages Shadowfax for reliable RVP (Reverse Pickup), hyperlocal and metro-centric deliveries.",
+    highlights: [
+      { icon: MapPin, text: "500+ Cities operational" },
+      { icon: Zap, text: "Hyperlocal & instant delivery" },
+      { icon: Truck, text: "Reverse logistics (RVP)" },
+      { icon: Star, text: "Real-time rider tracking" },
+    ],
+    services: ["Hyperlocal", "Same-Day", "Reverse Pickup", "Metro Express"],
   },
   {
-    icon: ShieldCheck,
-    title: "Verified Bookings Only",
-    text: "Every shipment is pre-paid with validated sender and receiver addresses, reducing COD risk and failed deliveries.",
+    name: "Xpressbees",
+    logo: xpressbeesLogo,
+    tagline: "E-Commerce Logistics Leader",
+    description:
+      "Xpressbees powers logistics for some of India's biggest online marketplaces. Their pan-India surface and air network, combined with deep e-commerce expertise, makes them a strong partner for high-volume B2C shipments.",
+    highlights: [
+      { icon: MapPin, text: "20,000+ Pin codes served" },
+      { icon: Zap, text: "Same-day & next-day air" },
+      { icon: Truck, text: "Heavy & bulk shipments" },
+      { icon: ShieldCheck, text: "NFO (Next Flight Out)" },
+    ],
+    services: ["Surface", "Air Express", "Bulk B2B", "NFO"],
   },
   {
-    icon: BarChart3,
-    title: "Transparent Reporting",
-    text: "Daily dashboards show booking volume, revenue, pincode coverage, NDR status and settlement summaries in one place.",
+    name: "Shree Maruti",
+    logo: shreeMarutiLogo,
+    tagline: "Regional Express Network",
+    description:
+      "Shree Maruti Courier brings decades of regional expertise with a strong presence in Tier-2 and Tier-3 cities. Their reliable ground network complements ViaSetu's coverage for cost-effective surface deliveries.",
+    highlights: [
+      { icon: MapPin, text: "Strong Tier-2/3 coverage" },
+      { icon: Zap, text: "Quick regional transit" },
+      { icon: Truck, text: "Economy surface service" },
+      { icon: ShieldCheck, text: "Doorstep pickup & delivery" },
+    ],
+    services: ["Surface Economy", "Regional Express", "Document Courier"],
   },
   {
-    icon: Clock,
-    title: "Faster Settlement Cycles",
-    text: "Our automated reconciliation engine ensures settlements are processed faster than typical industry timelines.",
-  },
-  {
-    icon: Headphones,
-    title: "Dedicated Partner Support",
-    text: "A direct escalation channel with our operations team for exceptions, NDR resolution and SLA queries.",
-  },
-];
-
-const steps = [
-  {
-    title: "Initial Discussion",
-    text: "Share your company profile, network coverage and service capabilities with our partnerships team.",
-  },
-  {
-    title: "Eligibility Review",
-    text: "We evaluate coverage reach, SLA track record, tech-readiness and compliance standards.",
-  },
-  {
-    title: "Integration & Testing",
-    text: "Connect via our standard REST APIs. We support sandbox testing before any live bookings go through.",
-  },
-  {
-    title: "Go Live",
-    text: "Once certified, your services go live on ViaSetu — visible to every customer searching your covered routes.",
-  },
-];
-
-const requirements = [
-  "Valid GST registration and IEC (if applicable) for cross-border services",
-  "Active pincode-level serviceability across your network",
-  "API or webhook capability for booking, tracking, label and cancellation flows",
-  "Ability to support doorstep pickup with time-bound SLAs",
-  "Standard B2B/B2C liability coverage for shipments",
-  "Commitment to ETAs agreed with ViaSetu for every service type",
-];
-
-const integrationPoints = [
-  {
-    icon: Cpu,
-    title: "Unified Booking API",
-    text: "Single REST contract for order creation, pickup scheduling and waybill generation.",
-  },
-  {
-    icon: Layers,
-    title: "Label & Invoice Generation",
-    text: "Auto-generate compliant shipping labels and GST invoices synced with every booking.",
-  },
-  {
-    icon: Globe,
-    title: "Real-Time Tracking Push",
-    text: "Webhooks push every status update — picked, in-transit, out-for-delivery, delivered — to ViaSetu in real time.",
-  },
-  {
-    icon: Settings,
-    title: "Serviceability Lookup",
-    text: "Expose your pincode network so ViaSetu can surface your services only where you operate.",
-  },
-  {
-    icon: FileCheck,
-    title: "NDR & Cancellation",
-    text: "Standardized non-delivery and cancellation APIs ensure consistent experience across all partners.",
-  },
-  {
-    icon: BarChart3,
-    title: "Analytics & Reconciliation",
-    text: "Automated data exchange for daily order volume, delivered vs returned, and financial reconciliation.",
+    name: "Urbanebolt",
+    logo: urbaneboltLogo,
+    tagline: "Emerging Smart Logistics",
+    description:
+      "Urbanebolt is an emerging logistics partner focused on tech-enabled shipping with competitive pricing and straightforward API integrations. Ideal for small sellers and startups looking for affordable express options.",
+    highlights: [
+      { icon: MapPin, text: "Pan-India expanding network" },
+      { icon: Zap, text: "Competitive express rates" },
+      { icon: Truck, text: "Easy API integration" },
+      { icon: Star, text: "Startup-friendly pricing" },
+    ],
+    services: ["Standard Express", "Economy Surface", "API-first Booking"],
   },
 ];
 
 const faqs = [
   {
-    q: "What types of courier companies can partner with ViaSetu?",
-    a: "We work with national express carriers, regional courier firms, last-mile delivery startups and hyperlocal logistics providers. If you have a valid network and API capability, we would love to talk.",
+    q: "Which courier partners does ViaSetu integrate with?",
+    a: "ViaSetu currently integrates with Delhivery, Shadowfax, Xpressbees, Shree Maruti and Urbanebolt — covering national express, last-mile, e-commerce logistics, regional networks and emerging tech-first carriers.",
   },
   {
-    q: "Is there a sign-up fee or revenue-sharing model?",
-    a: "There is no upfront sign-up fee. ViaSetu operates on a transparent per-booking revenue share, agreed upon before go-live. You retain full control over your base rates.",
+    q: "Can I choose a specific courier partner for my shipment?",
+    a: "Yes. During booking, ViaSetu shows all available partners for your origin-destination pair with live rates, ETAs and ratings — so you can pick the one that fits your timeline and budget.",
   },
   {
-    q: "How long does the integration process take?",
-    a: "Typical partner integrations take 2–4 weeks, depending on API readiness and sandbox testing cycles. We provide a dedicated integration checklist and test cases.",
+    q: "Do all partners support doorstep pickup?",
+    a: "Most partners on ViaSetu offer doorstep pickup. Availability is shown in real time during booking based on your pickup pincode and the partner's serviceability.",
   },
   {
-    q: "Do we need to change our existing systems?",
-    a: "Not at all. ViaSetu integrates with your existing booking, tracking and label APIs. If you do not have APIs yet, we can guide you on the minimal endpoints required.",
+    q: "Which partner is best for same-day or next-day delivery?",
+    a: "Delhivery and Shadowfax offer the strongest same-day and next-day metro coverage. Xpressbees also provides next-day air services for select corridors. The best option for your route is surfaced automatically.",
   },
   {
-    q: "Which service types does ViaSetu support?",
-    a: "We currently support standard surface, air/express and same-day metro services. Reverse logistics and bulk B2B solutions are on our near-term roadmap.",
+    q: "Do partners offer shipment insurance?",
+    a: "Delhivery and Xpressbees offer built-in liability coverage, with optional declared-value insurance available at checkout. Coverage details are shown per partner before you confirm your booking.",
   },
   {
-    q: "How are disputes and NDRs handled?",
-    a: "Every partner gets access to our partner portal for NDR management. Escalations are handled by our operations team within SLA timelines, with automated status updates.",
-  },
-  {
-    q: "Can we restrict coverage to specific pincodes or cities?",
-    a: "Yes. Your serviceability is fully configurable — expose as many or as few pincodes as you like. ViaSetu will only show your services where you confirm coverage.",
-  },
-  {
-    q: "Who should we contact to start a partnership?",
-    a: "Email us at partners@viasetu.com or fill the inquiry form on our Contact page. Our partnerships team typically responds within 48 hours.",
+    q: "How is tracking unified across partners?",
+    a: "ViaSetu normalizes tracking events from every partner into a single, consistent timeline — picked, in-transit, out-for-delivery and delivered — so you track all shipments in one place regardless of carrier.",
   },
 ];
 
@@ -167,16 +135,16 @@ export default function CourierPartners() {
   return (
     <PublicSiteLayout>
       <Helmet>
-        <title>Courier Partners — Join the ViaSetu Network</title>
+        <title>Courier Partners — ViaSetu</title>
         <meta
           name="description"
-          content="Partner with ViaSetu to grow your courier business. Access verified bookings, transparent reporting and a nationwide customer base with zero acquisition cost."
+          content="ViaSetu partners with India's leading courier companies — Delhivery, Shadowfax, Xpressbees, Shree Maruti and Urbanebolt — to bring you the best shipping options in one place."
         />
         <link rel="canonical" href="https://www.viasetu.com/courier-partners" />
         <meta property="og:title" content="Courier Partners — ViaSetu" />
         <meta
           property="og:description"
-          content="Grow your courier business by partnering with India's consumer-first courier aggregator."
+          content="Compare and book with India's top courier partners on a single platform."
         />
       </Helmet>
 
@@ -190,38 +158,38 @@ export default function CourierPartners() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[12px] font-semibold mb-6"
             style={{ background: `${C.teal}1A`, color: C.teal }}
           >
-            <Handshake className="h-3.5 w-3.5" /> Partnership Program
+            <Truck className="h-3.5 w-3.5" /> Integrated Courier Network
           </div>
           <h1 className="text-3xl md:text-5xl font-extrabold leading-tight" style={{ color: C.text }}>
-            Grow Your Courier Business with ViaSetu
+            India's Best Couriers, One Platform
           </h1>
           <p className="mt-5 text-[15px] md:text-[17px] max-w-3xl mx-auto" style={{ color: C.gray }}>
-            Join India's first consumer-first courier aggregator and unlock a nationwide customer base —
-            incremental revenue, verified bookings and transparent reporting with zero acquisition spend.
+            ViaSetu brings together India's most trusted logistics providers — from national giants to
+            nimble regional networks — so you can compare, book and track every shipment in one place.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-8">
-            <a
-              href="mailto:partners@viasetu.com"
+            <button
+              onClick={() => navigate("/booking")}
               className="px-6 h-12 rounded-lg font-bold text-[14px] inline-flex items-center transition-transform hover:scale-[1.02]"
               style={{ background: C.teal, color: C.bg }}
             >
-              Become a Partner <ArrowRight className="inline h-4 w-4 ml-1" />
-            </a>
+              Ship Now <ArrowRight className="inline h-4 w-4 ml-1" />
+            </button>
             <button
               onClick={() => navigate("/contact")}
               className="px-6 h-12 rounded-lg font-semibold text-[14px] border-2 transition-colors hover:bg-[#00C8C8]/10"
               style={{ borderColor: C.teal, color: C.teal }}
             >
-              Contact Partnership Team
+              Contact Us
             </button>
           </div>
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             {[
-              { label: "Cities Covered", value: "2,800+" },
+              { label: "Pin Codes Covered", value: "25,000+" },
               { label: "Monthly Bookings", value: "50,000+" },
               { label: "Active Partners", value: "5+" },
-              { label: "Avg. Settlement Time", value: "7 Days" },
+              { label: "Cities Served", value: "2,800+" },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -240,219 +208,133 @@ export default function CourierPartners() {
         </div>
       </section>
 
-      {/* Partner Network Overview */}
+      {/* Partner Cards */}
       <section className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: C.text }}>
+              Our Courier Partners
+            </h2>
+            <p className="mt-3 text-[15px]" style={{ color: C.gray }}>
+              Handpicked logistics providers with proven reliability, coverage and service quality.
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            {partners.map((p) => (
+              <div
+                key={p.name}
+                className="rounded-2xl border p-6 md:p-8 transition-shadow hover:shadow-lg"
+                style={{ background: C.bg, borderColor: C.border }}
+              >
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                  {/* Logo + Name */}
+                  <div className="shrink-0 flex flex-col items-center md:items-start text-center md:text-left">
+                    <div
+                      className="h-16 w-40 rounded-xl border flex items-center justify-center p-2 mb-3"
+                      style={{ background: C.bg2, borderColor: C.border }}
+                    >
+                      <img
+                        src={p.logo}
+                        alt={`${p.name} logo`}
+                        className="max-h-full max-w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h3 className="font-bold text-[18px]" style={{ color: C.text }}>
+                      {p.name}
+                    </h3>
+                    <p className="text-[12px] font-medium" style={{ color: C.teal }}>
+                      {p.tagline}
+                    </p>
+                  </div>
+
+                  {/* Description + Highlights */}
+                  <div className="flex-1">
+                    <p className="text-[14.5px] leading-relaxed" style={{ color: C.gray }}>
+                      {p.description}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                      {p.highlights.map((h) => (
+                        <div
+                          key={h.text}
+                          className="flex items-center gap-2.5 text-[13px]"
+                          style={{ color: C.text }}
+                        >
+                          <div
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+                            style={{ background: `${C.teal}1A`, color: C.teal }}
+                          >
+                            <h.icon className="h-3.5 w-3.5" />
+                          </div>
+                          {h.text}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-5">
+                      {p.services.map((s) => (
+                        <span
+                          key={s}
+                          className="px-3 py-1 rounded-full text-[11px] font-semibold"
+                          style={{ background: `${C.teal}1A`, color: C.teal }}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Multiple Partners */}
+      <section className="px-6 py-16" style={{ background: C.bg2 }}>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold mb-4"
-              style={{ background: `${C.teal}1A`, color: C.teal }}
-            >
-              <Network className="h-3.5 w-3.5" /> Partner Network
-            </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: C.text }}>
-              Partner Network Overview
+              Why ViaSetu Works with Multiple Partners
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: C.gray }}>
-              ViaSetu aggregates India's most trusted courier providers onto a single platform. Our partners range
-              from large national networks to nimble regional operators — all benefiting from a shared technology
-              layer, unified customer experience and predictable demand.
+              No single courier covers every pincode, every weight slab and every speed requirement.
+              ViaSetu's multi-partner model ensures you always get the best available option for
+              your specific route and timeline — automatically.
             </p>
-            <p className="mt-4 text-[15px] leading-relaxed" style={{ color: C.gray }}>
-              As a partner, you retain your brand identity while tapping into a curated audience of
-              individuals, students, small sellers and D2C brands who are actively looking to ship parcels every day.
-            </p>
-            <ul className="mt-5 space-y-2.5">
+            <ul className="mt-6 space-y-3">
               {[
-                "Pre-paid, verified bookings — no COD risk",
-                "Shared pincode intelligence and demand forecasting",
-                "Standardized SLAs with clear escalation paths",
-                "Brand visibility on every rate-comparison result",
+                "Live rate comparison across all partners",
+                "Automatic failover if one partner is unavailable",
+                "Route-optimized partner selection for fastest delivery",
+                "Unified tracking regardless of which partner delivers",
+                "Single booking flow — no need to visit multiple sites",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-[14px]" style={{ color: C.text }}>
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: C.teal }} />
-                  {item}
+                <li key={item} className="flex items-start gap-3 text-[14px]" style={{ color: C.text }}>
+                  <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0" style={{ color: C.teal }} />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { icon: Building2, label: "National Express" },
-              { icon: Globe, label: "Regional Networks" },
-              { icon: Zap, label: "Hyperlocal" },
-              { icon: ShieldCheck, label: "Specialty Cargo" },
-            ].map((c) => (
+              { value: "25,000+", label: "Pin Codes Covered" },
+              { value: "5+", label: "Courier Partners" },
+              { value: "24/7", label: "Booking Availability" },
+              { value: "1-click", label: "Partner Comparison" },
+            ].map((s) => (
               <div
-                key={c.label}
-                className="p-6 rounded-2xl border text-center transition-shadow hover:shadow-md"
-                style={{ background: C.bg2, borderColor: C.border }}
-              >
-                <div
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-xl mb-3 mx-auto"
-                  style={{ background: `${C.teal}1A`, color: C.teal }}
-                >
-                  <c.icon className="h-6 w-6" />
-                </div>
-                <h3 className="font-bold text-[14px]" style={{ color: C.text }}>{c.label}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="px-6 py-16" style={{ background: C.bg2 }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: C.text }}>
-              Benefits of Partnership
-            </h2>
-            <p className="mt-3 text-[15px]" style={{ color: C.gray }}>
-              Everything we do is designed to help partners grow predictably and operate efficiently.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {benefits.map((b) => (
-              <div
-                key={b.title}
-                className="p-6 rounded-2xl border transition-shadow hover:shadow-lg"
+                key={s.label}
+                className="p-6 rounded-2xl border text-center"
                 style={{ background: C.bg, borderColor: C.border }}
               >
-                <div
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
-                  style={{ background: `${C.teal}1A`, color: C.teal }}
-                >
-                  <b.icon className="h-5 w-5" />
+                <div className="text-2xl font-extrabold" style={{ color: C.teal }}>
+                  {s.value}
                 </div>
-                <h3 className="font-bold text-[16px]" style={{ color: C.text }}>
-                  {b.title}
-                </h3>
-                <p className="text-[13.5px] mt-2 leading-relaxed" style={{ color: C.gray }}>
-                  {b.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How the Partnership Process Works */}
-      <section className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: C.text }}>
-              How the Partnership Process Works
-            </h2>
-            <p className="mt-3 text-[15px]" style={{ color: C.gray }}>
-              From first conversation to live bookings in as little as two weeks.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-4 gap-5 relative">
-            {steps.map((s, i) => (
-              <div
-                key={s.title}
-                className="relative p-6 rounded-2xl border text-center"
-                style={{ background: C.bg2, borderColor: C.border }}
-              >
-                <div
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full font-bold text-[14px] mx-auto mb-4"
-                  style={{ background: C.teal, color: C.bg }}
-                >
-                  {i + 1}
+                <div className="text-[12px] font-medium mt-1" style={{ color: C.gray }}>
+                  {s.label}
                 </div>
-                <h3 className="font-bold text-[16px]" style={{ color: C.text }}>
-                  {s.title}
-                </h3>
-                <p className="text-[13.5px] mt-2 leading-relaxed" style={{ color: C.gray }}>
-                  {s.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Requirements */}
-      <section className="px-6 py-16" style={{ background: C.bg2 }}>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-start">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: C.text }}>
-              Eligibility & Requirements
-            </h2>
-            <p className="text-[15px] leading-relaxed" style={{ color: C.gray }}>
-              We keep our requirements practical — focused on legal compliance, network reach and
-              operational reliability. If you meet the essentials below, we are ready to move fast.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {requirements.map((r) => (
-                <li key={r} className="flex items-start gap-3 text-[14px]" style={{ color: C.text }}>
-                  <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0" style={{ color: C.teal }} />
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="p-7 rounded-2xl border" style={{ background: C.bg, borderColor: C.border }}>
-            <h3 className="font-bold text-[16px] mb-3" style={{ color: C.text }}>
-              What We Look For
-            </h3>
-            <div className="space-y-4">
-              {[
-                { label: "Network Reach", value: 85, text: "Broad pincode coverage across states" },
-                { label: "SLA Track Record", value: 92, text: "On-time pickup and delivery history" },
-                { label: "Tech Readiness", value: 70, text: "API/webhook support for core flows" },
-                { label: "Compliance Score", value: 95, text: "GST, insurance and legal adherence" },
-              ].map((bar) => (
-                <div key={bar.label}>
-                  <div className="flex justify-between text-[13px] mb-1">
-                    <span className="font-medium" style={{ color: C.text }}>{bar.label}</span>
-                    <span style={{ color: C.teal }}>{bar.value}%</span>
-                  </div>
-                  <div className="h-2 rounded-full" style={{ background: C.border }}>
-                    <div
-                      className="h-2 rounded-full"
-                      style={{ width: `${bar.value}%`, background: C.teal }}
-                    />
-                  </div>
-                  <p className="text-[12px] mt-1" style={{ color: C.gray }}>{bar.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Integration Capabilities */}
-      <section className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: C.text }}>
-              Integration Capabilities
-            </h2>
-            <p className="mt-3 text-[15px]" style={{ color: C.gray }}>
-              A lightweight, well-documented API layer that slots into your existing operations.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {integrationPoints.map((p) => (
-              <div
-                key={p.title}
-                className="p-6 rounded-2xl border transition-shadow hover:shadow-lg"
-                style={{ background: C.bg2, borderColor: C.border }}
-              >
-                <div
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
-                  style={{ background: `${C.teal}1A`, color: C.teal }}
-                >
-                  <p.icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-bold text-[16px]" style={{ color: C.text }}>
-                  {p.title}
-                </h3>
-                <p className="text-[13.5px] mt-2 leading-relaxed" style={{ color: C.gray }}>
-                  {p.text}
-                </p>
               </div>
             ))}
           </div>
@@ -460,13 +342,13 @@ export default function CourierPartners() {
       </section>
 
       {/* FAQ */}
-      <section className="px-6 py-16" style={{ background: C.bg2 }}>
+      <section className="px-6 py-16">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center" style={{ color: C.text }}>
-            Partnership FAQs
+            Partner FAQs
           </h2>
           <p className="text-center text-[14px] mb-8" style={{ color: C.gray }}>
-            Common questions from courier companies considering the ViaSetu network.
+            Common questions about ViaSetu's courier partner network.
           </p>
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((f, i) => (
@@ -511,20 +393,20 @@ export default function CourierPartners() {
           style={{ background: `linear-gradient(135deg, ${C.teal} 0%, #00C8C8 100%)`, color: C.bg }}
         >
           <h2 className="text-2xl md:text-3xl font-extrabold">
-            Ready to partner with India's fastest-growing courier aggregator?
+            Ready to ship with India's best courier network?
           </h2>
           <p className="mt-3 text-[15px] opacity-95 max-w-2xl mx-auto">
-            Talk to our partnerships team today and discover how ViaSetu can become your most reliable
-            demand channel.
+            Compare live rates from Delhivery, Shadowfax, Xpressbees and more — book your first
+            shipment in under 60 seconds.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-7">
-            <a
-              href="mailto:partners@viasetu.com"
+            <button
+              onClick={() => navigate("/booking")}
               className="px-6 h-12 inline-flex items-center rounded-lg font-bold text-[14px] transition-transform hover:scale-[1.02]"
               style={{ background: C.bg, color: C.teal }}
             >
-              <Mail className="h-4 w-4 mr-2" /> Email Partners Team
-            </a>
+              <Truck className="h-4 w-4 mr-2" /> Start Shipping
+            </button>
             <button
               onClick={() => navigate("/contact")}
               className="px-6 h-12 inline-flex items-center rounded-lg font-semibold text-[14px] border-2 transition-colors hover:bg-white/10"
