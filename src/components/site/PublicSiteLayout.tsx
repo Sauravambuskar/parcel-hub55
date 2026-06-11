@@ -19,6 +19,7 @@ const links = [
   { href: "/#hero", label: "Compare Couriers" },
   { href: "/#track", label: "Track Shipment" },
   { href: "/#how-it-works", label: "How It Works" },
+  { href: "/about", label: "About Us" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];
@@ -147,7 +148,7 @@ function SiteFooter() {
           <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
           <ul className="space-y-2 text-[13px]">
             {[
-              { label: "About Us", href: "/" },
+              { label: "About Us", href: "/about" },
               { label: "How It Works", href: "/#how-it-works" },
               { label: "Courier Partners", href: "/" },
               { label: "Press", href: "/" },
