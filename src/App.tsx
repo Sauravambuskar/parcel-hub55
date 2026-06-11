@@ -78,6 +78,8 @@ const App = () => (
           <Route path="/p/:slug" element={<CmsArticle type="page" />} />
           <Route path="/courier/:slug" element={<CmsArticle type="partner" />} />
           <Route path="/faq" element={<FaqPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/about-us" element={<Navigate to="/about" replace />} />
           <Route path="/Termsandconditions" element={<Terms />} />
           <Route path="/terms" element={<Navigate to="/Termsandconditions" replace />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/Termsandconditions" replace />} />
