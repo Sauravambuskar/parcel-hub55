@@ -19,6 +19,7 @@ const links = [
   { href: "/#hero", label: "Compare Couriers" },
   { href: "/#track", label: "Track Shipment" },
   { href: "/#how-it-works", label: "How It Works" },
+  { href: "/about", label: "About Us" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];
