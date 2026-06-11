@@ -105,6 +105,15 @@ export default function About() {
               Track Your Parcel
             </button>
           </div>
+          <div className="mt-12 max-w-5xl mx-auto rounded-3xl overflow-hidden border shadow-xl" style={{ borderColor: C.border }}>
+            <img
+              src={aboutHero}
+              alt="ViaSetu delivery partner handing a parcel to a happy customer at the doorstep"
+              width={1600}
+              height={1024}
+              className="w-full h-auto block"
+            />
+          </div>
         </div>
       </section>
 
