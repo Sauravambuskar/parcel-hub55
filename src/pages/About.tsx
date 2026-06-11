@@ -206,17 +206,29 @@ export default function About() {
               ))}
             </ul>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {values.map((v) => (
-              <div key={v.title} className="p-5 rounded-2xl border" style={{ background: C.bg2, borderColor: C.border }}>
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
-                  style={{ background: `${C.teal}1A`, color: C.teal }}>
-                  <v.icon className="h-5 w-5" />
+          <div className="space-y-5">
+            <div className="rounded-2xl overflow-hidden border shadow-md" style={{ borderColor: C.border, background: C.bg2 }}>
+              <img
+                src={aboutTech}
+                alt="Illustration of ViaSetu's logistics network connecting Indian cities"
+                width={1280}
+                height={896}
+                loading="lazy"
+                className="w-full h-auto block"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {values.map((v) => (
+                <div key={v.title} className="p-5 rounded-2xl border" style={{ background: C.bg2, borderColor: C.border }}>
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
+                    style={{ background: `${C.teal}1A`, color: C.teal }}>
+                    <v.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-[14px]" style={{ color: C.text }}>{v.title}</h3>
+                  <p className="text-[12.5px] mt-1.5" style={{ color: C.gray }}>{v.text}</p>
                 </div>
-                <h3 className="font-bold text-[14px]" style={{ color: C.text }}>{v.title}</h3>
-                <p className="text-[12.5px] mt-1.5" style={{ color: C.gray }}>{v.text}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
