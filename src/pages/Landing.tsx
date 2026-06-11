@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import PageSeo from "@/components/PageSeo";
 import Logo from "@/components/Logo";
@@ -6,8 +6,9 @@ const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
-  Linkedin, Twitter, Instagram,
+  Linkedin, Twitter, Instagram, BookOpen, HelpCircle,
 } from "lucide-react";
+
 
 // Brand tokens (kept inline for the landing page only — does not affect app theme)
 const C = {
