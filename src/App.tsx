@@ -22,6 +22,7 @@ const CmsArticle = lazy(() => import("./pages/cms/CmsArticle"));
 const FaqPage = lazy(() => import("./pages/cms/FaqPage"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const About = lazy(() => import("./pages/About"));
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
 const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
 const ContentEditor = lazy(() => import("./components/admin/cms/ContentEditor"));
