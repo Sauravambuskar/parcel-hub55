@@ -132,22 +132,34 @@ export default function About() {
               India — with transparent pricing, dependable pickup and a single tracking dashboard for every order.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 gap-5">
-            {[
-              { icon: Target, title: "Our Mission", text: "Make courier booking transparent, affordable and effortless for every Indian." },
-              { icon: Eye, title: "Our Vision", text: "Become the default delivery layer for India's next billion shippers." },
-              { icon: Compass, title: "Our Promise", text: "Best price. Fastest pickup. One tracking view. Real human support." },
-              { icon: HeartHandshake, title: "Our Culture", text: "Customer-first, partner-friendly, builder-led and proudly Indian." },
-            ].map((b) => (
-              <div key={b.title} className="p-5 rounded-2xl border" style={{ background: C.bg, borderColor: C.border }}>
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
-                  style={{ background: `${C.teal}1A`, color: C.teal }}>
-                  <b.icon className="h-5 w-5" />
+          <div className="space-y-5">
+            <div className="rounded-2xl overflow-hidden border shadow-md" style={{ borderColor: C.border }}>
+              <img
+                src={aboutTeam}
+                alt="ViaSetu team collaborating on logistics technology"
+                width={1280}
+                height={896}
+                loading="lazy"
+                className="w-full h-auto block"
+              />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-5">
+              {[
+                { icon: Target, title: "Our Mission", text: "Make courier booking transparent, affordable and effortless for every Indian." },
+                { icon: Eye, title: "Our Vision", text: "Become the default delivery layer for India's next billion shippers." },
+                { icon: Compass, title: "Our Promise", text: "Best price. Fastest pickup. One tracking view. Real human support." },
+                { icon: HeartHandshake, title: "Our Culture", text: "Customer-first, partner-friendly, builder-led and proudly Indian." },
+              ].map((b) => (
+                <div key={b.title} className="p-5 rounded-2xl border" style={{ background: C.bg, borderColor: C.border }}>
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3"
+                    style={{ background: `${C.teal}1A`, color: C.teal }}>
+                    <b.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-[15px]" style={{ color: C.text }}>{b.title}</h3>
+                  <p className="text-[13.5px] mt-1.5" style={{ color: C.gray }}>{b.text}</p>
                 </div>
-                <h3 className="font-bold text-[15px]" style={{ color: C.text }}>{b.title}</h3>
-                <p className="text-[13.5px] mt-1.5" style={{ color: C.gray }}>{b.text}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
