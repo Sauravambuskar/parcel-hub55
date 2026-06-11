@@ -253,7 +253,6 @@ function SiteFooter() {
               { label: "How It Works", href: "/#how-it-works" },
               { label: "Courier Partners", href: "/courier-partners" },
               { label: "Press", href: "/" },
-              { label: "Careers", href: "/" },
               { label: "Contact Us", href: "/contact" },
               { label: "Privacy Policy", href: "/Privacypolicy" },
               { label: "Terms & Conditions", href: "/Termsandconditions" },
