@@ -23,6 +23,7 @@ const FaqPage = lazy(() => import("./pages/cms/FaqPage"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
