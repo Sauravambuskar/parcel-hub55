@@ -1,6 +1,6 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram } from "lucide-react";
+import { ReactNode, useEffect, useState, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -15,13 +15,16 @@ const C = {
 
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
-const links = [
+const plainLinks = [
   { href: "/#hero", label: "Compare Couriers" },
   { href: "/#track", label: "Track Shipment" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/about", label: "About Us" },
-  { href: "/blog", label: "Blog" },
-  { href: "/faq", label: "FAQ" },
+];
+
+const resourceItems = [
+  { href: "/blog", label: "Blog", icon: BookOpen },
+  { href: "/faq", label: "FAQ", icon: HelpCircle },
 ];
 
 const ROUTES = [
@@ -33,10 +36,73 @@ const ROUTES = [
   "Kolkata to Delhi",
 ];
 
+function ResourcesDropdown() {
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location]);
+
+  const handleEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpen(true);
+  };
+
+  const handleLeave = () => {
+    timeoutRef.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      <button
+        className="flex items-center gap-1 text-[14px] transition-colors hover:text-[#00C8C8] focus:outline-none"
+        style={{ color: C.gray }}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        Resources
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200"
+          style={{ background: C.card, borderColor: C.border }}
+        >
+          {resourceItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] transition-colors hover:bg-[#00A8A8]/10 hover:text-[#00A8A8]"
+                style={{ color: C.text }}
+              >
+                <Icon className="h-4 w-4 shrink-0" style={{ color: C.teal }} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SiteHeader() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
@@ -53,11 +119,12 @@ function SiteHeader() {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8">
-          {links.map((l) => (
+          {plainLinks.map((l) => (
             <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
               {l.label}
             </Link>
           ))}
+          <ResourcesDropdown />
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -89,9 +156,40 @@ function SiteHeader() {
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
-            {links.map((l) => (
+            {plainLinks.map((l) => (
               <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg" style={{ color: C.text }}>{l.label}</Link>
             ))}
+
+            <div>
+              <button
+                onClick={() => setResourcesOpenMobile((v) => !v)}
+                className="flex items-center gap-2 text-lg w-full text-left"
+                style={{ color: C.text }}
+              >
+                Resources
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${resourcesOpenMobile ? "rotate-180" : ""}`} />
+              </button>
+              {resourcesOpenMobile && (
+                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                  {resourceItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                        style={{ color: C.gray }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <button onClick={() => { setOpen(false); navigate("/tracking"); }} className="mt-4 h-12 rounded-lg border-2 font-semibold" style={{ borderColor: C.teal, color: C.teal }}>Track Your Parcel</button>
             <button onClick={() => { setOpen(false); navigate("/login"); }} className="h-12 rounded-lg font-bold" style={{ background: C.teal, color: C.bg }}>Send a Parcel →</button>
           </nav>
