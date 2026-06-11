@@ -20,7 +20,7 @@ const plainLinks = [
   { href: "/#track", label: "Track Shipment" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/about", label: "About Us" },
-  { href: "/#partners", label: "Courier Partners" },
+  { href: "/courier-partners", label: "Courier Partners" },
 ];
 
 const resourceItems = [
@@ -250,7 +250,7 @@ function SiteFooter() {
             {[
               { label: "About Us", href: "/about" },
               { label: "How It Works", href: "/#how-it-works" },
-              { label: "Courier Partners", href: "/" },
+              { label: "Courier Partners", href: "/courier-partners" },
               { label: "Press", href: "/" },
               { label: "Careers", href: "/" },
               { label: "Contact Us", href: "/contact" },
