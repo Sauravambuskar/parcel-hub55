@@ -102,8 +102,6 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const plainLinks = [
-    { href: "#hero", label: "Compare Couriers", external: false },
-    { href: "#track", label: "Track Shipment", external: false },
     { href: "/how-it-works", label: "How It Works", external: true },
     { href: "/courier-partners", label: "Courier Partners", external: true },
     { href: "/about", label: "About Us", external: true },
