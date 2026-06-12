@@ -62,8 +62,8 @@ function ResourcesDropdown() {
       onMouseLeave={handleLeave}
     >
       <button
-        className="flex items-center gap-1 text-[14px] transition-colors hover:text-[#00C8C8] focus:outline-none"
-        style={{ color: C.gray }}
+        className="flex items-center gap-1 text-[14px] font-bold transition-colors hover:text-[#00C8C8] focus:outline-none"
+        style={{ color: C.text }}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
@@ -121,7 +121,7 @@ function SiteHeader() {
 
         <nav className="hidden lg:flex items-center gap-8">
           {plainLinks.map((l) => (
-            <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+            <Link key={l.label} to={l.href} className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
               {l.label}
             </Link>
           ))}
@@ -158,13 +158,13 @@ function SiteHeader() {
           </div>
           <nav className="flex flex-col p-6 gap-5">
             {plainLinks.map((l) => (
-              <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg" style={{ color: C.text }}>{l.label}</Link>
+              <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
             ))}
 
             <div>
               <button
                 onClick={() => setResourcesOpenMobile((v) => !v)}
-                className="flex items-center gap-2 text-lg w-full text-left"
+                className="flex items-center gap-2 text-lg w-full text-left font-bold"
                 style={{ color: C.text }}
               >
                 Resources
