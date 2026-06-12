@@ -164,7 +164,7 @@ function SiteHeader() {
             <div>
               <button
                 onClick={() => setResourcesOpenMobile((v) => !v)}
-                className="flex items-center gap-2 text-lg w-full text-left"
+                className="flex items-center gap-2 text-lg w-full text-left font-bold"
                 style={{ color: C.text }}
               >
                 Resources
