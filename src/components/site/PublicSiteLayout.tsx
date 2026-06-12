@@ -16,8 +16,6 @@ const C = {
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
 const plainLinks = [
-  { href: "/#hero", label: "Compare Couriers" },
-  { href: "/#track", label: "Track Shipment" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/about", label: "About Us" },
   { href: "/courier-partners", label: "Courier Partners" },
