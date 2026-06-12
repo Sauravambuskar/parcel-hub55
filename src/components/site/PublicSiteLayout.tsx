@@ -121,7 +121,7 @@ function SiteHeader() {
 
         <nav className="hidden lg:flex items-center gap-8">
           {plainLinks.map((l) => (
-            <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+            <Link key={l.label} to={l.href} className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
               {l.label}
             </Link>
           ))}
