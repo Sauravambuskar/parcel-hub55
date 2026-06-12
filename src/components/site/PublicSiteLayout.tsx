@@ -158,7 +158,7 @@ function SiteHeader() {
           </div>
           <nav className="flex flex-col p-6 gap-5">
             {plainLinks.map((l) => (
-              <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg" style={{ color: C.text }}>{l.label}</Link>
+              <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
             ))}
 
             <div>
