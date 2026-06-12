@@ -62,8 +62,8 @@ function ResourcesDropdown() {
       onMouseLeave={handleLeave}
     >
       <button
-        className="flex items-center gap-1 text-[14px] transition-colors hover:text-[#00C8C8] focus:outline-none"
-        style={{ color: C.gray }}
+        className="flex items-center gap-1 text-[14px] font-bold transition-colors hover:text-[#00C8C8] focus:outline-none"
+        style={{ color: C.text }}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
