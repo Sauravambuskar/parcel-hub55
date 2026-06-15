@@ -332,6 +332,69 @@ All colors MUST be HSL.
   }
 }
 
+
+
+/* ============================================================
+   MOBILE QUICK FIXES (≤ 767px) — desktop unchanged
+   ============================================================ */
+@media (max-width: 767px) {
+  html, body, #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* iOS Safari: prevent input zoom on focus */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Comfortable tap targets */
+  button,
+  a[role="button"],
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"] {
+    min-height: 40px;
+  }
+  /* Allow small utility buttons to stay small */
+  button.h-6, button.h-7, button.h-8,
+  [role="tab"].h-7, [role="tab"].h-8 {
+    min-height: 0 !important;
+  }
+
+  /* Dialogs/Modals fit small viewports */
+  [role="dialog"] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Tables scroll inside themselves, not the page */
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tame oversized section padding */
+  .py-24 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+  .py-20 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  .py-16 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+  /* Dynamic viewport height (mobile browser chrome aware) */
+  .min-h-screen { min-height: 100dvh; }
+
+  /* Long words wrap instead of overflowing */
+  p, span, h1, h2, h3, h4, h5, h6, li, td, th, a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+
 /* CMS rich content rendering (used in editor + public article) */
 .cms-content { line-height: 1.7; color: hsl(var(--foreground)); }
 .cms-content h1 { font-size: 2.25rem; font-weight: 700; margin: 1.5rem 0 1rem; line-height: 1.2; }
