@@ -132,19 +132,18 @@ function SiteHeader() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all ${scrolled ? "backdrop-blur-sm" : ""}`}
       style={{ background: scrolled ? "rgba(255,255,255,0.92)" : C.bg, borderBottom: `1px solid ${C.border}`, height: 64 }}
     >
-      <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center" aria-label="ViaSetu home">
+      <div className="max-w-7xl mx-auto h-full px-4 lg:px-6 flex items-center justify-between gap-3">
+        <Link to="/" className="flex items-center shrink-0" aria-label="ViaSetu home">
           <Logo size="md" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-7">
-          <NavDropdown label="Resources" items={resourceItems} />
+        <nav className="hidden lg:flex items-center gap-3 xl:gap-5 flex-1 justify-center">
           <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks
             .filter((l) => l.label !== "Contact Us")
             .map((l) => (
               <span key={l.label} className="contents">
-                <Link to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+                <Link to={l.href} className="text-[13px] xl:text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
                   {l.label}
                 </Link>
                 {l.href === "/courier-partners" && (
@@ -152,29 +151,30 @@ function SiteHeader() {
                 )}
               </span>
             ))}
-          <Link to="/contact" className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+          <NavDropdown label="Resources" items={resourceItems} />
+          <Link to="/contact" className="text-[13px] xl:text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
             Contact Us
           </Link>
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           <button
             onClick={() => navigate("/tracking")}
-            className="px-4 h-10 rounded-lg font-semibold text-[14px] border-2 transition-colors hover:bg-[#00C8C8]/10"
+            className="px-3 xl:px-4 h-10 rounded-lg font-semibold text-[13px] xl:text-[14px] border-2 whitespace-nowrap transition-colors hover:bg-[#00C8C8]/10"
             style={{ borderColor: C.teal, color: C.teal }}
           >
-            Track Your Parcel
+            Track Parcel
           </button>
           <button
             onClick={() => navigate("/login")}
-            className="px-5 h-10 rounded-lg font-bold text-[14px] transition-transform hover:scale-[1.02]"
+            className="px-3 xl:px-5 h-10 rounded-lg font-bold text-[13px] xl:text-[14px] whitespace-nowrap transition-transform hover:scale-[1.02]"
             style={{ background: C.teal, color: C.bg }}
           >
-            Send a Parcel →
+            Send Parcel →
           </button>
         </div>
 
-        <button className="md:hidden" style={{ color: C.text }} onClick={() => setOpen(true)} aria-label="Open menu">
+        <button className="md:hidden shrink-0" style={{ color: C.text }} onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu className="h-6 w-6" />
         </button>
       </div>
