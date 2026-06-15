@@ -308,9 +308,9 @@ function SiteFooter() {
           <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
           <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
           <div className="flex gap-4 mt-4">
-            <a href="#" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
-            <a href="#" aria-label="Twitter" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Twitter className="h-5 w-5" /></a>
-            <a href="#" aria-label="Instagram" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Instagram className="h-5 w-5" /></a>
+            <a href="https://www.linkedin.com/company/viasetu" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
+            <a href="https://www.facebook.com/people/ViaSetu/61587987614465/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Facebook className="h-5 w-5" /></a>
+            <a href="https://www.instagram.com/viasetu.delivery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Instagram className="h-5 w-5" /></a>
           </div>
         </div>
         <div>
