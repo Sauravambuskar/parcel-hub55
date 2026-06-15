@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban, Info } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
@@ -69,6 +69,9 @@ const Tracking = () => {
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
   const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string; awb?: string | null } | null>(null);
+  const [universalCandidates, setUniversalCandidates] = useState<Array<{ partner: string; label: string; data: TrackingData }>>([]);
+  const [universalSource, setUniversalSource] = useState<string | null>(null);
+  const [universalNoMatch, setUniversalNoMatch] = useState(false);
 
 
   useEffect(() => {
@@ -94,6 +97,9 @@ const Tracking = () => {
   const fetchTrackingData = async (awb: string) => {
     setLoading(true);
     setTrackingData(null);
+    setUniversalCandidates([]);
+    setUniversalSource(null);
+    setUniversalNoMatch(false);
 
     try {
       // Lookup booking via authenticated edge function (no client-side RLS issues)
@@ -169,11 +175,43 @@ const Tracking = () => {
         if (smError || !smData || smData.error) throw new Error('Failed to fetch Shree Maruti tracking');
         partnerData = smData;
       } else {
-        toast({
-          title: "Tracking Unavailable",
-          description: "Tracking is not available for this order. Please contact support.",
-          variant: "destructive",
+        // Universal mode — no booking row in our DB. Fan out to all 5 partner
+        // tracking APIs and surface whichever returns event data.
+        const partners: Array<{ key: string; label: string; fn: string; body: Record<string, unknown> }> = [
+          { key: 'delhivery',    label: 'Delhivery',    fn: 'delhivery-tracking',    body: { waybill: awb } },
+          { key: 'urbanebolt',   label: 'Urbanebolt',   fn: 'urbanebolt-tracking',   body: { waybill: awb } },
+          { key: 'shree_maruti', label: 'Shree Maruti', fn: 'shree-maruti-tracking', body: { waybill: awb, order_id: awb } },
+          { key: 'xpressbees',   label: 'XpressBees',   fn: 'xpressbees-tracking',   body: { waybill: awb } },
+          { key: 'shadowfax',    label: 'Shadowfax',    fn: 'shadowfax-tracking',    body: { client_request_id: awb, awb, order_id: awb } },
+        ];
+        const settled = await Promise.allSettled(
+          partners.map((p) =>
+            supabase.functions.invoke(p.fn, {
+              body: p.body,
+              headers: { 'x-environment': CURRENT_ENV },
+            })
+          )
+        );
+        const hits: Array<{ partner: string; label: string; data: TrackingData }> = [];
+        settled.forEach((res, idx) => {
+          if (res.status !== 'fulfilled') return;
+          const d: any = (res.value as any)?.data;
+          if (d && !d.error && Array.isArray(d.statuses) && d.statuses.length > 0) {
+            hits.push({ partner: partners[idx].key, label: partners[idx].label, data: d as TrackingData });
+          }
         });
+
+        if (hits.length === 0) {
+          setUniversalNoMatch(true);
+          return;
+        }
+        if (hits.length === 1) {
+          setUniversalSource(hits[0].label);
+          setTrackingData(hits[0].data);
+          return;
+        }
+        // >1 hits — let the user disambiguate.
+        setUniversalCandidates(hits);
         return;
       }
 
@@ -346,8 +384,53 @@ const Tracking = () => {
                   {loading ? "Tracking..." : "Track"}
                 </Button>
               </div>
+              <div className="rounded-md border border-white/20 bg-white/5 p-2.5 flex gap-2">
+                <Info className="h-4 w-4 text-white/70 shrink-0 mt-0.5" />
+                <p className="text-xs text-white/70 leading-snug">
+                  Track shipments from any of our partner networks — Delhivery, XpressBees, Shadowfax, Shree Maruti and Urbanebolt — even if you didn't book through ViaSetu.
+                  <span className="block mt-1 text-white/50">Note: XpressBees and Shadowfax only return data for shipments on ViaSetu's account; 3rd-party AWBs from those carriers may not be found here.</span>
+                </p>
+              </div>
             </CardContent>
           </Card>
+
+          {universalNoMatch && !loading && (
+            <Card className="bg-white/10 backdrop-blur-xl border-amber-300/40">
+              <CardContent className="p-6 text-center space-y-2">
+                <Package className="h-10 w-10 mx-auto text-amber-300" />
+                <h3 className="font-semibold text-white">AWB not found</h3>
+                <p className="text-sm text-white/70">
+                  We couldn't find <span className="font-mono text-white">{currentAwb}</span> on any of our partner networks (Delhivery, XpressBees, Shadowfax, Shree Maruti, Urbanebolt). Double-check the number, or contact the courier directly.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {universalCandidates.length > 1 && !loading && (
+            <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white text-base">Found on multiple networks</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm text-white/70 mb-2">Which courier did you ship with?</p>
+                {universalCandidates.map((c) => (
+                  <Button
+                    key={c.partner}
+                    variant="outline"
+                    className="w-full justify-start bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    onClick={() => {
+                      setUniversalSource(c.label);
+                      setTrackingData(c.data);
+                      setUniversalCandidates([]);
+                    }}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    {c.label}
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {loading && (
             <div className="space-y-4">
@@ -403,6 +486,15 @@ const Tracking = () => {
       </header>
 
       <div className="p-4 space-y-4 max-w-4xl mx-auto relative z-10">
+        {universalSource && (
+          <div className="rounded-md border border-primary/40 bg-primary/10 p-2.5 flex gap-2">
+            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-white/80 leading-snug">
+              Tracked via <span className="font-semibold text-white">{universalSource}</span>. This AWB was not booked through ViaSetu — data shown directly from the courier partner.
+            </p>
+          </div>
+        )}
+
         {/* Search Again */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardContent className="p-3">
