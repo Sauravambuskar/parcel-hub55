@@ -2,6 +2,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import PageSeo from "@/components/PageSeo";
 import Logo from "@/components/Logo";
+import PublicSiteLayout from "@/components/site/PublicSiteLayout";
 const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -424,13 +425,15 @@ const Landing = () => {
   }
 
   return (
-    <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
+    <PublicSiteLayout>
+      <div style={{ background: C.bg, color: C.white, fontFamily: FONT_STACK }}>
       <PageSeo
         title="Best Courier Service in India | Compare & Book — ViaSetu"
         description="Compare prices from 14+ couriers, book doorstep pickup and track every parcel in one app. Save 20-40% on every shipment."
         path="/"
       />
-      <NavBar onSendClick={goSend} onTrackClick={goTrack} />
+
+
 
       {/* HERO */}
       <section
@@ -735,68 +738,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="px-6 pt-16 pb-10" style={{ background: C.bg, borderTop: `1px solid ${C.border}` }}>
-        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-10">
-          <div>
-            <Logo size="md" />
-            <div className="text-[13px] font-semibold mt-2 text-[#0B1220]">India's First Consumer Courier Aggregator</div>
-            <p className="text-[13px] mt-3" style={{ color: C.gray }}>Compare prices from top couriers, book doorstep pickup and track all shipments — all in one app.</p>
-            <div className="flex gap-4 mt-4">
-              <a href="#" aria-label="LinkedIn" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Linkedin className="h-5 w-5" /></a>
-              <a href="#" aria-label="Twitter" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Twitter className="h-5 w-5" /></a>
-              <a href="#" aria-label="Instagram" className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}><Instagram className="h-5 w-5" /></a>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Our Services</h3>
-            <ul className="space-y-2 text-[13px]">
-              {[
-                { label: "Compare Courier Prices", onClick: goSend },
-                { label: "Book Courier Online", onClick: goSend },
-                { label: "Courier Tracking", onClick: goTrack },
-                { label: "Doorstep Pickup", onClick: goSend },
-                { label: "Bulk Shipping (Coming Soon)", onClick: goSend },
-              ].map((x) => (
-                <li key={x.label}>
-                  <button onClick={x.onClick} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{x.label}</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Popular Routes</h3>
-            <ul className="space-y-2 text-[13px]">
-              {ROUTES.slice(0, 6).map((r) => (
-                <li key={r}>
-                  <button onClick={goSend} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{r} Courier</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
-            <ul className="space-y-2 text-[13px]">
-              {[
-                { label: "About Us", href: "/about" },
-                { label: "How It Works", href: "/how-it-works" },
-                { label: "Courier Partners", href: "/courier-partners" },
-                { label: "Contact Us", href: "/contact" },
-                { label: "Privacy Policy", href: "/Privacypolicy" },
-                { label: "Terms & Conditions", href: "/Termsandconditions" },
-                { label: "Refund Policy", href: "/Privacypolicy" },
-              ].map((x) => (
-                <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-10 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
-          <span>© 2025 Viasetu. All rights reserved.</span>
-          <span>Made with ❤️ for every Indian who ships a parcel.</span>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </PublicSiteLayout>
   );
 };
 
