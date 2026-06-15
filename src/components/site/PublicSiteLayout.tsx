@@ -71,7 +71,7 @@ function NavDropdown({ label, items, width = "w-52" }: { label: string; items: D
   return (
     <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <button
-        className="flex items-center gap-1 text-[14px] font-bold transition-colors hover:text-[#00C8C8] focus:outline-none"
+        className="flex items-center gap-1 text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8] focus:outline-none"
         style={{ color: C.text }}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
