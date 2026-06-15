@@ -142,9 +142,14 @@ function SiteHeader() {
           </Link>
           <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks.map((l) => (
-            <Link key={l.label} to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
-              {l.label}
-            </Link>
+            <span key={l.label} className="contents">
+              <Link to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+                {l.label}
+              </Link>
+              {l.href === "/courier-partners" && (
+                <NavDropdown label="Parcel Availability" items={cityItems} width="w-64" />
+              )}
+            </span>
           ))}
           <NavDropdown label="Resources" items={resourceItems} />
         </nav>
