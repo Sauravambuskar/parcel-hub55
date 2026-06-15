@@ -180,7 +180,7 @@ function SiteHeader() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 md:hidden bg-white/85 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] md:hidden overflow-y-auto" style={{ background: C.bg }}>
           <div className="flex justify-between items-center px-6 h-16" style={{ borderBottom: `1px solid ${C.border}` }}>
             <Logo size="md" />
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
