@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Clock, Phone, CheckCircle, Truck, Calendar, Search, Ban, Info } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
