@@ -49,7 +49,9 @@ const ROUTES = [
   "Kolkata to Delhi",
 ];
 
-function ResourcesDropdown() {
+type DropdownItem = { href: string; label: string; icon: any };
+
+function NavDropdown({ label, items, width = "w-52" }: { label: string; items: DropdownItem[]; width?: string }) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
@@ -62,17 +64,12 @@ function ResourcesDropdown() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setOpen(true);
   };
-
   const handleLeave = () => {
     timeoutRef.current = setTimeout(() => setOpen(false), 150);
   };
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-    >
+    <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <button
         className="flex items-center gap-1 text-[14px] font-bold transition-colors hover:text-[#00C8C8] focus:outline-none"
         style={{ color: C.text }}
@@ -80,18 +77,16 @@ function ResourcesDropdown() {
         aria-haspopup="true"
         aria-expanded={open}
       >
-        Resources
-        <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
+        {label}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200"
+          className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 ${width} rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200`}
           style={{ background: C.card, borderColor: C.border }}
         >
-          {resourceItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             return (
               <Link
@@ -111,11 +106,12 @@ function ResourcesDropdown() {
   );
 }
 
+
 function SiteHeader() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
+  const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
