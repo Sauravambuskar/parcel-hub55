@@ -33,6 +33,14 @@ const serviceItems = [
   { href: "/services/doorstep-pickup", label: "Doorstep Pickup", icon: Hand },
 ];
 
+const cityItems = [
+  { href: "/courier-service-in-mumbai", label: "Courier Service in Mumbai", icon: MapPin },
+  { href: "/courier-service-in-pune", label: "Courier Service in Pune", icon: MapPin },
+  { href: "/courier-service-in-bangalore", label: "Courier Service in Bangalore", icon: MapPin },
+  { href: "/courier-service-in-hyderabad", label: "Courier Service in Hyderabad", icon: MapPin },
+  { href: "/courier-service-in-delhi", label: "Courier Service in Delhi", icon: Landmark },
+];
+
 const resourceItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
