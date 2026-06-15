@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand } from "lucide-react";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand, Landmark } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -31,6 +31,14 @@ const serviceItems = [
   { href: "/services/personal-business", label: "Personal Business", icon: Home },
   { href: "/services/sme-courier-service", label: "SME Courier Service", icon: Building2 },
   { href: "/services/doorstep-pickup", label: "Doorstep Pickup", icon: Hand },
+];
+
+const cityItems = [
+  { href: "/courier-service-in-mumbai", label: "Courier Service in Mumbai", icon: MapPin },
+  { href: "/courier-service-in-pune", label: "Courier Service in Pune", icon: MapPin },
+  { href: "/courier-service-in-bangalore", label: "Courier Service in Bangalore", icon: MapPin },
+  { href: "/courier-service-in-hyderabad", label: "Courier Service in Hyderabad", icon: MapPin },
+  { href: "/courier-service-in-delhi", label: "Courier Service in Delhi", icon: Landmark },
 ];
 
 const resourceItems = [
@@ -113,6 +121,7 @@ function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
+  const [parcelOpenMobile, setParcelOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
@@ -134,9 +143,14 @@ function SiteHeader() {
           </Link>
           <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks.map((l) => (
-            <Link key={l.label} to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
-              {l.label}
-            </Link>
+            <span key={l.label} className="contents">
+              <Link to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+                {l.label}
+              </Link>
+              {l.href === "/courier-partners" && (
+                <NavDropdown label="Parcel Availability" items={cityItems} width="w-64" />
+              )}
+            </span>
           ))}
           <NavDropdown label="Resources" items={resourceItems} />
         </nav>
@@ -203,7 +217,40 @@ function SiteHeader() {
             </div>
 
             {plainLinks.map((l) => (
-              <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
+              <span key={l.label} className="contents">
+                <Link to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
+                {l.href === "/courier-partners" && (
+                  <div>
+                    <button
+                      onClick={() => setParcelOpenMobile((v) => !v)}
+                      className="flex items-center gap-2 text-lg w-full text-left font-bold"
+                      style={{ color: C.text }}
+                    >
+                      Parcel Availability
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${parcelOpenMobile ? "rotate-180" : ""}`} />
+                    </button>
+                    {parcelOpenMobile && (
+                      <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                        {cityItems.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.label}
+                              to={item.href}
+                              onClick={() => setOpen(false)}
+                              className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                              style={{ color: C.gray }}
+                            >
+                              <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </span>
             ))}
 
             <div>
