@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase } from "lucide-react";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -16,9 +16,21 @@ const C = {
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
 const plainLinks = [
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/tracking", label: "Track Parcel" },
   { href: "/about", label: "About Us" },
   { href: "/courier-partners", label: "Courier Partners" },
+  { href: "/contact", label: "Contact Us" },
+];
+
+const serviceItems = [
+  { href: "/services/parcel-tracking", label: "Parcel Tracking", icon: Package },
+  { href: "/services/bulk-shipment", label: "Bulk Shipment", icon: Truck },
+  { href: "/services/express-delivery", label: "Express Delivery", icon: Zap },
+  { href: "/services/domestic-courier-service", label: "Domestic Courier Service", icon: MapPin },
+  { href: "/services/individual-business", label: "Individual Business", icon: User },
+  { href: "/services/personal-business", label: "Personal Business", icon: Home },
+  { href: "/services/sme-courier-service", label: "SME Courier Service", icon: Building2 },
+  { href: "/services/doorstep-pickup", label: "Doorstep Pickup", icon: Hand },
 ];
 
 const resourceItems = [
