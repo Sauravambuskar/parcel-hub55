@@ -69,6 +69,9 @@ const Tracking = () => {
   const [awbInput, setAwbInput] = useState(initialAwbNumber || "");
   const [currentAwb, setCurrentAwb] = useState(initialAwbNumber || "");
   const [bookingMeta, setBookingMeta] = useState<{ id: string; booking_source: string; status: string; orderId: string; awb?: string | null } | null>(null);
+  const [universalCandidates, setUniversalCandidates] = useState<Array<{ partner: string; label: string; data: TrackingData }>>([]);
+  const [universalSource, setUniversalSource] = useState<string | null>(null);
+  const [universalNoMatch, setUniversalNoMatch] = useState(false);
 
 
   useEffect(() => {
