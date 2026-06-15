@@ -329,7 +329,10 @@ All colors MUST be HSL.
   [data-radix-dialog-overlay] {
     position: fixed !important;
     inset: 0 !important;
+  }
 }
+
+
 
 /* ============================================================
    MOBILE QUICK FIXES (≤ 767px) — desktop unchanged
