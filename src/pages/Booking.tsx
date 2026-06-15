@@ -1216,16 +1216,16 @@ const Booking = () => {
       <PageSeo title="Book a Courier — Compare 14+ Couriers Online | ViaSetu" description="Compare real-time prices and ETAs from 14+ couriers and book doorstep pickup across 21,000+ pincodes in India." path="/booking" />
       <div className="min-h-screen relative z-10">
         {/* Header */}
-        <header className="backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-50 bg-primary-glow">
-          <div className="flex items-center gap-3 max-w-2xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
+        <header className="backdrop-blur-md border-b border-border/50 p-2.5 md:p-4 sticky top-0 z-50 bg-primary-glow">
+          <div className="flex items-center gap-2 md:gap-3 max-w-2xl mx-auto">
+            <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold text-slate-700">Book Delivery</h1>
+            <h1 className="text-base md:text-xl font-semibold text-slate-700">Book Delivery</h1>
           </div>
         </header>
 
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="booking-shell p-3 md:p-4 max-w-2xl mx-auto">
           <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
           {renderCurrentStep()}
         </div>
