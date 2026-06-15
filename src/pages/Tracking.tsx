@@ -175,11 +175,43 @@ const Tracking = () => {
         if (smError || !smData || smData.error) throw new Error('Failed to fetch Shree Maruti tracking');
         partnerData = smData;
       } else {
-        toast({
-          title: "Tracking Unavailable",
-          description: "Tracking is not available for this order. Please contact support.",
-          variant: "destructive",
+        // Universal mode — no booking row in our DB. Fan out to all 5 partner
+        // tracking APIs and surface whichever returns event data.
+        const partners: Array<{ key: string; label: string; fn: string; body: Record<string, unknown> }> = [
+          { key: 'delhivery',    label: 'Delhivery',    fn: 'delhivery-tracking',    body: { waybill: awb } },
+          { key: 'urbanebolt',   label: 'Urbanebolt',   fn: 'urbanebolt-tracking',   body: { waybill: awb } },
+          { key: 'shree_maruti', label: 'Shree Maruti', fn: 'shree-maruti-tracking', body: { waybill: awb, order_id: awb } },
+          { key: 'xpressbees',   label: 'XpressBees',   fn: 'xpressbees-tracking',   body: { waybill: awb } },
+          { key: 'shadowfax',    label: 'Shadowfax',    fn: 'shadowfax-tracking',    body: { client_request_id: awb, awb, order_id: awb } },
+        ];
+        const settled = await Promise.allSettled(
+          partners.map((p) =>
+            supabase.functions.invoke(p.fn, {
+              body: p.body,
+              headers: { 'x-environment': CURRENT_ENV },
+            })
+          )
+        );
+        const hits: Array<{ partner: string; label: string; data: TrackingData }> = [];
+        settled.forEach((res, idx) => {
+          if (res.status !== 'fulfilled') return;
+          const d: any = (res.value as any)?.data;
+          if (d && !d.error && Array.isArray(d.statuses) && d.statuses.length > 0) {
+            hits.push({ partner: partners[idx].key, label: partners[idx].label, data: d as TrackingData });
+          }
         });
+
+        if (hits.length === 0) {
+          setUniversalNoMatch(true);
+          return;
+        }
+        if (hits.length === 1) {
+          setUniversalSource(hits[0].label);
+          setTrackingData(hits[0].data);
+          return;
+        }
+        // >1 hits — let the user disambiguate.
+        setUniversalCandidates(hits);
         return;
       }
 
