@@ -128,13 +128,13 @@ function SiteHeader() {
           <Logo size="md" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-7">
-          <Link to="/" className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-7">
+          <Link to="/" className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
             Home
           </Link>
           <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks.map((l) => (
-            <Link key={l.label} to={l.href} className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+            <Link key={l.label} to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
               {l.label}
             </Link>
           ))}
