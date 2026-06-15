@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase } from "lucide-react";
+import { Menu, X, Linkedin, Twitter, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
@@ -16,9 +16,21 @@ const C = {
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
 const plainLinks = [
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/tracking", label: "Track Parcel" },
   { href: "/about", label: "About Us" },
   { href: "/courier-partners", label: "Courier Partners" },
+  { href: "/contact", label: "Contact Us" },
+];
+
+const serviceItems = [
+  { href: "/services/parcel-tracking", label: "Parcel Tracking", icon: Package },
+  { href: "/services/bulk-shipment", label: "Bulk Shipment", icon: Truck },
+  { href: "/services/express-delivery", label: "Express Delivery", icon: Zap },
+  { href: "/services/domestic-courier-service", label: "Domestic Courier Service", icon: MapPin },
+  { href: "/services/individual-business", label: "Individual Business", icon: User },
+  { href: "/services/personal-business", label: "Personal Business", icon: Home },
+  { href: "/services/sme-courier-service", label: "SME Courier Service", icon: Building2 },
+  { href: "/services/doorstep-pickup", label: "Doorstep Pickup", icon: Hand },
 ];
 
 const resourceItems = [
@@ -37,7 +49,9 @@ const ROUTES = [
   "Kolkata to Delhi",
 ];
 
-function ResourcesDropdown() {
+type DropdownItem = { href: string; label: string; icon: any };
+
+function NavDropdown({ label, items, width = "w-52" }: { label: string; items: DropdownItem[]; width?: string }) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
@@ -50,17 +64,12 @@ function ResourcesDropdown() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setOpen(true);
   };
-
   const handleLeave = () => {
     timeoutRef.current = setTimeout(() => setOpen(false), 150);
   };
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-    >
+    <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <button
         className="flex items-center gap-1 text-[14px] font-bold transition-colors hover:text-[#00C8C8] focus:outline-none"
         style={{ color: C.text }}
@@ -68,18 +77,16 @@ function ResourcesDropdown() {
         aria-haspopup="true"
         aria-expanded={open}
       >
-        Resources
-        <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
+        {label}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200"
+          className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 ${width} rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200`}
           style={{ background: C.card, borderColor: C.border }}
         >
-          {resourceItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             return (
               <Link
@@ -99,10 +106,12 @@ function ResourcesDropdown() {
   );
 }
 
+
 function SiteHeader() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -119,13 +128,17 @@ function SiteHeader() {
           <Logo size="md" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-7">
+          <Link to="/" className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+            Home
+          </Link>
+          <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks.map((l) => (
             <Link key={l.label} to={l.href} className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
               {l.label}
             </Link>
           ))}
-          <ResourcesDropdown />
+          <NavDropdown label="Resources" items={resourceItems} />
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -156,7 +169,39 @@ function SiteHeader() {
             <Logo size="md" />
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
-          <nav className="flex flex-col p-6 gap-5">
+          <nav className="flex flex-col p-6 gap-5 overflow-y-auto" style={{ maxHeight: "calc(100vh - 64px)" }}>
+            <Link to="/" onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>Home</Link>
+
+            <div>
+              <button
+                onClick={() => setServicesOpenMobile((v) => !v)}
+                className="flex items-center gap-2 text-lg w-full text-left font-bold"
+                style={{ color: C.text }}
+              >
+                Our Services
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${servicesOpenMobile ? "rotate-180" : ""}`} />
+              </button>
+              {servicesOpenMobile && (
+                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                  {serviceItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                        style={{ color: C.gray }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {plainLinks.map((l) => (
               <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
             ))}
@@ -220,25 +265,25 @@ function SiteFooter() {
         <div>
           <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Our Services</h3>
           <ul className="space-y-2 text-[13px]">
-            {[
-              { label: "Compare Courier Prices", onClick: goSend },
-              { label: "Book Courier Online", onClick: goSend },
-              { label: "Courier Tracking", onClick: goTrack },
-              { label: "Doorstep Pickup", onClick: goSend },
-              { label: "Bulk Shipping (Coming Soon)", onClick: goSend },
-            ].map((x) => (
-              <li key={x.label}>
-                <button onClick={x.onClick} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{x.label}</button>
+            {serviceItems.map((s) => (
+              <li key={s.label}>
+                <Link to={s.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{s.label}</Link>
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Popular Routes</h3>
+          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Courier in Cities</h3>
           <ul className="space-y-2 text-[13px]">
-            {ROUTES.map((r) => (
-              <li key={r}>
-                <button onClick={goSend} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{r} Courier</button>
+            {[
+              { label: "Courier Service in Mumbai", href: "/courier-service-in-mumbai" },
+              { label: "Courier Service in Pune", href: "/courier-service-in-pune" },
+              { label: "Courier Service in Bangalore", href: "/courier-service-in-bangalore" },
+              { label: "Courier Service in Hyderabad", href: "/courier-service-in-hyderabad" },
+              { label: "Courier Service in Delhi", href: "/courier-service-in-delhi" },
+            ].map((c) => (
+              <li key={c.label}>
+                <Link to={c.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{c.label}</Link>
               </li>
             ))}
           </ul>
@@ -248,15 +293,15 @@ function SiteFooter() {
           <ul className="space-y-2 text-[13px]">
             {[
               { label: "About Us", href: "/about" },
-              { label: "How It Works", href: "/#how-it-works" },
+              { label: "How It Works", href: "/how-it-works" },
               { label: "Courier Partners", href: "/courier-partners" },
-              { label: "Press", href: "/" },
+              { label: "Track Parcel", href: "/tracking" },
               { label: "Contact Us", href: "/contact" },
               { label: "Privacy Policy", href: "/Privacypolicy" },
               { label: "Terms & Conditions", href: "/Termsandconditions" },
               { label: "Refund Policy", href: "/Privacypolicy" },
             ].map((x) => (
-              <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
+              <li key={x.label}><Link to={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</Link></li>
             ))}
           </ul>
         </div>

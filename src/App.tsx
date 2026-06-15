@@ -27,6 +27,10 @@ const Contact = lazy(() => import("./pages/Contact"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
 const Careers = lazy(() => import("./pages/Careers"));
+const ServicePage = lazy(() => import("./pages/ServicePage"));
+const CityPage = lazy(() => import("./pages/CityPage"));
+import { SERVICES } from "./pages/ServicePage";
+import { CITIES } from "./pages/CityPage";
 const CMSDashboard = lazy(() => import("./pages/admin/cms/CMSDashboard"));
 const ContentList = lazy(() => import("./components/admin/cms/ContentList"));
 const ContentEditor = lazy(() => import("./components/admin/cms/ContentEditor"));
@@ -88,6 +92,12 @@ const App = () => (
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/courier-partners" element={<CourierPartners />} />
+          {SERVICES.map((s) => (
+            <Route key={s.slug} path={`/services/${s.slug}`} element={<ServicePage service={s} />} />
+          ))}
+          {CITIES.map((c) => (
+            <Route key={c.slug} path={`/courier-service-in-${c.slug}`} element={<CityPage city={c} />} />
+          ))}
           <Route path="/Termsandconditions" element={<Terms />} />
           <Route path="/terms" element={<Navigate to="/Termsandconditions" replace />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/Termsandconditions" replace />} />
