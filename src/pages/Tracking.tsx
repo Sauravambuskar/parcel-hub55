@@ -486,6 +486,15 @@ const Tracking = () => {
       </header>
 
       <div className="p-4 space-y-4 max-w-4xl mx-auto relative z-10">
+        {universalSource && (
+          <div className="rounded-md border border-primary/40 bg-primary/10 p-2.5 flex gap-2">
+            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-white/80 leading-snug">
+              Tracked via <span className="font-semibold text-white">{universalSource}</span>. This AWB was not booked through ViaSetu — data shown directly from the courier partner.
+            </p>
+          </div>
+        )}
+
         {/* Search Again */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardContent className="p-3">
