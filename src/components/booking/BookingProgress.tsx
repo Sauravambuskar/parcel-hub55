@@ -10,18 +10,18 @@ const BookingProgress = ({
   totalSteps
 }: BookingProgressProps) => {
   const progressPercentage = (currentStep - 1) / (totalSteps - 1) * 100;
-  return <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-muted-foreground text-teal-300">
+  return <div className="mb-4 md:mb-8">
+      <div className="flex items-center justify-between mb-2 md:mb-4">
+        <div className="text-xs md:text-sm text-muted-foreground text-teal-300">
           Step {currentStep} of {totalSteps}
         </div>
-        <div className="text-sm font-medium text-primary">
+        <div className="text-xs md:text-sm font-medium text-primary">
           {Math.round(currentStep / totalSteps * 100)}% Complete
         </div>
       </div>
       
       {/* Progress Bar */}
-      <div className="relative h-2 bg-muted rounded-full mb-6 overflow-hidden">
+      <div className="relative h-1.5 md:h-2 bg-muted rounded-full mb-3 md:mb-6 overflow-hidden">
         <div className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" style={{
         width: `${progressPercentage}%`
       }} />
