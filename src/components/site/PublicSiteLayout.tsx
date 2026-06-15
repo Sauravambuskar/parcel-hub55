@@ -265,25 +265,25 @@ function SiteFooter() {
         <div>
           <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Our Services</h3>
           <ul className="space-y-2 text-[13px]">
-            {[
-              { label: "Compare Courier Prices", onClick: goSend },
-              { label: "Book Courier Online", onClick: goSend },
-              { label: "Courier Tracking", onClick: goTrack },
-              { label: "Doorstep Pickup", onClick: goSend },
-              { label: "Bulk Shipping (Coming Soon)", onClick: goSend },
-            ].map((x) => (
-              <li key={x.label}>
-                <button onClick={x.onClick} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{x.label}</button>
+            {serviceItems.map((s) => (
+              <li key={s.label}>
+                <Link to={s.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{s.label}</Link>
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Popular Routes</h3>
+          <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Courier in Cities</h3>
           <ul className="space-y-2 text-[13px]">
-            {ROUTES.map((r) => (
-              <li key={r}>
-                <button onClick={goSend} className="hover:text-[#00C8C8] transition-colors text-left" style={{ color: C.gray }}>{r} Courier</button>
+            {[
+              { label: "Courier Service in Mumbai", href: "/courier-service-in-mumbai" },
+              { label: "Courier Service in Pune", href: "/courier-service-in-pune" },
+              { label: "Courier Service in Bangalore", href: "/courier-service-in-bangalore" },
+              { label: "Courier Service in Hyderabad", href: "/courier-service-in-hyderabad" },
+              { label: "Courier Service in Delhi", href: "/courier-service-in-delhi" },
+            ].map((c) => (
+              <li key={c.label}>
+                <Link to={c.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{c.label}</Link>
               </li>
             ))}
           </ul>
@@ -293,15 +293,15 @@ function SiteFooter() {
           <ul className="space-y-2 text-[13px]">
             {[
               { label: "About Us", href: "/about" },
-              { label: "How It Works", href: "/#how-it-works" },
+              { label: "How It Works", href: "/how-it-works" },
               { label: "Courier Partners", href: "/courier-partners" },
-              { label: "Press", href: "/" },
+              { label: "Track Parcel", href: "/tracking" },
               { label: "Contact Us", href: "/contact" },
               { label: "Privacy Policy", href: "/Privacypolicy" },
               { label: "Terms & Conditions", href: "/Termsandconditions" },
               { label: "Refund Policy", href: "/Privacypolicy" },
             ].map((x) => (
-              <li key={x.label}><a href={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</a></li>
+              <li key={x.label}><Link to={x.href} className="hover:text-[#00C8C8] transition-colors" style={{ color: C.gray }}>{x.label}</Link></li>
             ))}
           </ul>
         </div>
