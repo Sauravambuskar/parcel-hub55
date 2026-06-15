@@ -47,6 +47,57 @@ const resourceItems = [
   { href: "/contact", label: "Contact Us", icon: Mail },
 ];
 
+const serviceItems = [
+  { href: "/services/parcel-tracking", label: "Parcel Tracking" },
+  { href: "/services/bulk-shipment", label: "Bulk Shipment" },
+  { href: "/services/express-delivery", label: "Express Delivery" },
+  { href: "/services/domestic-courier-service", label: "Domestic Courier Service" },
+  { href: "/services/individual-business", label: "Individual Business" },
+  { href: "/services/personal-business", label: "Personal Business" },
+  { href: "/services/sme-courier-service", label: "SME Courier Service" },
+  { href: "/services/doorstep-pickup", label: "Doorstep Pickup" },
+];
+
+function ServicesDropdown() {
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const location = useLocation();
+  useEffect(() => { setOpen(false); }, [location]);
+  const handleEnter = () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setOpen(true); };
+  const handleLeave = () => { timeoutRef.current = setTimeout(() => setOpen(false), 150); };
+  return (
+    <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+      <button
+        className="flex items-center gap-1 text-[14px] transition-colors hover:text-[#00C8C8] focus:outline-none"
+        style={{ color: C.gray }}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        Our Services
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 rounded-xl border shadow-lg p-2 animate-in fade-in zoom-in-95 duration-200"
+          style={{ background: C.card, borderColor: C.border }}
+        >
+          {serviceItems.map((item) => (
+            <Link
+              key={item.label}
+              to={item.href}
+              className="block rounded-lg px-3 py-2 text-[13px] transition-colors hover:bg-[#00A8A8]/10 hover:text-[#00A8A8]"
+              style={{ color: C.white }}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ResourcesDropdown() {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,10 +152,12 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const plainLinks = [
-    { href: "/how-it-works", label: "How It Works", external: true },
-    { href: "/courier-partners", label: "Courier Partners", external: true },
-    { href: "/about", label: "About Us", external: true },
+    { href: "/", label: "Home" },
+    { href: "/tracking", label: "Track Parcel" },
+    { href: "/about", label: "About Us" },
+    { href: "/courier-partners", label: "Courier Partners" },
   ];
   return (
     <header
@@ -116,18 +169,12 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
           <Logo size="md" />
         </a>
 
-        <nav className="hidden lg:flex items-center gap-8">
-          {plainLinks.map((l) => (
-            l.external ? (
-              <Link key={l.label} to={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
-                {l.label}
-              </Link>
-            ) : (
-              <a key={l.label} href={l.href} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
-                {l.label}
-              </a>
-            )
-          ))}
+        <nav className="hidden lg:flex items-center gap-6">
+          <Link to="/" className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>Home</Link>
+          <ServicesDropdown />
+          <Link to="/tracking" className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>Track Parcel</Link>
+          <Link to="/about" className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>About Us</Link>
+          <Link to="/courier-partners" className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>Courier Partners</Link>
           <ResourcesDropdown />
         </nav>
 
@@ -160,13 +207,28 @@ const NavBar = ({ onSendClick, onTrackClick }: { onSendClick: () => void; onTrac
             <button onClick={() => setOpen(false)} className="text-[#0B1220]" aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5">
-            {plainLinks.map((l) => (
-              l.external ? (
-                <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</Link>
-              ) : (
-                <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">{l.label}</a>
-              )
-            ))}
+            <Link to="/" onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">Home</Link>
+            <div>
+              <button
+                onClick={() => setServicesOpenMobile((v) => !v)}
+                className="flex items-center gap-2 text-lg w-full text-left text-[#0B1220]"
+              >
+                Our Services
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${servicesOpenMobile ? "rotate-180" : ""}`} />
+              </button>
+              {servicesOpenMobile && (
+                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                  {serviceItems.map((item) => (
+                    <Link key={item.label} to={item.href} onClick={() => setOpen(false)} className="text-[14px] transition-colors hover:text-[#00C8C8]" style={{ color: C.gray }}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Link to="/tracking" onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">Track Parcel</Link>
+            <Link to="/about" onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">About Us</Link>
+            <Link to="/courier-partners" onClick={() => setOpen(false)} className="text-[#0B1220] text-lg">Courier Partners</Link>
             <div>
               <button
                 onClick={() => setResourcesOpenMobile((v) => !v)}
@@ -716,11 +778,9 @@ const Landing = () => {
             <h3 className="text-[#0B1220] font-bold text-[14px] mb-4">Company</h3>
             <ul className="space-y-2 text-[13px]">
               {[
-                { label: "About Us", href: "#" },
-                { label: "How It Works", href: "#how-it-works" },
-                { label: "Courier Partners", href: "#" },
-                { label: "Press", href: "#" },
-                { label: "Careers", href: "#" },
+                { label: "About Us", href: "/about" },
+                { label: "How It Works", href: "/how-it-works" },
+                { label: "Courier Partners", href: "/courier-partners" },
                 { label: "Contact Us", href: "/contact" },
                 { label: "Privacy Policy", href: "/Privacypolicy" },
                 { label: "Terms & Conditions", href: "/Termsandconditions" },
