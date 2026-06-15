@@ -112,6 +112,7 @@ function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
+  const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
@@ -127,13 +128,17 @@ function SiteHeader() {
           <Logo size="md" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-7">
+          <Link to="/" className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+            Home
+          </Link>
+          <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
           {plainLinks.map((l) => (
             <Link key={l.label} to={l.href} className="text-[14px] font-bold transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
               {l.label}
             </Link>
           ))}
-          <ResourcesDropdown />
+          <NavDropdown label="Resources" items={resourceItems} />
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -164,7 +169,39 @@ function SiteHeader() {
             <Logo size="md" />
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
-          <nav className="flex flex-col p-6 gap-5">
+          <nav className="flex flex-col p-6 gap-5 overflow-y-auto" style={{ maxHeight: "calc(100vh - 64px)" }}>
+            <Link to="/" onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>Home</Link>
+
+            <div>
+              <button
+                onClick={() => setServicesOpenMobile((v) => !v)}
+                className="flex items-center gap-2 text-lg w-full text-left font-bold"
+                style={{ color: C.text }}
+              >
+                Our Services
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${servicesOpenMobile ? "rotate-180" : ""}`} />
+              </button>
+              {servicesOpenMobile && (
+                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                  {serviceItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                        style={{ color: C.gray }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {plainLinks.map((l) => (
               <Link key={l.label} to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
             ))}
