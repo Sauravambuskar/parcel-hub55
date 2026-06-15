@@ -138,21 +138,23 @@ function SiteHeader() {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-4 xl:gap-7">
-          <Link to="/" className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
-            Home
-          </Link>
-          <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
-          {plainLinks.map((l) => (
-            <span key={l.label} className="contents">
-              <Link to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
-                {l.label}
-              </Link>
-              {l.href === "/courier-partners" && (
-                <NavDropdown label="Parcel Availability" items={cityItems} width="w-64" />
-              )}
-            </span>
-          ))}
           <NavDropdown label="Resources" items={resourceItems} />
+          <NavDropdown label="Our Services" items={serviceItems} width="w-64" />
+          {plainLinks
+            .filter((l) => l.label !== "Contact Us")
+            .map((l) => (
+              <span key={l.label} className="contents">
+                <Link to={l.href} className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+                  {l.label}
+                </Link>
+                {l.href === "/courier-partners" && (
+                  <NavDropdown label="Parcel Availability" items={cityItems} width="w-64" />
+                )}
+              </span>
+            ))}
+          <Link to="/contact" className="text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
+            Contact Us
+          </Link>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -184,7 +186,35 @@ function SiteHeader() {
             <button onClick={() => setOpen(false)} style={{ color: C.text }} aria-label="Close menu"><X className="h-6 w-6" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-5 overflow-y-auto" style={{ maxHeight: "calc(100vh - 64px)" }}>
-            <Link to="/" onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>Home</Link>
+            <div>
+              <button
+                onClick={() => setResourcesOpenMobile((v) => !v)}
+                className="flex items-center gap-2 text-lg w-full text-left font-bold"
+                style={{ color: C.text }}
+              >
+                Resources
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${resourcesOpenMobile ? "rotate-180" : ""}`} />
+              </button>
+              {resourcesOpenMobile && (
+                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                  {resourceItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                        style={{ color: C.gray }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div>
               <button
@@ -216,72 +246,46 @@ function SiteHeader() {
               )}
             </div>
 
-            {plainLinks.map((l) => (
-              <span key={l.label} className="contents">
-                <Link to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
-                {l.href === "/courier-partners" && (
-                  <div>
-                    <button
-                      onClick={() => setParcelOpenMobile((v) => !v)}
-                      className="flex items-center gap-2 text-lg w-full text-left font-bold"
-                      style={{ color: C.text }}
-                    >
-                      Parcel Availability
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${parcelOpenMobile ? "rotate-180" : ""}`} />
-                    </button>
-                    {parcelOpenMobile && (
-                      <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
-                        {cityItems.map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <Link
-                              key={item.label}
-                              to={item.href}
-                              onClick={() => setOpen(false)}
-                              className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
-                              style={{ color: C.gray }}
-                            >
-                              <Icon className="h-4 w-4" style={{ color: C.teal }} />
-                              {item.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </span>
-            ))}
-
-            <div>
-              <button
-                onClick={() => setResourcesOpenMobile((v) => !v)}
-                className="flex items-center gap-2 text-lg w-full text-left font-bold"
-                style={{ color: C.text }}
-              >
-                Resources
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${resourcesOpenMobile ? "rotate-180" : ""}`} />
-              </button>
-              {resourcesOpenMobile && (
-                <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
-                  {resourceItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
-                        style={{ color: C.gray }}
+            {plainLinks
+              .filter((l) => l.label !== "Contact Us")
+              .map((l) => (
+                <span key={l.label} className="contents">
+                  <Link to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
+                  {l.href === "/courier-partners" && (
+                    <div>
+                      <button
+                        onClick={() => setParcelOpenMobile((v) => !v)}
+                        className="flex items-center gap-2 text-lg w-full text-left font-bold"
+                        style={{ color: C.text }}
                       >
-                        <Icon className="h-4 w-4" style={{ color: C.teal }} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        Parcel Availability
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${parcelOpenMobile ? "rotate-180" : ""}`} />
+                      </button>
+                      {parcelOpenMobile && (
+                        <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
+                          {cityItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.label}
+                                to={item.href}
+                                onClick={() => setOpen(false)}
+                                className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
+                                style={{ color: C.gray }}
+                              >
+                                <Icon className="h-4 w-4" style={{ color: C.teal }} />
+                                {item.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </span>
+              ))}
+
+            <Link to="/contact" onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>Contact Us</Link>
 
             <button onClick={() => { setOpen(false); navigate("/tracking"); }} className="mt-4 h-12 rounded-lg border-2 font-semibold" style={{ borderColor: C.teal, color: C.teal }}>Track Your Parcel</button>
             <button onClick={() => { setOpen(false); navigate("/login"); }} className="h-12 rounded-lg font-bold" style={{ background: C.teal, color: C.bg }}>Send a Parcel →</button>
