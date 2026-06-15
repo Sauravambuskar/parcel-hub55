@@ -97,6 +97,9 @@ const Tracking = () => {
   const fetchTrackingData = async (awb: string) => {
     setLoading(true);
     setTrackingData(null);
+    setUniversalCandidates([]);
+    setUniversalSource(null);
+    setUniversalNoMatch(false);
 
     try {
       // Lookup booking via authenticated edge function (no client-side RLS issues)
