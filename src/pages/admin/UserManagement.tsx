@@ -233,15 +233,26 @@ const UserManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("full_name")}>
+                        <span className="flex items-center">Name <SortIcon field="full_name" /></span>
+                      </TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Orders</TableHead>
-                      <TableHead>Join Date</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
+                        <span className="flex items-center">Status <SortIcon field="status" /></span>
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("order_count")}>
+                        <span className="flex items-center">Orders <SortIcon field="order_count" /></span>
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
+                        <span className="flex items-center">Join Date <SortIcon field="created_at" /></span>
+                      </TableHead>
                       <TableHead>Heard About Us</TableHead>
                       <TableHead>Frequency</TableHead>
                       <TableHead>Courier Type</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("survey_completed_at")}>
+                        <span className="flex items-center">Survey At <SortIcon field="survey_completed_at" /></span>
+                      </TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
