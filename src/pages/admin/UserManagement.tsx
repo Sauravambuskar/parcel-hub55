@@ -223,6 +223,11 @@ const UserManagement = () => {
                         <TableCell>
                           {format(new Date(user.created_at), "MMM dd, yyyy")}
                         </TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={user.survey_source || ""}>
+                          {user.survey_source || "—"}
+                        </TableCell>
+                        <TableCell>{user.survey_frequency || "—"}</TableCell>
+                        <TableCell>{user.survey_courier_type || "—"}</TableCell>
                         <TableCell className="space-x-2">
                           <Button 
                             size="sm" 
