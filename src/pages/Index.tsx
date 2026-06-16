@@ -191,6 +191,14 @@ const Index = () => {
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />
+
+      {user?.user_id && profile && !profile.survey_completed_at && (
+        <OnboardingSurveyDialog
+          open
+          userId={user.user_id}
+          onCompleted={() => fetchProfile(user.user_id)}
+        />
+      )}
     </div>
   );
 };
