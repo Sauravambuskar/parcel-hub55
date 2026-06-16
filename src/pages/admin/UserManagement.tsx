@@ -114,11 +114,48 @@ const UserManagement = () => {
     }
   };
 
+  const handleSort = (field: keyof UserData) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: keyof UserData }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 text-muted-foreground opacity-50" />;
+    return sortDirection === "asc"
+      ? <ArrowUp className="h-3 w-3 ml-1 text-primary" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-primary" />;
+  };
+
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (!sortField) return 0;
+    const aVal = a[sortField];
+    const bVal = b[sortField];
+    if (aVal === null && bVal === null) return 0;
+    if (aVal === null) return sortDirection === "asc" ? -1 : 1;
+    if (bVal === null) return sortDirection === "asc" ? 1 : -1;
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+    }
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      const aDate = Date.parse(aVal);
+      const bDate = Date.parse(bVal);
+      if (!isNaN(aDate) && !isNaN(bDate)) {
+        return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
+      }
+      return sortDirection === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    }
+    return 0;
+  });
 
   const exportCsv = () => {
     const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
