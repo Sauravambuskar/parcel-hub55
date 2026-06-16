@@ -19,6 +19,10 @@ interface UserData {
   status: string;
   order_count: number;
   created_at: string;
+  survey_source: string | null;
+  survey_frequency: string | null;
+  survey_courier_type: string | null;
+  survey_completed_at: string | null;
 }
 
 const UserManagement = () => {
