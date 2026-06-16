@@ -278,6 +278,9 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>{user.survey_frequency || "—"}</TableCell>
                         <TableCell>{user.survey_courier_type || "—"}</TableCell>
+                        <TableCell>
+                          {user.survey_completed_at ? format(new Date(user.survey_completed_at), "MMM dd, yyyy HH:mm") : "—"}
+                        </TableCell>
                         <TableCell className="space-x-2">
                           <Button 
                             size="sm" 
