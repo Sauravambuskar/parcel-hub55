@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, UserCheck, UserX, Loader2, Download } from "lucide-react";
+import { Search, UserCheck, UserX, Loader2, Download, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -29,6 +29,8 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState<keyof UserData | null>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,11 +114,48 @@ const UserManagement = () => {
     }
   };
 
+  const handleSort = (field: keyof UserData) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: keyof UserData }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 text-muted-foreground opacity-50" />;
+    return sortDirection === "asc"
+      ? <ArrowUp className="h-3 w-3 ml-1 text-primary" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-primary" />;
+  };
+
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (!sortField) return 0;
+    const aVal = a[sortField];
+    const bVal = b[sortField];
+    if (aVal === null && bVal === null) return 0;
+    if (aVal === null) return sortDirection === "asc" ? -1 : 1;
+    if (bVal === null) return sortDirection === "asc" ? 1 : -1;
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+    }
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      const aDate = Date.parse(aVal);
+      const bDate = Date.parse(bVal);
+      if (!isNaN(aDate) && !isNaN(bDate)) {
+        return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
+      }
+      return sortDirection === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    }
+    return 0;
+  });
 
   const exportCsv = () => {
     const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
@@ -194,15 +233,26 @@ const UserManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("full_name")}>
+                        <span className="flex items-center">Name <SortIcon field="full_name" /></span>
+                      </TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Orders</TableHead>
-                      <TableHead>Join Date</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
+                        <span className="flex items-center">Status <SortIcon field="status" /></span>
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("order_count")}>
+                        <span className="flex items-center">Orders <SortIcon field="order_count" /></span>
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
+                        <span className="flex items-center">Join Date <SortIcon field="created_at" /></span>
+                      </TableHead>
                       <TableHead>Heard About Us</TableHead>
                       <TableHead>Frequency</TableHead>
                       <TableHead>Courier Type</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("survey_completed_at")}>
+                        <span className="flex items-center">Survey At <SortIcon field="survey_completed_at" /></span>
+                      </TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -228,6 +278,9 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>{user.survey_frequency || "—"}</TableCell>
                         <TableCell>{user.survey_courier_type || "—"}</TableCell>
+                        <TableCell>
+                          {user.survey_completed_at ? format(new Date(user.survey_completed_at), "MMM dd, yyyy HH:mm") : "—"}
+                        </TableCell>
                         <TableCell className="space-x-2">
                           <Button 
                             size="sm" 
