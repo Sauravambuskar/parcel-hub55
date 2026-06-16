@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, UserCheck, UserX, Loader2 } from "lucide-react";
+import { Search, UserCheck, UserX, Loader2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
@@ -19,6 +19,10 @@ interface UserData {
   status: string;
   order_count: number;
   created_at: string;
+  survey_source: string | null;
+  survey_frequency: string | null;
+  survey_courier_type: string | null;
+  survey_completed_at: string | null;
 }
 
 const UserManagement = () => {
@@ -46,7 +50,7 @@ const UserManagement = () => {
 
       // Fetch booking counts for each user
       const usersWithCounts = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (profiles || []).map(async (profile: any) => {
           const { count } = await supabase
             .from('bookings')
             .select('*', { count: 'exact', head: true })
@@ -60,6 +64,10 @@ const UserManagement = () => {
             status: profile.status || 'active',
             order_count: count || 0,
             created_at: profile.created_at,
+            survey_source: profile.survey_source ?? null,
+            survey_frequency: profile.survey_frequency ?? null,
+            survey_courier_type: profile.survey_courier_type ?? null,
+            survey_completed_at: profile.survey_completed_at ?? null,
           };
         })
       );
@@ -110,6 +118,36 @@ const UserManagement = () => {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const exportCsv = () => {
+    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
+    const escape = (v: any) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = filteredUsers.map(u => [
+      u.full_name || "",
+      u.phone || "",
+      u.email || "",
+      u.status,
+      u.order_count,
+      u.created_at ? format(new Date(u.created_at), "yyyy-MM-dd") : "",
+      u.survey_source || "",
+      u.survey_frequency || "",
+      u.survey_courier_type || "",
+      u.survey_completed_at ? format(new Date(u.survey_completed_at), "yyyy-MM-dd HH:mm") : "",
+    ].map(escape).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users-${format(new Date(), "yyyyMMdd-HHmm")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -117,7 +155,7 @@ const UserManagement = () => {
         <p className="text-muted-foreground">Manage and monitor app users</p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -127,6 +165,10 @@ const UserManagement = () => {
             className="pl-8"
           />
         </div>
+        <Button variant="outline" onClick={exportCsv} disabled={filteredUsers.length === 0}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       <Tabs defaultValue="users" className="space-y-4">
@@ -158,6 +200,9 @@ const UserManagement = () => {
                       <TableHead>Status</TableHead>
                       <TableHead>Orders</TableHead>
                       <TableHead>Join Date</TableHead>
+                      <TableHead>Heard About Us</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead>Courier Type</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -178,6 +223,11 @@ const UserManagement = () => {
                         <TableCell>
                           {format(new Date(user.created_at), "MMM dd, yyyy")}
                         </TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={user.survey_source || ""}>
+                          {user.survey_source || "—"}
+                        </TableCell>
+                        <TableCell>{user.survey_frequency || "—"}</TableCell>
+                        <TableCell>{user.survey_courier_type || "—"}</TableCell>
                         <TableCell className="space-x-2">
                           <Button 
                             size="sm" 

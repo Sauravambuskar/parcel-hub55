@@ -551,6 +551,10 @@ export type Database = {
           promo_notifications: boolean | null
           sms_notifications: boolean | null
           status: string | null
+          survey_completed_at: string | null
+          survey_courier_type: string | null
+          survey_frequency: string | null
+          survey_source: string | null
           theme_preference: string | null
           updated_at: string
           user_id: string
@@ -569,6 +573,10 @@ export type Database = {
           promo_notifications?: boolean | null
           sms_notifications?: boolean | null
           status?: string | null
+          survey_completed_at?: string | null
+          survey_courier_type?: string | null
+          survey_frequency?: string | null
+          survey_source?: string | null
           theme_preference?: string | null
           updated_at?: string
           user_id: string
@@ -587,6 +595,10 @@ export type Database = {
           promo_notifications?: boolean | null
           sms_notifications?: boolean | null
           status?: string | null
+          survey_completed_at?: string | null
+          survey_courier_type?: string | null
+          survey_frequency?: string | null
+          survey_source?: string | null
           theme_preference?: string | null
           updated_at?: string
           user_id?: string

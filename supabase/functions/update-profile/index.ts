@@ -18,8 +18,23 @@ Deno.serve(async (req) => {
       preferred_language, 
       theme_preference, 
       sms_notifications, 
-      promo_notifications 
+      promo_notifications,
+      survey_source,
+      survey_frequency,
+      survey_courier_type,
     } = await req.json();
+
+    const FREQ = ["1-5", "5-10", "10+"];
+    const COURIER = ["Documents", "Box Items"];
+    if (survey_frequency !== undefined && survey_frequency !== null && !FREQ.includes(survey_frequency)) {
+      return new Response(JSON.stringify({ error: "invalid survey_frequency" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (survey_courier_type !== undefined && survey_courier_type !== null && !COURIER.includes(survey_courier_type)) {
+      return new Response(JSON.stringify({ error: "invalid survey_courier_type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (survey_source !== undefined && survey_source !== null && String(survey_source).length > 200) {
+      return new Response(JSON.stringify({ error: "survey_source too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     if (!user_id) {
       return new Response(
@@ -49,6 +64,16 @@ Deno.serve(async (req) => {
       if (theme_preference !== undefined) updateData.theme_preference = theme_preference;
       if (sms_notifications !== undefined) updateData.sms_notifications = sms_notifications;
       if (promo_notifications !== undefined) updateData.promo_notifications = promo_notifications;
+      if (survey_source !== undefined) updateData.survey_source = survey_source;
+      if (survey_frequency !== undefined) updateData.survey_frequency = survey_frequency;
+      if (survey_courier_type !== undefined) updateData.survey_courier_type = survey_courier_type;
+      const surveyComplete =
+        (survey_source !== undefined ? survey_source : existingProfile.survey_source) &&
+        (survey_frequency !== undefined ? survey_frequency : existingProfile.survey_frequency) &&
+        (survey_courier_type !== undefined ? survey_courier_type : existingProfile.survey_courier_type);
+      if (surveyComplete && !existingProfile.survey_completed_at) {
+        updateData.survey_completed_at = new Date().toISOString();
+      }
 
       const { error } = await supabase
         .from("profiles")
@@ -58,6 +83,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
     } else {
       // Create new profile
+      const surveyComplete = survey_source && survey_frequency && survey_courier_type;
       const { error } = await supabase
         .from("profiles")
         .insert({
@@ -68,6 +94,10 @@ Deno.serve(async (req) => {
           theme_preference: theme_preference || 'light',
           sms_notifications: sms_notifications ?? true,
           promo_notifications: promo_notifications ?? true,
+          survey_source: survey_source || null,
+          survey_frequency: survey_frequency || null,
+          survey_courier_type: survey_courier_type || null,
+          survey_completed_at: surveyComplete ? new Date().toISOString() : null,
         });
 
       if (error) throw error;
