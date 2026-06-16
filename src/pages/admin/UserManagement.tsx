@@ -118,6 +118,36 @@ const UserManagement = () => {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const exportCsv = () => {
+    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
+    const escape = (v: any) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = filteredUsers.map(u => [
+      u.full_name || "",
+      u.phone || "",
+      u.email || "",
+      u.status,
+      u.order_count,
+      u.created_at ? format(new Date(u.created_at), "yyyy-MM-dd") : "",
+      u.survey_source || "",
+      u.survey_frequency || "",
+      u.survey_courier_type || "",
+      u.survey_completed_at ? format(new Date(u.survey_completed_at), "yyyy-MM-dd HH:mm") : "",
+    ].map(escape).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users-${format(new Date(), "yyyyMMdd-HHmm")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -125,7 +155,7 @@ const UserManagement = () => {
         <p className="text-muted-foreground">Manage and monitor app users</p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -135,6 +165,10 @@ const UserManagement = () => {
             className="pl-8"
           />
         </div>
+        <Button variant="outline" onClick={exportCsv} disabled={filteredUsers.length === 0}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       <Tabs defaultValue="users" className="space-y-4">
@@ -166,6 +200,9 @@ const UserManagement = () => {
                       <TableHead>Status</TableHead>
                       <TableHead>Orders</TableHead>
                       <TableHead>Join Date</TableHead>
+                      <TableHead>Heard About Us</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead>Courier Type</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
