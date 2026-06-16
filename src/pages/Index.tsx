@@ -11,6 +11,7 @@ import Logo from "@/components/Logo";
 import BottomNav from "@/components/BottomNav";
 import PageBackground from "@/components/PageBackground";
 import PageSeo from "@/components/PageSeo";
+import OnboardingSurveyDialog from "@/components/OnboardingSurveyDialog";
 import { CURRENT_ENV, setEnvironment, isLovablePreview } from "@/config/environment";
 import { cn } from "@/lib/utils";
 
