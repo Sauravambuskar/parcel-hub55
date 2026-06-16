@@ -50,7 +50,7 @@ const UserManagement = () => {
 
       // Fetch booking counts for each user
       const usersWithCounts = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (profiles || []).map(async (profile: any) => {
           const { count } = await supabase
             .from('bookings')
             .select('*', { count: 'exact', head: true })
@@ -64,6 +64,10 @@ const UserManagement = () => {
             status: profile.status || 'active',
             order_count: count || 0,
             created_at: profile.created_at,
+            survey_source: profile.survey_source ?? null,
+            survey_frequency: profile.survey_frequency ?? null,
+            survey_courier_type: profile.survey_courier_type ?? null,
+            survey_completed_at: profile.survey_completed_at ?? null,
           };
         })
       );
