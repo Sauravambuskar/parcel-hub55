@@ -18,8 +18,23 @@ Deno.serve(async (req) => {
       preferred_language, 
       theme_preference, 
       sms_notifications, 
-      promo_notifications 
+      promo_notifications,
+      survey_source,
+      survey_frequency,
+      survey_courier_type,
     } = await req.json();
+
+    const FREQ = ["1-5", "5-10", "10+"];
+    const COURIER = ["Documents", "Box Items"];
+    if (survey_frequency !== undefined && survey_frequency !== null && !FREQ.includes(survey_frequency)) {
+      return new Response(JSON.stringify({ error: "invalid survey_frequency" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (survey_courier_type !== undefined && survey_courier_type !== null && !COURIER.includes(survey_courier_type)) {
+      return new Response(JSON.stringify({ error: "invalid survey_courier_type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (survey_source !== undefined && survey_source !== null && String(survey_source).length > 200) {
+      return new Response(JSON.stringify({ error: "survey_source too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     if (!user_id) {
       return new Response(
