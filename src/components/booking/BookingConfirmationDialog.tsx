@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Download, Package, Printer, Truck } from "lucide-react";
+import ParcelPhotoUpload from "@/components/booking/ParcelPhotoUpload";
 
 interface BookingConfirmationDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface BookingConfirmationDialogProps {
   labelUrl?: string | null;
   courierName?: string;
   isReversePickup?: boolean;
+  bookingId?: string | null;
 }
 
 const BookingConfirmationDialog = ({
@@ -25,6 +27,7 @@ const BookingConfirmationDialog = ({
   labelUrl,
   courierName,
   isReversePickup = false,
+  bookingId,
 }: BookingConfirmationDialogProps) => {
   const handleDownloadLabel = () => {
     if (labelUrl) {
@@ -34,7 +37,7 @@ const BookingConfirmationDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
             <CheckCircle className="h-10 w-10 text-success" />
@@ -112,6 +115,20 @@ const BookingConfirmationDialog = ({
                 </p>
               </div>
             </>
+          )}
+
+          {bookingId && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                Upload Parcel Photos (Required)
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Please upload photos of your packed parcel so we can verify its
+                condition at pickup and at delivery.
+              </p>
+              <ParcelPhotoUpload bookingId={bookingId} compact />
+            </div>
           )}
         </div>
 
