@@ -321,7 +321,7 @@ function SiteFooter() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto mt-10 pt-6 flex flex-col md:flex-row justify-between gap-3 text-[12px]" style={{ borderTop: `1px solid ${C.border}`, color: C.gray }}>
-        <span>© 2025 Viasetu. All rights reserved.</span>
+        <span>© 2026 Viasetu. All rights reserved.</span>
         <span>Made with ❤️ for every Indian who ships a parcel.</span>
       </div>
     </footer>
