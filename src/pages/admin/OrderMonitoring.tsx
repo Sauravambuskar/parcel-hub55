@@ -869,6 +869,22 @@ const OrderMonitoring = () => {
                 </Card>
               </div>
 
+              {/* Parcel Photos uploaded by customer */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Parcel Photos (Customer Uploaded)
+                  </CardTitle>
+                  <CardDescription>
+                    Verify parcel condition before pickup and on delivery.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ParcelPhotoGallery bookingId={selectedBooking.id} />
+                </CardContent>
+              </Card>
+
               {/* Live Tracking from Partner API */}
               <Card className="border-primary/20">
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
