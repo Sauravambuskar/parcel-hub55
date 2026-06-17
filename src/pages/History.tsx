@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
 import EmptyBoxIllustration from "@/components/illustrations/EmptyBoxIllustration";
 import PageBackground from "@/components/PageBackground";
+import BottomNav from "@/components/BottomNav";
 import PageSeo from "@/components/PageSeo";
 
 interface OrderAddress {
@@ -197,7 +198,7 @@ const History = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative">
+      <div className="min-h-screen relative pb-24 md:pb-4">
         <PageBackground variant="shipping" opacity={0.75} />
         <header className="bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
           <div className="flex items-center gap-3 max-w-4xl mx-auto">
@@ -210,12 +211,13 @@ const History = () => {
           <OrderCardSkeleton />
           <OrderCardSkeleton />
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pb-24 md:pb-4">
       <PageSeo title="Order History — My Shipments | ViaSetu" description="View your past ViaSetu shipments, download invoices and labels, and reorder past bookings." path="/history" noindex />
       <PageBackground variant="shipping" opacity={0.75} />
       
@@ -481,7 +483,7 @@ const History = () => {
           })
         )}
       </div>
-
+      <BottomNav />
     </div>
   );
 };
