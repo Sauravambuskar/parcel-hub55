@@ -121,7 +121,6 @@ function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
-  const [parcelOpenMobile, setParcelOpenMobile] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
@@ -146,9 +145,6 @@ function SiteHeader() {
                 <Link to={l.href} className="text-[13px] xl:text-[14px] font-bold whitespace-nowrap transition-colors hover:text-[#00C8C8]" style={{ color: C.text }}>
                   {l.label}
                 </Link>
-                {l.href === "/courier-partners" && (
-                  <NavDropdown label="Parcel Availability" items={cityItems} width="w-64" />
-                )}
               </span>
             ))}
           <NavDropdown label="Resources" items={resourceItems} />
@@ -251,37 +247,6 @@ function SiteHeader() {
               .map((l) => (
                 <span key={l.label} className="contents">
                   <Link to={l.href} onClick={() => setOpen(false)} className="text-lg font-bold" style={{ color: C.text }}>{l.label}</Link>
-                  {l.href === "/courier-partners" && (
-                    <div>
-                      <button
-                        onClick={() => setParcelOpenMobile((v) => !v)}
-                        className="flex items-center gap-2 text-lg w-full text-left font-bold"
-                        style={{ color: C.text }}
-                      >
-                        Parcel Availability
-                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${parcelOpenMobile ? "rotate-180" : ""}`} />
-                      </button>
-                      {parcelOpenMobile && (
-                        <div className="mt-3 ml-3 flex flex-col gap-3 border-l-2 pl-4" style={{ borderColor: C.border }}>
-                          {cityItems.map((item) => {
-                            const Icon = item.icon;
-                            return (
-                              <Link
-                                key={item.label}
-                                to={item.href}
-                                onClick={() => setOpen(false)}
-                                className="flex items-center gap-2 text-[15px] transition-colors hover:text-[#00C8C8]"
-                                style={{ color: C.gray }}
-                              >
-                                <Icon className="h-4 w-4" style={{ color: C.teal }} />
-                                {item.label}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </span>
               ))}
 
