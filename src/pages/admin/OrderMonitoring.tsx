@@ -18,6 +18,7 @@ import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAdminAuth } from "@/contexts/useAdminAuth";
 import ParcelPhotoGallery from "@/components/admin/ParcelPhotoGallery";
+import { bucketOfStatus } from "@/lib/booking-status";
 
 // Map booking_source -> partner edge function names
 const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
@@ -133,13 +134,15 @@ const OrderMonitoring = () => {
   };
 
   const getStatusColor = (status: string | null) => {
-    switch (status?.toLowerCase()) {
+    switch (bucketOfStatus(status)) {
       case "delivered": return "default";
-      case "in_transit": case "in transit": return "secondary";
-      case "picked_up": case "picked up": return "outline";
-      case "pending": return "secondary";
-      case "cancelled": return "destructive";
-      default: return "secondary";
+      case "in_transit":
+      case "out_for_delivery":
+      case "picked_up":
+      case "confirmed": return "secondary";
+      case "cancelled":
+      case "rto": return "destructive";
+      default: return "outline";
     }
   };
 
@@ -148,45 +151,59 @@ const OrderMonitoring = () => {
     return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const inTransitBuckets = new Set(["confirmed", "picked_up", "in_transit", "out_for_delivery"]);
+
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = 
       booking.tracking_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.sender_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.receiver_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
+    const bucket = bucketOfStatus(booking.status);
+
     if (selectedFilter === "all") return matchesSearch;
-    if (selectedFilter === "pending") return matchesSearch && booking.status === "pending";
-    if (selectedFilter === "in_transit") return matchesSearch && (booking.status === "in_transit" || booking.status === "in transit");
-    if (selectedFilter === "delivered") return matchesSearch && booking.status === "delivered";
+    if (selectedFilter === "pending") return matchesSearch && bucket === "created";
+    if (selectedFilter === "in_transit") return matchesSearch && inTransitBuckets.has(bucket);
+    if (selectedFilter === "delivered") return matchesSearch && bucket === "delivered";
+    if (selectedFilter === "cancelled") return matchesSearch && (bucket === "cancelled" || bucket === "rto");
     if (selectedFilter === "cop_pending") return matchesSearch && booking.payment_status === "cop_pending";
     return matchesSearch;
   });
 
+  const countByBucket = (predicate: (b: string) => boolean) =>
+    bookings.filter(b => predicate(bucketOfStatus(b.status))).length.toString();
+
   const stats = [
-    { 
-      title: "Total Orders", 
-      value: bookings.length.toString(), 
-      icon: Package, 
-      color: "text-blue-600" 
+    {
+      title: "Total Orders",
+      value: bookings.length.toString(),
+      icon: Package,
+      color: "text-blue-600"
     },
-    { 
-      title: "In Transit", 
-      value: bookings.filter(b => b.status === "in_transit" || b.status === "in transit").length.toString(), 
-      icon: Truck, 
-      color: "text-green-600" 
+    {
+      title: "In Transit",
+      value: countByBucket(b => inTransitBuckets.has(b)),
+      icon: Truck,
+      color: "text-green-600"
     },
-    { 
-      title: "Pending", 
-      value: bookings.filter(b => b.status === "pending" || !b.status).length.toString(), 
-      icon: Clock, 
-      color: "text-yellow-600" 
+    {
+      title: "Pending",
+      value: countByBucket(b => b === "created"),
+      icon: Clock,
+      color: "text-yellow-600"
     },
-    { 
-      title: "Delivered", 
-      value: bookings.filter(b => b.status === "delivered").length.toString(), 
-      icon: CheckCircle, 
-      color: "text-purple-600" 
+    {
+      title: "Delivered",
+      value: countByBucket(b => b === "delivered"),
+      icon: CheckCircle,
+      color: "text-purple-600"
+    },
+    {
+      title: "Cancelled",
+      value: countByBucket(b => b === "cancelled" || b === "rto"),
+      icon: XCircle,
+      color: "text-red-600"
     },
   ];
 
@@ -339,8 +356,8 @@ const OrderMonitoring = () => {
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">All Orders ({bookings.length})</TabsTrigger>
-          <TabsTrigger value="active">Active ({bookings.filter(b => b.status !== "delivered").length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({bookings.filter(b => b.status === "delivered").length})</TabsTrigger>
+          <TabsTrigger value="active">Active ({bookings.filter(b => bucketOfStatus(b.status) !== "delivered" && bucketOfStatus(b.status) !== "cancelled" && bucketOfStatus(b.status) !== "rto").length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({bookings.filter(b => bucketOfStatus(b.status) === "delivered").length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -479,7 +496,7 @@ const OrderMonitoring = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredBookings.filter(b => b.status !== "delivered").map((booking) => (
+                      {filteredBookings.filter(b => { const bk = bucketOfStatus(b.status); return bk !== "delivered" && bk !== "cancelled" && bk !== "rto"; }).map((booking) => (
                         <TableRow key={booking.id}>
                           <TableCell className="font-medium">
                             {booking.tracking_id || booking.id.slice(0, 8)}
@@ -542,7 +559,7 @@ const OrderMonitoring = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredBookings.filter(b => b.status === "delivered").map((booking) => (
+                      {filteredBookings.filter(b => bucketOfStatus(b.status) === "delivered").map((booking) => (
                         <TableRow key={booking.id}>
                           <TableCell className="font-medium">
                             {booking.tracking_id || booking.id.slice(0, 8)}
