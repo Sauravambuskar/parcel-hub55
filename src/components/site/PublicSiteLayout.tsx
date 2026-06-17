@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Linkedin, Facebook, Instagram, ChevronDown, BookOpen, HelpCircle, Mail, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand, Landmark } from "lucide-react";
+import { Menu, X, Linkedin, Facebook, Instagram, ChevronDown, BookOpen, HelpCircle, Briefcase, Package, Truck, Zap, MapPin, User, Home, Building2, Hand, Landmark } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const C = {
