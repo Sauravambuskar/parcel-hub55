@@ -68,6 +68,8 @@ export type Database = {
           package_weight: string
           packaging_amount: number | null
           packaging_required: boolean | null
+          parcel_photos: Json
+          parcel_photos_uploaded_at: string | null
           partner_error_raw: string | null
           payment_id: string | null
           payment_status: string | null
@@ -121,6 +123,8 @@ export type Database = {
           package_weight: string
           packaging_amount?: number | null
           packaging_required?: boolean | null
+          parcel_photos?: Json
+          parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
           payment_id?: string | null
           payment_status?: string | null
@@ -174,6 +178,8 @@ export type Database = {
           package_weight?: string
           packaging_amount?: number | null
           packaging_required?: boolean | null
+          parcel_photos?: Json
+          parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
           payment_id?: string | null
           payment_status?: string | null
