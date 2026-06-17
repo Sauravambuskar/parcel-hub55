@@ -11,12 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw, FileSpreadsheet, FileText } from "lucide-react";
+import { IndianRupee, TrendingUp, Download, Percent, Truck, RefreshCw, FileSpreadsheet, FileText, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import { downloadAccountsWorkbook, type ExportBooking } from "@/lib/accounts-export";
+import { bucketOfStatus } from "@/lib/booking-status";
 
 interface Booking {
   id: string;
@@ -182,6 +183,8 @@ const RevenueManagement = () => {
   const gstCollected = sumBy(collectedBookings, k => k.gst);
   const copPendingTotal = sumBy(copBookings, k => k.total);
 
+  const completedOrdersCount = filteredBookings.filter(b => bucketOfStatus(b.status) === "delivered").length;
+
   const revenueStats = [
     {
       title: "Total Collections",
@@ -189,6 +192,13 @@ const RevenueManagement = () => {
       change: `${collectedBookings.length} paid orders`,
       icon: IndianRupee,
       color: "text-green-600",
+    },
+    {
+      title: "Completed Orders",
+      value: completedOrdersCount.toLocaleString(),
+      change: "Delivered in this period",
+      icon: CheckCircle,
+      color: "text-emerald-600",
     },
     {
       title: "Pending COP Collection",
