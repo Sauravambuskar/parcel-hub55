@@ -117,6 +117,8 @@ function NavDropdown({ label, items, width = "w-52" }: { label: string; items: D
 
 function SiteHeader() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const [resourcesOpenMobile, setResourcesOpenMobile] = useState(false);
   useEffect(() => {
