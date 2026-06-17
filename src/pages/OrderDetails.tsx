@@ -9,6 +9,7 @@ import { CURRENT_ENV } from "@/config/environment";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthSession } from "@/lib/auth";
 import { isCancellable } from "@/hooks/useCancelOrder";
+import ParcelPhotoUpload from "@/components/booking/ParcelPhotoUpload";
 
 interface OrderAddress {
   type: string;
@@ -703,8 +704,8 @@ const OrderDetails = () => {
           </Card>
         )}
 
-        {/* Label Printing Instructions */}
-        <Card className="p-4">
+        {/* Label Printing Instructions + Parcel Photo Upload */}
+        <Card className="p-4 space-y-4">
           <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Printer className="h-5 w-5 text-warning" />
@@ -720,14 +721,27 @@ const OrderDetails = () => {
               <li>
                 <span className="font-medium text-foreground">Attach</span> the printed label securely on your shipment box
               </li>
+              <li>
+                <span className="font-medium text-foreground">Upload</span> photos of your packed parcel below (required before pickup)
+              </li>
             </ol>
           </div>
-          <div className="flex items-start gap-3 rounded-lg bg-primary/10 p-3 mt-3">
+          <div className="flex items-start gap-3 rounded-lg bg-primary/10 p-3">
             <Package className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">Note:</span> The courier will only pick up your shipment if the shipping label is clearly visible and attached to the package.
             </p>
           </div>
+
+          {bookingMeta?.id && (
+            <div className="pt-2 border-t">
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                Parcel Photos
+              </h4>
+              <ParcelPhotoUpload bookingId={bookingMeta.id} />
+            </div>
+          )}
         </Card>
 
         {/* Download Actions */}

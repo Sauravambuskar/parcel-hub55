@@ -1,41 +1,54 @@
-## Goal
-Capture 3 onboarding questions from every user (new signups + existing users on next login), store them on their profile, expose in admin User Management with CSV export.
+## Parcel Photo Upload Feature
 
-## Questions
-1. **Where did you hear about us?** — free text (max 200 chars)
-2. **How often do you send parcels in a month?** — dropdown: `1-5`, `5-10`, `10+`
-3. **What type of courier do you send?** — dropdown: `Documents`, `Box Items`
+Let users upload up to 5 photos of the packed parcel after booking confirmation. Photos are mandatory before pickup, surfaced in the post-order instruction box (where label printing instructions live) and in the Order History / Order Details page. Admins view & download photos from the Order Monitoring section.
 
-## Database (migration)
-Add 4 columns to `public.profiles`:
-- `survey_source text`
-- `survey_frequency text` (check: 1-5 / 5-10 / 10+)
-- `survey_courier_type text` (check: Documents / Box Items)
-- `survey_completed_at timestamptz`
+### 1. Storage
+- Create a new private Supabase storage bucket `parcel-photos`.
+- Path convention: `{user_id}/{booking_id}/{uuid}.{ext}`.
+- RLS on `storage.objects`:
+  - Users can `SELECT/INSERT/DELETE` their own files (path prefix = their `user_id`).
+  - Admins (`is_admin(auth.uid())`) can `SELECT` all.
+- Admin downloads use short-lived signed URLs generated client-side.
 
-No new table — keeps the survey one-to-one with the user. Existing RLS already covers self-update via the `update-profile` edge function.
+### 2. Database (migration)
+- Add column `parcel_photos jsonb DEFAULT '[]'::jsonb` to `public.bookings`.
+  - Each entry: `{ path: string, uploaded_at: timestamptz }`.
+- Add column `parcel_photos_uploaded_at timestamptz` for sorting/filtering.
+- No new tables.
 
-## Frontend
-**New component:** `src/components/OnboardingSurveyDialog.tsx`
-- Modal dialog (cannot be dismissed without submitting; "Skip for now" not allowed per requirement to capture data — confirm in question below).
-- 3 fields with validation (zod).
-- Submits via existing `update-profile` edge function (extended to accept the 4 new fields).
+### 3. Upload UI (user-facing)
+- New component `src/components/booking/ParcelPhotoUpload.tsx`:
+  - Drag-drop + file picker, image-only, max 5 files, max ~5MB each, client-side compression (canvas resize to 1600px).
+  - Thumbnails with delete button.
+  - Uploads via `supabase.storage.from('parcel-photos').upload(...)` then calls edge function `save-parcel-photos` to persist the path array on the booking (RLS-safe).
+- Mount points:
+  - **Order History detail / Order Details page** (`src/pages/OrderDetails.tsx`) — primary upload location.
+  - **Post-order confirmation instructions box** (`src/components/booking/BookingConfirmationDialog.tsx` — the screen with label-printing instructions): add a clearly highlighted "Upload parcel photos (required before pickup)" section above/below label instructions, linking to / inlining the same component.
+- Mandatory enforcement:
+  - Warning banner on Order Details + confirmation dialog when `parcel_photos.length === 0`: "Pickup will not be scheduled until parcel photos are uploaded."
+  - Disable / hide "Mark ready / Schedule pickup" actions until ≥1 photo uploaded.
+  - Backend pickup-trigger edge functions (Delhivery/Shadowfax/etc. pickup-request) reject with clear error if `parcel_photos` is empty.
 
-**Trigger logic:** In `src/App.tsx` (or a small `SurveyGate` mounted under authenticated routes):
-- After auth resolves, fetch profile.
-- If `survey_completed_at IS NULL` → show dialog over current route.
-- Applies to both fresh signups and returning existing users on their next session.
+### 4. Edge function
+- New `supabase/functions/save-parcel-photos/index.ts`:
+  - Auth via existing JWT pattern, verifies caller owns the booking, validates payload (zod: array of {path} max length 5), updates `bookings.parcel_photos` and `parcel_photos_uploaded_at`.
 
-**Edge function update:** `supabase/functions/update-profile/index.ts` — accept and persist the 4 new fields; set `survey_completed_at = now()` when all three answers present.
+### 5. Admin Order Monitoring
+- `src/pages/admin/OrderMonitoring.tsx`:
+  - Add "Photos" column showing count badge (e.g. `📷 3`).
+  - Row expand / detail modal: thumbnail grid of all parcel photos with:
+    - Click to open full-size lightbox.
+    - "Download" button per photo (signed URL, `download` attribute).
+    - "Download all (zip)" button — client-side using `jszip` (add dep) fetching each signed URL.
+  - Filter toggle: "Missing parcel photos".
 
-## Admin User Management
-Update `src/pages/admin/UserManagement.tsx`:
-- Add columns in the user table: Source, Frequency, Courier Type, Survey Date.
-- Add **Export CSV** button that downloads all users (or filtered set) including the survey columns. Client-side CSV generation from the already-fetched rows.
+### Technical notes
+- New dep: `jszip` for admin bulk download.
+- Reuse existing `supabase` client; no service-role usage in browser.
+- Signed URL TTL: 5 minutes.
+- Image compression handled in browser to keep bucket lean.
+- File-type whitelist: `image/jpeg`, `image/png`, `image/webp`, `image/heic` (converted to jpeg on upload).
 
-## Out of scope
-- No changes to login/OTP flow itself — the gate fires post-auth on first authenticated render.
-- No edits to KYC or other profile fields.
-
-## Open question
-The user said "These responses…will help us capture some data." Should the survey be **mandatory** (blocking modal, no skip) or **dismissible once** (skip → ask again next login)? Default in plan is mandatory; will confirm before building.
+### Files touched
+- New: `supabase/migrations/<ts>_parcel_photos.sql`, `supabase/functions/save-parcel-photos/index.ts`, `src/components/booking/ParcelPhotoUpload.tsx`, `src/components/admin/ParcelPhotoGallery.tsx`.
+- Edited: `src/pages/OrderDetails.tsx`, `src/components/booking/BookingConfirmationDialog.tsx`, `src/pages/admin/OrderMonitoring.tsx`, `src/integrations/supabase/types.ts` (auto), pickup-request edge functions (add photo-presence guard).

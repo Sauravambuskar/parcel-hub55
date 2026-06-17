@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink, Navigation, XCircle, Download, Loader2, RefreshCw } from "lucide-react";
+import { Package, Clock, AlertCircle, CheckCircle, MapPin, User, Eye, Search, IndianRupee, Truck, Phone, Calendar, FileText, ExternalLink, Navigation, XCircle, Download, Loader2, RefreshCw, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import { useCancelOrder, isCancellable } from "@/hooks/useCancelOrder";
 import CancelOrderDialog from "@/components/booking/CancelOrderDialog";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { useAdminAuth } from "@/contexts/useAdminAuth";
+import ParcelPhotoGallery from "@/components/admin/ParcelPhotoGallery";
 
 // Map booking_source -> partner edge function names
 const PARTNER_FN: Record<string, { tracking: string; label?: string }> = {
@@ -77,6 +78,7 @@ interface Booking {
   partner_error_raw?: string | null;
   refund_id?: string | null;
   refund_reason?: string | null;
+  parcel_photos?: any;
 }
 
 const OrderMonitoring = () => {
@@ -364,6 +366,7 @@ const OrderMonitoring = () => {
                         <TableHead>Route</TableHead>
                         <TableHead>Courier</TableHead>
                         <TableHead>Amount</TableHead>
+                        <TableHead>Photos</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -408,6 +411,19 @@ const OrderMonitoring = () => {
                           <TableCell className="text-sm">{booking.courier_name}</TableCell>
                           <TableCell className="font-medium">
                             ₹{booking.courier_price?.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            {Array.isArray(booking.parcel_photos) && booking.parcel_photos.length > 0 ? (
+                              <Badge variant="outline" className="gap-1">
+                                <Camera className="h-3 w-3" />
+                                {booking.parcel_photos.length}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground gap-1">
+                                <Camera className="h-3 w-3 opacity-50" />
+                                0
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1 items-start">
@@ -852,6 +868,22 @@ const OrderMonitoring = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Parcel Photos uploaded by customer */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Parcel Photos (Customer Uploaded)
+                  </CardTitle>
+                  <CardDescription>
+                    Verify parcel condition before pickup and on delivery.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ParcelPhotoGallery bookingId={selectedBooking.id} />
+                </CardContent>
+              </Card>
 
               {/* Live Tracking from Partner API */}
               <Card className="border-primary/20">

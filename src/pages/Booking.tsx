@@ -57,6 +57,7 @@ const Booking = () => {
     labelUrl: string | null;
     courierName: string;
     trackingId: string;
+    bookingId: string | null;
   } | null>(null);
   const [senderData, setSenderData] = useState({
     name: "",
@@ -1080,7 +1081,7 @@ const Booking = () => {
       } as any;
       // Persist via edge function (RLS-safe; Prayog auth doesn't set auth.uid()).
       const prayogAuthRaw = (localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth'));
-      const { error: dbError } = await supabase.functions.invoke('save-booking', {
+      const { data: dbData, error: dbError } = await supabase.functions.invoke('save-booking', {
         body: bookingData,
         headers: prayogAuthRaw ? { 'x-prayog-auth': prayogAuthRaw } : {},
       });
@@ -1094,7 +1095,8 @@ const Booking = () => {
         awbNumber: awbNumber || trackingId,
         labelUrl: labelUrl,
         courierName: selectedCourierData?.name || selectedService?.partner_code || "",
-        trackingId: trackingId
+        trackingId: trackingId,
+        bookingId: dbData?.booking?.id || null,
       });
       // Clear draft on successful booking
       localStorage.removeItem('booking_draft');
@@ -1286,7 +1288,7 @@ const Booking = () => {
             }
           });
         }
-      }} awbNumber={confirmationData?.awbNumber || ""} labelUrl={confirmationData?.labelUrl} courierName={confirmationData?.courierName} isReversePickup={(confirmationData?.courierName || "").toLowerCase().includes("shadowfax")} />
+      }} awbNumber={confirmationData?.awbNumber || ""} labelUrl={confirmationData?.labelUrl} courierName={confirmationData?.courierName} isReversePickup={(confirmationData?.courierName || "").toLowerCase().includes("shadowfax")} bookingId={confirmationData?.bookingId} />
       </div>
     </PageBackground>;
 };
