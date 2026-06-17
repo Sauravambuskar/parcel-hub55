@@ -44,7 +44,6 @@ const cityItems = [
 const resourceItems = [
   { href: "/blog", label: "Blog", icon: BookOpen },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
-  { href: "/careers", label: "Careers", icon: Briefcase },
   { href: "/contact", label: "Contact Us", icon: Mail },
 ];
 
