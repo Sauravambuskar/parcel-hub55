@@ -1228,10 +1228,12 @@ const Booking = () => {
           </div>
         </header>
 
-        <div className="booking-shell p-3 md:p-4 max-w-2xl mx-auto">
+        <div className="booking-shell p-3 md:p-4 max-w-2xl mx-auto pb-24 md:pb-4">
           <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
           {renderCurrentStep()}
         </div>
+
+        <BottomNav />
 
         {/* Payment Modal */}
         {selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
