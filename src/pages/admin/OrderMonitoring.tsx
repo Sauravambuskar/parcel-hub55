@@ -78,7 +78,7 @@ interface Booking {
   partner_error_raw?: string | null;
   refund_id?: string | null;
   refund_reason?: string | null;
-  parcel_photos?: Array<{ path: string; uploaded_at: string }> | null;
+  parcel_photos?: any;
 }
 
 const OrderMonitoring = () => {
