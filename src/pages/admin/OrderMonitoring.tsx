@@ -345,6 +345,7 @@ const OrderMonitoring = () => {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="in_transit">In Transit</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
             <SelectItem value="cop_pending">💵 COP Pending</SelectItem>
           </SelectContent>
         </Select>
