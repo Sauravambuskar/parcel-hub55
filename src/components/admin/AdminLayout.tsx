@@ -46,6 +46,7 @@ const adminMenuItems: { title: string; url: string; icon: any; allowedRoles: Rol
   { title: "Support Management", url: "/admin/support", icon: MessageSquare, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Dispute Resolution", url: "/admin/disputes", icon: AlertOctagon, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Analytics & Insights", url: "/admin/analytics", icon: BarChart3, allowedRoles: ["super_admin"] },
+  { title: "Abandonment Funnel", url: "/admin/abandonment", icon: TrendingDown, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Content (CMS)", url: "/admin/cms", icon: FileEdit, allowedRoles: ["super_admin", "cms_editor"] },
   { title: "System Settings", url: "/admin/settings", icon: Settings, allowedRoles: ["super_admin"] },
 ];
