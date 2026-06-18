@@ -40,7 +40,7 @@ const BookingStep1 = ({
                 <h3 className="font-bold text-xl group-hover:text-primary transition-colors">
                   Domestic Delivery
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-foreground font-medium mt-1">
                   Send packages anywhere within India
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -74,11 +74,11 @@ const BookingStep1 = ({
                 <h3 className="font-bold text-xl text-muted-foreground">
                   International Delivery
                 </h3>
-                <p className="text-sm text-muted-foreground/70 mt-1">
+                <p className="text-sm text-foreground font-medium mt-1">
                   Send packages worldwide
                 </p>
                 <div className="flex gap-2 mt-3">
-                  <span className="text-xs bg-muted text-muted-foreground px-3 py-1 rounded-full font-medium">
+                  <span className="text-xs bg-muted text-muted-foreground px-3 py-1 rounded-full font-semibold">
                     Coming Soon
                   </span>
                 </div>
