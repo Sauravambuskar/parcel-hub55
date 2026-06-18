@@ -647,11 +647,11 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-12">
           Back
         </Button>
-        <Button onClick={handleContinue}>
+        <Button onClick={handleContinue} className="flex-1 h-12">
           Continue
         </Button>
       </div>
