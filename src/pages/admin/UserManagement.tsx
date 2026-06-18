@@ -275,6 +275,9 @@ const UserManagement = () => {
                       <TableHead className="cursor-pointer select-none" onClick={() => handleSort("survey_completed_at")}>
                         <span className="flex items-center">Survey At <SortIcon field="survey_completed_at" /></span>
                       </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("abandoned_step")}>
+                        <span className="flex items-center">Abandoned At <SortIcon field="abandoned_step" /></span>
+                      </TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
