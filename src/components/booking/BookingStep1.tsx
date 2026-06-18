@@ -44,13 +44,13 @@ const BookingStep1 = ({
                   Send packages anywhere within India
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="text-xs bg-success/15 text-success px-3 py-1 rounded-full font-medium border border-success/20">
+                  <span className="text-xs bg-success/15 text-success px-3 py-1 rounded-full font-semibold border border-success/20">
                     Same Day
                   </span>
-                  <span className="text-xs bg-primary/15 text-primary px-3 py-1 rounded-full font-medium border border-primary/20">
+                  <span className="text-xs bg-primary/15 text-primary px-3 py-1 rounded-full font-semibold border border-primary/20">
                     Express
                   </span>
-                  <span className="text-xs bg-accent/50 text-accent-foreground px-3 py-1 rounded-full font-medium">
+                  <span className="text-xs bg-accent/50 text-accent-foreground px-3 py-1 rounded-full font-semibold">
                     Standard
                   </span>
                 </div>
