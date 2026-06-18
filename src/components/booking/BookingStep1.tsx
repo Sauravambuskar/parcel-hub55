@@ -89,7 +89,7 @@ const BookingStep1 = ({
       </div>
 
       <div className="pt-2">
-        <Button onClick={onNext} className="w-full h-14 text-base font-semibold gap-2 group">
+        <Button onClick={onNext} className="w-full h-12 md:h-14 text-sm md:text-base font-semibold gap-2 group">
           Continue with Domestic Delivery
           <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
         </Button>
