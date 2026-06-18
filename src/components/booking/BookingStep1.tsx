@@ -8,13 +8,13 @@ interface BookingStep1Props {
 const BookingStep1 = ({
   onNext
 }: BookingStep1Props) => {
-  return <div className="space-y-8">
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mb-2">
+  return <div className="space-y-5 md:space-y-8">
+      <div className="text-center space-y-2 md:space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs md:text-sm font-medium mb-1 md:mb-2">
           <Sparkles className="h-4 w-4" />
           Fast & Reliable
         </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-secondary-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-secondary-foreground">
           Choose Service Type
         </h2>
         
@@ -26,7 +26,7 @@ const BookingStep1 = ({
           {/* Animated gradient background */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
           
-          <CardContent className="relative p-6">
+          <CardContent className="relative p-4 md:p-6">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -65,7 +65,7 @@ const BookingStep1 = ({
         <Card className="relative overflow-hidden border border-muted/50 opacity-70">
           <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,hsl(var(--muted)/0.1)_10px,hsl(var(--muted)/0.1)_20px)]" />
           
-          <CardContent className="relative p-6">
+          <CardContent className="relative p-4 md:p-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-muted/50 rounded-2xl flex items-center justify-center">
                 <Globe className="w-7 h-7 text-muted-foreground" />
@@ -89,7 +89,7 @@ const BookingStep1 = ({
       </div>
 
       <div className="pt-2">
-        <Button onClick={onNext} className="w-full h-14 text-base font-semibold gap-2 group">
+        <Button onClick={onNext} className="w-full h-12 md:h-14 text-sm md:text-base font-semibold gap-2 group">
           Continue with Domestic Delivery
           <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
         </Button>

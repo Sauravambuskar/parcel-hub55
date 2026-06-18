@@ -18,17 +18,17 @@ const DisclaimerStep = ({
       onNext();
     }
   };
-  return <Card className="mt-6">
-      <CardHeader className="text-center">
+  return <Card className="mt-4 md:mt-6">
+      <CardHeader className="text-center p-4 md:p-6 pb-2 md:pb-4">
         <div className="flex items-center justify-center gap-2">
-          <AlertTriangle className="h-6 w-6 text-warning" />
-          <CardTitle>Important Declaration</CardTitle>
+          <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 text-warning" />
+          <CardTitle className="text-lg md:text-xl">Important Declaration</CardTitle>
         </div>
-        <CardDescription>
+        <CardDescription className="text-xs md:text-sm">
           Please read and accept the terms before proceeding
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5 md:space-y-6 p-4 md:p-6 pt-0">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-sm">
@@ -76,11 +76,11 @@ const DisclaimerStep = ({
           </label>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onBack} className="flex-1">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+          <Button variant="outline" onClick={onBack} className="flex-1 h-12">
             Back
           </Button>
-          <Button onClick={handleContinue} disabled={!accepted} className="flex-1">
+          <Button onClick={handleContinue} disabled={!accepted} className="flex-1 h-12">
             Accept & Continue
           </Button>
         </div>

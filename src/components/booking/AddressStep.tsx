@@ -339,9 +339,9 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Sender Details</h2>
+          <h2 className="text-lg md:text-xl font-semibold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
             // Pincode mismatch — block apply, open dialog
             if (addr.pincode && addr.pincode !== pickupPincode) {
@@ -476,9 +476,9 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Receiver Details</h2>
+          <h2 className="text-lg md:text-xl font-semibold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
             if (addr.pincode && addr.pincode !== deliveryPincode) {
               setMismatchDialog({
@@ -611,8 +611,8 @@ const AddressStep = ({
       </Card>
 
       {/* Package Information Card */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <Card className="p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
           Package Information
         </h2>
@@ -647,11 +647,11 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-12">
           Back
         </Button>
-        <Button onClick={handleContinue}>
+        <Button onClick={handleContinue} className="flex-1 h-12">
           Continue
         </Button>
       </div>

@@ -371,15 +371,15 @@ const BookingStep2 = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <MapPin className="h-5 w-5 text-primary" />
             Pincode Information
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4 md:p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
@@ -428,13 +428,13 @@ const BookingStep2 = ({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Package className="h-5 w-5 text-primary" />
             Package Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5 md:space-y-6 p-4 md:p-6 pt-0">
           <div className="space-y-3">
             <Label>Type of Good *</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -592,7 +592,7 @@ const BookingStep2 = ({
         </Card>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
         <Button variant="outline" onClick={onBack} className="flex-1 h-12">
           Back
         </Button>
