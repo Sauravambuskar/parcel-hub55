@@ -8,13 +8,13 @@ interface BookingStep1Props {
 const BookingStep1 = ({
   onNext
 }: BookingStep1Props) => {
-  return <div className="space-y-8">
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mb-2">
+  return <div className="space-y-5 md:space-y-8">
+      <div className="text-center space-y-2 md:space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs md:text-sm font-medium mb-1 md:mb-2">
           <Sparkles className="h-4 w-4" />
           Fast & Reliable
         </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-secondary-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text bg-primary-glow text-secondary-foreground">
           Choose Service Type
         </h2>
         
