@@ -341,7 +341,7 @@ const AddressStep = ({
 
       <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Sender Details</h2>
+          <h2 className="text-lg md:text-xl font-semibold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
             // Pincode mismatch — block apply, open dialog
             if (addr.pincode && addr.pincode !== pickupPincode) {
@@ -478,7 +478,7 @@ const AddressStep = ({
 
       <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Receiver Details</h2>
+          <h2 className="text-lg md:text-xl font-semibold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
             if (addr.pincode && addr.pincode !== deliveryPincode) {
               setMismatchDialog({
@@ -612,7 +612,7 @@ const AddressStep = ({
 
       {/* Package Information Card */}
       <Card className="p-4 md:p-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
           Package Information
         </h2>
