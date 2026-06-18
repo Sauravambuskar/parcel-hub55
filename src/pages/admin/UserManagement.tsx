@@ -306,6 +306,18 @@ const UserManagement = () => {
                         <TableCell>
                           {user.survey_completed_at ? format(new Date(user.survey_completed_at), "MMM dd, yyyy HH:mm") : "—"}
                         </TableCell>
+                        <TableCell>
+                          {user.abandoned_step ? (
+                            <div className="flex flex-col">
+                              <Badge variant="destructive" className="w-fit">Step {user.abandoned_step}: {user.abandoned_step_name}</Badge>
+                              {user.abandoned_at && (
+                                <span className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(user.abandoned_at), "MMM dd, HH:mm")}
+                                </span>
+                              )}
+                            </div>
+                          ) : "—"}
+                        </TableCell>
                         <TableCell className="space-x-2">
                           <Button 
                             size="sm" 
