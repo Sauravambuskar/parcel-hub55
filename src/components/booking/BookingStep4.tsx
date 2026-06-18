@@ -65,7 +65,7 @@ const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Pr
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg font-bold">{option.title}</h3>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
+                    <p className="text-sm text-foreground font-medium mb-2">{option.description}</p>
                     <Badge variant="outline" className="text-xs">
                       Delivery: {option.timeframe}
                     </Badge>
