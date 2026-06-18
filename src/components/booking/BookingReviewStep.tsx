@@ -70,14 +70,14 @@ const BookingReviewStep = ({
   const totalAmount = baseFareRounded + gstAmount;
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>Review Your Booking</CardTitle>
-        <CardDescription>
+    <Card className="mt-4 md:mt-6">
+      <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+        <CardTitle className="text-lg md:text-xl">Review Your Booking</CardTitle>
+        <CardDescription className="text-xs md:text-sm">
           Please review all details before confirming your order
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5 md:space-y-6 p-4 md:p-6 pt-0">
         {/* Sender Details */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
