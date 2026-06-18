@@ -54,6 +54,19 @@ const UserManagement = () => {
 
       if (profilesError) throw profilesError;
 
+      // Fetch all booking progress (abandoned + completed) once
+      const { data: progressRows } = await supabase
+        .from('booking_progress' as any)
+        .select('user_id, last_step, last_step_name, updated_at, completed')
+        .order('updated_at', { ascending: false });
+
+      // Latest abandoned (not completed) session per user
+      const latestAbandoned = new Map<string, any>();
+      ((progressRows as any[]) || []).forEach((row) => {
+        if (row.completed) return;
+        if (!latestAbandoned.has(row.user_id)) latestAbandoned.set(row.user_id, row);
+      });
+
       // Fetch booking counts for each user
       const usersWithCounts = await Promise.all(
         (profiles || []).map(async (profile: any) => {
@@ -62,8 +75,10 @@ const UserManagement = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', profile.user_id);
 
+          const ab = latestAbandoned.get(profile.user_id);
           return {
             id: profile.id,
+            user_id: profile.user_id,
             full_name: profile.full_name,
             phone: profile.phone,
             email: profile.email,
@@ -74,6 +89,9 @@ const UserManagement = () => {
             survey_frequency: profile.survey_frequency ?? null,
             survey_courier_type: profile.survey_courier_type ?? null,
             survey_completed_at: profile.survey_completed_at ?? null,
+            abandoned_step: ab?.last_step ?? null,
+            abandoned_step_name: ab?.last_step_name ?? null,
+            abandoned_at: ab?.updated_at ?? null,
           };
         })
       );
