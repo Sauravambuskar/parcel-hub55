@@ -65,7 +65,7 @@ const BookingStep1 = ({
         <Card className="relative overflow-hidden border border-muted/50 opacity-70">
           <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,hsl(var(--muted)/0.1)_10px,hsl(var(--muted)/0.1)_20px)]" />
           
-          <CardContent className="relative p-6">
+          <CardContent className="relative p-4 md:p-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-muted/50 rounded-2xl flex items-center justify-center">
                 <Globe className="w-7 h-7 text-muted-foreground" />
