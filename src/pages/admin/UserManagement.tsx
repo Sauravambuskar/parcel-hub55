@@ -180,7 +180,7 @@ const UserManagement = () => {
   });
 
   const exportCsv = () => {
-    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
+    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At","Abandoned Step","Abandoned Step Name","Abandoned At"];
     const escape = (v: any) => {
       const s = v === null || v === undefined ? "" : String(v);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -196,6 +196,9 @@ const UserManagement = () => {
       u.survey_frequency || "",
       u.survey_courier_type || "",
       u.survey_completed_at ? format(new Date(u.survey_completed_at), "yyyy-MM-dd HH:mm") : "",
+      u.abandoned_step ?? "",
+      u.abandoned_step_name || "",
+      u.abandoned_at ? format(new Date(u.abandoned_at), "yyyy-MM-dd HH:mm") : "",
     ].map(escape).join(","));
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
