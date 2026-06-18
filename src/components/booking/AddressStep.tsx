@@ -339,7 +339,7 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
@@ -476,7 +476,7 @@ const AddressStep = ({
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
@@ -611,7 +611,7 @@ const AddressStep = ({
       </Card>
 
       {/* Package Information Card */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
           Package Information
