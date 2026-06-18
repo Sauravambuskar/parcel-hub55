@@ -15,7 +15,8 @@ import {
   MapPin,
   AlertTriangle,
   FileEdit,
-  AlertOctagon
+  AlertOctagon,
+  TrendingDown
 } from "lucide-react";
 import { 
   Sidebar, 
