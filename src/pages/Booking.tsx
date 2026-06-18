@@ -163,6 +163,11 @@ const Booking = () => {
     }
   }, [currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
 
+  // Track furthest step reached for admin abandonment analytics
+  useEffect(() => {
+    if (userId) trackStep(userId, currentStep);
+  }, [userId, currentStep]);
+
   // Auto-populate pincodes from serviceability check - always sync from step 2 values
   useEffect(() => {
     if (pickupPincode) {
