@@ -26,7 +26,7 @@ const BookingStep1 = ({
           {/* Animated gradient background */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
           
-          <CardContent className="relative p-6">
+          <CardContent className="relative p-4 md:p-6">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
