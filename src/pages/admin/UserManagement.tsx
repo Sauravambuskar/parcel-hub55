@@ -13,6 +13,7 @@ import { format } from "date-fns";
 
 interface UserData {
   id: string;
+  user_id: string;
   full_name: string | null;
   phone: string | null;
   email: string | null;
@@ -23,6 +24,9 @@ interface UserData {
   survey_frequency: string | null;
   survey_courier_type: string | null;
   survey_completed_at: string | null;
+  abandoned_step: number | null;
+  abandoned_step_name: string | null;
+  abandoned_at: string | null;
 }
 
 const UserManagement = () => {
