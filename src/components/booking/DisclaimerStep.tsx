@@ -76,11 +76,11 @@ const DisclaimerStep = ({
           </label>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onBack} className="flex-1">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+          <Button variant="outline" onClick={onBack} className="flex-1 h-12">
             Back
           </Button>
-          <Button onClick={handleContinue} disabled={!accepted} className="flex-1">
+          <Button onClick={handleContinue} disabled={!accepted} className="flex-1 h-12">
             Accept & Continue
           </Button>
         </div>
