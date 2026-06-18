@@ -428,13 +428,13 @@ const BookingStep2 = ({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Package className="h-5 w-5 text-primary" />
             Package Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5 md:space-y-6 p-4 md:p-6 pt-0">
           <div className="space-y-3">
             <Label>Type of Good *</Label>
             <div className="grid grid-cols-2 gap-2">
