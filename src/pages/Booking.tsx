@@ -22,6 +22,7 @@ import BookingReviewStep from "@/components/booking/BookingReviewStep";
 import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
 import BottomNav from "@/components/BottomNav";
 import { extractInvokeError } from "@/lib/invoke-error";
+import { trackStep, markCompleted } from "@/lib/booking-progress";
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState("");
