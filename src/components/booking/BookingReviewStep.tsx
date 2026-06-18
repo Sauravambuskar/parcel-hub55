@@ -84,7 +84,7 @@ const BookingReviewStep = ({
             <MapPin className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">Pickup Details</h3>
           </div>
-          <div className="ml-7 space-y-1 text-sm">
+          <div className="ml-7 sm:ml-7 space-y-1 text-sm">
             <p className="font-medium">{senderData.name}</p>
             <p className="text-muted-foreground">{senderData.phone}</p>
             <p className="text-muted-foreground">
@@ -101,7 +101,7 @@ const BookingReviewStep = ({
             <MapPin className="h-5 w-5 text-secondary" />
             <h3 className="font-semibold">Delivery Details</h3>
           </div>
-          <div className="ml-7 space-y-1 text-sm">
+          <div className="ml-7 sm:ml-7 space-y-1 text-sm">
             <p className="font-medium">{receiverData.name}</p>
             <p className="text-muted-foreground">{receiverData.phone}</p>
             <p className="text-muted-foreground">
@@ -118,7 +118,7 @@ const BookingReviewStep = ({
             <Package className="h-5 w-5 text-accent" />
             <h3 className="font-semibold">Package Information</h3>
           </div>
-          <div className="ml-7 grid grid-cols-2 gap-3 text-sm">
+          <div className="ml-7 sm:ml-7 grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-muted-foreground">Type</p>
               <p className="font-medium capitalize">{packageDetails.goodsType}</p>
@@ -158,7 +158,7 @@ const BookingReviewStep = ({
             if (deadKg <= 0) return null;
             const fmt = (kg: number) => `${Math.round(kg * 1000).toLocaleString()} g`;
             return (
-              <div className="ml-7 mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 flex justify-between items-center text-xs">
+              <div className="ml-7 sm:ml-7 mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 flex justify-between items-center text-xs">
                 <span className="font-semibold">Chargeable weight (billed)</span>
                 <span className="font-bold text-primary">{fmt(chargeableKg)}</span>
               </div>
@@ -175,7 +175,7 @@ const BookingReviewStep = ({
             <Truck className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">Courier & Schedule</h3>
           </div>
-          <div className="ml-7 space-y-3 text-sm">
+          <div className="ml-7 sm:ml-7 space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Courier Service</span>
               <span className="font-medium">{courierDetails.name}</span>
@@ -201,7 +201,7 @@ const BookingReviewStep = ({
             <IndianRupee className="h-5 w-5 text-green-600" />
             <h3 className="font-semibold">Payment Summary</h3>
           </div>
-          <div className="ml-7 space-y-2 text-sm">
+          <div className="ml-7 sm:ml-7 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Base Fare</span>
               <span>₹{Math.round(courierDetails.baseFare)}</span>
