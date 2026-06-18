@@ -612,13 +612,13 @@ const AddressStep = ({
 
       {/* Package Information Card */}
       <Card className="p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
+        <h2 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
           Package Information
         </h2>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="shipment-value">Shipment Value (₹)</Label>
+            <Label htmlFor="shipment-value" className="font-semibold text-foreground">Shipment Value (₹)</Label>
             <Input
               id="shipment-value"
               type="number"
@@ -627,20 +627,20 @@ const AddressStep = ({
               placeholder="Enter value for insurance"
               min="0"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground font-medium mt-1">
               Optional: For insurance purposes
             </p>
           </div>
 
           <div>
-            <Label htmlFor="package-description">Package Contents *</Label>
+            <Label htmlFor="package-description" className="font-semibold text-foreground">Package Contents *</Label>
             <Input
               id="package-description"
               value={packageDescription}
               onChange={(e) => onPackageChange("packageDescription", e.target.value)}
               placeholder="e.g., Documents, Electronics, Clothing"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground font-medium mt-1">
               Describe the contents of your package
             </p>
           </div>
