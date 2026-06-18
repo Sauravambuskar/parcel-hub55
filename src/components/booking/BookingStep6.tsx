@@ -31,12 +31,12 @@ const BookingStep6 = ({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">Schedule Pickup</h2>
-        <p className="text-muted-foreground">Choose when you'd like your parcel picked up</p>
+        <h2 className="text-2xl font-bold">Schedule Pickup</h2>
+        <p className="text-foreground font-medium">Choose when you'd like your parcel picked up</p>
       </div>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Select Pickup Date</h3>
+        <h3 className="font-bold mb-4">Select Pickup Date</h3>
         
         <div className="space-y-4">
           {/* Quick select buttons */}
@@ -47,7 +47,7 @@ const BookingStep6 = ({
               className="h-16"
             >
               <div className="text-center">
-                <div className="font-semibold">Today</div>
+                <div className="font-bold">Today</div>
                 <div className="text-xs opacity-80">{format(today, 'MMM dd')}</div>
               </div>
             </Button>
@@ -58,7 +58,7 @@ const BookingStep6 = ({
               className="h-16"
             >
               <div className="text-center">
-                <div className="font-semibold">Tomorrow</div>
+                <div className="font-bold">Tomorrow</div>
                 <div className="text-xs opacity-80">{format(tomorrow, 'MMM dd')}</div>
               </div>
             </Button>
@@ -99,7 +99,7 @@ const BookingStep6 = ({
         <div className="flex items-start gap-3 mb-4">
           <Package className="h-5 w-5 mt-1 text-primary" />
           <div className="flex-1">
-            <h3 className="font-semibold mb-2">Order Summary</h3>
+            <h3 className="font-bold mb-2">Order Summary</h3>
             <div className="text-2xl font-bold">₹{Math.round(totalAmount)}</div>
           </div>
         </div>

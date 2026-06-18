@@ -316,7 +316,7 @@ const AddressStep = ({
     <div className="space-y-6">
       {/* Self / Someone Else Toggle */}
       <Card className="p-4">
-        <Label className="text-sm font-medium mb-3 block">Sending for</Label>
+        <Label className="text-sm font-semibold text-foreground mb-3 block">Sending for</Label>
         <div className="flex gap-2">
           <Button
             type="button"
@@ -341,7 +341,7 @@ const AddressStep = ({
 
       <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg md:text-xl font-semibold">Sender Details</h2>
+          <h2 className="text-lg md:text-xl font-bold">Sender Details</h2>
           <SavedAddressPicker type="sender" onSelect={(addr) => {
             // Pincode mismatch — block apply, open dialog
             if (addr.pincode && addr.pincode !== pickupPincode) {
@@ -364,7 +364,7 @@ const AddressStep = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="sender-name">Full Name *</Label>
+              <Label htmlFor="sender-name" className="font-semibold text-foreground">Full Name *</Label>
               <Input
                 id="sender-name"
                 value={senderData.name}
@@ -376,7 +376,7 @@ const AddressStep = ({
               {submitted && !senderData.name && <p className="text-xs text-destructive mt-1">Name is required</p>}
             </div>
             <div>
-              <Label htmlFor="sender-phone">Phone Number * (10 digits)</Label>
+              <Label htmlFor="sender-phone" className="font-semibold text-foreground">Phone Number * (10 digits)</Label>
               <Input
                 id="sender-phone"
                 type="tel"
@@ -396,7 +396,7 @@ const AddressStep = ({
           </div>
 
           <div>
-            <Label htmlFor="sender-flatNo">Flat No./Building Name/House No. *</Label>
+            <Label htmlFor="sender-flatNo" className="font-semibold text-foreground">Flat No./Building Name/House No. *</Label>
             <Input
               id="sender-flatNo"
               value={senderData.flatNo}
@@ -441,7 +441,7 @@ const AddressStep = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="sender-city">City *</Label>
+              <Label htmlFor="sender-city" className="font-semibold text-foreground">City *</Label>
               <Input
                 id="sender-city"
                 value={senderData.city}
@@ -450,7 +450,7 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="sender-state">State *</Label>
+              <Label htmlFor="sender-state" className="font-semibold text-foreground">State *</Label>
               <Input
                 id="sender-state"
                 value={senderData.state}
@@ -459,7 +459,7 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="sender-pincode">Pincode *</Label>
+              <Label htmlFor="sender-pincode" className="font-semibold text-foreground">Pincode *</Label>
               <Input
                 id="sender-pincode"
                 value={senderData.pincode}
@@ -471,14 +471,14 @@ const AddressStep = ({
           </div>
           <div className="flex items-center gap-2 mt-3">
             <Checkbox id="save-sender" checked={saveSender} onCheckedChange={(v) => setSaveSender(!!v)} />
-            <Label htmlFor="save-sender" className="text-sm text-muted-foreground cursor-pointer">Save this address</Label>
+            <Label htmlFor="save-sender" className="text-sm text-foreground font-medium cursor-pointer">Save this address</Label>
           </div>
         </div>
       </Card>
 
       <Card className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg md:text-xl font-semibold">Receiver Details</h2>
+          <h2 className="text-lg md:text-xl font-bold">Receiver Details</h2>
           <SavedAddressPicker type="receiver" onSelect={(addr) => {
             if (addr.pincode && addr.pincode !== deliveryPincode) {
               setMismatchDialog({
@@ -500,7 +500,7 @@ const AddressStep = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="receiver-name">Full Name *</Label>
+              <Label htmlFor="receiver-name" className="font-semibold text-foreground">Full Name *</Label>
               <Input
                 id="receiver-name"
                 value={receiverData.name}
@@ -511,7 +511,7 @@ const AddressStep = ({
               {submitted && !receiverData.name && <p className="text-xs text-destructive mt-1">Name is required</p>}
             </div>
             <div>
-              <Label htmlFor="receiver-phone">Phone Number * (10 digits)</Label>
+              <Label htmlFor="receiver-phone" className="font-semibold text-foreground">Phone Number * (10 digits)</Label>
               <Input
                 id="receiver-phone"
                 type="tel"
@@ -530,7 +530,7 @@ const AddressStep = ({
           </div>
 
           <div>
-            <Label htmlFor="receiver-flatNo">Flat No./Building Name/House No. *</Label>
+            <Label htmlFor="receiver-flatNo" className="font-semibold text-foreground">Flat No./Building Name/House No. *</Label>
             <Input
               id="receiver-flatNo"
               value={receiverData.flatNo}
@@ -575,7 +575,7 @@ const AddressStep = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="receiver-city">City *</Label>
+              <Label htmlFor="receiver-city" className="font-semibold text-foreground">City *</Label>
               <Input
                 id="receiver-city"
                 value={receiverData.city}
@@ -584,7 +584,7 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="receiver-state">State *</Label>
+              <Label htmlFor="receiver-state" className="font-semibold text-foreground">State *</Label>
               <Input
                 id="receiver-state"
                 value={receiverData.state}
@@ -593,7 +593,7 @@ const AddressStep = ({
               />
             </div>
             <div>
-              <Label htmlFor="receiver-pincode">Pincode *</Label>
+              <Label htmlFor="receiver-pincode" className="font-semibold text-foreground">Pincode *</Label>
               <Input
                 id="receiver-pincode"
                 value={receiverData.pincode}
@@ -605,20 +605,20 @@ const AddressStep = ({
           </div>
           <div className="flex items-center gap-2 mt-3">
             <Checkbox id="save-receiver" checked={saveReceiver} onCheckedChange={(v) => setSaveReceiver(!!v)} />
-            <Label htmlFor="save-receiver" className="text-sm text-muted-foreground cursor-pointer">Save this address</Label>
+            <Label htmlFor="save-receiver" className="text-sm text-foreground font-medium cursor-pointer">Save this address</Label>
           </div>
         </div>
       </Card>
 
       {/* Package Information Card */}
       <Card className="p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
+        <h2 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
           Package Information
         </h2>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="shipment-value">Shipment Value (₹)</Label>
+            <Label htmlFor="shipment-value" className="font-semibold text-foreground">Shipment Value (₹)</Label>
             <Input
               id="shipment-value"
               type="number"
@@ -627,20 +627,20 @@ const AddressStep = ({
               placeholder="Enter value for insurance"
               min="0"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground font-medium mt-1">
               Optional: For insurance purposes
             </p>
           </div>
 
           <div>
-            <Label htmlFor="package-description">Package Contents *</Label>
+            <Label htmlFor="package-description" className="font-semibold text-foreground">Package Contents *</Label>
             <Input
               id="package-description"
               value={packageDescription}
               onChange={(e) => onPackageChange("packageDescription", e.target.value)}
               placeholder="e.g., Documents, Electronics, Clothing"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground font-medium mt-1">
               Describe the contents of your package
             </p>
           </div>

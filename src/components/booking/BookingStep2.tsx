@@ -374,7 +374,7 @@ const BookingStep2 = ({
     <div className="space-y-4 md:space-y-6">
       <Card>
         <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
-          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg font-bold">
             <MapPin className="h-5 w-5 text-primary" />
             Pincode Information
           </CardTitle>
@@ -382,7 +382,7 @@ const BookingStep2 = ({
         <CardContent className="space-y-4 p-4 md:p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="pickup-pincode">Pickup Pincode</Label>
+              <Label htmlFor="pickup-pincode" className="font-semibold text-foreground">Pickup Pincode</Label>
               <Input
                 id="pickup-pincode"
                 value={pickupPincode}
@@ -403,7 +403,7 @@ const BookingStep2 = ({
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delivery-pincode">Delivery Pincode</Label>
+              <Label htmlFor="delivery-pincode" className="font-semibold text-foreground">Delivery Pincode</Label>
               <Input
                 id="delivery-pincode"
                 value={deliveryPincode}
@@ -429,14 +429,14 @@ const BookingStep2 = ({
 
       <Card>
         <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
-          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg font-bold">
             <Package className="h-5 w-5 text-primary" />
             Package Details
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5 md:space-y-6 p-4 md:p-6 pt-0">
           <div className="space-y-3">
-            <Label>Type of Good *</Label>
+            <Label className="font-semibold text-foreground">Type of Good *</Label>
             <div className="grid grid-cols-2 gap-2">
               {goodsTypes.map((type) => {
                 const Icon = type.icon;
@@ -454,15 +454,15 @@ const BookingStep2 = ({
                     )}
                   >
                     <Icon className="h-6 w-6" />
-                    <span className="text-xs font-medium text-center">{type.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{type.weightHint}</span>
+                    <span className="text-xs font-bold text-center">{type.label}</span>
+                    <span className="text-[10px] text-foreground font-medium">{type.weightHint}</span>
                   </button>
                 );
               })}
             </div>
             {goodsType === 'box' && (
               <div className="space-y-2 mt-3">
-                <Label htmlFor="custom-goods-type">Goods specification — what's inside the box? *</Label>
+                <Label htmlFor="custom-goods-type" className="font-semibold text-foreground">Goods specification — what's inside the box? *</Label>
                 <Input
                   id="custom-goods-type"
                   value={customGoodsType}
@@ -470,7 +470,7 @@ const BookingStep2 = ({
                   placeholder="e.g., Electronics, Clothing, Books, Cosmetics"
                   maxLength={80}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-foreground font-medium">
                   Required by courier partners. Please describe the contents accurately.
                 </p>
               </div>
@@ -479,7 +479,7 @@ const BookingStep2 = ({
 
           {weightRequired ? (
             <div className="space-y-2">
-              <Label htmlFor="package-weight">Weight (g)</Label>
+              <Label htmlFor="package-weight" className="font-semibold text-foreground">Weight (g)</Label>
               <Input
                 id="package-weight"
                 type="number"
@@ -502,18 +502,18 @@ const BookingStep2 = ({
           )}
           {dimensionsRequired ? (
             <div className="space-y-2">
-              <Label>Dimensions (cm)</Label>
+              <Label className="font-semibold text-foreground">Dimensions (cm)</Label>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="length" className="text-xs text-muted-foreground">Length</Label>
+                  <Label htmlFor="length" className="text-xs text-foreground font-medium">Length</Label>
                   <Input id="length" type="number" value={dimensions.length} onChange={(e) => onDimensionChange('length', e.target.value)} placeholder="L" min="1" />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="width" className="text-xs text-muted-foreground">Breadth</Label>
+                  <Label htmlFor="width" className="text-xs text-foreground font-medium">Breadth</Label>
                   <Input id="width" type="number" value={dimensions.width} onChange={(e) => onDimensionChange('width', e.target.value)} placeholder="B" min="1" />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="height" className="text-xs text-muted-foreground">Height</Label>
+                  <Label htmlFor="height" className="text-xs text-foreground font-medium">Height</Label>
                   <Input id="height" type="number" value={dimensions.height} onChange={(e) => onDimensionChange('height', e.target.value)} placeholder="H" min="1" />
                 </div>
               </div>
@@ -566,18 +566,18 @@ const BookingStep2 = ({
       {pricingData && isServiceable && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold">
               <CheckCircle className="h-5 w-5 text-success" />
               Estimated Pricing
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Base Price</span>
+              <span className="text-foreground font-medium">Base Price</span>
               <span className="font-semibold">₹{pricingData.basePrice}</span>
             </div>
             <div className="border-t pt-2 flex justify-between items-center">
-              <span className="font-semibold">Total Estimated Cost</span>
+              <span className="font-bold">Total Estimated Cost</span>
               <span className="text-xl font-bold text-primary">₹{pricingData.totalPrice}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2 italic">

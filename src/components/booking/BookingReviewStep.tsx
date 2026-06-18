@@ -72,7 +72,7 @@ const BookingReviewStep = ({
   return (
     <Card className="mt-4 md:mt-6">
       <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
-        <CardTitle className="text-lg md:text-xl">Review Your Booking</CardTitle>
+        <CardTitle className="text-lg md:text-xl font-bold">Review Your Booking</CardTitle>
         <CardDescription className="text-xs md:text-sm">
           Please review all details before confirming your order
         </CardDescription>
@@ -82,10 +82,10 @@ const BookingReviewStep = ({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Pickup Details</h3>
+            <h3 className="font-bold">Pickup Details</h3>
           </div>
           <div className="ml-0 sm:ml-7 space-y-1 text-sm">
-            <p className="font-medium">{senderData.name}</p>
+            <p className="font-semibold">{senderData.name}</p>
             <p className="text-muted-foreground">{senderData.phone}</p>
             <p className="text-muted-foreground">
               {[senderData.flatNo, senderData.address].filter(Boolean).join(', ')}, {senderData.city}, {senderData.state} - {senderData.pincode}
@@ -99,10 +99,10 @@ const BookingReviewStep = ({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-secondary" />
-            <h3 className="font-semibold">Delivery Details</h3>
+            <h3 className="font-bold">Delivery Details</h3>
           </div>
           <div className="ml-0 sm:ml-7 space-y-1 text-sm">
-            <p className="font-medium">{receiverData.name}</p>
+            <p className="font-semibold">{receiverData.name}</p>
             <p className="text-muted-foreground">{receiverData.phone}</p>
             <p className="text-muted-foreground">
               {[receiverData.flatNo, receiverData.address].filter(Boolean).join(', ')}, {receiverData.city}, {receiverData.state} - {receiverData.pincode}
@@ -116,26 +116,26 @@ const BookingReviewStep = ({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-accent" />
-            <h3 className="font-semibold">Package Information</h3>
+            <h3 className="font-bold">Package Information</h3>
           </div>
           <div className="ml-0 sm:ml-7 grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-muted-foreground">Type</p>
-              <p className="font-medium capitalize">{packageDetails.goodsType}</p>
+              <p className="font-semibold capitalize">{packageDetails.goodsType}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Weight (entered)</p>
-              <p className="font-medium">{packageDetails.weight} g</p>
+              <p className="font-semibold">{packageDetails.weight} g</p>
             </div>
             <div>
               <p className="text-muted-foreground">Dimensions (L×W×H)</p>
-              <p className="font-medium">
+              <p className="font-semibold">
                 {packageDetails.dimensions.length} × {packageDetails.dimensions.width} × {packageDetails.dimensions.height} cm
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Declared Value</p>
-              <p className="font-medium">₹{packageDetails.shipmentValue}</p>
+              <p className="font-semibold">₹{packageDetails.shipmentValue}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Priority</p>
@@ -173,21 +173,21 @@ const BookingReviewStep = ({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Courier & Schedule</h3>
+            <h3 className="font-bold">Courier & Schedule</h3>
           </div>
           <div className="ml-0 sm:ml-7 space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Courier Service</span>
-              <span className="font-medium">{courierDetails.name}</span>
+              <span className="font-semibold">{courierDetails.name}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Estimated Delivery</span>
-              <span className="font-medium">{courierDetails.deliveryTime}</span>
+              <span className="font-semibold">{courierDetails.deliveryTime}</span>
             </div>
             {selectedDate && (
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Pickup Date</span>
-                <span className="font-medium">{selectedDate.toLocaleDateString()}</span>
+                <span className="font-semibold">{selectedDate.toLocaleDateString()}</span>
               </div>
             )}
           </div>
@@ -199,19 +199,19 @@ const BookingReviewStep = ({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <IndianRupee className="h-5 w-5 text-green-600" />
-            <h3 className="font-semibold">Payment Summary</h3>
+            <h3 className="font-bold">Payment Summary</h3>
           </div>
           <div className="ml-0 sm:ml-7 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Base Fare</span>
+              <span className="text-foreground font-medium">Base Fare</span>
               <span>₹{Math.round(courierDetails.baseFare)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">GST (18%)</span>
+              <span className="text-foreground font-medium">GST (18%)</span>
               <span>₹{gstAmount}</span>
             </div>
             <Separator />
-            <div className="flex justify-between text-base font-semibold">
+            <div className="flex justify-between text-base font-bold">
               <span>Total Amount</span>
               <span className="text-primary">₹{totalAmount}</span>
             </div>
