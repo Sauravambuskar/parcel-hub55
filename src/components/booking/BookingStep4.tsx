@@ -37,8 +37,8 @@ const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Pr
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold">Choose Delivery Speed</h2>
-        <p className="text-muted-foreground">Select how quickly you need your package delivered</p>
+        <h2 className="text-2xl font-bold">Choose Delivery Speed</h2>
+        <p className="text-foreground font-medium">Select how quickly you need your package delivered</p>
       </div>
 
       <div className="grid gap-4">
@@ -63,7 +63,7 @@ const BookingStep4 = ({ urgency, onInputChange, onNext, onBack }: BookingStep4Pr
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-semibold">{option.title}</h3>
+                      <h3 className="text-lg font-bold">{option.title}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
                     <Badge variant="outline" className="text-xs">

@@ -235,8 +235,8 @@ const BookingStep5 = ({
   return (
     <div className="space-y-4">
       <div className="text-center space-y-1">
-        <h2 className="text-xl font-semibold">Courier Partners</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-xl font-bold">Courier Partners</h2>
+        <p className="text-sm text-foreground font-medium">
           {serviceablePartners.length} partner{serviceablePartners.length !== 1 ? "s" : ""} • {sortedRows.length} service{sortedRows.length !== 1 ? "s" : ""}
         </p>
       </div>
@@ -303,7 +303,7 @@ const BookingStep5 = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-destructive" />
-              <h3 className="text-sm font-semibold">
+              <h3 className="text-sm font-bold">
                 Not available for this route ({nonServiceablePartners.length})
               </h3>
             </div>
@@ -336,7 +336,7 @@ const BookingStep5 = ({
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{partner.partner_name}</p>
+                      <p className="font-semibold text-sm truncate">{partner.partner_name}</p>
                       <p className="text-xs text-destructive truncate">{reason}</p>
                     </div>
                   </div>

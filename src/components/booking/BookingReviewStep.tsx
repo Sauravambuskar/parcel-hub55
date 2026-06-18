@@ -203,15 +203,15 @@ const BookingReviewStep = ({
           </div>
           <div className="ml-0 sm:ml-7 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Base Fare</span>
+              <span className="text-foreground font-medium">Base Fare</span>
               <span>₹{Math.round(courierDetails.baseFare)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">GST (18%)</span>
+              <span className="text-foreground font-medium">GST (18%)</span>
               <span>₹{gstAmount}</span>
             </div>
             <Separator />
-            <div className="flex justify-between text-base font-semibold">
+            <div className="flex justify-between text-base font-bold">
               <span>Total Amount</span>
               <span className="text-primary">₹{totalAmount}</span>
             </div>
