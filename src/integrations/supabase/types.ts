@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_progress: {
+        Row: {
+          booking_id: string | null
+          completed: boolean
+          id: string
+          last_step: number
+          last_step_name: string
+          session_id: string
+          started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          completed?: boolean
+          id?: string
+          last_step: number
+          last_step_name: string
+          session_id: string
+          started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          completed?: boolean
+          id?: string
+          last_step?: number
+          last_step_name?: string
+          session_id?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           admin_email_sent_at: string | null

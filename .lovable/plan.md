@@ -1,30 +1,45 @@
-# Fix order status counts in admin
+## Goal
+Let admins see where users drop off in the 6-step booking flow — per-user (in User Management) and in aggregate (funnel dashboard).
 
-## Problem
+## Approach
+Persist the furthest step each user reaches as they progress. If they later complete a booking, mark the session as completed; otherwise it's an "abandoned" session.
 
-The stat tiles in **Order Monitoring** show `0` for In Transit, Pending, and Delivered even though 25 orders exist. The DB stores statuses with mixed casing and partner-native values like `Delivered`, `CANCELLED`, `READY_FOR_DISPATCH`, `Out for Pickup`, but the current code does strict equality checks like `b.status === "delivered"` / `=== "in_transit"`, so nothing matches.
+## Database
+New table `public.booking_progress`:
+- `user_id` (uuid)
+- `session_id` (uuid) — one per booking attempt, generated on Step 1 entry
+- `last_step` (int 1–6)
+- `last_step_name` (text, e.g. "Address", "Parcel", "Courier", "Review", "Payment", "Confirmation")
+- `completed` (bool, default false) — flipped true when booking row is created
+- `booking_id` (uuid, nullable) — links to `bookings.id` when completed
+- `started_at`, `updated_at`
+- Index on `(user_id, updated_at desc)` and `(completed, last_step)`
 
-The project already has a canonical bucketing helper (`src/lib/booking-status.ts → bucketOfStatus`) that normalizes any partner status into one of: `created`, `confirmed`, `picked_up`, `in_transit`, `out_for_delivery`, `delivered`, `cancelled`, `rto`, `other`. We should route every status comparison through it.
+RLS: users can insert/update their own rows; admins (via `is_admin`/`is_operations`) can select all.
+Grants: authenticated (insert/update/select own), service_role (all).
 
-## Changes
+## Frontend wiring
+In `src/pages/Booking.tsx`:
+- On mount of Step 1, generate `session_id` (stored in component state + localStorage for resume).
+- On each step change, upsert `{user_id, session_id, last_step, last_step_name}` to `booking_progress` (fire-and-forget; no UI blocking).
+- After successful booking creation (existing success path), update the row: `completed=true, booking_id=<new id>`.
 
-**`src/pages/admin/OrderMonitoring.tsx`**
-- Import `bucketOfStatus` from `@/lib/booking-status`.
-- Replace stat tiles with bucket-based counts:
-  - **Total Orders** — all bookings (unchanged)
-  - **In Transit** — buckets `confirmed` + `picked_up` + `in_transit` + `out_for_delivery` (everything moving but not yet delivered/cancelled)
-  - **Pending** — bucket `created` (newly created, not yet manifested)
-  - **Delivered** — bucket `delivered`
-  - Add a 5th tile: **Cancelled** — bucket `cancelled` + `rto` (so the 8 CANCELLED + 4 FAILED orders are visible)
-- Update the filter dropdown logic (`selectedFilter` for `pending` / `in_transit` / `delivered`) to use `bucketOfStatus` instead of string equality.
-- Update the Active/Completed tabs and their `.filter(...)` row lists to use `bucketOfStatus(b.status) === "delivered"` for the "completed" side and everything-else for "active".
-- Update `getStatusColor` to switch on the bucket so badges color correctly for any raw status string.
+## Admin UI
+1. **User detail page** (User Management) — new "Booking Activity" section:
+   - Table of recent sessions: started_at, last step reached, status (Completed / Abandoned at Step X), linked booking if completed.
+2. **New funnel dashboard** at `/admin/abandonment` (linked from AdminLayout sidebar):
+   - Bar chart: count of sessions whose furthest step = N, split by completed vs abandoned.
+   - Filters: date range, last 7/30/90 days.
+   - Summary cards: total sessions, completion rate, top drop-off step.
 
-**`src/pages/admin/RevenueManagement.tsx`**
-- Add a **Completed Orders** stat tile to `revenueStats` showing the count of bookings in this period whose bucket is `delivered`, so revenue monitoring also surfaces completion progress (placed between Total Collections and Pending COP Collection).
-- Keep the existing revenue math unchanged (still based on `payment_status`, which is the correct signal for "money actually collected").
+## Files to add/change
+- Migration: create `booking_progress` table + policies + grants.
+- `src/pages/Booking.tsx` — session id + step upsert + completion update.
+- `src/pages/admin/UserManagement.tsx` (or `AdminUserManagement.tsx`) — Booking Activity section.
+- `src/pages/admin/AbandonmentFunnel.tsx` — new page.
+- `src/components/admin/AdminLayout.tsx` — sidebar link.
+- `src/App.tsx` — route for the new admin page.
 
 ## Out of scope
-- No DB/schema changes — statuses already exist as stored.
-- No edge function changes.
-- Not normalizing stored status values in the DB; bucketing at the read layer is enough and stays robust as new partner status strings appear.
+- Saving the actual draft form data (addresses, parcel details) — only step number is tracked.
+- Event-level funnel (entry/exit per step).
