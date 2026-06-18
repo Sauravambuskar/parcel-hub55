@@ -13,6 +13,7 @@ import { format } from "date-fns";
 
 interface UserData {
   id: string;
+  user_id: string;
   full_name: string | null;
   phone: string | null;
   email: string | null;
@@ -23,6 +24,9 @@ interface UserData {
   survey_frequency: string | null;
   survey_courier_type: string | null;
   survey_completed_at: string | null;
+  abandoned_step: number | null;
+  abandoned_step_name: string | null;
+  abandoned_at: string | null;
 }
 
 const UserManagement = () => {
@@ -50,6 +54,19 @@ const UserManagement = () => {
 
       if (profilesError) throw profilesError;
 
+      // Fetch all booking progress (abandoned + completed) once
+      const { data: progressRows } = await supabase
+        .from('booking_progress' as any)
+        .select('user_id, last_step, last_step_name, updated_at, completed')
+        .order('updated_at', { ascending: false });
+
+      // Latest abandoned (not completed) session per user
+      const latestAbandoned = new Map<string, any>();
+      ((progressRows as any[]) || []).forEach((row) => {
+        if (row.completed) return;
+        if (!latestAbandoned.has(row.user_id)) latestAbandoned.set(row.user_id, row);
+      });
+
       // Fetch booking counts for each user
       const usersWithCounts = await Promise.all(
         (profiles || []).map(async (profile: any) => {
@@ -58,8 +75,10 @@ const UserManagement = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', profile.user_id);
 
+          const ab = latestAbandoned.get(profile.user_id);
           return {
             id: profile.id,
+            user_id: profile.user_id,
             full_name: profile.full_name,
             phone: profile.phone,
             email: profile.email,
@@ -70,6 +89,9 @@ const UserManagement = () => {
             survey_frequency: profile.survey_frequency ?? null,
             survey_courier_type: profile.survey_courier_type ?? null,
             survey_completed_at: profile.survey_completed_at ?? null,
+            abandoned_step: ab?.last_step ?? null,
+            abandoned_step_name: ab?.last_step_name ?? null,
+            abandoned_at: ab?.updated_at ?? null,
           };
         })
       );
@@ -158,7 +180,7 @@ const UserManagement = () => {
   });
 
   const exportCsv = () => {
-    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At"];
+    const headers = ["Name","Phone","Email","Status","Orders","Join Date","Heard About Us","Parcel Frequency","Courier Type","Survey Completed At","Abandoned Step","Abandoned Step Name","Abandoned At"];
     const escape = (v: any) => {
       const s = v === null || v === undefined ? "" : String(v);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -174,6 +196,9 @@ const UserManagement = () => {
       u.survey_frequency || "",
       u.survey_courier_type || "",
       u.survey_completed_at ? format(new Date(u.survey_completed_at), "yyyy-MM-dd HH:mm") : "",
+      u.abandoned_step ?? "",
+      u.abandoned_step_name || "",
+      u.abandoned_at ? format(new Date(u.abandoned_at), "yyyy-MM-dd HH:mm") : "",
     ].map(escape).join(","));
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -253,6 +278,9 @@ const UserManagement = () => {
                       <TableHead className="cursor-pointer select-none" onClick={() => handleSort("survey_completed_at")}>
                         <span className="flex items-center">Survey At <SortIcon field="survey_completed_at" /></span>
                       </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort("abandoned_step")}>
+                        <span className="flex items-center">Abandoned At <SortIcon field="abandoned_step" /></span>
+                      </TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -280,6 +308,18 @@ const UserManagement = () => {
                         <TableCell>{user.survey_courier_type || "—"}</TableCell>
                         <TableCell>
                           {user.survey_completed_at ? format(new Date(user.survey_completed_at), "MMM dd, yyyy HH:mm") : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {user.abandoned_step ? (
+                            <div className="flex flex-col">
+                              <Badge variant="destructive" className="w-fit">Step {user.abandoned_step}: {user.abandoned_step_name}</Badge>
+                              {user.abandoned_at && (
+                                <span className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(user.abandoned_at), "MMM dd, HH:mm")}
+                                </span>
+                              )}
+                            </div>
+                          ) : "—"}
                         </TableCell>
                         <TableCell className="space-x-2">
                           <Button 

@@ -22,6 +22,7 @@ import BookingReviewStep from "@/components/booking/BookingReviewStep";
 import BookingConfirmationDialog from "@/components/booking/BookingConfirmationDialog";
 import BottomNav from "@/components/BottomNav";
 import { extractInvokeError } from "@/lib/invoke-error";
+import { trackStep, markCompleted } from "@/lib/booking-progress";
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState("");
@@ -161,6 +162,11 @@ const Booking = () => {
       localStorage.setItem('booking_draft', JSON.stringify(draft));
     }
   }, [currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
+
+  // Track furthest step reached for admin abandonment analytics
+  useEffect(() => {
+    if (userId) trackStep(userId, currentStep);
+  }, [userId, currentStep]);
 
   // Auto-populate pincodes from serviceability check - always sync from step 2 values
   useEffect(() => {
@@ -1101,6 +1107,7 @@ const Booking = () => {
       });
       // Clear draft on successful booking
       localStorage.removeItem('booking_draft');
+      markCompleted(userId, dbData?.booking?.id || null);
       setShowPaymentModal(false);
       setShowConfirmationDialog(true);
     } catch (error: any) {

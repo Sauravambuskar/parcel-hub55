@@ -51,6 +51,7 @@ const SupportManagement = lazy(() => import("./pages/admin/SupportManagement"));
 const Analytics = lazy(() => import("./pages/admin/Analytics"));
 const SystemSettings = lazy(() => import("./pages/admin/SystemSettings"));
 const DisputeResolution = lazy(() => import("./pages/admin/DisputeResolution"));
+const AbandonmentFunnel = lazy(() => import("./pages/admin/AbandonmentFunnel"));
 const ProtectedAdminRoute = lazy(() => import("./components/admin/ProtectedAdminRoute"));
 
 const queryClient = new QueryClient();
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="support" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><SupportManagement /></ProtectedAdminRoute>} />
             <Route path="disputes" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><DisputeResolution /></ProtectedAdminRoute>} />
             <Route path="analytics" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><Analytics /></ProtectedAdminRoute>} />
+            <Route path="abandonment" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><AbandonmentFunnel /></ProtectedAdminRoute>} />
             <Route path="settings" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><SystemSettings /></ProtectedAdminRoute>} />
             <Route path="cms" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><CMSDashboard /></ProtectedAdminRoute>} />
             <Route path="cms/posts" element={<ProtectedAdminRoute allowedRoles={["super_admin", "cms_editor"]}><ContentList type="post" /></ProtectedAdminRoute>} />
