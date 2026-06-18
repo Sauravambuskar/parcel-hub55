@@ -1107,6 +1107,7 @@ const Booking = () => {
       });
       // Clear draft on successful booking
       localStorage.removeItem('booking_draft');
+      markCompleted(userId, dbData?.booking?.id || null);
       setShowPaymentModal(false);
       setShowConfirmationDialog(true);
     } catch (error: any) {
