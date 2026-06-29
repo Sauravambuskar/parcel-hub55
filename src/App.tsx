@@ -28,6 +28,7 @@ const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
 const Careers = lazy(() => import("./pages/Careers"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
+const ParcelTrackingPage = lazy(() => import("./pages/ParcelTrackingPage"));
 const CityPage = lazy(() => import("./pages/CityPage"));
 import { SERVICES } from "./pages/ServicePage";
 import { CITIES } from "./pages/CityPage";
