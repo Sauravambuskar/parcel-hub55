@@ -94,7 +94,8 @@ const App = () => (
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/courier-partners" element={<CourierPartners />} />
-          {SERVICES.map((s) => (
+          <Route path="/services/parcel-tracking" element={<ParcelTrackingPage />} />
+          {SERVICES.filter((s) => s.slug !== "parcel-tracking").map((s) => (
             <Route key={s.slug} path={`/services/${s.slug}`} element={<ServicePage service={s} />} />
           ))}
           {CITIES.map((c) => (
