@@ -28,6 +28,7 @@ const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const CourierPartners = lazy(() => import("./pages/CourierPartners"));
 const Careers = lazy(() => import("./pages/Careers"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
+const ParcelTrackingPage = lazy(() => import("./pages/ParcelTrackingPage"));
 const CityPage = lazy(() => import("./pages/CityPage"));
 import { SERVICES } from "./pages/ServicePage";
 import { CITIES } from "./pages/CityPage";
@@ -93,7 +94,8 @@ const App = () => (
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/courier-partners" element={<CourierPartners />} />
-          {SERVICES.map((s) => (
+          <Route path="/services/parcel-tracking" element={<ParcelTrackingPage />} />
+          {SERVICES.filter((s) => s.slug !== "parcel-tracking").map((s) => (
             <Route key={s.slug} path={`/services/${s.slug}`} element={<ServicePage service={s} />} />
           ))}
           {CITIES.map((c) => (
