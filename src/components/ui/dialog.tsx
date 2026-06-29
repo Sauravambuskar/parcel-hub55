@@ -42,7 +42,7 @@ const DialogContent = React.forwardRef<
         transform: 'translate(-50%, -50%)',
       }}
       className={cn(
-        "z-50 grid w-[calc(100%-2rem)] max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-lg [&_*]:min-w-0 [&_*]:break-words",
+        "z-50 grid w-[calc(100vw-2rem)] max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-lg [&_*]:min-w-0 [&_*]:break-words",
         className
       )}
       {...props}
