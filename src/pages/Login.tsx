@@ -245,11 +245,11 @@ const Login = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSoftConfirm(null)}>Cancel</AlertDialogCancel>
-            <Button variant="outline" onClick={handleKeepExistingName} disabled={loading}>
+            <AlertDialogCancel onClick={() => setSoftConfirm(null)} className="whitespace-normal break-words h-auto min-h-10 py-2">Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={handleKeepExistingName} disabled={loading} className="whitespace-normal break-words h-auto min-h-10 py-2">
               Continue as {softConfirm?.existingName}
             </Button>
-            <AlertDialogAction onClick={handleUpdateName} disabled={loading}>
+            <AlertDialogAction onClick={handleUpdateName} disabled={loading} className="whitespace-normal break-words h-auto min-h-10 py-2">
               Update to {softConfirm?.enteredName}
             </AlertDialogAction>
           </AlertDialogFooter>
