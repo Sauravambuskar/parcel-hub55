@@ -1,45 +1,38 @@
+# Plan: Update Platform Markup from 1.5× to 3×
+
 ## Goal
-Let admins see where users drop off in the 6-step booking flow — per-user (in User Management) and in aggregate (funnel dashboard).
+Change the ViaSetu pricing rule so Base Fare is calculated as `round(partner_rate × 3) + 50` instead of the current `round(partner_rate × 1.5) + 50`, while keeping the hidden-platform-fee model and reconciliation identity intact.
 
-## Approach
-Persist the furthest step each user reaches as they progress. If they later complete a booking, mark the session as completed; otherwise it's an "abandoned" session.
+## Background
+Current formula: `baseFare = round(cardPrice × 1.5) + 50`.
+Platform fee remains hidden inside base fare as `baseFare − cardPrice`.
+Partner payable is `baseFare − platformFee` (i.e., the original card price).
 
-## Database
-New table `public.booking_progress`:
-- `user_id` (uuid)
-- `session_id` (uuid) — one per booking attempt, generated on Step 1 entry
-- `last_step` (int 1–6)
-- `last_step_name` (text, e.g. "Address", "Parcel", "Courier", "Review", "Payment", "Confirmation")
-- `completed` (bool, default false) — flipped true when booking row is created
-- `booking_id` (uuid, nullable) — links to `bookings.id` when completed
-- `started_at`, `updated_at`
-- Index on `(user_id, updated_at desc)` and `(completed, last_step)`
+## New formula
+- `baseFare = round(cardPrice × 3) + 50`
+- `platformFee = baseFare − cardPrice`
+- `gst = round(baseFare × 0.18)`
+- `customerTotal = baseFare + gst + packaging + insurance`
+- `partnerPayable = baseFare − platformFee = cardPrice`
+- Identity check: `partnerPayable + platformFee + gst + packaging + insurance = customerTotal`
 
-RLS: users can insert/update their own rows; admins (via `is_admin`/`is_operations`) can select all.
-Grants: authenticated (insert/update/select own), service_role (all).
+## Example (partner rate = ₹50)
+- Base Fare = round(50 × 3) + 50 = ₹200
+- Platform Fee = ₹150
+- GST = ₹36
+- Customer Total = ₹236
+- Partner Payable = ₹50
 
-## Frontend wiring
-In `src/pages/Booking.tsx`:
-- On mount of Step 1, generate `session_id` (stored in component state + localStorage for resume).
-- On each step change, upsert `{user_id, session_id, last_step, last_step_name}` to `booking_progress` (fire-and-forget; no UI blocking).
-- After successful booking creation (existing success path), update the row: `completed=true, booking_id=<new id>`.
+## Files to change
+1. `src/lib/pricing.ts` — update the multiplier constant from 1.5 to 3.
+2. `supabase/functions/calculate-platform-fee/index.ts` — mirror the same change so the server-side edge function matches the client-side calculation.
+3. Verify no other hardcoded `1.5` multiplier exists in booking/checkout flow (e.g., `src/lib/pricing.ts`, edge functions, admin dashboards, tests).
 
-## Admin UI
-1. **User detail page** (User Management) — new "Booking Activity" section:
-   - Table of recent sessions: started_at, last step reached, status (Completed / Abandoned at Step X), linked booking if completed.
-2. **New funnel dashboard** at `/admin/abandonment` (linked from AdminLayout sidebar):
-   - Bar chart: count of sessions whose furthest step = N, split by completed vs abandoned.
-   - Filters: date range, last 7/30/90 days.
-   - Summary cards: total sessions, completion rate, top drop-off step.
+## Verification
+- Run existing pricing tests if any; add/update the ₹50 example as a test case.
+- Spot-check a live checkout flow to confirm the new customer total matches ₹236 for a ₹50 partner rate.
+- Confirm the admin dashboard reconciliation identity still holds for new bookings.
 
-## Files to add/change
-- Migration: create `booking_progress` table + policies + grants.
-- `src/pages/Booking.tsx` — session id + step upsert + completion update.
-- `src/pages/admin/UserManagement.tsx` (or `AdminUserManagement.tsx`) — Booking Activity section.
-- `src/pages/admin/AbandonmentFunnel.tsx` — new page.
-- `src/components/admin/AdminLayout.tsx` — sidebar link.
-- `src/App.tsx` — route for the new admin page.
-
-## Out of scope
-- Saving the actual draft form data (addresses, parcel details) — only step number is tracked.
-- Event-level funnel (entry/exit per step).
+## Notes
+- This only changes the markup multiplier. It does not affect GST rate, payment flow, partner payout, or admin reporting logic.
+- No new secrets or database schema changes are needed.
