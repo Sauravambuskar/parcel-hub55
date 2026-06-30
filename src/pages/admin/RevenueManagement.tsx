@@ -171,9 +171,13 @@ const RevenueManagement = () => {
 
   const filteredBookings = getFilteredBookings();
 
-  // COP not collected yet — exclude from revenue totals
-  const copBookings = filteredBookings.filter(b => b.payment_status === "cop_pending");
-  const collectedBookings = filteredBookings.filter(b => b.payment_status !== "cop_pending");
+  // Revenue recognition (shared rule — see src/lib/revenue.ts):
+  // only payment_status='paid' contributes to collections, platform
+  // revenue and partner payable. COP and refunded orders are tracked
+  // separately so admins can see them without inflating totals.
+  const copBookings = filteredBookings.filter(b => isCopPending(b.payment_status));
+  const refundedBookings = filteredBookings.filter(b => isRefunded(b.payment_status));
+  const collectedBookings = filteredBookings.filter(b => isCollected(b.payment_status));
 
   const sumBy = (rows: Booking[], pick: (k: ReturnType<typeof breakdownOf>) => number) =>
     rows.reduce((acc, b) => acc + pick(breakdownOf(b)), 0);
@@ -183,6 +187,7 @@ const RevenueManagement = () => {
   const platformRevenueTotal = sumBy(collectedBookings, k => k.platformRevenue);
   const gstCollected = sumBy(collectedBookings, k => k.gst);
   const copPendingTotal = sumBy(copBookings, k => k.total);
+  const refundedTotal = sumBy(refundedBookings, k => k.total);
 
   const completedOrdersCount = filteredBookings.filter(b => bucketOfStatus(b.status) === "delivered").length;
 
