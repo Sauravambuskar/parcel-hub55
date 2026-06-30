@@ -1,7 +1,7 @@
 // Deterministic platform-fee endpoint.
 //
 // Pricing model (single source of truth, mirrored in src/lib/pricing.ts):
-//   baseFare = round(cardPrice * 1.5) + 50
+//   baseFare = round(cardPrice * 3) + 50
 //   platformFee = baseFare - cardPrice
 //
 // This endpoint is kept for backwards compatibility with `usePlatformFee`. It no

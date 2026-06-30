@@ -1,8 +1,8 @@
 // Single source of truth for ViaSetu pricing math.
-// Formula: baseFare = round(cardPrice * 1.5) + 50 ; gst = 18% of baseFare.
+// Formula: baseFare = round(cardPrice * 3) + 50 ; gst = 18% of baseFare.
 // "Platform fee" is hidden inside Base Fare and is derived as baseFare - cardPrice.
 
-export const MARKUP_PCT = 0.5;   // 50% markup on courier card price
+export const MARKUP_PCT = 2.0;   // 200% markup on courier card price (i.e., 3x total)
 export const ZONE_FEE = 50;      // flat ₹50 zone fee
 export const GST_RATE = 0.18;
 
