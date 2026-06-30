@@ -102,21 +102,27 @@ const AdminDashboard = () => {
       const today = startOfDay(new Date());
       const monthStart = startOfMonth(new Date());
 
-      // Calculate stats
-      const totalRevenue = bookings?.reduce((sum, b) => sum + (b.courier_price || 0), 0) || 0;
+      // Revenue recognition — only payment_status='paid' counts as
+      // collected cash. Refunded / cop_pending / failed orders are
+      // intentionally excluded so dashboard totals agree with the
+      // Revenue Management page (see src/lib/revenue.ts).
+      const collectedBookings = (bookings || []).filter(b => isCollected(b.payment_status));
+      const collectedToday = collectedBookings.filter(b => new Date(b.created_at) >= today);
+      const collectedMonth = collectedBookings.filter(b => new Date(b.created_at) >= monthStart);
+
+      const totalRevenue = collectedBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
       const todayBookings = bookings?.filter(b => new Date(b.created_at) >= today) || [];
       const monthlyBookings = bookings?.filter(b => new Date(b.created_at) >= monthStart) || [];
-      
-      const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-      const monthlyRevenue = monthlyBookings.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-      
+
+      const todayRevenue = collectedToday.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+      const monthlyRevenue = collectedMonth.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+
       const buckets = bucketCounts(bookings || []);
       const pendingOrders = buckets.created;
       const inTransitOrders = buckets.in_transit + buckets.picked_up + buckets.out_for_delivery + buckets.confirmed;
       const deliveredOrders = buckets.delivered;
 
-      // Platform Revenue = sum of real platform_fee column on collected bookings
-      const collectedBookings = bookings?.filter(b => b.payment_status !== "cop_pending") || [];
+      // Platform Revenue (Net to Viasetu) = platform_fee on paid orders only
       const platformFees = collectedBookings.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
 
       const { count: openDisputes } = await (supabase as any)
