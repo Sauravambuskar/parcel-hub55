@@ -355,7 +355,7 @@ const RevenueManagement = () => {
   };
 
   // Lifetime aggregates for the analytics tab
-  const lifetimeCollected = bookings.filter(b => b.payment_status !== "cop_pending");
+  const lifetimeCollected = bookings.filter(b => isCollected(b.payment_status));
   const lifetimeRevenue = sumBy(lifetimeCollected, k => k.total);
   const lifetimePlatform = sumBy(lifetimeCollected, k => k.platformRevenue);
   const lifetimePartner = sumBy(lifetimeCollected, k => k.partnerPayable);
