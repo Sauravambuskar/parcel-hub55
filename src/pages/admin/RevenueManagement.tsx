@@ -250,7 +250,7 @@ const RevenueManagement = () => {
       { revenue: number; orders: number; partner: number; platform: number; gst: number }
     >();
     bookings.forEach(b => {
-      if (b.payment_status === "cop_pending") return;
+      if (!isCollected(b.payment_status)) return;
       const k = breakdownOf(b);
       const monthKey = format(new Date(b.created_at), "MMM yyyy");
       const existing = monthlyMap.get(monthKey) || { revenue: 0, orders: 0, partner: 0, platform: 0, gst: 0 };
