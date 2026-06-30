@@ -15,7 +15,7 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const MARKUP_PCT = 0.5;
+const MARKUP_PCT = 2.0;
 const ZONE_FEE = 50;
 const REPRESENTATIVE_CARD_PRICE = 100; // legacy fallback for callers without a card price
 
