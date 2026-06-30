@@ -215,7 +215,7 @@ const OrderMonitoring = () => {
     const insurance = Number(booking.insurance_amount) || 0;
     const packaging = Number(booking.packaging_amount) || 0;
     const baseFareCol = Number(booking.base_fare) || 0;
-    // base_fare in DB embeds the platform markup (baseFare = round(card*1.5)+50).
+    // base_fare in DB embeds the platform markup (baseFare = round(card*3)+50).
     // True partner payable = base_fare - platform_fee (the card price).
     const partnerPayable = baseFareCol > 0
       ? Math.max(0, baseFareCol - platformFee)

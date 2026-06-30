@@ -399,7 +399,7 @@ const Booking = () => {
         const service = partner.services?.find((s: any) => s.service_code === selectedPartnerData.serviceCode);
         if (service) {
           const apiPrice = Math.round(service.rate?.price?.amount || 0);
-          // Deterministic pricing: baseFare = round(card * 1.5) + 50.
+          // Deterministic pricing: baseFare = round(card * 3) + 50.
           return {
             name: `${partner.partner_name} - ${service.service_name}`,
             basePrice: computeBaseFare(apiPrice),
