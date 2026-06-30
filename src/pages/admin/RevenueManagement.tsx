@@ -60,7 +60,7 @@ const num = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
 
 // Real per-booking financial breakdown sourced from DB columns.
 // IMPORTANT: base_fare in DB already includes the platform markup
-// (baseFare = round(cardPrice * 1.5) + 50, see src/lib/pricing.ts).
+// (baseFare = round(cardPrice * 3) + 50, see src/lib/pricing.ts).
 // So Partner Payable (what we owe the courier) = base_fare - platform_fee,
 // NOT base_fare itself. Otherwise platform_fee gets double-counted and
 // partner + platform + gst exceeds the total customer paid.
