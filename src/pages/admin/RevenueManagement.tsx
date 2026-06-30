@@ -214,9 +214,16 @@ const RevenueManagement = () => {
       color: "text-yellow-600",
     },
     {
+      title: "Refunded",
+      value: `₹${refundedTotal.toLocaleString()}`,
+      change: `${refundedBookings.length} orders refunded`,
+      icon: RefreshCw,
+      color: "text-red-600",
+    },
+    {
       title: "Amount Payable to Partners",
       value: `₹${partnerPayableTotal.toLocaleString()}`,
-      change: "Owed to courier partners",
+      change: "Owed to courier partners (paid orders)",
       icon: Truck,
       color: "text-purple-600",
     },
