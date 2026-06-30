@@ -18,6 +18,7 @@ import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfMonth, startOfWeek, subMonths } from "date-fns";
 import { downloadAccountsWorkbook, type ExportBooking } from "@/lib/accounts-export";
 import { bucketOfStatus } from "@/lib/booking-status";
+import { isCollected, isCopPending, isRefunded } from "@/lib/revenue";
 
 interface Booking {
   id: string;
