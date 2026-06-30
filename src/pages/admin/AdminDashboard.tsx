@@ -140,7 +140,7 @@ const AdminDashboard = () => {
         pendingOrders,
         inTransitOrders,
         deliveredOrders,
-        avgOrderValue: bookings && bookings.length > 0 ? Math.round(totalRevenue / bookings.length) : 0,
+        avgOrderValue: collectedBookings.length > 0 ? Math.round(totalRevenue / collectedBookings.length) : 0,
         platformFees,
         openDisputes: openDisputes || 0,
         buckets,
