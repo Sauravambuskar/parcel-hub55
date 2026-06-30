@@ -530,6 +530,36 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          otp_hash: string
+          phone: string
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_hash: string
+          phone: string
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_hash?: string
+          phone?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       partner_ratings: {
         Row: {
           badges: string[] | null
