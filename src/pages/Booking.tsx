@@ -81,6 +81,10 @@ const Booking = () => {
     state: "",
     pincode: ""
   });
+  // Admin-assisted booking context (set by /admin/assisted-booking flow).
+  const [assistedContext, setAssistedContext] = useState<{ userId: string; name: string; phone: string } | null>(null);
+  const [paymentLinkInfo, setPaymentLinkInfo] = useState<{ url: string; bookingId: string } | null>(null);
+  const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {
