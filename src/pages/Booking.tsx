@@ -497,7 +497,75 @@ const Booking = () => {
     setCurrentStep(stepNumber);
   };
   const handleProceedToPayment = () => {
+    if (assistedContext) {
+      handleSendAdminPaymentLink();
+      return;
+    }
     setShowPaymentModal(true);
+  };
+
+  // Admin-assisted flow: create a Razorpay Payment Link and SMS it to the
+  // customer instead of opening the Razorpay checkout in-session.
+  const handleSendAdminPaymentLink = async () => {
+    if (!assistedContext) return;
+    const selectedCourierData = getSelectedServiceDetails();
+    if (!selectedCourierData) {
+      toast({ title: "Select a courier first", variant: "destructive" });
+      return;
+    }
+    setSendingPaymentLink(true);
+    try {
+      const bookingDraft = {
+        sender_name: senderData.name,
+        sender_phone: senderData.phone,
+        sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+        sender_city: senderData.city,
+        sender_state: senderData.state,
+        sender_pincode: senderData.pincode,
+        receiver_name: receiverData.name,
+        receiver_phone: receiverData.phone,
+        receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+        receiver_city: receiverData.city,
+        receiver_state: receiverData.state,
+        receiver_pincode: receiverData.pincode,
+        goods_type: goodsType || 'Package',
+        package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
+        length: dimensions?.length || null,
+        width: dimensions?.width || null,
+        height: dimensions?.height || null,
+        shipment_value: shipmentValue ? parseFloat(shipmentValue) : null,
+        urgency: urgency || 'standard',
+        courier_name: selectedCourierData.name,
+        courier_price: totalAmount,
+        delivery_time: selectedCourierData.deliveryTime,
+        base_fare: baseFare,
+        platform_fee: effectivePlatformFee,
+        gst: gstAmount,
+      };
+      const { data, error } = await supabase.functions.invoke('admin-create-payment-link', {
+        body: {
+          customer_user_id: assistedContext.userId,
+          customer_name: assistedContext.name,
+          customer_phone: assistedContext.phone,
+          total_amount: totalAmount,
+          description: `ViaSetu · ${selectedCourierData.name} · ${senderData.city || ''} → ${receiverData.city || ''}`,
+          booking_draft: bookingDraft,
+        },
+        headers: { 'x-environment': CURRENT_ENV },
+      });
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Failed to create payment link');
+      }
+      setPaymentLinkInfo({ url: data.payment_link_url, bookingId: data.booking_id });
+      toast({
+        title: "Payment link sent",
+        description: `SMS sent to +91 ${assistedContext.phone}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Could not send payment link", description: e?.message || 'Please try again', variant: 'destructive' });
+    } finally {
+      setSendingPaymentLink(false);
+    }
   };
   // Cash-on-Pickup: skip Razorpay entirely. TEMPORARY — see memory note
   // payments/no-cash-on-delivery-policy. Booking is created as Prepaid with the
