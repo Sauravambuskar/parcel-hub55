@@ -1,38 +1,17 @@
-# Plan: Update Platform Markup from 1.5× to 3×
+## Problem
 
-## Goal
-Change the ViaSetu pricing rule so Base Fare is calculated as `round(partner_rate × 3) + 50` instead of the current `round(partner_rate × 1.5) + 50`, while keeping the hidden-platform-fee model and reconciliation identity intact.
+When the user enters a weight with **Box** selected and then switches to **Documents / Envelope**, the previously entered weight persists in state. It should snap to the fixed envelope default (250g = 0.25 kg), and clear when switching back to Box.
 
-## Background
-Current formula: `baseFare = round(cardPrice × 1.5) + 50`.
-Platform fee remains hidden inside base fare as `baseFare − cardPrice`.
-Partner payable is `baseFare − platformFee` (i.e., the original card price).
+## Fix
 
-## New formula
-- `baseFare = round(cardPrice × 3) + 50`
-- `platformFee = baseFare − cardPrice`
-- `gst = round(baseFare × 0.18)`
-- `customerTotal = baseFare + gst + packaging + insurance`
-- `partnerPayable = baseFare − platformFee = cardPrice`
-- Identity check: `partnerPayable + platformFee + gst + packaging + insurance = customerTotal`
+In `src/pages/Booking.tsx`, update the `handleInputChange` `"goodsType"` case:
 
-## Example (partner rate = ₹50)
-- Base Fare = round(50 × 3) + 50 = ₹200
-- Platform Fee = ₹150
-- GST = ₹36
-- Customer Total = ₹236
-- Partner Payable = ₹50
+- If new value is `documents` → `setPackageWeight("0.25")` and clear `dimensions` (`{ length: "", width: "", height: "" }`) since envelope has no dimensions.
+- If new value is `box` (switching away from documents) → `setPackageWeight("")` so the user is forced to enter the actual box weight (avoids the reverse bug of carrying 0.25 kg into a box).
 
-## Files to change
-1. `src/lib/pricing.ts` — update the multiplier constant from 1.5 to 3.
-2. `supabase/functions/calculate-platform-fee/index.ts` — mirror the same change so the server-side edge function matches the client-side calculation.
-3. Verify no other hardcoded `1.5` multiplier exists in booking/checkout flow (e.g., `src/lib/pricing.ts`, edge functions, admin dashboards, tests).
+No changes to BookingStep2 UI (it already hides the weight field for documents and shows the "Weight fixed at 250g" note). No pricing / API changes — downstream code already uses `packageWeight` as source of truth.
 
 ## Verification
-- Run existing pricing tests if any; add/update the ₹50 example as a test case.
-- Spot-check a live checkout flow to confirm the new customer total matches ₹236 for a ₹50 partner rate.
-- Confirm the admin dashboard reconciliation identity still holds for new bookings.
 
-## Notes
-- This only changes the markup multiplier. It does not affect GST rate, payment flow, partner payout, or admin reporting logic.
-- No new secrets or database schema changes are needed.
+- Select Box, enter 2 kg → switch to Envelope → weight state becomes 0.25 kg, UI shows the fixed-weight note, pricing recalculates on 0.25 kg.
+- Switch back to Box → weight field is empty, user must re-enter.
