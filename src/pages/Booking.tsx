@@ -173,8 +173,10 @@ const Booking = () => {
     } catch {}
   }, []);
 
-  // Save draft on state changes
+  // Save draft on state changes (skip in admin-assisted mode to avoid
+  // clobbering the admin's own draft with a customer's booking).
   useEffect(() => {
+    if (assistedContext) return;
     if (currentStep > 1) {
       const draft = {
         currentStep, senderData, receiverData, pickupPincode, deliveryPincode,
@@ -183,7 +185,7 @@ const Booking = () => {
       };
       localStorage.setItem('booking_draft', JSON.stringify(draft));
     }
-  }, [currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
+  }, [assistedContext, currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
 
   // Track furthest step reached for admin abandonment analytics
   useEffect(() => {
