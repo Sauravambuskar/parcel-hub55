@@ -105,6 +105,22 @@ const Booking = () => {
   });
   const totalSteps = 6;
   useEffect(() => {
+    // Admin-assisted mode: navigation state overrides the logged-in user.
+    // The admin's own auth session stays in localStorage untouched; we only
+    // use the customer's user_id for booking persistence + progress tracking.
+    const assisted = (location.state as any)?.assistedContext;
+    if (assisted?.userId) {
+      setAssistedContext({ userId: assisted.userId, name: assisted.name || "", phone: assisted.phone || "" });
+      setUserId(assisted.userId);
+      setSenderData(prev => ({
+        ...prev,
+        name: prev.name || assisted.name || "",
+        phone: prev.phone || assisted.phone || "",
+      }));
+      // Don't restore the admin's own booking draft on top of a customer flow.
+      return;
+    }
+
     // Use unified auth session (with legacy prayog_auth fallback).
     const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
     if (authRaw) {
