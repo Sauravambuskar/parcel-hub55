@@ -40,6 +40,7 @@ const adminMenuItems: { title: string; url: string; icon: any; allowedRoles: Rol
   { title: "Dashboard", url: "/admin/dashboard", icon: Home, allowedRoles: ["super_admin"] },
   { title: "Real-Time Tracking", url: "/admin/tracking", icon: MapPin, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Order Monitoring", url: "/admin/orders", icon: Package, allowedRoles: ["super_admin", "operations", "support"] },
+  { title: "Assisted Booking", url: "/admin/assisted-booking", icon: PackagePlus, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "User & Partner Management", url: "/admin/users", icon: Users, allowedRoles: ["super_admin", "operations", "support"] },
   { title: "Admin Users", url: "/admin/admin-users", icon: Shield, allowedRoles: ["super_admin"] },
   { title: "Revenue & Commission", url: "/admin/revenue", icon: DollarSign, allowedRoles: ["super_admin"] },
