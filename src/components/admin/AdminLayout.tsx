@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   FileEdit,
   AlertOctagon,
-  TrendingDown
+  TrendingDown,
+  PackagePlus
 } from "lucide-react";
 import { 
   Sidebar, 
