@@ -124,6 +124,7 @@ const App = () => (
             <Route path="dashboard" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminDashboard /></ProtectedAdminRoute>} />
             <Route path="tracking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><RealTimeTracking /></ProtectedAdminRoute>} />
             <Route path="orders" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><OrderMonitoring /></ProtectedAdminRoute>} />
+            <Route path="assisted-booking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><AssistedBooking /></ProtectedAdminRoute>} />
             <Route path="users" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><UserManagement /></ProtectedAdminRoute>} />
             <Route path="admin-users" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminUserManagement /></ProtectedAdminRoute>} />
             <Route path="revenue" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><RevenueManagement /></ProtectedAdminRoute>} />
