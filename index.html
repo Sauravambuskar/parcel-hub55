@@ -89,6 +89,29 @@
     </script>
 
     <style>html { scroll-behavior: smooth; } body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }</style>
+
+    <!-- Crisp alignment safeguard -->
+    <style>
+      #crisp-chatbox,
+      #crisp-chatbox * {
+        max-width: none !important;
+        max-height: none !important;
+      }
+
+      #crisp-chatbox {
+        position: fixed !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        z-index: 2147483000 !important;
+      }
+
+      @media (max-width: 768px) {
+        #crisp-chatbox {
+          right: 12px !important;
+          bottom: 12px !important;
+        }
+      }
+    </style>
   </head>
 
   <body>
