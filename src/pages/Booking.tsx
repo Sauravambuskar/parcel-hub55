@@ -355,6 +355,12 @@ const Booking = () => {
         break;
       case "goodsType":
         setGoodsType(value);
+        if (value === 'documents') {
+          setPackageWeight("0.25");
+          setDimensions({ length: "", width: "", height: "" });
+        } else if (value === 'box') {
+          setPackageWeight("");
+        }
         break;
       case "shipmentValue":
         setShipmentValue(value);
