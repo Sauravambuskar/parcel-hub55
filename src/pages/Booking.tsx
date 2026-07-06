@@ -1326,17 +1326,34 @@ const Booking = () => {
         {/* Header */}
         <header className="backdrop-blur-md border-b border-border/50 p-2.5 md:p-4 sticky top-0 z-50 bg-primary-glow">
           <div className="flex items-center gap-2 md:gap-3 max-w-2xl mx-auto">
-            <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={() => currentStep === 1 ? navigate(assistedContext ? "/admin/assisted-booking" : "/") : handlePrevStep()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-base md:text-xl font-semibold text-slate-700">Book Delivery</h1>
+            <h1 className="text-base md:text-xl font-semibold text-slate-700">
+              {assistedContext ? "Assisted Booking" : "Book Delivery"}
+            </h1>
           </div>
         </header>
+
+        {assistedContext && (
+          <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-3 md:px-4 py-2 sticky top-[52px] md:top-[65px] z-40">
+            <div className="max-w-2xl mx-auto flex items-center gap-2 text-sm">
+              <UserCog className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                Booking on behalf of <strong>{assistedContext.name || 'customer'}</strong> · +91 {assistedContext.phone}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="booking-shell p-3 md:p-4 max-w-2xl mx-auto pb-24 md:pb-4">
           <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
           {renderCurrentStep()}
+          {assistedContext && currentStep === 6 && sendingPaymentLink && (
+            <div className="mt-3 text-sm text-muted-foreground text-center">Sending payment link to customer…</div>
+          )}
         </div>
+
 
         <BottomNav />
 
