@@ -23,6 +23,8 @@ import BookingConfirmationDialog from "@/components/booking/BookingConfirmationD
 import BottomNav from "@/components/BottomNav";
 import { extractInvokeError } from "@/lib/invoke-error";
 import { trackStep, markCompleted } from "@/lib/booking-progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Copy, CheckCircle2, UserCog } from "lucide-react";
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [pickupAddress, setPickupAddress] = useState("");
@@ -79,6 +81,10 @@ const Booking = () => {
     state: "",
     pincode: ""
   });
+  // Admin-assisted booking context (set by /admin/assisted-booking flow).
+  const [assistedContext, setAssistedContext] = useState<{ userId: string; name: string; phone: string } | null>(null);
+  const [paymentLinkInfo, setPaymentLinkInfo] = useState<{ url: string; bookingId: string } | null>(null);
+  const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -99,6 +105,22 @@ const Booking = () => {
   });
   const totalSteps = 6;
   useEffect(() => {
+    // Admin-assisted mode: navigation state overrides the logged-in user.
+    // The admin's own auth session stays in localStorage untouched; we only
+    // use the customer's user_id for booking persistence + progress tracking.
+    const assisted = (location.state as any)?.assistedContext;
+    if (assisted?.userId) {
+      setAssistedContext({ userId: assisted.userId, name: assisted.name || "", phone: assisted.phone || "" });
+      setUserId(assisted.userId);
+      setSenderData(prev => ({
+        ...prev,
+        name: prev.name || assisted.name || "",
+        phone: prev.phone || assisted.phone || "",
+      }));
+      // Don't restore the admin's own booking draft on top of a customer flow.
+      return;
+    }
+
     // Use unified auth session (with legacy prayog_auth fallback).
     const authRaw = localStorage.getItem('auth_session') || localStorage.getItem('prayog_auth');
     if (authRaw) {
@@ -151,8 +173,10 @@ const Booking = () => {
     } catch {}
   }, []);
 
-  // Save draft on state changes
+  // Save draft on state changes (skip in admin-assisted mode to avoid
+  // clobbering the admin's own draft with a customer's booking).
   useEffect(() => {
+    if (assistedContext) return;
     if (currentStep > 1) {
       const draft = {
         currentStep, senderData, receiverData, pickupPincode, deliveryPincode,
@@ -161,7 +185,7 @@ const Booking = () => {
       };
       localStorage.setItem('booking_draft', JSON.stringify(draft));
     }
-  }, [currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
+  }, [assistedContext, currentStep, senderData, receiverData, pickupPincode, deliveryPincode, goodsType, packageWeight, dimensions, shipmentValue, urgency]);
 
   // Track furthest step reached for admin abandonment analytics
   useEffect(() => {
@@ -473,7 +497,75 @@ const Booking = () => {
     setCurrentStep(stepNumber);
   };
   const handleProceedToPayment = () => {
+    if (assistedContext) {
+      handleSendAdminPaymentLink();
+      return;
+    }
     setShowPaymentModal(true);
+  };
+
+  // Admin-assisted flow: create a Razorpay Payment Link and SMS it to the
+  // customer instead of opening the Razorpay checkout in-session.
+  const handleSendAdminPaymentLink = async () => {
+    if (!assistedContext) return;
+    const selectedCourierData = getSelectedServiceDetails();
+    if (!selectedCourierData) {
+      toast({ title: "Select a courier first", variant: "destructive" });
+      return;
+    }
+    setSendingPaymentLink(true);
+    try {
+      const bookingDraft = {
+        sender_name: senderData.name,
+        sender_phone: senderData.phone,
+        sender_address: [senderData.flatNo, senderData.address].filter(Boolean).join(', '),
+        sender_city: senderData.city,
+        sender_state: senderData.state,
+        sender_pincode: senderData.pincode,
+        receiver_name: receiverData.name,
+        receiver_phone: receiverData.phone,
+        receiver_address: [receiverData.flatNo, receiverData.address].filter(Boolean).join(', '),
+        receiver_city: receiverData.city,
+        receiver_state: receiverData.state,
+        receiver_pincode: receiverData.pincode,
+        goods_type: goodsType || 'Package',
+        package_weight: String(weightUnit === 'g' ? (parseFloat(packageWeight) || 1000) / 1000 : parseFloat(packageWeight) || 1),
+        length: dimensions?.length || null,
+        width: dimensions?.width || null,
+        height: dimensions?.height || null,
+        shipment_value: shipmentValue ? parseFloat(shipmentValue) : null,
+        urgency: urgency || 'standard',
+        courier_name: selectedCourierData.name,
+        courier_price: totalAmount,
+        delivery_time: selectedCourierData.deliveryTime,
+        base_fare: baseFare,
+        platform_fee: effectivePlatformFee,
+        gst: gstAmount,
+      };
+      const { data, error } = await supabase.functions.invoke('admin-create-payment-link', {
+        body: {
+          customer_user_id: assistedContext.userId,
+          customer_name: assistedContext.name,
+          customer_phone: assistedContext.phone,
+          total_amount: totalAmount,
+          description: `ViaSetu · ${selectedCourierData.name} · ${senderData.city || ''} → ${receiverData.city || ''}`,
+          booking_draft: bookingDraft,
+        },
+        headers: { 'x-environment': CURRENT_ENV },
+      });
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'Failed to create payment link');
+      }
+      setPaymentLinkInfo({ url: data.payment_link_url, bookingId: data.booking_id });
+      toast({
+        title: "Payment link sent",
+        description: `SMS sent to +91 ${assistedContext.phone}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Could not send payment link", description: e?.message || 'Please try again', variant: 'destructive' });
+    } finally {
+      setSendingPaymentLink(false);
+    }
   };
   // Cash-on-Pickup: skip Razorpay entirely. TEMPORARY — see memory note
   // payments/no-cash-on-delivery-policy. Booking is created as Prepaid with the
@@ -1234,22 +1326,39 @@ const Booking = () => {
         {/* Header */}
         <header className="backdrop-blur-md border-b border-border/50 p-2.5 md:p-4 sticky top-0 z-50 bg-primary-glow">
           <div className="flex items-center gap-2 md:gap-3 max-w-2xl mx-auto">
-            <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={() => currentStep === 1 ? navigate("/") : handlePrevStep()}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={() => currentStep === 1 ? navigate(assistedContext ? "/admin/assisted-booking" : "/") : handlePrevStep()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-base md:text-xl font-semibold text-slate-700">Book Delivery</h1>
+            <h1 className="text-base md:text-xl font-semibold text-slate-700">
+              {assistedContext ? "Assisted Booking" : "Book Delivery"}
+            </h1>
           </div>
         </header>
+
+        {assistedContext && (
+          <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-3 md:px-4 py-2 sticky top-[52px] md:top-[65px] z-40">
+            <div className="max-w-2xl mx-auto flex items-center gap-2 text-sm">
+              <UserCog className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                Booking on behalf of <strong>{assistedContext.name || 'customer'}</strong> · +91 {assistedContext.phone}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="booking-shell p-3 md:p-4 max-w-2xl mx-auto pb-24 md:pb-4">
           <BookingProgress currentStep={currentStep} totalSteps={totalSteps} />
           {renderCurrentStep()}
+          {assistedContext && currentStep === 6 && sendingPaymentLink && (
+            <div className="mt-3 text-sm text-muted-foreground text-center">Sending payment link to customer…</div>
+          )}
         </div>
+
 
         <BottomNav />
 
-        {/* Payment Modal */}
-        {selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
+        {/* Payment Modal (customer self-service only) */}
+        {!assistedContext && selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
         courierId: selectedPartnerData?.partnerId ?? '',
         courierName: selectedCourierData.name ?? '',
         baseFare: baseFare,
@@ -1288,6 +1397,44 @@ const Booking = () => {
         gst: gstAmount,
         booking_source: 'pending',
       }} />}
+
+        {/* Admin-assisted: payment link sent confirmation */}
+        <Dialog open={!!paymentLinkInfo} onOpenChange={(open) => { if (!open) { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                Payment link sent
+              </DialogTitle>
+              <DialogDescription>
+                An SMS with the Razorpay payment link has been sent to <strong>+91 {assistedContext?.phone}</strong>.
+                The booking will be confirmed automatically once the customer completes payment.
+              </DialogDescription>
+            </DialogHeader>
+            {paymentLinkInfo?.url && (
+              <div className="rounded-md border bg-muted p-3 text-xs break-all font-mono">
+                {paymentLinkInfo.url}
+              </div>
+            )}
+            <DialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (paymentLinkInfo?.url) {
+                    navigator.clipboard.writeText(paymentLinkInfo.url);
+                    toast({ title: "Link copied" });
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4 mr-2" /> Copy link
+              </Button>
+              <Button onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); }}>
+                Book for another customer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Booking Confirmation Dialog */}
         <BookingConfirmationDialog isOpen={showConfirmationDialog} onClose={() => {
