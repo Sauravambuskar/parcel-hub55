@@ -89,6 +89,8 @@ export type Database = {
           courier_name: string
           courier_price: number
           created_at: string
+          created_by_admin_email: string | null
+          created_by_admin_id: string | null
           dead_weight_g: number | null
           delivery_time: string
           failure_reason: string | null
@@ -99,6 +101,7 @@ export type Database = {
           id: string
           insurance_amount: number | null
           insurance_required: boolean | null
+          is_admin_assisted: boolean
           label_url: string | null
           length: string | null
           package_weight: string
@@ -108,6 +111,9 @@ export type Database = {
           parcel_photos_uploaded_at: string | null
           partner_error_raw: string | null
           payment_id: string | null
+          payment_link_id: string | null
+          payment_link_status: string | null
+          payment_link_url: string | null
           payment_status: string | null
           platform_fee: number | null
           prayog_awb: string | null
@@ -144,6 +150,8 @@ export type Database = {
           courier_name: string
           courier_price: number
           created_at?: string
+          created_by_admin_email?: string | null
+          created_by_admin_id?: string | null
           dead_weight_g?: number | null
           delivery_time: string
           failure_reason?: string | null
@@ -154,6 +162,7 @@ export type Database = {
           id?: string
           insurance_amount?: number | null
           insurance_required?: boolean | null
+          is_admin_assisted?: boolean
           label_url?: string | null
           length?: string | null
           package_weight: string
@@ -163,6 +172,9 @@ export type Database = {
           parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
           payment_id?: string | null
+          payment_link_id?: string | null
+          payment_link_status?: string | null
+          payment_link_url?: string | null
           payment_status?: string | null
           platform_fee?: number | null
           prayog_awb?: string | null
@@ -199,6 +211,8 @@ export type Database = {
           courier_name?: string
           courier_price?: number
           created_at?: string
+          created_by_admin_email?: string | null
+          created_by_admin_id?: string | null
           dead_weight_g?: number | null
           delivery_time?: string
           failure_reason?: string | null
@@ -209,6 +223,7 @@ export type Database = {
           id?: string
           insurance_amount?: number | null
           insurance_required?: boolean | null
+          is_admin_assisted?: boolean
           label_url?: string | null
           length?: string | null
           package_weight?: string
@@ -218,6 +233,9 @@ export type Database = {
           parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
           payment_id?: string | null
+          payment_link_id?: string | null
+          payment_link_status?: string | null
+          payment_link_url?: string | null
           payment_status?: string | null
           platform_fee?: number | null
           prayog_awb?: string | null
