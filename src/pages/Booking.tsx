@@ -1357,8 +1357,8 @@ const Booking = () => {
 
         <BottomNav />
 
-        {/* Payment Modal */}
-        {selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
+        {/* Payment Modal (customer self-service only) */}
+        {!assistedContext && selectedCourierData && <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} orderDetails={{
         courierId: selectedPartnerData?.partnerId ?? '',
         courierName: selectedCourierData.name ?? '',
         baseFare: baseFare,
@@ -1397,6 +1397,44 @@ const Booking = () => {
         gst: gstAmount,
         booking_source: 'pending',
       }} />}
+
+        {/* Admin-assisted: payment link sent confirmation */}
+        <Dialog open={!!paymentLinkInfo} onOpenChange={(open) => { if (!open) { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                Payment link sent
+              </DialogTitle>
+              <DialogDescription>
+                An SMS with the Razorpay payment link has been sent to <strong>+91 {assistedContext?.phone}</strong>.
+                The booking will be confirmed automatically once the customer completes payment.
+              </DialogDescription>
+            </DialogHeader>
+            {paymentLinkInfo?.url && (
+              <div className="rounded-md border bg-muted p-3 text-xs break-all font-mono">
+                {paymentLinkInfo.url}
+              </div>
+            )}
+            <DialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (paymentLinkInfo?.url) {
+                    navigator.clipboard.writeText(paymentLinkInfo.url);
+                    toast({ title: "Link copied" });
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4 mr-2" /> Copy link
+              </Button>
+              <Button onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); }}>
+                Book for another customer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Booking Confirmation Dialog */}
         <BookingConfirmationDialog isOpen={showConfirmationDialog} onClose={() => {
