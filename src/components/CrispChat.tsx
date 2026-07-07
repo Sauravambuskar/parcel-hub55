@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Crisp } from "crisp-sdk-web";
+import { ChatboxPosition, Crisp } from "crisp-sdk-web";
 import { getAuthSession } from "@/lib/auth";
 
 const CRISP_WEBSITE_ID = "0f163c1b-0824-46f1-9e7e-68aaa3c55367";
@@ -32,6 +32,12 @@ export function CrispChat() {
   useEffect(() => {
     if (!configured) {
       Crisp.configure(CRISP_WEBSITE_ID);
+      try {
+        Crisp.setPosition(ChatboxPosition.Right);
+        Crisp.setZIndex(2147483000);
+      } catch {
+        /* noop */
+      }
       configured = true;
     }
     applySession();

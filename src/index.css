@@ -441,23 +441,12 @@ All colors MUST be HSL.
   height: 0;
 }
 
-/* Crisp chat widget alignment overrides */
-.crisp-client .cc-1brb6[data-full-view="false"] .cc-1yy0g,
-.crisp-client .cc-kv6t[data-full-view="false"] .cc-1yy0g {
-  right: 16px !important;
-  bottom: 16px !important;
-  left: auto !important;
-  top: auto !important;
-}
-.crisp-client .cc-1brb6[data-full-view="false"] .cc-1yy0g .cc-1no03,
-.crisp-client .cc-kv6t[data-full-view="false"] .cc-1yy0g .cc-1no03 {
-  right: 0 !important;
-  left: auto !important;
-}
-/* Lift launcher above mobile bottom nav */
+/* Crisp chat widget: only lift the launcher above the mobile bottom nav.
+   No positioning overrides on desktop — Crisp handles its own bottom-right anchor. */
 @media (max-width: 768px) {
-  .crisp-client .cc-1brb6[data-full-view="false"] .cc-1yy0g,
-  .crisp-client .cc-kv6t[data-full-view="false"] .cc-1yy0g {
-    bottom: 80px !important;
+  #crisp-chatbox > div {
+    margin-bottom: 72px !important;
   }
 }
+
+
