@@ -449,7 +449,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
           <div>
             <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
-              Compare Courier Prices &amp; Book Online — <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
+              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
             <h2 className="mt-5 text-[16px] md:text-[20px] font-normal" style={{ color: C.gray }}>
               India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
