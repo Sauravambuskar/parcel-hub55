@@ -6,6 +6,7 @@ const CRISP_WEBSITE_ID = "0f163c1b-0824-46f1-9e7e-68aaa3c55367";
 const CRISP_Z_INDEX = 2147483000;
 
 let configured = false;
+let crispMountFrame: number | null = null;
 
 const ensureCrispViewportMount = () => {
   const chatbox = document.getElementById("crisp-chatbox");
@@ -25,10 +26,10 @@ const ensureCrispViewportMount = () => {
   chatbox.style.removeProperty("overflow");
   chatbox.style.removeProperty("overflow-x");
   chatbox.style.removeProperty("overflow-y");
-  chatbox.style.removeProperty("right");
-  chatbox.style.removeProperty("top");
   chatbox.style.removeProperty("transform");
   chatbox.style.removeProperty("width");
+  chatbox.style.setProperty("position", "fixed", "important");
+  chatbox.style.setProperty("z-index", String(CRISP_Z_INDEX), "important");
 
   const crispClient = chatbox.querySelector<HTMLElement>(".crisp-client");
   crispClient?.style.removeProperty("max-height");
@@ -46,7 +47,14 @@ const ensureCrispViewportMount = () => {
   });
 };
 
-const scheduleCrispMountCheck = () => window.requestAnimationFrame(ensureCrispViewportMount);
+const scheduleCrispMountCheck = () => {
+  if (crispMountFrame !== null) return;
+
+  crispMountFrame = window.requestAnimationFrame(() => {
+    crispMountFrame = null;
+    ensureCrispViewportMount();
+  });
+};
 
 const applySession = () => {
   const session = getAuthSession();
