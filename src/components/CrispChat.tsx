@@ -8,6 +8,21 @@ const CRISP_Z_INDEX = 2147483000;
 let configured = false;
 let crispMountFrame: number | null = null;
 
+const clearStyleProperty = (element: HTMLElement, property: string) => {
+  if (element.style.getPropertyValue(property)) {
+    element.style.removeProperty(property);
+  }
+};
+
+const setImportantStyle = (element: HTMLElement, property: string, value: string) => {
+  if (
+    element.style.getPropertyValue(property) !== value ||
+    element.style.getPropertyPriority(property) !== "important"
+  ) {
+    element.style.setProperty(property, value, "important");
+  }
+};
+
 const ensureCrispViewportMount = () => {
   const chatbox = document.getElementById("crisp-chatbox");
   if (!chatbox) return;
@@ -16,34 +31,36 @@ const ensureCrispViewportMount = () => {
     document.body.appendChild(chatbox);
   }
 
-  chatbox.style.removeProperty("bottom");
-  chatbox.style.removeProperty("height");
-  chatbox.style.removeProperty("left");
-  chatbox.style.removeProperty("margin");
-  chatbox.style.removeProperty("margin-bottom");
-  chatbox.style.removeProperty("max-height");
-  chatbox.style.removeProperty("max-width");
-  chatbox.style.removeProperty("overflow");
-  chatbox.style.removeProperty("overflow-x");
-  chatbox.style.removeProperty("overflow-y");
-  chatbox.style.removeProperty("transform");
-  chatbox.style.removeProperty("width");
-  chatbox.style.setProperty("position", "fixed", "important");
-  chatbox.style.setProperty("z-index", String(CRISP_Z_INDEX), "important");
+  clearStyleProperty(chatbox, "bottom");
+  clearStyleProperty(chatbox, "height");
+  clearStyleProperty(chatbox, "left");
+  clearStyleProperty(chatbox, "margin");
+  clearStyleProperty(chatbox, "margin-bottom");
+  clearStyleProperty(chatbox, "max-height");
+  clearStyleProperty(chatbox, "max-width");
+  clearStyleProperty(chatbox, "overflow");
+  clearStyleProperty(chatbox, "overflow-x");
+  clearStyleProperty(chatbox, "overflow-y");
+  clearStyleProperty(chatbox, "transform");
+  clearStyleProperty(chatbox, "width");
+  setImportantStyle(chatbox, "position", "fixed");
+  setImportantStyle(chatbox, "z-index", String(CRISP_Z_INDEX));
 
   const crispClient = chatbox.querySelector<HTMLElement>(".crisp-client");
-  crispClient?.style.removeProperty("max-height");
-  crispClient?.style.removeProperty("max-width");
-  crispClient?.style.removeProperty("overflow");
-  crispClient?.style.removeProperty("overflow-x");
-  crispClient?.style.removeProperty("overflow-y");
-  crispClient?.style.removeProperty("transform");
+  if (crispClient) {
+    clearStyleProperty(crispClient, "max-height");
+    clearStyleProperty(crispClient, "max-width");
+    clearStyleProperty(crispClient, "overflow");
+    clearStyleProperty(crispClient, "overflow-x");
+    clearStyleProperty(crispClient, "overflow-y");
+    clearStyleProperty(crispClient, "transform");
+  }
 
   chatbox.querySelectorAll<HTMLIFrameElement>("iframe").forEach((iframe) => {
-    iframe.style.removeProperty("max-height");
-    iframe.style.removeProperty("max-width");
-    iframe.style.removeProperty("overflow");
-    iframe.style.removeProperty("transform");
+    clearStyleProperty(iframe, "max-height");
+    clearStyleProperty(iframe, "max-width");
+    clearStyleProperty(iframe, "overflow");
+    clearStyleProperty(iframe, "transform");
   });
 };
 
