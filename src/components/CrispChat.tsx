@@ -41,6 +41,8 @@ const ensureCrispViewportMount = () => {
   clearStyleProperty(chatbox, "overflow");
   clearStyleProperty(chatbox, "overflow-x");
   clearStyleProperty(chatbox, "overflow-y");
+  clearStyleProperty(chatbox, "right");
+  clearStyleProperty(chatbox, "top");
   clearStyleProperty(chatbox, "transform");
   clearStyleProperty(chatbox, "width");
   setImportantStyle(chatbox, "position", "fixed");
