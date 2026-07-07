@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.send-order-admin-email]
 verify_jwt = false
+
+[functions.track-booking-progress]
+verify_jwt = false

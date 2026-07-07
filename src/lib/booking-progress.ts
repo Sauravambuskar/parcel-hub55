@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthSession } from "@/lib/auth";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -28,20 +29,27 @@ export function resetSessionId(): string {
   return id;
 }
 
+function prayogAuthHeader(): string | null {
+  const s = getAuthSession();
+  if (!s?.user_id) return null;
+  return JSON.stringify({ user_id: s.user_id });
+}
+
 export async function trackStep(userId: string | null, step: number) {
   if (!userId || !UUID_RE.test(userId)) return;
   const sessionId = getOrCreateSessionId();
+  const header = prayogAuthHeader();
+  if (!header) return;
   try {
-    await supabase.from("booking_progress" as any).upsert(
-      {
-        user_id: userId,
+    await supabase.functions.invoke("track-booking-progress", {
+      body: {
+        action: "track",
         session_id: sessionId,
-        last_step: step,
-        last_step_name: STEP_NAMES[step] || `Step ${step}`,
-        updated_at: new Date().toISOString(),
+        step,
+        step_name: STEP_NAMES[step] || `Step ${step}`,
       },
-      { onConflict: "user_id,session_id" }
-    );
+      headers: { "x-prayog-auth": header },
+    });
   } catch (e) {
     console.warn("trackStep failed", e);
   }
@@ -51,20 +59,20 @@ export async function markCompleted(userId: string | null, bookingId: string | n
   if (!userId || !UUID_RE.test(userId)) return;
   const sessionId = localStorage.getItem(SESSION_KEY);
   if (!sessionId) return;
-  try {
-    await supabase
-      .from("booking_progress" as any)
-      .update({
-        completed: true,
-        booking_id: bookingId,
-        last_step: 6,
-        last_step_name: "Completed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("session_id", sessionId);
-  } catch (e) {
-    console.warn("markCompleted failed", e);
+  const header = prayogAuthHeader();
+  if (header) {
+    try {
+      await supabase.functions.invoke("track-booking-progress", {
+        body: {
+          action: "complete",
+          session_id: sessionId,
+          booking_id: bookingId,
+        },
+        headers: { "x-prayog-auth": header },
+      });
+    } catch (e) {
+      console.warn("markCompleted failed", e);
+    }
   }
   // Start a fresh session for the next booking
   resetSessionId();
