@@ -70,6 +70,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <CrispChat />
       <BrowserRouter>
         <Suspense fallback={<AppLoading />}>
         <Routes>
