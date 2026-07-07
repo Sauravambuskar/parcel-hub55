@@ -441,12 +441,4 @@ All colors MUST be HSL.
   height: 0;
 }
 
-/* Crisp chat widget: only lift the launcher above the mobile bottom nav.
-   No positioning overrides on desktop — Crisp handles its own bottom-right anchor. */
-@media (max-width: 768px) {
-  #crisp-chatbox > div {
-    margin-bottom: 72px !important;
-  }
-}
-
 
