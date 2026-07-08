@@ -163,16 +163,117 @@ export const CITIES: CityContent[] = [
     slug: "pune",
     city: "Pune",
     intro:
-      "Pune's mix of IT parks, manufacturing hubs and residential pockets makes it a high-volume courier city. ViaSetu surfaces the best courier rates from Hinjewadi to Hadapsar with reliable pickup slots.",
-    hubs: ["Hinjewadi", "Kothrud", "Hadapsar", "Wakad", "Viman Nagar", "Kharadi"],
-    highlights: [
-      "Intra-city same-day options for Pune addresses",
-      "Next-day express to Mumbai, Bangalore and Hyderabad",
-      "Doorstep pickup across Pune and PCMC",
-      "Coverage across all Pune pin codes",
+      "Whether you're shipping from Hinjawadi, Hadapsar, Kharadi, Baner, or anywhere across Pune, ViaSetu helps you book trusted courier services through one convenient platform. Compare shipping options, arrange doorstep pickup, and track your parcel from dispatch to delivery all without visiting multiple courier offices. Whether it's a single document or daily business shipments, sending parcels from Pune becomes quicker, easier, and more reliable.",
+    hubs: [
+      "Hinjawadi",
+      "Baner",
+      "Wakad",
+      "Kharadi",
+      "Hadapsar",
+      "Kothrud",
+      "Viman Nagar",
+      "Pimpri",
+      "Chinchwad",
+      "Aundh",
+      "Magarpatta",
+      "Bavdhan",
     ],
+    highlights: [
+      "Compare multiple courier options before confirming your shipment",
+      "Convenient doorstep pickup from home, office, warehouse or store",
+      "Live shipment tracking with real-time updates after booking",
+      "Nationwide delivery network from Pune to across India",
+    ],
+    metaTitle: "Courier Service in Pune | Fast Parcel Delivery & Doorstep Pickup | ViaSetu",
     metaDescription:
-      "Reliable courier service in Pune — compare top couriers and book online with ViaSetu.",
+      "Looking for a reliable courier service in Pune? Compare courier partners, schedule doorstep parcel pickup, track shipments, and send packages anywhere in India with ViaSetu.",
+    h1: "Courier Service in Pune",
+    tagline: "Send Parcels Across Pune and India Without the Usual Hassle",
+    sections: [
+      {
+        heading: "Smart Shipping for a City That Never Stops Building",
+        paragraphs: [
+          "Pune has become one of India's fastest-growing business and technology hubs. Thousands of startups, manufacturers, online sellers, students, and professionals send parcels every day.",
+          "Instead of spending time comparing different courier companies, ViaSetu lets you manage your shipment from one place. Choose the courier that fits your delivery timeline and budget while staying updated with real-time tracking throughout the journey.",
+        ],
+      },
+      {
+        heading: "Designed for Individuals, Businesses and Growing Brands",
+        paragraphs: ["Shipping needs vary across Pune."],
+        bullets: [
+          "A student may need to send important documents home.",
+          "An online seller may dispatch dozens of customer orders each week.",
+          "A manufacturer may require dependable logistics for regular deliveries.",
+        ],
+      },
+      {
+        heading: "Areas in Pune Where Doorstep Pickup Is Commonly Available",
+        paragraphs: [
+          "Courier pickup is available across many residential, commercial and industrial neighbourhoods, depending on courier partner coverage.",
+          "Coverage may vary by PIN code and courier partner availability.",
+        ],
+      },
+      {
+        heading: "Why Customers Prefer ViaSetu for Courier Services in Pune",
+        bullets: [
+          "Compare multiple courier options before confirming your shipment",
+          "Convenient doorstep pickup from home, office, warehouse or store",
+          "Live shipment tracking with real-time updates",
+          "Nationwide delivery network across India",
+          "One platform for every shipment — bookings, tracking and history",
+        ],
+      },
+      {
+        heading: "Frequently Shipped Items from Pune",
+        paragraphs: ["Customers regularly send:"],
+        bullets: [
+          "Business documents",
+          "Ecommerce orders",
+          "Electronic accessories",
+          "Automotive spare parts",
+          "Fashion products",
+          "Educational certificates",
+          "Books and study material",
+          "Gifts and personal parcels",
+          "Product samples",
+          "Office supplies",
+        ],
+      },
+      {
+        heading: "Looking for a Reliable Courier Partner in Pune?",
+        paragraphs: [
+          "Whether you're running a startup in Hinjawadi, managing an online store from Kharadi, operating a manufacturing unit in Pimpri-Chinchwad, or simply sending a parcel to family, ViaSetu makes shipping straightforward.",
+          "Book your courier online, compare trusted delivery partners, schedule pickup at your convenience, and track every shipment from one dashboard.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Can I schedule a doorstep courier pickup in Pune?",
+        a: "Yes. Doorstep pickup is available across many serviceable locations depending on the courier partner and PIN code.",
+      },
+      {
+        q: "Does ViaSetu support business shipping in Pune?",
+        a: "Yes. The platform is suitable for startups, SMEs, manufacturers, ecommerce sellers and individual customers.",
+      },
+      {
+        q: "Can I send parcels from Pune to other states?",
+        a: "Absolutely. Shipments can be booked from Pune to destinations throughout India.",
+      },
+      {
+        q: "How can I track my courier?",
+        a: "You'll receive shipment tracking details after booking, allowing you to follow your parcel until delivery.",
+      },
+      {
+        q: "Which areas in Pune are commonly covered?",
+        a: "Many residential, commercial and industrial areas across Pune and PCMC are serviceable, subject to courier partner coverage.",
+      },
+    ],
+    closingHeading: "Why Pune Businesses Trust Efficient Logistics",
+    closingParagraphs: [
+      "From technology parks and industrial zones to educational campuses and growing ecommerce businesses, Pune depends on reliable logistics every day. Fast pickups, transparent tracking and flexible courier options help businesses maintain customer satisfaction while simplifying daily shipping operations.",
+      "ViaSetu connects multiple courier partners on a single platform, making parcel delivery easier for professionals, startups, retailers and individuals across Pune.",
+    ],
   },
   {
     slug: "bangalore",
