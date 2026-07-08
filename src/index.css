@@ -304,15 +304,6 @@ All colors MUST be HSL.
     }
   }
 
-  /* Dialog/Modal centering fix */
-  [role="dialog"] {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    margin: 0 !important;
-  }
-
   /* Razorpay modal centering fix */
   .razorpay-container,
   .razorpay-checkout-frame,
@@ -362,13 +353,6 @@ All colors MUST be HSL.
   button.h-6, button.h-7, button.h-8,
   [role="tab"].h-7, [role="tab"].h-8 {
     min-height: 0 !important;
-  }
-
-  /* Dialogs/Modals fit small viewports */
-  [role="dialog"] {
-    max-width: calc(100vw - 1rem) !important;
-    max-height: calc(100dvh - 1rem) !important;
-    overflow-y: auto !important;
   }
 
   /* Tables scroll inside themselves, not the page */
@@ -440,3 +424,5 @@ All colors MUST be HSL.
   pointer-events: none;
   height: 0;
 }
+
+

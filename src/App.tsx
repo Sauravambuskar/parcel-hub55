@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
+import { CrispChat } from "@/components/CrispChat";
 
 const Index = lazy(() => import("./pages/Index"));
 const Landing = lazy(() => import("./pages/Landing"));
@@ -69,6 +70,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <CrispChat />
       <BrowserRouter>
         <Suspense fallback={<AppLoading />}>
         <Routes>

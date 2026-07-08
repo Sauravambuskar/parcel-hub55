@@ -1,75 +1,154 @@
+## Root-cause analysis
 
-# Admin-Assisted Booking Flow
+Based on live checks from this environment, the current source-of-truth DNS and Lovable routing are now correct.
 
-Let admins (super_admin, operations, support) create a booking on behalf of a customer using the same 6-step flow customers use, then send a Razorpay payment link the customer completes to confirm the order.
+### What I verified
 
-## 1. Admin navigation & access
-- Add "Assisted Booking" entry to `AdminLayout` sidebar (visible to super_admin, operations, support).
-- New route `/admin/assisted-booking` guarded by `ProtectedAdminRoute` with those three roles.
+1. **Authoritative Hostinger DNS is correct**
+   - `@ns1.dns-parking.com viasetu.com A` returns `185.158.133.1`
+   - `@ns2.dns-parking.com viasetu.com A` returns `185.158.133.1`
+   - `www.viasetu.com` also returns `185.158.133.1` from both authoritative nameservers
 
-## 2. Customer lookup step (new Step 0)
-- New page `src/pages/admin/AssistedBooking.tsx`.
-- First panel: admin enters customer's 10-digit phone + name.
-- Calls new edge function `admin-lookup-customer` (service-role) that:
-  - Derives `user_id` via the existing phone-hash convention.
-  - Fetches `profiles` row if it exists; if not, upserts a minimal profile (name + phone).
-  - Returns `{ user_id, phone, name, isNew }`.
-- Once resolved, admin sees "Booking for: <name> · <phone>" banner pinned at the top for the rest of the flow.
+2. **Public recursive DNS is now correct**
+   - Google DNS `8.8.8.8` returns `185.158.133.1` for both `viasetu.com` and `www.viasetu.com`
+   - Cloudflare DNS `1.1.1.1` returns `185.158.133.1` for both domains
+   - DNS-over-HTTPS from Google and Cloudflare also returns `185.158.133.1`
 
-## 3. Reuse the consumer booking flow
-- Refactor `src/pages/Booking.tsx` so its stepper (Step1–Step6 components + state) is exported as a reusable `<BookingWizard>` accepting:
-  - `mode: "self" | "admin_assisted"`
-  - `customer: { userId, name, phone }` (overrides the logged-in user for self/receiver defaults, address prefill, saved addresses, draft persistence)
-  - `onComplete(bookingId)` callback
-- Consumer `/booking` page becomes a thin wrapper passing the current session user.
-- Admin page mounts `<BookingWizard mode="admin_assisted" customer={lookedUpCustomer} />`.
-- Saved-address picker, pincode autofill, goods-type/weight logic, serviceability, courier selection, ETA, review — all identical.
+3. **Lovable is routing the apex domain correctly**
+   - `https://viasetu.com` returns `HTTP/2 200`
+   - Response headers include a Lovable/Cloudflare deployment response, including `x-deployment-id`
+   - This means the apex domain is attached to the current Lovable project and is being served successfully.
 
-## 4. Payment: send link instead of in-session Razorpay
-- In `mode="admin_assisted"`, Step 6 replaces the "Pay now" button with **"Send payment link to customer"**.
-- New edge function `admin-create-payment-link`:
-  - Creates the booking row with `status='PENDING_PAYMENT'`, `is_admin_assisted=true`, `created_by_admin_id=<admin auth uid>`.
-  - Calls Razorpay **Payment Links API** (`POST /v1/payment_links`) with:
-    - amount, currency INR, customer name/phone, description = order summary
-    - `notify: { sms: true }` (uses Razorpay's SMS; no extra provider)
-    - `callback_url` → existing verify page, `callback_method: get`
-    - `notes.booking_id` for reconciliation
-  - Stores `razorpay_payment_link_id` + `payment_link_url` on the booking.
-- Existing `razorpay-verify-payment` webhook path already flips status to `CONFIRMED` and triggers courier booking; extend it to also handle `payment_link.paid` events (match by `notes.booking_id`).
-- Admin sees confirmation screen with: link URL (copy button), "Resend SMS" action, and booking reference. No courier booking is placed until payment succeeds.
+4. **`www` is currently redirecting to the apex domain**
+   - `https://www.viasetu.com` returns `302` to `https://viasetu.com/`
+   - Then `https://viasetu.com/` returns `200`
+   - So Lovable is not requiring apex-to-www. In your current setup, the apex appears to be the primary domain and `www` redirects to it.
 
-## 5. Audit trail
-Migration on `bookings`:
-- `is_admin_assisted boolean not null default false`
-- `created_by_admin_id uuid` (references admin user id, nullable)
-- `payment_link_id text`, `payment_link_url text`, `payment_link_status text`
-- Index on `created_by_admin_id`.
-- RLS: extend existing owner-select policy so admins with roles super_admin/operations/support can select/insert/update these rows (via `is_operations(auth.uid())`).
+5. **The old Vercel error only appears when the apex is forced to the old Vercel IP**
+   - Forcing `viasetu.com` to `216.198.79.1` returns:
+     - `HTTP/2 404`
+     - `server: Vercel`
+     - `x-vercel-error: DEPLOYMENT_NOT_FOUND`
+   - Forcing `viasetu.com` to `185.158.133.1` returns `HTTP/2 200`
 
-## 6. Admin order monitoring
-- On `OrderMonitoring` admin page, add an "Assisted" badge when `is_admin_assisted=true` and a filter toggle "Assisted only". Show `created_by_admin_email` (joined from `admin_users`).
+## Precise diagnosis
 
-## Technical details
+The old Vercel page is not being caused by Lovable routing, a missing Lovable apex configuration, or a required apex-to-www redirect.
 
-**New files**
-- `src/pages/admin/AssistedBooking.tsx` — lookup + wizard host
-- `src/components/booking/BookingWizard.tsx` — extracted from `Booking.tsx`
-- `supabase/functions/admin-lookup-customer/index.ts`
-- `supabase/functions/admin-create-payment-link/index.ts`
+The Vercel error happens only when a resolver, browser, OS, router, ISP, or CDN cache still resolves `viasetu.com` to the old Vercel IP:
 
-**Modified**
-- `src/pages/Booking.tsx` → wraps `<BookingWizard mode="self" />`
-- `src/components/booking/BookingStep6.tsx` → conditional CTA based on `mode`
-- `src/components/admin/AdminLayout.tsx` → sidebar item
-- `src/components/admin/ProtectedAdminRoute.tsx` route map in `App.tsx`
-- `supabase/functions/razorpay-verify-payment/index.ts` → also accept payment-link webhook payload
-- `src/pages/admin/OrderMonitoring.tsx` → badge + filter
+```text
+216.198.79.1
+```
 
-**Secrets**: reuses existing `RAZORPAY_PROD_KEY_ID` / `RAZORPAY_PROD_KEY_SECRET`. No new secrets.
+When `viasetu.com` resolves to the correct Lovable IP:
 
-**Migration**: single migration adding the four columns + index + updated policies with `GRANT`s preserved.
+```text
+185.158.133.1
+```
 
-## Out of scope
-- Offline/manual payment recording (not selected).
-- Admin paying via Razorpay checkout in-session (not selected).
-- Customer OTP re-verification for the assisted booking.
+Lovable serves the site correctly.
+
+So the root cause is stale DNS resolution somewhere outside the current authoritative Hostinger zone. Your Hostinger records appear correct now, and the active authoritative nameservers are returning the Lovable IP.
+
+## Answers to your specific questions
+
+### Is Lovable internally routing `viasetu.com` differently from `www.viasetu.com`?
+
+No. Current evidence shows both domains are attached to this Lovable project. `www.viasetu.com` redirects to `viasetu.com`, and the apex domain serves the Lovable deployment successfully.
+
+### Does Lovable require an apex redirect to `www`?
+
+No. Your current Lovable configuration appears to use the apex domain as the primary destination, with `www` redirecting to the apex. That is valid.
+
+### Is there stale deployment, edge cache, or old Vercel association still linked to this domain?
+
+There may still be stale DNS caches on some client/network paths, but the live Vercel response is explained by DNS resolving to `216.198.79.1`, not by Lovable routing.
+
+If the browser reaches `216.198.79.1`, Vercel will answer. If it reaches `185.158.133.1`, Lovable answers.
+
+### Is Lovable expecting a different IP for the apex domain?
+
+No. `185.158.133.1` is the correct Lovable IP for the apex domain, and it works when explicitly tested.
+
+### Is the domain fully attached to the current project internally?
+
+Yes. The project reports both custom domains attached:
+
+```text
+https://viasetu.com
+https://www.viasetu.com
+```
+
+And `https://viasetu.com` currently returns a successful Lovable deployment response.
+
+### Why did the apex serve old Vercel while the DNS panel looked correct?
+
+Because some resolver path was still returning the old cached A record for the apex domain:
+
+```text
+viasetu.com -> 216.198.79.1
+```
+
+The DNS panel can be correct while recursive resolvers or local caches temporarily continue serving the previous value. Since `www` already resolved to `185.158.133.1`, it worked while the apex still failed on those stale paths.
+
+## Do not overwrite these records
+
+Do not overwrite or regenerate the current Hostinger DNS records if they are:
+
+```text
+A    @      185.158.133.1
+A    www    185.158.133.1
+```
+
+Those are correct.
+
+## Exact permanent-resolution steps
+
+1. **Leave the current Hostinger DNS records unchanged**
+   - Do not replace the Lovable IP.
+   - Do not add another A record for the apex.
+   - Do not add Vercel records back.
+
+2. **Confirm there are no duplicate apex records in Hostinger**
+   - There should be only one active `A` record for `@` pointing to `185.158.133.1`.
+   - Remove any `A`, `AAAA`, ALIAS, ANAME, or CNAME-style flattening record for `@` that points to Vercel.
+   - Based on authoritative DNS, this already appears clean.
+
+3. **Flush local DNS caches where the Vercel page still appears**
+   - Restart browser.
+   - Clear browser DNS/socket cache.
+   - Restart Wi-Fi/router if needed.
+   - On macOS: `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
+   - On Windows: `ipconfig /flushdns`
+
+4. **Test using authoritative DNS, not only browser behavior**
+
+   Use:
+
+   ```bash
+   dig @ns1.dns-parking.com viasetu.com A
+   dig @ns2.dns-parking.com viasetu.com A
+   dig @8.8.8.8 viasetu.com A
+   dig @1.1.1.1 viasetu.com A
+   ```
+
+   All should return:
+
+   ```text
+   185.158.133.1
+   ```
+
+5. **If any public resolver still returns `216.198.79.1`**
+   - That resolver is stale.
+   - Wait for its cache to expire.
+   - The current TTL shown is `14400` seconds, approximately 4 hours.
+   - If an old record had a longer TTL, some networks may take longer.
+
+6. **Optional cleanup in Vercel**
+   - If you still have access to the old Vercel project/team, remove `viasetu.com` and `www.viasetu.com` from Vercel Domains.
+   - This is cleanup only. It is not the primary fix, because DNS should no longer point traffic to Vercel.
+
+## Final conclusion
+
+The apex domain issue was caused by stale DNS resolution to the old Vercel IP `216.198.79.1`. The authoritative DNS is now correct, Lovable is accepting and serving `viasetu.com`, `www` redirects to the apex, and Lovable does not require a different apex IP or an apex-to-www redirect.
