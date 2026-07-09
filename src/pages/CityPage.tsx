@@ -279,46 +279,265 @@ export const CITIES: CityContent[] = [
     slug: "bangalore",
     city: "Bangalore",
     intro:
-      "Bangalore is India's tech and D2C startup capital. ViaSetu helps brands and individuals ship from Whitefield to Koramangala with the right courier for every shipment — express, economy or bulk.",
-    hubs: ["Whitefield", "Koramangala", "Indiranagar", "HSR Layout", "Electronic City", "Jayanagar"],
-    highlights: [
-      "Same-day delivery options within Bangalore",
-      "Next-day express to Chennai, Hyderabad and Mumbai",
-      "Doorstep pickup across all major Bangalore zones",
-      "Built for D2C sellers shipping from Bangalore",
+      "From Whitefield's technology parks to Koramangala's startup community and Electronic City's business hubs, Bangalore depends on fast and dependable logistics every day. ViaSetu helps individuals, online sellers, and businesses compare courier services, arrange doorstep parcel pickup, and track deliveries through one simple platform. Whether you're shipping a single parcel or managing daily customer orders, everything can be booked online in just a few minutes.",
+    hubs: [
+      "Whitefield",
+      "Koramangala",
+      "Electronic City",
+      "Indiranagar",
+      "HSR Layout",
+      "Jayanagar",
+      "Marathahalli",
+      "Bellandur",
+      "Yelahanka",
+      "Rajajinagar",
+      "Hebbal",
+      "Banashankari",
     ],
+    highlights: [
+      "Compare courier rates from multiple partners in one place",
+      "Convenient doorstep pickup from home, office, warehouse or store",
+      "Real-time shipment visibility from dispatch to delivery",
+      "Nationwide shipping coverage from Bangalore to across India",
+    ],
+    metaTitle: "Courier Service in Bangalore | Fast Parcel Delivery & Doorstep Pickup | ViaSetu",
     metaDescription:
-      "Top courier service in Bangalore. Book Delhivery, Xpressbees, Shadowfax and more on ViaSetu.",
+      "Book trusted courier services in Bangalore with ViaSetu. Compare courier partners, schedule doorstep pickup, track parcels, and send shipments across Bangalore and anywhere in India.",
+    h1: "Courier Service in Bangalore",
+    tagline: "Reliable Courier Solutions for Bangalore's Growing Businesses and Everyday Deliveries",
+    sections: [
+      {
+        heading: "Built for the City's Fast-Moving Economy",
+        paragraphs: [
+          "Bangalore has become one of India's busiest centres for technology companies, D2C brands, ecommerce businesses and entrepreneurs. Reliable shipping is essential when customers expect quick deliveries and transparent tracking.",
+          "ViaSetu removes the complexity of dealing with multiple courier providers by bringing booking, shipment management and tracking together in one place. You choose the delivery option that works for your timeline while we simplify the entire shipping experience.",
+        ],
+      },
+      {
+        heading: "Shipping That Works for Every Kind of Customer",
+        paragraphs: ["Every shipment has a different purpose."],
+        bullets: [
+          "A startup may need to dispatch customer orders every day.",
+          "An IT professional may need to send confidential documents.",
+          "A student may be shipping books and personal belongings.",
+          "A home business may require affordable courier options without long-term commitments.",
+        ],
+      },
+      {
+        heading: "Major Pickup Locations Across Bangalore",
+        paragraphs: [
+          "Doorstep parcel pickup is available in many residential, commercial and business districts across Bangalore, depending on courier partner serviceability.",
+          "Pickup availability may vary based on PIN code and courier partner coverage.",
+        ],
+      },
+      {
+        heading: "Why Bangalore Customers Choose ViaSetu",
+        bullets: [
+          "Compare courier rates from multiple partners before booking",
+          "Convenient doorstep collection from home, office or store",
+          "Real-time shipment visibility with regular updates",
+          "Nationwide shipping coverage across India",
+          "Manage business and personal deliveries from one dashboard",
+        ],
+      },
+      {
+        heading: "Common Shipments Sent from Bangalore",
+        paragraphs: ["Customers frequently book courier services for:"],
+        bullets: [
+          "Ecommerce orders",
+          "Software and business documents",
+          "Electronic gadgets and accessories",
+          "Apparel and fashion products",
+          "Startup product samples",
+          "Books and educational material",
+          "Gifts and personal parcels",
+          "Office supplies",
+          "Healthcare products",
+          "Small business inventory",
+        ],
+      },
+      {
+        heading: "A Better Way to Send Parcels in Bangalore",
+        paragraphs: [
+          "Whether you're running a D2C brand from HSR Layout, working from a tech campus in Whitefield, operating an online store in Koramangala, or simply sending a parcel to family, ViaSetu gives you one place to compare courier services, schedule pickups and monitor every shipment with confidence.",
+          "No unnecessary paperwork. No visiting multiple courier offices. Just a smoother way to ship.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Can I book a courier pickup from my home or office in Bangalore?", a: "Yes. Doorstep pickup is available across many serviceable locations, depending on courier partner availability." },
+      { q: "Is ViaSetu suitable for ecommerce businesses in Bangalore?", a: "Yes. Many online sellers, startups and growing businesses use the platform to simplify parcel bookings and shipment management." },
+      { q: "Can I send parcels from Bangalore to other Indian cities?", a: "Absolutely. Shipments can be booked from Bangalore to destinations across India." },
+      { q: "How do I track my shipment?", a: "Once your booking is confirmed, you'll receive tracking information that allows you to monitor the parcel until delivery." },
+      { q: "Which Bangalore locations are commonly covered?", a: "Many major residential, commercial and technology hubs are serviceable, subject to courier partner coverage and PIN code availability." },
+    ],
+    closingHeading: "Shipping That Supports Bangalore's Innovation",
+    closingParagraphs: [
+      "Bangalore is home to thousands of startups, technology companies, online brands and independent entrepreneurs. As businesses grow, dependable logistics become just as important as great products and customer service.",
+      "ViaSetu simplifies courier booking by bringing multiple delivery partners onto one platform, helping businesses and individuals move parcels efficiently without the complexity of managing different courier providers.",
+    ],
   },
   {
     slug: "hyderabad",
     city: "Hyderabad",
     intro:
-      "Hyderabad's blend of commerce and tech drives steady courier demand from Hitech City to the Old City. ViaSetu gives you instant rate comparison and pickup scheduling for every Hyderabad pin code.",
-    hubs: ["Hitech City", "Gachibowli", "Banjara Hills", "Madhapur", "Secunderabad", "Kondapur"],
-    highlights: [
-      "Same-day delivery within Hyderabad metro",
-      "Next-day express to Bangalore, Chennai and Vijayawada",
-      "Doorstep pickup across HMDA limits",
-      "Coverage across all Hyderabad pin codes",
+      "From Hitech City and Gachibowli to Secunderabad and LB Nagar, thousands of parcels move across Hyderabad every day. ViaSetu helps you send documents, customer orders, business shipments, and personal packages without the hassle of visiting multiple courier offices. Compare courier options, arrange a doorstep pickup, and keep track of your shipment from dispatch to delivery all through one platform.",
+    hubs: [
+      "Hitech City",
+      "Gachibowli",
+      "Madhapur",
+      "Kondapur",
+      "Banjara Hills",
+      "Jubilee Hills",
+      "Kukatpally",
+      "Secunderabad",
+      "Uppal",
+      "Miyapur",
+      "LB Nagar",
+      "Begumpet",
     ],
+    highlights: [
+      "Compare trusted courier partners based on speed and cost",
+      "Doorstep parcel collection from home, office or warehouse",
+      "Stay updated with real-time shipment tracking",
+      "Deliver from Hyderabad to destinations across India",
+    ],
+    metaTitle: "Courier Service in Hyderabad | Fast Parcel Delivery & Doorstep Pickup | ViaSetu",
     metaDescription:
-      "Fast and affordable courier service in Hyderabad. Compare and book on ViaSetu.",
+      "Need a reliable courier service in Hyderabad? Book doorstep parcel pickup, compare courier partners, track shipments, and send parcels anywhere in India with ViaSetu.",
+    h1: "Courier Service in Hyderabad",
+    tagline: "Reliable Parcel Delivery Across Hyderabad for Homes, Businesses and Online Sellers",
+    sections: [
+      {
+        heading: "Shipping Solutions That Keep Hyderabad Moving",
+        paragraphs: [
+          "Hyderabad is home to a fast-growing mix of technology companies, pharmaceutical businesses, manufacturers, retailers and entrepreneurs. Whether you're fulfilling online orders or sending an urgent business document, dependable logistics make all the difference.",
+          "ViaSetu simplifies the process by bringing trusted courier partners together in one place. Instead of contacting different courier companies, you can compare services, book a shipment, and monitor its progress with ease.",
+        ],
+      },
+      {
+        heading: "Flexible Courier Services for Every Shipping Requirement",
+        paragraphs: ["Not every parcel is the same, and neither is every customer."],
+        bullets: [
+          "Some people need to send important paperwork across the city.",
+          "Businesses dispatch customer orders every day.",
+          "Students ship books and personal belongings.",
+          "Retailers move products to customers across India.",
+        ],
+      },
+      {
+        heading: "Popular Pickup Locations Across Hyderabad",
+        paragraphs: [
+          "Doorstep courier pickup is available across many residential, commercial and business areas, subject to courier partner serviceability.",
+          "Coverage depends on the selected courier partner and serviceable PIN codes.",
+        ],
+      },
+      {
+        heading: "Why Hyderabad Customers Choose ViaSetu",
+        bullets: [
+          "Compare trusted courier partners by delivery speed and cost",
+          "Doorstep parcel collection from home, office or warehouse",
+          "Stay updated with shipment tracking at every stage",
+          "Deliver from Hyderabad to cities across India",
+          "One dashboard for every shipment and booking history",
+        ],
+      },
+      {
+        heading: "Common Parcels Sent from Hyderabad",
+        paragraphs: ["Customers regularly use courier services to send:"],
+        bullets: [
+          "Business contracts and legal documents",
+          "Pharmaceutical samples and medical supplies",
+          "Ecommerce orders",
+          "Electronics and accessories",
+          "Clothing and lifestyle products",
+          "Educational documents",
+          "Gifts and personal parcels",
+          "Office equipment",
+          "Product samples",
+          "Books and stationery",
+        ],
+      },
+      {
+        heading: "Send Parcels from Hyderabad with Confidence",
+        paragraphs: [
+          "Whether you're operating a business in Gachibowli, managing an online store in Madhapur, working from Hitech City, or sending a personal package to family, ViaSetu helps simplify every shipment.",
+          "Book online, compare courier services, schedule a pickup, and monitor your parcel through one convenient platform.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Can I book a courier pickup from my home in Hyderabad?", a: "Yes. Doorstep pickup is available across many serviceable areas depending on courier partner availability." },
+      { q: "Does ViaSetu support business shipping in Hyderabad?", a: "Yes. Individuals, startups, retailers, ecommerce businesses and SMEs can all use the platform to manage parcel deliveries." },
+      { q: "Can I ship parcels from Hyderabad to anywhere in India?", a: "Yes. Courier bookings are available for deliveries across India through supported courier partners." },
+      { q: "How can I track my shipment?", a: "After your booking is confirmed, you'll receive tracking details to monitor your parcel until delivery." },
+      { q: "Which Hyderabad locations are commonly covered?", a: "Many residential, commercial and business districts across Hyderabad and Secunderabad are serviceable, depending on PIN code coverage." },
+    ],
+    closingHeading: "Built for Hyderabad's Growing Business Community",
+    closingParagraphs: [
+      "Hyderabad continues to attract technology companies, pharmaceutical manufacturers, exporters and fast-growing online businesses. As shipping volumes increase, businesses need courier services that are dependable, flexible and easy to manage.",
+      "ViaSetu helps simplify logistics by connecting multiple courier partners through one platform, allowing businesses and individuals to book shipments, compare delivery options and stay informed throughout the shipping journey.",
+    ],
   },
   {
     slug: "delhi",
     city: "Delhi",
     intro:
-      "Delhi-NCR is India's largest courier corridor. ViaSetu covers Delhi, Gurgaon, Noida, Faridabad and Ghaziabad with the best partner rates and same-day pickup slots across the region.",
-    hubs: ["Connaught Place", "Dwarka", "Saket", "Rohini", "Gurgaon", "Noida"],
+      "Need a dependable courier service in Delhi? ViaSetu lets you compare courier charges, book doorstep pickup, and send parcels across Delhi-NCR and anywhere in India. Whether you're dispatching business shipments from Nehru Place, delivering ecommerce orders from Rohini, or sending personal packages from Dwarka, you can choose the right courier partner in minutes all from one platform.",
+    hubs: ["Connaught Place", "Dwarka", "Saket", "Rohini", "Nehru Place", "Karol Bagh", "Pitampura", "Lajpat Nagar", "Gurugram", "Noida", "Faridabad", "Ghaziabad"],
     highlights: [
-      "Same-day delivery within Delhi-NCR",
-      "Next-day express to Mumbai, Jaipur and Chandigarh",
-      "Doorstep pickup across NCR pin codes",
-      "Coverage across all Delhi and NCR pin codes",
+      "Compare courier prices from multiple trusted delivery partners",
+      "Doorstep parcel pickup across Delhi, Noida, Gurugram, Faridabad and Ghaziabad",
+      "Ship documents, personal parcels, ecommerce orders and business consignments",
+      "Live tracking with regular shipment updates until delivery",
     ],
+    metaTitle: "Courier Service in Delhi | Doorstep Pickup & Parcel Delivery NCR | ViaSetu",
     metaDescription:
-      "Best courier service in Delhi NCR. Compare top couriers and book online with ViaSetu.",
+      "Book courier services in Delhi with ViaSetu. Compare courier charges, schedule doorstep pickup across Delhi-NCR, track shipments and send parcels anywhere in India.",
+    h1: "Courier Service in Delhi",
+    tagline: "Fast, Reliable Courier Services Across Delhi-NCR",
+    sections: [
+      {
+        heading: "Couriers Available in Delhi",
+        paragraphs: [
+          "Delhi is one of India's busiest logistics hubs, where fast and reliable shipping is essential for businesses and individuals alike. ViaSetu brings together trusted courier partners so you can compare shipping costs, estimated delivery times, and pickup availability before booking. Instead of contacting multiple courier companies, you get everything in one place — from booking and pickup to real-time parcel tracking.",
+          "Whether you're shipping within Delhi, across the NCR, or to any destination in India, ViaSetu helps you find the most suitable courier service based on your budget and delivery timeline.",
+        ],
+      },
+      {
+        heading: "Why Choose ViaSetu for Courier Services in Delhi?",
+        bullets: [
+          "Compare courier prices from multiple trusted delivery partners",
+          "Doorstep parcel pickup across Delhi, Noida, Gurugram, Faridabad and Ghaziabad",
+          "Ship documents, personal parcels, ecommerce orders and business consignments",
+          "Live tracking with regular shipment updates until delivery",
+        ],
+      },
+      {
+        heading: "Popular Pickup Zones Across Delhi-NCR",
+        paragraphs: [
+          "Doorstep courier pickup is commonly available across Delhi, Gurugram, Noida, Faridabad and Ghaziabad, subject to courier partner serviceability and PIN code coverage.",
+        ],
+      },
+      {
+        heading: "Shipping Built for Delhi's Businesses and Homes",
+        paragraphs: [
+          "From wholesalers in Chandni Chowk to ecommerce sellers in Rohini, corporate offices in Nehru Place, and families in Dwarka — everyone in Delhi ships differently. ViaSetu supports business consignments, ecommerce orders, documents and personal parcels through a single easy-to-use platform.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Can I book a courier pickup from home in Delhi?", a: "Yes. Doorstep pickup is available across Delhi-NCR depending on the courier partner and PIN code." },
+      { q: "Do you cover Gurugram, Noida, Faridabad and Ghaziabad?", a: "Yes. Pickup and delivery are commonly available across Delhi-NCR through supported courier partners." },
+      { q: "Can I send parcels from Delhi to other cities?", a: "Absolutely. Shipments can be booked from Delhi to destinations across India." },
+      { q: "How do I compare courier charges in Delhi?", a: "ViaSetu lets you view multiple courier options side by side with rates and delivery timelines before booking." },
+      { q: "Is this suitable for ecommerce sellers in Delhi?", a: "Yes. Online sellers, SMEs and businesses use ViaSetu to manage regular parcel dispatches efficiently." },
+    ],
+    closingHeading: "Reliable Parcel Delivery Across Delhi-NCR",
+    closingParagraphs: [
+      "Delhi-NCR is one of India's largest courier corridors, with millions of shipments moving every day between homes, offices, warehouses and customers nationwide. ViaSetu makes it easier for businesses and individuals to ship efficiently by connecting multiple courier partners through one dashboard.",
+      "Compare rates, schedule pickups, and track every parcel from a single platform — without visiting multiple courier offices.",
+    ],
   },
 ];
 
