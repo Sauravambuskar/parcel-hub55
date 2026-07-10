@@ -1282,7 +1282,7 @@ const Booking = () => {
       case 2:
         return <BookingStep2 pickupPincode={pickupPincode} deliveryPincode={deliveryPincode} pickupCity={senderData.city} deliveryCity={receiverData.city} goodsType={goodsType} packageWeight={packageWeight} dimensions={dimensions} shipmentValue={shipmentValue} urgency={urgency} onInputChange={handleInputChange} onDimensionChange={handleDimensionChange} onPricingCalculated={setCalculatedPricing} onServiceabilityData={setServiceabilityData} onLocationData={handleLocationData} onWeightUnitChange={setWeightUnit} onNext={handleNextStep} onBack={handlePrevStep} />;
       case 3:
-        return <BookingStep5 partners={getPartners()} selectedServiceId={selectedServiceId} onServiceSelect={handleServiceSelect} onNext={handleNextStep} onBack={handlePrevStep} platformFee={platformFee} platformFeeData={platformFeeData} shipmentSummary={{
+        return <BookingStep5 partners={getPartners()} selectedServiceId={selectedServiceId} onServiceSelect={handleServiceSelect} onNext={handleNextStep} onBack={handlePrevStep} platformFee={platformFee} platformFeeData={platformFeeData} isAssisted={!!assistedContext} shipmentSummary={{
           pickupPincode,
           deliveryPincode,
           pickupCity: senderData.city || serviceabilityData?.partners?.find((p: any) => p.is_serviceable)?.metadata?.source_pincode_data?.city || "",

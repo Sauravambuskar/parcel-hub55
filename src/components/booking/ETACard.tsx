@@ -44,6 +44,7 @@ interface ETACardProps {
   rating?: number | null;
   cons?: string[];
   avgDelayDays?: number | null;
+  isAssisted?: boolean;
 }
 
 /** Column header row rendered once above the list */
@@ -91,10 +92,11 @@ export const ETACardSkeleton = () => (
   </div>
 );
 
-const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating, cons, avgDelayDays }: ETACardProps) => {
+const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, rank, rating, cons, avgDelayDays, isAssisted = false }: ETACardProps) => {
   const [imageError, setImageError] = useState(false);
   const logo = courierData.logo_url || getPartnerLogo(courierData.partner_code, courierData.partner_name);
   const hasValidLogo = logo && logo !== "/placeholder.svg" && !imageError;
+  const partnerPrice = Math.round(courierData.price || 0);
   const totalPrice = computeBaseFare(courierData.price);
 
   const days = etaData?.adjusted_days ?? courierData.tat_days;
@@ -232,11 +234,16 @@ const ETACard = ({ courierData, etaData, isSelected, onSelect, platformFee = 0, 
       </div>
 
       {/* Price */}
-      <div className="w-[60px] sm:w-[68px] shrink-0 text-right">
+      <div className={`${isAssisted ? "w-[86px] sm:w-[96px]" : "w-[60px] sm:w-[68px]"} shrink-0 text-right`}>
         <span className="text-xs sm:text-sm font-bold bg-foreground text-background px-1.5 sm:px-2 py-0.5 rounded">
           ₹{totalPrice}
         </span>
         <p className="text-[9px] text-muted-foreground mt-0.5">excl. GST</p>
+        {isAssisted && (
+          <p className="text-[9px] font-medium text-amber-700 mt-0.5" title="Actual price quoted by courier partner">
+            Partner ₹{partnerPrice}
+          </p>
+        )}
       </div>
     </div>
   );
