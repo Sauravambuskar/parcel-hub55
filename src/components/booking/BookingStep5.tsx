@@ -58,6 +58,7 @@ interface BookingStep5Props {
   shipmentSummary?: ShipmentSummary;
   platformFee?: number;
   platformFeeData?: { distance_tier?: string; distance_km?: number; explanation?: string } | null;
+  isAssisted?: boolean;
 }
 
 interface ETAResult {
@@ -83,6 +84,7 @@ const BookingStep5 = ({
   shipmentSummary,
   platformFee = 50,
   platformFeeData,
+  isAssisted = false,
 }: BookingStep5Props) => {
   const isValid = selectedServiceId !== null;
   const [showNonServiceable, setShowNonServiceable] = React.useState(true);
@@ -243,7 +245,7 @@ const BookingStep5 = ({
 
       {/* AI-Powered Smart Ranking */}
       {serviceablePartners.length > 0 && (
-        <SmartRanking partners={serviceablePartners} ratings={ratings} onSelectPartner={onServiceSelect} platformFee={platformFee} />
+        <SmartRanking partners={serviceablePartners} ratings={ratings} onSelectPartner={onServiceSelect} platformFee={platformFee} isAssisted={isAssisted} />
       )}
 
       {/* Sort Toggle Bar */}
@@ -287,6 +289,7 @@ const BookingStep5 = ({
                 rating={partnerRating?.rating ?? null}
                 cons={partnerRating?.cons ?? []}
                 avgDelayDays={partnerRating?.avg_delay_days ?? null}
+                isAssisted={isAssisted}
               />
             );
           })}

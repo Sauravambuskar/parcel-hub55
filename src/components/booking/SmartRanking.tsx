@@ -33,6 +33,7 @@ interface SmartRankingProps {
   ratings: Map<string, PartnerRating>;
   onSelectPartner: (partnerId: string, serviceCode: string, rateId: string) => void;
   platformFee?: number;
+  isAssisted?: boolean;
 }
 
 interface RankedPartner {
@@ -42,7 +43,7 @@ interface RankedPartner {
   reason: string;
 }
 
-const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: SmartRankingProps) => {
+const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50, isAssisted = false }: SmartRankingProps) => {
   // Get all services with prices for proper comparison
   const allServices = partners
     .filter(p => p.is_serviceable && p.services?.length > 0)
@@ -202,9 +203,16 @@ const SmartRanking = ({ partners, ratings, onSelectPartner, platformFee = 50 }: 
               })()}
 
               <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
-                  ₹{computeBaseFare(ranked.partner.services[0]?.rate?.price?.amount || 0)}
-                </span>
+                <div className="flex flex-col items-start gap-0.5">
+                  <span className="text-sm font-semibold bg-foreground text-background px-2 py-0.5 rounded">
+                    ₹{computeBaseFare(ranked.partner.services[0]?.rate?.price?.amount || 0)}
+                  </span>
+                  {isAssisted && (
+                    <span className="text-[10px] font-medium text-amber-700" title="Actual price quoted by courier partner">
+                      Partner ₹{Math.round(ranked.partner.services[0]?.rate?.price?.amount || 0)}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs text-muted-foreground">
                   {normalizeTatDays(ranked.partner.services[0]?.tat_days, ranked.partner.services[0]?.service_name)} days
                 </span>

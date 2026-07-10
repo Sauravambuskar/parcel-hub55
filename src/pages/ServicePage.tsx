@@ -791,35 +791,295 @@ export const SERVICES: ServiceContent[] = [
     ],
   },
 
+  // ─────────────────────────────────────────────────────────────
+  // SME COURIER SERVICE
+  // ─────────────────────────────────────────────────────────────
   {
     slug: "sme-courier-service",
     title: "SME Courier Service",
-    tagline: "Enterprise-grade logistics priced for small businesses.",
+    tagline: "Smart Shipping Solutions for Growing Small and Medium Businesses",
     description:
-      "ViaSetu gives growing SMEs the negotiating power of an enterprise shipper. Access aggregated partner rates, dedicated support and tooling that scales with your order volume.",
+      "ViaSetu helps small and medium enterprises manage business deliveries through a single platform. Compare courier partners, schedule pickups, track shipments, and simplify logistics while keeping shipping costs under control.",
     features: [
-      "Aggregated partner rates without volume commitments",
-      "Dedicated account manager for growing SMEs",
-      "API and CSV order ingestion",
-      "Consolidated GST-compliant invoicing",
+      "Multi-courier rate comparison in one dashboard",
+      "Doorstep pickup from office or warehouse",
+      "Centralised shipment management",
+      "Real-time shipment tracking across partners",
+      "Nationwide delivery coverage",
+      "Flexible shipping options for speed, cost and coverage",
     ],
+    metaTitle: "SME Courier Service in India | Business Shipping Solutions | ViaSetu",
     metaDescription:
-      "SME courier service in India with the best partner rates, dedicated support and bulk tools on ViaSetu.",
+      "Simplify business shipping with ViaSetu's SME courier services. Compare courier rates, schedule pickups, manage bulk orders, track shipments, and streamline logistics for small and medium businesses across India.",
+    h1: "SME Courier Service",
+    heroParagraphs: [
+      "As your business grows, shipping becomes more than just moving parcels — it becomes a critical part of customer satisfaction and operational efficiency.",
+      "ViaSetu helps small and medium enterprises manage business deliveries through a single platform. Compare courier partners, schedule pickups, track shipments, and simplify logistics while keeping shipping costs under control.",
+      "Whether you ship a few orders a day or hundreds every week, ViaSetu provides flexible logistics solutions designed to grow with your business.",
+    ],
+    ctas: [
+      { label: "Start Shipping Today", to: "/login" },
+      { label: "Compare Courier Rates", to: "/booking" },
+    ],
+    sections: [
+      {
+        heading: "What Is an SME Courier Service?",
+        paragraphs: [
+          "An SME courier service is a logistics solution built for businesses that regularly ship products, documents, or commercial parcels across India.",
+          "Unlike traditional courier booking, modern shipping platforms allow businesses to compare multiple courier partners, manage shipments from one dashboard, schedule pickups, and monitor deliveries in real time.",
+          "For growing businesses, efficient logistics improves customer experience, supports expansion, and reduces the complexity of managing multiple courier providers.",
+        ],
+      },
+      {
+        heading: "Who Is This Service Designed For?",
+        paragraphs: ["ViaSetu supports businesses across a wide range of industries."],
+        subsections: [
+          { heading: "Small and Medium Enterprises", body: "Manage daily shipping operations with greater efficiency." },
+          { heading: "D2C Brands", body: "Deliver customer orders quickly while comparing courier options for better value." },
+          { heading: "Manufacturers", body: "Ship finished goods, spare parts, samples, and commercial consignments across India." },
+          { heading: "Wholesalers & Distributors", body: "Coordinate deliveries to retailers, dealers, and business partners." },
+          { heading: "Ecommerce Businesses", body: "Handle increasing order volumes with streamlined shipping workflows." },
+          { heading: "B2B Suppliers", body: "Ensure reliable parcel movement between warehouses, offices, and customers." },
+        ],
+      },
+      {
+        heading: "Common Logistics Challenges for SMEs",
+        paragraphs: ["Growing businesses often encounter shipping challenges that affect productivity and customer satisfaction."],
+        subsections: [
+          { heading: "Rising Shipping Costs", body: "Managing courier expenses becomes difficult as shipment volumes increase." },
+          { heading: "Multiple Courier Partners", body: "Working with different courier companies often creates fragmented processes." },
+          { heading: "Limited Shipment Visibility", body: "Tracking parcels across multiple systems can consume valuable time." },
+          { heading: "Manual Operations", body: "Handling bookings, labels, and tracking manually slows business operations." },
+          { heading: "Scaling Logistics", body: "As order volumes grow, businesses require structured shipping processes that can keep pace." },
+        ],
+      },
+      {
+        heading: "How SME Shipping Works",
+        subsections: [
+          { heading: "Step 1: Create Your Shipment", body: "Enter shipment details, pickup location, destination, and parcel information." },
+          { heading: "Step 2: Compare Courier Options", body: "Review shipping rates, delivery timelines, and available courier partners." },
+          { heading: "Step 3: Choose the Best Service", body: "Select the courier that matches your business priorities for speed, cost, or coverage." },
+          { heading: "Step 4: Schedule Pickup", body: "Arrange doorstep pickup from your office, warehouse, or business location." },
+          { heading: "Step 5: Track Every Shipment", body: "Monitor deliveries through one dashboard until successful completion." },
+        ],
+      },
+      {
+        heading: "Why SMEs Need Modern Logistics Solutions",
+        bullets: [
+          "Improve operational efficiency — reduce time spent managing multiple couriers",
+          "Lower shipping costs by comparing options before booking",
+          "Deliver better customer experiences with reliable delivery",
+          "Increase visibility with dispatch-to-delivery tracking",
+          "Support business growth with a scalable logistics system",
+        ],
+      },
+      {
+        heading: "What You Get with ViaSetu",
+        bullets: [
+          "Multi-courier rate comparison in one place",
+          "Doorstep pickup from your office or warehouse",
+          "Centralised shipment management dashboard",
+          "Real-time shipment tracking with live updates",
+          "Nationwide delivery coverage across India",
+          "Flexible shipping options by speed, budget, and shipment type",
+          "Business-friendly logistics designed to support growing businesses",
+        ],
+      },
+      {
+        heading: "Industries We Support",
+        bullets: [
+          "Ecommerce & D2C Brands",
+          "Manufacturing",
+          "Wholesale Distribution",
+          "Retail Businesses",
+          "Industrial Suppliers",
+          "Healthcare & Medical Supplies",
+          "Fashion & Apparel",
+          "Consumer Electronics",
+          "FMCG Businesses",
+          "Automotive Components",
+        ],
+      },
+      {
+        heading: "Why Choose ViaSetu for SME Shipping?",
+        subsections: [
+          { heading: "Built for Growing Businesses", body: "Designed to simplify shipping for companies expanding their operations." },
+          { heading: "One Platform, Multiple Couriers", body: "Manage bookings and deliveries without switching between courier portals." },
+          { heading: "Transparent Shipping Options", body: "Compare rates and choose services that fit your business needs." },
+          { heading: "Easy to Scale", body: "Handle higher shipment volumes without increasing operational complexity." },
+          { heading: "Reliable Delivery Experience", body: "Improve shipping efficiency while maintaining customer satisfaction." },
+        ],
+      },
+      {
+        heading: "SME Courier Service vs Traditional Courier Booking",
+        paragraphs: [
+          "Many businesses continue to manage shipping by contacting courier companies individually. While this may work for occasional shipments, growing businesses benefit from centralised logistics management.",
+        ],
+        bullets: [
+          "Compare courier rates instantly",
+          "Reduce manual processes",
+          "Manage multiple shipments efficiently",
+          "Improve delivery visibility",
+          "Save operational time",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "What is an SME courier service?", a: "An SME courier service is designed to help small and medium businesses manage commercial shipments efficiently through modern logistics tools and courier networks." },
+      { q: "Is this service suitable for growing businesses?", a: "Yes. It supports businesses handling regular shipments and looking for scalable logistics solutions." },
+      { q: "Can I compare courier prices before booking?", a: "Yes. ViaSetu allows businesses to evaluate available courier options before selecting a shipping service." },
+      { q: "Can businesses schedule doorstep pickups?", a: "Yes. Pickup availability depends on service coverage in your location." },
+      { q: "Can I track business shipments?", a: "Yes. Shipment tracking provides visibility from dispatch to final delivery." },
+      { q: "Does ViaSetu support businesses shipping across India?", a: "Yes. Businesses can ship to serviceable destinations across India using supported courier partners." },
+      { q: "Can SMEs manage multiple shipments through one platform?", a: "Yes. ViaSetu helps businesses organise and manage shipments through a centralised dashboard." },
+    ],
+    closingHeading: "Helping SMEs Build Smarter Logistics",
+    closingParagraphs: [
+      "Small and medium enterprises are among the fastest-growing contributors to India's economy. As customer expectations continue to rise, businesses need logistics solutions that are reliable, scalable, and easy to manage.",
+      "Efficient shipping is no longer just an operational task; it is an important part of delivering a positive customer experience, maintaining business relationships, and supporting long-term growth.",
+      "ViaSetu helps SMEs simplify shipping by bringing courier comparison, booking, tracking, and shipment management together in one platform. Whether you're shipping locally or serving customers nationwide, our goal is to make logistics simpler, more transparent, and ready to scale with your business.",
+    ],
+    internalLinks: [
+      { label: "Bulk Shipment", to: "/services/bulk-shipment" },
+      { label: "Domestic Courier Service", to: "/services/domestic-courier-service" },
+      { label: "Express Delivery", to: "/services/express-delivery" },
+      { label: "Parcel Tracking", to: "/services/parcel-tracking" },
+      { label: "Individual Business Shipping", to: "/services/individual-business" },
+      { label: "Personal Business Shipping", to: "/services/personal-business" },
+      { label: "Homepage", to: "/" },
+    ],
   },
+
+  // ─────────────────────────────────────────────────────────────
+  // DOORSTEP PICKUP
+  // ─────────────────────────────────────────────────────────────
   {
     slug: "doorstep-pickup",
-    title: "Doorstep Pickup",
-    tagline: "Pickup at your doorstep — no store visits, no queues.",
+    title: "Doorstep Pickup Service",
+    tagline: "We Come to Your Door. You Stay Focused on Your Day.",
     description:
-      "Schedule pickup from your home or office in a few taps. Choose your slot, our partner courier arrives, and you get tracking the moment the parcel is collected.",
+      "With ViaSetu, you can schedule a courier pickup directly from your home, office, warehouse, or shop. Choose a convenient pickup time, prepare your parcel, and our courier partner will collect it from your location.",
     features: [
-      "Same-day and next-day pickup slots",
-      "SMS and email pickup confirmations",
-      "Live tracking from the moment of pickup",
-      "Available across 27,000+ pin codes",
+      "Doorstep pickup from home, office, warehouse or shop",
+      "Flexible pickup time slots",
+      "Real-time tracking from collection to delivery",
+      "Access to multiple trusted courier partners",
+      "Nationwide serviceability across pincodes",
+      "No courier office visits or queues",
     ],
+    metaTitle: "Doorstep Pickup Service in India | Schedule Courier Pickup Online | ViaSetu",
     metaDescription:
-      "Free doorstep parcel pickup across India. Schedule a courier pickup at home with ViaSetu.",
+      "Book a doorstep pickup for your parcel anywhere in India. Schedule courier pickup from your home or office, compare courier partners, and track your shipment with ViaSetu.",
+    h1: "Doorstep Pickup Service",
+    heroParagraphs: [
+      "Need to send a parcel but don't have time to visit a courier office?",
+      "With ViaSetu, you can schedule a courier pickup directly from your home, office, warehouse, or shop. Choose a convenient pickup time, prepare your parcel, and our courier partner will collect it from your location.",
+      "No waiting in queues. No travelling across the city. Just a faster and easier way to ship.",
+    ],
+    ctas: [
+      { label: "Book Pickup", to: "/login" },
+      { label: "Check Pickup Availability", to: "/booking" },
+    ],
+    sections: [
+      {
+        heading: "Why People Prefer Doorstep Pickup",
+        paragraphs: [
+          "Modern shipping shouldn't require taking time off work or travelling to a courier centre.",
+          "Whether you're sending a single parcel to a family member, dispatching daily customer orders, or shipping important business documents, doorstep pickup saves valuable time.",
+          "Instead of adjusting your schedule around courier office timings, the pickup is scheduled around yours.",
+        ],
+      },
+      {
+        heading: "Pickup From Home or Office — The Choice Is Yours",
+        paragraphs: [
+          "Your parcel can be collected from almost anywhere. Whether you're working from home, running a business, managing a warehouse, or shipping from an office, you can schedule a pickup that fits your routine.",
+        ],
+        bullets: [
+          "Online sellers",
+          "Working professionals",
+          "Small businesses",
+          "Students",
+          "Freelancers",
+          "Manufacturers",
+          "Families sending personal parcels",
+        ],
+      },
+      {
+        heading: "Here's How It Works",
+        subsections: [
+          { heading: "Book Your Shipment", body: "Enter your pickup and delivery details online." },
+          { heading: "Choose a Pickup Time", body: "Select an available slot that suits your schedule." },
+          { heading: "Pack Your Parcel", body: "Secure your shipment before the courier partner arrives." },
+          { heading: "Courier Collection", body: "The pickup executive collects the parcel from your address." },
+          { heading: "Track Every Movement", body: "Receive shipment tracking updates until delivery." },
+        ],
+      },
+      {
+        heading: "Why Doorstep Pickup Makes Shipping Easier",
+        subsections: [
+          { heading: "Save Valuable Time", body: "Avoid travelling to courier offices or waiting in long queues." },
+          { heading: "Ship From Anywhere", body: "Book pickups from homes, offices, shops, or warehouses." },
+          { heading: "Better Convenience", body: "Arrange shipping without interrupting your daily work." },
+          { heading: "Real-Time Tracking", body: "Track your parcel from pickup until successful delivery." },
+          { heading: "Reliable Courier Partners", body: "Access multiple trusted courier networks through one platform." },
+          { heading: "Flexible Scheduling", body: "Book pickups according to your preferred time whenever available." },
+        ],
+      },
+      {
+        heading: "Perfect For Every Type of Shipment",
+        paragraphs: ["Doorstep pickup isn't only for businesses. People use it every day for different reasons."],
+        subsections: [
+          { heading: "Personal Parcels", body: "Send gifts, clothes, books, documents, and household items." },
+          { heading: "Business Orders", body: "Dispatch customer orders without leaving your workplace." },
+          { heading: "Office Documents", body: "Send contracts, agreements, and important paperwork securely." },
+          { heading: "Ecommerce Deliveries", body: "Schedule regular pickups for online store orders." },
+          { heading: "Return Shipments", body: "Arrange hassle-free pickups for product returns and exchanges." },
+        ],
+      },
+      {
+        heading: "When Should You Use Doorstep Pickup?",
+        bullets: [
+          "You're shipping multiple parcels",
+          "The parcel is heavy or bulky",
+          "You don't have a nearby courier office",
+          "You're managing customer orders daily",
+          "You have a busy work schedule",
+          "You want a faster shipping experience",
+        ],
+      },
+      {
+        heading: "What Makes ViaSetu Different?",
+        paragraphs: [
+          "Shipping should be simple — not confusing. Instead of contacting different courier companies separately, ViaSetu brings shipping services together on one platform.",
+          "You can compare courier options, schedule pickups, book shipments, and track deliveries without switching between multiple websites.",
+          "Whether you're sending one parcel or managing regular shipments, everything stays organised in one place.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Can I schedule a pickup from my home?", a: "Yes. If pickup service is available in your area, you can schedule parcel collection directly from your address." },
+      { q: "Can I request pickup from my office?", a: "Yes. Courier pickups can usually be arranged from homes, offices, warehouses, or commercial locations." },
+      { q: "Is doorstep pickup available across India?", a: "Pickup availability depends on the serviceability of your location and the courier partner selected." },
+      { q: "Do I need to visit a courier office?", a: "No. Once your pickup is confirmed, the courier partner collects the parcel from your location." },
+      { q: "Can I track my parcel after pickup?", a: "Yes. Tracking begins after the shipment is processed, allowing you to monitor its journey until delivery." },
+      { q: "Can businesses schedule regular pickups?", a: "Yes. Businesses shipping frequently can use doorstep pickup to streamline daily dispatch operations." },
+    ],
+    closingHeading: "Shipping Should Start at Your Door",
+    closingParagraphs: [
+      "Sending a parcel shouldn't mean planning an extra trip across town.",
+      "Doorstep pickup removes one of the biggest hassles in the shipping process by bringing the courier service to you. Whether you're sending a single package or dispatching orders every day, scheduling a pickup saves time and helps you focus on what matters most.",
+      "ViaSetu connects you with trusted courier partners, making it easy to arrange pickups, compare shipping options, and keep track of every shipment from collection to delivery — all from one place.",
+    ],
+    internalLinks: [
+      { label: "Parcel Tracking", to: "/services/parcel-tracking" },
+      { label: "Domestic Courier Service", to: "/services/domestic-courier-service" },
+      { label: "Express Delivery", to: "/services/express-delivery" },
+      { label: "Bulk Shipment", to: "/services/bulk-shipment" },
+      { label: "SME Courier Service", to: "/services/sme-courier-service" },
+      { label: "Personal Business Shipping", to: "/services/personal-business" },
+      { label: "Individual Business Shipping", to: "/services/individual-business" },
+      { label: "Homepage", to: "/" },
+    ],
   },
 ];
 
