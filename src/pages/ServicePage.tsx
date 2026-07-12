@@ -819,7 +819,6 @@ export const SERVICES: ServiceContent[] = [
     ],
     ctas: [
       { label: "Start Shipping Today", to: "/login" },
-      { label: "Compare Courier Rates", to: "/booking" },
     ],
     sections: [
       {
