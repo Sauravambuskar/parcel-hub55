@@ -55,6 +55,7 @@ const SystemSettings = lazy(() => import("./pages/admin/SystemSettings"));
 const DisputeResolution = lazy(() => import("./pages/admin/DisputeResolution"));
 const AbandonmentFunnel = lazy(() => import("./pages/admin/AbandonmentFunnel"));
 const AssistedBooking = lazy(() => import("./pages/admin/AssistedBooking"));
+const AssistedPendingBookings = lazy(() => import("./pages/admin/AssistedPendingBookings"));
 const ProtectedAdminRoute = lazy(() => import("./components/admin/ProtectedAdminRoute"));
 
 const queryClient = new QueryClient();
