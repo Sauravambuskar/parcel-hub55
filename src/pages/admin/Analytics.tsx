@@ -10,11 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfWeek, startOfMonth, subMonths, subDays } from "date-fns";
+import { isCollected } from "@/lib/revenue";
+import { bucketOfStatus } from "@/lib/booking-status";
 
 interface Booking {
   id: string;
   courier_name: string;
   courier_price: number;
+  platform_fee: number | null;
+  payment_status: string | null;
   status: string | null;
   created_at: string;
   sender_city: string;
@@ -40,7 +44,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       // Narrow column projection — Analytics only uses these columns.
-      const cols = "id,courier_name,courier_price,status,created_at,sender_city,receiver_city,delivery_time,urgency";
+      const cols = "id,courier_name,courier_price,platform_fee,payment_status,status,created_at,sender_city,receiver_city,delivery_time,urgency";
       const [bookingsRes, profilesRes] = await Promise.all([
         supabase.from("bookings").select(cols).order("created_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -70,11 +74,22 @@ const Analytics = () => {
   };
 
   const filtered = getFilteredBookings();
-  const totalRevenue = filtered.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-  const deliveredCount = filtered.filter(b => b.status === "delivered").length;
+  // Revenue recognition (shared rule — see src/lib/revenue.ts + RevenueManagement):
+  // Only payment_status='paid' rows contribute to collected revenue and platform
+  // commission. Delivered/completed counts use bucketOfStatus so partner API
+  // status strings (DELIVERED, delivered, Delivered_to_customer, …) all match.
+  const collected = filtered.filter(b => isCollected(b.payment_status));
+  const totalRevenue = collected.reduce((sum, b) => sum + (Number(b.courier_price) || 0), 0);
+  const deliveredCount = filtered.filter(b => bucketOfStatus(b.status) === "delivered").length;
   const completionRate = filtered.length > 0 ? Math.round((deliveredCount / filtered.length) * 100) : 0;
-  const avgOrderValue = filtered.length > 0 ? Math.round(totalRevenue / filtered.length) : 0;
-  const platformCommission = Math.round(totalRevenue * 0.1);
+  const avgOrderValue = collected.length > 0 ? Math.round(totalRevenue / collected.length) : 0;
+  // Real platform revenue from the platform_fee column (paid orders only) —
+  // matches AdminDashboard "Platform Revenue" and RevenueManagement.
+  const platformCommission = collected.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
+  const pendingOrdersCount = filtered.filter(b => {
+    const bucket = bucketOfStatus(b.status);
+    return bucket === "created" || bucket === "confirmed";
+  }).length;
 
   // Compare with previous period
   const getPreviousPeriodBookings = () => {
@@ -94,19 +109,22 @@ const Analytics = () => {
   };
 
   const prevPeriod = getPreviousPeriodBookings();
-  const prevRevenue = prevPeriod.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+  const prevRevenue = prevPeriod
+    .filter(b => isCollected(b.payment_status))
+    .reduce((sum, b) => sum + (Number(b.courier_price) || 0), 0);
   const revenueChange = prevRevenue > 0 ? Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100) : 0;
   const orderChange = prevPeriod.length > 0 ? Math.round(((filtered.length - prevPeriod.length) / prevPeriod.length) * 100) : 0;
 
-  // Courier partner analytics
+  // Courier partner analytics — revenue only from collected (paid) bookings,
+  // delivered count uses shared status bucket so it matches OrderMonitoring.
   const courierStats = () => {
     const map = new Map<string, { orders: number; revenue: number; delivered: number }>();
     filtered.forEach(b => {
       const existing = map.get(b.courier_name) || { orders: 0, revenue: 0, delivered: 0 };
       map.set(b.courier_name, {
         orders: existing.orders + 1,
-        revenue: existing.revenue + (b.courier_price || 0),
-        delivered: existing.delivered + (b.status === "delivered" ? 1 : 0),
+        revenue: existing.revenue + (isCollected(b.payment_status) ? (Number(b.courier_price) || 0) : 0),
+        delivered: existing.delivered + (bucketOfStatus(b.status) === "delivered" ? 1 : 0),
       });
     });
     return Array.from(map.entries())
@@ -114,13 +132,16 @@ const Analytics = () => {
       .sort((a, b) => b.revenue - a.revenue);
   };
 
-  // City/route analytics
+  // City/route analytics — revenue restricted to collected (paid) bookings.
   const cityStats = () => {
     const map = new Map<string, { orders: number; revenue: number }>();
     filtered.forEach(b => {
       const route = `${b.sender_city} → ${b.receiver_city}`;
       const existing = map.get(route) || { orders: 0, revenue: 0 };
-      map.set(route, { orders: existing.orders + 1, revenue: existing.revenue + (b.courier_price || 0) });
+      map.set(route, {
+        orders: existing.orders + 1,
+        revenue: existing.revenue + (isCollected(b.payment_status) ? (Number(b.courier_price) || 0) : 0),
+      });
     });
     return Array.from(map.entries())
       .map(([route, data]) => ({ route, ...data }))
@@ -128,7 +149,7 @@ const Analytics = () => {
       .slice(0, 10);
   };
 
-  // Time-based analytics
+  // Time-based analytics — revenue restricted to collected (paid) bookings.
   const timeStats = () => {
     const slots: Record<string, { orders: number; revenue: number }> = {
       "6 AM - 10 AM": { orders: 0, revenue: 0 },
@@ -146,10 +167,11 @@ const Analytics = () => {
       else if (hour >= 18 && hour < 22) slot = "6 PM - 10 PM";
       else slot = "10 PM - 6 AM";
       slots[slot].orders += 1;
-      slots[slot].revenue += (b.courier_price || 0);
+      slots[slot].revenue += (isCollected(b.payment_status) ? (Number(b.courier_price) || 0) : 0);
     });
     return Object.entries(slots).map(([time, data]) => ({ time, ...data }));
   };
+
 
   const getDemandLevel = (orders: number, maxOrders: number) => {
     const pct = maxOrders > 0 ? orders / maxOrders : 0;
@@ -255,7 +277,7 @@ const Analytics = () => {
                   <Badge variant="default">{deliveredCount} delivered</Badge>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded">
-                  <div><p className="font-medium">Pending Orders</p><p className="text-2xl font-bold">{filtered.filter(b => b.status === "pending" || !b.status).length}</p></div>
+                  <div><p className="font-medium">Pending Orders</p><p className="text-2xl font-bold">{pendingOrdersCount}</p></div>
                   <Badge variant="secondary">Needs attention</Badge>
                 </div>
               </CardContent>
@@ -276,8 +298,8 @@ const Analytics = () => {
                   <Badge variant="secondary">Per booking</Badge>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded">
-                  <div><p className="font-medium">Platform Commission</p><p className="text-2xl font-bold">₹{platformCommission.toLocaleString()}</p></div>
-                  <Badge variant="default">10%</Badge>
+                  <div><p className="font-medium">Platform Revenue</p><p className="text-2xl font-bold">₹{platformCommission.toLocaleString()}</p></div>
+                  <Badge variant="default">Net to Viasetu</Badge>
                 </div>
               </CardContent>
             </Card>
