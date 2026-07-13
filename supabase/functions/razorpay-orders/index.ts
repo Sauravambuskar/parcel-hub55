@@ -142,6 +142,19 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case 'fetchPayment': {
+        if (!paymentId) {
+          return new Response(
+            JSON.stringify({ error: 'paymentId is required for fetchPayment action' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        endpoint = `https://api.razorpay.com/v1/payments/${paymentId}`;
+        console.log(`[razorpay-orders] Fetching payment: ${paymentId}`);
+        response = await fetch(endpoint, { method: 'GET', headers: baseHeaders });
+        break;
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: `Invalid action: ${action}. Use: fetch, fetchAll, update, or fetchPayments` }),
