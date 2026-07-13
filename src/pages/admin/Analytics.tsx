@@ -277,7 +277,7 @@ const Analytics = () => {
                   <Badge variant="default">{deliveredCount} delivered</Badge>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded">
-                  <div><p className="font-medium">Pending Orders</p><p className="text-2xl font-bold">{filtered.filter(b => b.status === "pending" || !b.status).length}</p></div>
+                  <div><p className="font-medium">Pending Orders</p><p className="text-2xl font-bold">{pendingOrdersCount}</p></div>
                   <Badge variant="secondary">Needs attention</Badge>
                 </div>
               </CardContent>
