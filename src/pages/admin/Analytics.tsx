@@ -10,11 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { format, startOfDay, startOfWeek, startOfMonth, subMonths, subDays } from "date-fns";
+import { isCollected } from "@/lib/revenue";
+import { bucketOfStatus } from "@/lib/booking-status";
 
 interface Booking {
   id: string;
   courier_name: string;
   courier_price: number;
+  platform_fee: number | null;
+  payment_status: string | null;
   status: string | null;
   created_at: string;
   sender_city: string;
