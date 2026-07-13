@@ -107,10 +107,10 @@ Deno.serve(async (req) => {
     }
 
     // Idempotency: already booked
-    if (row.status && row.status !== "PENDING_PAYMENT" && row.awb_number) {
+    if (row.status && row.status !== "PENDING_PAYMENT" && row.prayog_awb) {
       return new Response(JSON.stringify({
         paid: true, booked: true,
-        awb_number: row.awb_number, tracking_id: row.tracking_id, label_url: row.label_url,
+        awb_number: row.prayog_awb, tracking_id: row.tracking_id, label_url: row.label_url,
         already: true,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
