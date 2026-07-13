@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CURRENT_ENV } from "@/config/environment";
 import {
   RefreshCw, Copy, ExternalLink, Loader2, KeyRound, CheckCircle2, Clock,
+  Truck, Download, PackageCheck,
 } from "lucide-react";
 
 interface PendingRow {
@@ -27,31 +29,54 @@ interface PendingRow {
   created_by_admin_email: string | null;
   sender_city: string | null;
   receiver_city: string | null;
+  prayog_awb: string | null;
+  tracking_id: string | null;
+  label_url: string | null;
+  booking_source: string | null;
 }
 
 const AssistedPendingBookings = () => {
   const { toast } = useToast();
-  const [rows, setRows] = useState<PendingRow[]>([]);
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<PendingRow[]>([]);
+  const [confirmed, setConfirmed] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [labelBusyId, setLabelBusyId] = useState<string | null>(null);
   const [manualDialog, setManualDialog] = useState<{ booking: PendingRow } | null>(null);
   const [manualPaymentId, setManualPaymentId] = useState("");
   const [submittingManual, setSubmittingManual] = useState(false);
 
+  const SELECT_COLS =
+    "id, created_at, sender_name, receiver_name, courier_name, courier_price, payment_link_id, payment_link_url, payment_link_status, status, created_by_admin_email, sender_city, receiver_city, prayog_awb, tracking_id, label_url, booking_source";
+
   const fetchRows = async () => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select(
-        "id, created_at, sender_name, receiver_name, courier_name, courier_price, payment_link_id, payment_link_url, payment_link_status, status, created_by_admin_email, sender_city, receiver_city",
-      )
-      .eq("is_admin_assisted", true)
-      .eq("status", "PENDING_PAYMENT")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (error) {
-      toast({ title: "Failed to load", description: error.message, variant: "destructive" });
+    const [{ data: pendingData, error: pendErr }, { data: confirmedData, error: confErr }] =
+      await Promise.all([
+        supabase
+          .from("bookings")
+          .select(SELECT_COLS)
+          .eq("is_admin_assisted", true)
+          .eq("status", "PENDING_PAYMENT")
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("bookings")
+          .select(SELECT_COLS)
+          .eq("is_admin_assisted", true)
+          .not("prayog_awb", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
+    if (pendErr || confErr) {
+      toast({
+        title: "Failed to load",
+        description: (pendErr || confErr)?.message,
+        variant: "destructive",
+      });
     } else {
-      setRows((data || []) as PendingRow[]);
+      setPending((pendingData || []) as PendingRow[]);
+      setConfirmed((confirmedData || []) as PendingRow[]);
     }
     setLoading(false);
   };
@@ -128,16 +153,79 @@ const AssistedPendingBookings = () => {
     }
   };
 
+  const handleTrack = (row: PendingRow) => {
+    const awb = row.prayog_awb || row.tracking_id;
+    if (!awb) {
+      toast({ title: "No AWB yet", variant: "destructive" });
+      return;
+    }
+    navigate("/tracking", { state: { awbNumber: awb } });
+  };
+
+  const handleDownloadLabel = async (row: PendingRow) => {
+    if (row.label_url) {
+      window.open(row.label_url, "_blank");
+      return;
+    }
+    // No cached label — fetch fresh via partner-specific label function using the AWB.
+    const awb = row.prayog_awb || row.tracking_id;
+    if (!awb) {
+      toast({ title: "AWB not available yet", variant: "destructive" });
+      return;
+    }
+    const source = (row.booking_source || "").toLowerCase();
+    const fnMap: Record<string, string> = {
+      delhivery_direct: "delhivery-label",
+      shadowfax_direct: "shadowfax-label",
+      xpressbees_direct: "xpressbees-label",
+      urbanebolt_direct: "urbanebolt-label",
+      shree_maruti_direct: "shree-maruti-label",
+    };
+    const fnName = fnMap[source];
+    if (!fnName) {
+      toast({
+        title: "Label unavailable",
+        description: `Cached label missing for source ${source || "unknown"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setLabelBusyId(row.id);
+    try {
+      const { data, error } = await supabase.functions.invoke(fnName, {
+        body: { waybill: awb, awb, booking_id: row.id },
+        headers: { "x-environment": CURRENT_ENV },
+      });
+      if (error) throw error;
+      if (data?.success && data?.label_url) {
+        window.open(data.label_url, "_blank");
+        // Persist for next time
+        await supabase.from("bookings").update({ label_url: data.label_url }).eq("id", row.id);
+        await fetchRows();
+      } else {
+        toast({
+          title: "Label unavailable",
+          description: data?.error || "Could not retrieve label.",
+          variant: "destructive",
+        });
+      }
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message || "Failed", variant: "destructive" });
+    } finally {
+      setLabelBusyId(null);
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Clock className="h-6 w-6 text-primary" /> Pending Assisted Bookings
+            <Clock className="h-6 w-6 text-primary" /> Assisted Bookings
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Admin-assisted bookings awaiting customer payment. Click <strong>Refresh</strong> to
-            check Razorpay; the courier order is placed automatically once payment is received.
+            Manage admin-assisted bookings. Refresh Razorpay payments, then track shipments and
+            download labels once booked.
           </p>
         </div>
         <Button variant="outline" onClick={fetchRows} disabled={loading}>
@@ -146,20 +234,24 @@ const AssistedPendingBookings = () => {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : rows.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-green-600" />
-            No pending assisted bookings.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((row) => (
+      {/* Pending Payment */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="h-5 w-5 text-amber-600" /> Pending Payment ({pending.length})
+        </h2>
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : pending.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground text-sm">
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-600" />
+              No pending assisted bookings.
+            </CardContent>
+          </Card>
+        ) : (
+          pending.map((row) => (
             <Card key={row.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -182,11 +274,7 @@ const AssistedPendingBookings = () => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleRefresh(row)}
-                    disabled={refreshingId === row.id}
-                  >
+                  <Button size="sm" onClick={() => handleRefresh(row)} disabled={refreshingId === row.id}>
                     {refreshingId === row.id ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking…</>
                     ) : (
@@ -222,9 +310,82 @@ const AssistedPendingBookings = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </section>
+
+      {/* Confirmed / Booked */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <PackageCheck className="h-5 w-5 text-green-600" /> Booked Shipments ({confirmed.length})
+        </h2>
+        {loading ? null : confirmed.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground text-sm">
+              No confirmed assisted bookings yet.
+            </CardContent>
+          </Card>
+        ) : (
+          confirmed.map((row) => {
+            const awb = row.prayog_awb || row.tracking_id || "";
+            return (
+              <Card key={row.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <CardTitle className="text-base">
+                        {row.sender_name || "—"} → {row.receiver_name || "—"}
+                      </CardTitle>
+                      <CardDescription className="mt-1 text-xs">
+                        {row.sender_city || "?"} → {row.receiver_city || "?"} ·{" "}
+                        {row.courier_name || "—"} · ₹{Number(row.courier_price || 0).toFixed(0)}
+                        {" · "}
+                        AWB <span className="font-mono">{awb}</span>
+                        {" · "}
+                        {new Date(row.created_at).toLocaleString()}
+                      </CardDescription>
+                    </div>
+                    <div className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-900 border border-green-200">
+                      {row.status}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => handleTrack(row)} disabled={!awb}>
+                      <Truck className="h-4 w-4 mr-2" /> Track shipment
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadLabel(row)}
+                      disabled={labelBusyId === row.id}
+                    >
+                      {labelBusyId === row.id ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Fetching…</>
+                      ) : (
+                        <><Download className="h-4 w-4 mr-2" /> Download label</>
+                      )}
+                    </Button>
+                    {awb && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(awb);
+                          toast({ title: "AWB copied" });
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-2" /> Copy AWB
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </section>
 
       <Dialog open={!!manualDialog} onOpenChange={(o) => { if (!o) { setManualDialog(null); setManualPaymentId(""); } }}>
         <DialogContent>
