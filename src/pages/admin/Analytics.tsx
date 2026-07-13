@@ -298,8 +298,8 @@ const Analytics = () => {
                   <Badge variant="secondary">Per booking</Badge>
                 </div>
                 <div className="flex justify-between items-center p-4 border rounded">
-                  <div><p className="font-medium">Platform Commission</p><p className="text-2xl font-bold">₹{platformCommission.toLocaleString()}</p></div>
-                  <Badge variant="default">10%</Badge>
+                  <div><p className="font-medium">Platform Revenue</p><p className="text-2xl font-bold">₹{platformCommission.toLocaleString()}</p></div>
+                  <Badge variant="default">Net to Viasetu</Badge>
                 </div>
               </CardContent>
             </Card>
