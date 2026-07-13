@@ -74,11 +74,22 @@ const Analytics = () => {
   };
 
   const filtered = getFilteredBookings();
-  const totalRevenue = filtered.reduce((sum, b) => sum + (b.courier_price || 0), 0);
-  const deliveredCount = filtered.filter(b => b.status === "delivered").length;
+  // Revenue recognition (shared rule — see src/lib/revenue.ts + RevenueManagement):
+  // Only payment_status='paid' rows contribute to collected revenue and platform
+  // commission. Delivered/completed counts use bucketOfStatus so partner API
+  // status strings (DELIVERED, delivered, Delivered_to_customer, …) all match.
+  const collected = filtered.filter(b => isCollected(b.payment_status));
+  const totalRevenue = collected.reduce((sum, b) => sum + (Number(b.courier_price) || 0), 0);
+  const deliveredCount = filtered.filter(b => bucketOfStatus(b.status) === "delivered").length;
   const completionRate = filtered.length > 0 ? Math.round((deliveredCount / filtered.length) * 100) : 0;
-  const avgOrderValue = filtered.length > 0 ? Math.round(totalRevenue / filtered.length) : 0;
-  const platformCommission = Math.round(totalRevenue * 0.1);
+  const avgOrderValue = collected.length > 0 ? Math.round(totalRevenue / collected.length) : 0;
+  // Real platform revenue from the platform_fee column (paid orders only) —
+  // matches AdminDashboard "Platform Revenue" and RevenueManagement.
+  const platformCommission = collected.reduce((sum, b) => sum + (Number(b.platform_fee) || 0), 0);
+  const pendingOrdersCount = filtered.filter(b => {
+    const bucket = bucketOfStatus(b.status);
+    return bucket === "created" || bucket === "confirmed";
+  }).length;
 
   // Compare with previous period
   const getPreviousPeriodBookings = () => {
@@ -98,7 +109,9 @@ const Analytics = () => {
   };
 
   const prevPeriod = getPreviousPeriodBookings();
-  const prevRevenue = prevPeriod.reduce((sum, b) => sum + (b.courier_price || 0), 0);
+  const prevRevenue = prevPeriod
+    .filter(b => isCollected(b.payment_status))
+    .reduce((sum, b) => sum + (Number(b.courier_price) || 0), 0);
   const revenueChange = prevRevenue > 0 ? Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100) : 0;
   const orderChange = prevPeriod.length > 0 ? Math.round(((filtered.length - prevPeriod.length) / prevPeriod.length) * 100) : 0;
 
