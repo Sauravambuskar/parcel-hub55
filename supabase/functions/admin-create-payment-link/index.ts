@@ -172,6 +172,8 @@ Deno.serve(async (req) => {
       base_fare: draft.base_fare ?? 0,
       platform_fee: draft.platform_fee ?? 0,
       gst: draft.gst ?? 0,
+      partner_id: draft.partner_id ?? null,
+      service_code: draft.service_code ?? null,
       booking_source: "admin_assisted_pending",
     };
 

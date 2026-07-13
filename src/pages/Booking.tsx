@@ -541,6 +541,8 @@ const Booking = () => {
         base_fare: baseFare,
         platform_fee: effectivePlatformFee,
         gst: gstAmount,
+        partner_id: selectedPartnerData?.partnerId || null,
+        service_code: selectedPartnerData?.serviceCode || null,
       };
       const { data, error } = await supabase.functions.invoke('admin-create-payment-link', {
         body: {
@@ -1427,6 +1429,9 @@ const Booking = () => {
                 }}
               >
                 <Copy className="h-4 w-4 mr-2" /> Copy link
+              </Button>
+              <Button variant="outline" onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-pending'); }}>
+                View pending bookings
               </Button>
               <Button onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); }}>
                 Book for another customer
