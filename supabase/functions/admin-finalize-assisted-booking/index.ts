@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
         payment_status: refundId ? "refunded" : "paid",
         failure_reason: `Partner booking failed: ${errDetail}`.slice(0, 500),
         refund_id: refundId,
-        refund_status: refundId ? "processed" : "failed",
+        refund_reason: refundId ? "partner_booking_failed" : null,
       }).eq("id", bookingId);
 
       return new Response(JSON.stringify({
@@ -297,10 +297,10 @@ Deno.serve(async (req) => {
 
     const { data: updated } = await admin.from("bookings").update({
       status: "CREATED",
-      awb_number: awb,
+      prayog_awb: awb,
       tracking_id: trackingId,
       label_url: labelUrl,
-      order_id: orderId,
+      prayog_order_id: orderId,
       booking_source: "admin_assisted",
     }).eq("id", bookingId).select().single();
 
