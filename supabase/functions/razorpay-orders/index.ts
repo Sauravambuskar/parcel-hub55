@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
   try {
     const requestBody: OrdersRequest = await req.json();
-    const { action, orderId, notes, filters } = requestBody;
+    const { action, orderId, notes, filters, paymentId } = requestBody as any;
 
     if (!action) {
       return new Response(
