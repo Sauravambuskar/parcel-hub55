@@ -465,9 +465,10 @@ const Landing = () => {
           style={{ zIndex: 0 }}
         />
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative" style={{ zIndex: 3 }}>
 
-          <div>
+        <div className="max-w-3xl mx-auto relative" style={{ zIndex: 3 }}>
+
+          <div className="text-center">
             <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
