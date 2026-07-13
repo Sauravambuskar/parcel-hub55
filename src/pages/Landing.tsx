@@ -497,7 +497,7 @@ const Landing = () => {
               <TrackForm onTrack={trackAwb} />
             </div>
 
-            <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2" style={{ color: C.gray }}>
+            <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2 justify-center" style={{ color: C.gray }}>
               <span>⭐ Trusted by 10,000+ users</span>
               <span>·</span>
               <span>📦 Pan-India coverage</span>
@@ -506,9 +506,6 @@ const Landing = () => {
               <span>·</span>
               <span>💰 Avg. saving ₹180 per shipment</span>
             </div>
-          </div>
-          <div className="hidden lg:block">
-            <PhoneMockup />
           </div>
         </div>
       </section>
