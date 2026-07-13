@@ -464,14 +464,6 @@ const Landing = () => {
           aria-hidden="true"
           style={{ zIndex: 0 }}
         />
-        {/* Readability overlay on desktop only (matches original light wash) */}
-        <div
-          className="hidden md:block absolute inset-0 pointer-events-none"
-          style={{
-            zIndex: 1,
-            background: "linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.82))",
-          }}
-        />
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative" style={{ zIndex: 3 }}>
 
