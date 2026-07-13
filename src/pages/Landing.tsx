@@ -39,6 +39,7 @@ import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
 import deliveryHero from "@/assets/delivery-hero.jpg";
+import heroDesktopVideo from "@/assets/hero-desktop.mp4.asset.json";
 import appPreview from "@/assets/app-preview.png";
 import appPreview2 from "@/assets/app-preview-2.png";
 
@@ -442,11 +443,38 @@ const Landing = () => {
         className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
         style={{
           minHeight: "100vh",
-          background: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero}) center/cover no-repeat`,
+          backgroundColor: "#000",
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)" }} />
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
+        {/* Desktop-only background video */}
+        <video
+          className="hidden md:block absolute inset-0 w-full h-full object-cover pointer-events-none"
+          src={heroDesktopVideo.url}
+          poster={deliveryHero}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          aria-hidden="true"
+          style={{ zIndex: 0 }}
+        />
+        {/* Readability overlay on desktop only (matches original light wash) */}
+        <div
+          className="hidden md:block absolute inset-0 pointer-events-none"
+          style={{
+            zIndex: 1,
+            background: "linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.82))",
+          }}
+        />
+        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative" style={{ zIndex: 3 }}>
+
           <div>
             <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
