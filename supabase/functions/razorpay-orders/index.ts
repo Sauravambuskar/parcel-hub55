@@ -6,7 +6,8 @@ const corsHeaders = {
 };
 
 interface OrdersRequest {
-  action: 'fetch' | 'fetchAll' | 'update' | 'fetchPayments';
+  action: 'fetch' | 'fetchAll' | 'update' | 'fetchPayments' | 'fetchPayment';
+  paymentId?: string;
   orderId?: string;
   notes?: Record<string, string>;
   filters?: {
