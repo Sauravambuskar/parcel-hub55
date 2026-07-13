@@ -1430,6 +1430,9 @@ const Booking = () => {
               >
                 <Copy className="h-4 w-4 mr-2" /> Copy link
               </Button>
+              <Button variant="outline" onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-pending'); }}>
+                View pending bookings
+              </Button>
               <Button onClick={() => { setPaymentLinkInfo(null); navigate('/admin/assisted-booking'); }}>
                 Book for another customer
               </Button>
