@@ -167,15 +167,40 @@ const AssistedPendingBookings = () => {
       window.open(row.label_url, "_blank");
       return;
     }
+    // No cached label — fetch fresh via partner-specific label function using the AWB.
+    const awb = row.prayog_awb || row.tracking_id;
+    if (!awb) {
+      toast({ title: "AWB not available yet", variant: "destructive" });
+      return;
+    }
+    const source = (row.booking_source || "").toLowerCase();
+    const fnMap: Record<string, string> = {
+      delhivery_direct: "delhivery-label",
+      shadowfax_direct: "shadowfax-label",
+      xpressbees_direct: "xpressbees-label",
+      urbanebolt_direct: "urbanebolt-label",
+      shree_maruti_direct: "shree-maruti-label",
+    };
+    const fnName = fnMap[source];
+    if (!fnName) {
+      toast({
+        title: "Label unavailable",
+        description: `Cached label missing for source ${source || "unknown"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setLabelBusyId(row.id);
     try {
-      const { data, error } = await supabase.functions.invoke("get-booking-label", {
-        body: { booking_id: row.id },
+      const { data, error } = await supabase.functions.invoke(fnName, {
+        body: { waybill: awb, awb, booking_id: row.id },
         headers: { "x-environment": CURRENT_ENV },
       });
       if (error) throw error;
       if (data?.success && data?.label_url) {
         window.open(data.label_url, "_blank");
+        // Persist for next time
+        await supabase.from("bookings").update({ label_url: data.label_url }).eq("id", row.id);
         await fetchRows();
       } else {
         toast({
