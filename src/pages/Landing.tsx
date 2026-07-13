@@ -440,9 +440,10 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
+        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex items-center"
         style={{
           minHeight: "100vh",
+          maxHeight: "100vh",
           backgroundColor: "#000",
           backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero})`,
           backgroundSize: "cover",
@@ -469,38 +470,38 @@ const Landing = () => {
         <div className="relative w-full md:pl-8 lg:pl-12" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-6 md:p-8 backdrop-blur-sm"
+            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 backdrop-blur-sm"
             style={{ background: "rgba(255,255,255,0.85)" }}
           >
-            <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
+            <h1 className="font-bold leading-[1.15] text-[28px] md:text-[42px] lg:text-[46px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
-            <h2 className="mt-5 text-[16px] md:text-[20px] font-normal" style={{ color: C.gray }}>
+            <h2 className="mt-3 text-[14px] md:text-[16px] font-normal" style={{ color: C.gray }}>
               India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h2>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <button
                 onClick={goSend}
-                className="h-14 px-8 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
+                className="h-12 px-6 rounded-lg font-bold text-[15px] flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
                 style={{ background: C.teal, color: C.bg }}
               >
                 <Package className="h-5 w-5" /> Send a Parcel →
               </button>
               <a
                 href="#track"
-                className="h-14 px-8 rounded-lg font-bold text-[16px] flex items-center justify-center gap-2 border-2"
+                className="h-12 px-6 rounded-lg font-bold text-[15px] flex items-center justify-center gap-2 border-2"
                 style={{ borderColor: C.teal, color: C.teal }}
               >
                 <Search className="h-5 w-5" /> Track a Parcel
               </a>
             </div>
 
-            <div id="track" className="mt-6">
+            <div id="track" className="mt-4">
               <TrackForm onTrack={trackAwb} />
             </div>
 
-            <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2" style={{ color: C.gray }}>
+            <div className="mt-4 text-[12px] md:text-[13px] flex flex-wrap gap-x-3 gap-y-1" style={{ color: C.gray }}>
               <span>⭐ Trusted by 10,000+ users</span>
               <span>·</span>
               <span>📦 Pan-India coverage</span>
