@@ -6,7 +6,8 @@ const corsHeaders = {
 };
 
 interface OrdersRequest {
-  action: 'fetch' | 'fetchAll' | 'update' | 'fetchPayments';
+  action: 'fetch' | 'fetchAll' | 'update' | 'fetchPayments' | 'fetchPayment';
+  paymentId?: string;
   orderId?: string;
   notes?: Record<string, string>;
   filters?: {
@@ -27,7 +28,7 @@ Deno.serve(async (req) => {
 
   try {
     const requestBody: OrdersRequest = await req.json();
-    const { action, orderId, notes, filters } = requestBody;
+    const { action, orderId, notes, filters, paymentId } = requestBody as any;
 
     if (!action) {
       return new Response(
@@ -138,6 +139,19 @@ Deno.serve(async (req) => {
           method: 'GET',
           headers: baseHeaders,
         });
+        break;
+      }
+
+      case 'fetchPayment': {
+        if (!paymentId) {
+          return new Response(
+            JSON.stringify({ error: 'paymentId is required for fetchPayment action' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        endpoint = `https://api.razorpay.com/v1/payments/${paymentId}`;
+        console.log(`[razorpay-orders] Fetching payment: ${paymentId}`);
+        response = await fetch(endpoint, { method: 'GET', headers: baseHeaders });
         break;
       }
 
