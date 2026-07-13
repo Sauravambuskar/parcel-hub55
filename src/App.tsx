@@ -55,6 +55,7 @@ const SystemSettings = lazy(() => import("./pages/admin/SystemSettings"));
 const DisputeResolution = lazy(() => import("./pages/admin/DisputeResolution"));
 const AbandonmentFunnel = lazy(() => import("./pages/admin/AbandonmentFunnel"));
 const AssistedBooking = lazy(() => import("./pages/admin/AssistedBooking"));
+const AssistedPendingBookings = lazy(() => import("./pages/admin/AssistedPendingBookings"));
 const ProtectedAdminRoute = lazy(() => import("./components/admin/ProtectedAdminRoute"));
 
 const queryClient = new QueryClient();
@@ -127,6 +128,8 @@ const App = () => (
             <Route path="tracking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><RealTimeTracking /></ProtectedAdminRoute>} />
             <Route path="orders" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><OrderMonitoring /></ProtectedAdminRoute>} />
             <Route path="assisted-booking" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><AssistedBooking /></ProtectedAdminRoute>} />
+            <Route path="assisted-pending" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><AssistedPendingBookings /></ProtectedAdminRoute>} />
+
             <Route path="users" element={<ProtectedAdminRoute allowedRoles={["super_admin", "operations", "support"]}><UserManagement /></ProtectedAdminRoute>} />
             <Route path="admin-users" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><AdminUserManagement /></ProtectedAdminRoute>} />
             <Route path="revenue" element={<ProtectedAdminRoute allowedRoles={["super_admin"]}><RevenueManagement /></ProtectedAdminRoute>} />
