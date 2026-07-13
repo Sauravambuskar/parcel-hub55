@@ -44,7 +44,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       // Narrow column projection — Analytics only uses these columns.
-      const cols = "id,courier_name,courier_price,status,created_at,sender_city,receiver_city,delivery_time,urgency";
+      const cols = "id,courier_name,courier_price,platform_fee,payment_status,status,created_at,sender_city,receiver_city,delivery_time,urgency";
       const [bookingsRes, profilesRes] = await Promise.all([
         supabase.from("bookings").select(cols).order("created_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
