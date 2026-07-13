@@ -469,8 +469,8 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto relative" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-2xl rounded-2xl p-6 md:p-10"
-            style={{ background: "rgba(255,255,255,0.78)", backdropFilter: "blur(8px)" }}
+            className="max-w-2xl rounded-2xl p-6 md:p-10 backdrop-blur-sm"
+            style={{ background: "rgba(255,255,255,0.78)" }}
           >
             <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
