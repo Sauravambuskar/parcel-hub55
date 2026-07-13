@@ -466,9 +466,12 @@ const Landing = () => {
         />
         <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
-        <div className="max-w-3xl mx-auto relative" style={{ zIndex: 3 }}>
+        <div className="max-w-7xl mx-auto relative" style={{ zIndex: 3 }}>
 
-          <div className="text-center">
+          <div
+            className="max-w-2xl rounded-2xl p-6 md:p-10 backdrop-blur-sm"
+            style={{ background: "rgba(255,255,255,0.78)" }}
+          >
             <h1 className="font-bold leading-[1.15] text-[32px] md:text-[52px] text-[#0B1220]">
               Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h1>
@@ -497,7 +500,7 @@ const Landing = () => {
               <TrackForm onTrack={trackAwb} />
             </div>
 
-            <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2 justify-center" style={{ color: C.gray }}>
+            <div className="mt-6 text-[13px] md:text-[14px] flex flex-wrap gap-x-4 gap-y-2" style={{ color: C.gray }}>
               <span>⭐ Trusted by 10,000+ users</span>
               <span>·</span>
               <span>📦 Pan-India coverage</span>
