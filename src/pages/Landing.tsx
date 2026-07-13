@@ -440,9 +440,10 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative pt-24 md:pt-32 pb-16 px-6 overflow-hidden"
+        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex items-center"
         style={{
           minHeight: "100vh",
+          maxHeight: "100vh",
           backgroundColor: "#000",
           backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero})`,
           backgroundSize: "cover",
