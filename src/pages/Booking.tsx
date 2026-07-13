@@ -541,6 +541,8 @@ const Booking = () => {
         base_fare: baseFare,
         platform_fee: effectivePlatformFee,
         gst: gstAmount,
+        partner_id: selectedPartnerData?.partnerId || null,
+        service_code: selectedPartnerData?.serviceCode || null,
       };
       const { data, error } = await supabase.functions.invoke('admin-create-payment-link', {
         body: {
