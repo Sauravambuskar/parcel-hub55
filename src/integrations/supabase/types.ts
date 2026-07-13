@@ -110,6 +110,7 @@ export type Database = {
           parcel_photos: Json
           parcel_photos_uploaded_at: string | null
           partner_error_raw: string | null
+          partner_id: string | null
           payment_id: string | null
           payment_link_id: string | null
           payment_link_status: string | null
@@ -133,6 +134,7 @@ export type Database = {
           sender_phone: string
           sender_pincode: string
           sender_state: string
+          service_code: string | null
           shipment_value: number | null
           status: string | null
           tracking_id: string | null
@@ -171,6 +173,7 @@ export type Database = {
           parcel_photos?: Json
           parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
+          partner_id?: string | null
           payment_id?: string | null
           payment_link_id?: string | null
           payment_link_status?: string | null
@@ -194,6 +197,7 @@ export type Database = {
           sender_phone: string
           sender_pincode: string
           sender_state: string
+          service_code?: string | null
           shipment_value?: number | null
           status?: string | null
           tracking_id?: string | null
@@ -232,6 +236,7 @@ export type Database = {
           parcel_photos?: Json
           parcel_photos_uploaded_at?: string | null
           partner_error_raw?: string | null
+          partner_id?: string | null
           payment_id?: string | null
           payment_link_id?: string | null
           payment_link_status?: string | null
@@ -255,6 +260,7 @@ export type Database = {
           sender_phone?: string
           sender_pincode?: string
           sender_state?: string
+          service_code?: string | null
           shipment_value?: number | null
           status?: string | null
           tracking_id?: string | null
