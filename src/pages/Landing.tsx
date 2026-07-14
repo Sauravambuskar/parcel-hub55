@@ -35,6 +35,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 
 // Background imagery (logistics & courier)
 import logisticsBg from "@/assets/logistics-bg.jpg";
+import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -473,11 +474,11 @@ const Landing = () => {
             className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 backdrop-blur-sm"
             style={{ background: "rgba(255,255,255,0.85)" }}
           >
-            <h1 className="font-bold leading-[1.15] text-[28px] md:text-[42px] lg:text-[46px] text-[#0B1220]">
-              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
+            <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
+              India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h1>
             <h2 className="mt-3 text-[14px] md:text-[16px] font-normal" style={{ color: C.gray }}>
-              India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
+              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h2>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
@@ -557,7 +558,17 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+          {/* Desktop: 3D illustration */}
+          <div className="hidden md:block mt-12">
+            <img
+              src={howItWorksDesktop.url}
+              alt="How Viasetu works: enter shipment details, compare courier prices, book and pay securely, track every shipment live"
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+          {/* Mobile: step cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-12 md:hidden">
             {[
               { n: "01", icon: <Package className="h-7 w-7" />, t: "Enter Shipment Details", b: "Add your pickup pincode, delivery location, weight and parcel type. Takes 30 seconds." },
               { n: "02", icon: <Search className="h-7 w-7" />, t: "Compare All Courier Prices", b: "See prices, delivery speed and reliability scores from our partners side by side. Instantly." },
