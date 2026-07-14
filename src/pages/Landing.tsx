@@ -474,10 +474,10 @@ const Landing = () => {
             style={{ background: "rgba(255,255,255,0.85)" }}
           >
             <h1 className="font-bold leading-[1.15] text-[28px] md:text-[42px] lg:text-[46px] text-[#0B1220]">
-              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
+              India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h1>
             <h2 className="mt-3 text-[14px] md:text-[16px] font-normal" style={{ color: C.gray }}>
-              India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
+              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
             </h2>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
