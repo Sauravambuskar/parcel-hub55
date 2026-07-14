@@ -540,6 +540,10 @@ const Landing = () => {
               width: max-content;
               animation: viasetu-marquee 18s linear infinite;
             }
+            .viasetu-marquee-mask {
+              mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+            }
           `}</style>
           <div className="viasetu-marquee-mask overflow-hidden">
             <div className="viasetu-marquee-track">
