@@ -35,6 +35,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 
 // Background imagery (logistics & courier)
 import logisticsBg from "@/assets/logistics-bg.jpg";
+import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -557,7 +558,17 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+          {/* Desktop: 3D illustration */}
+          <div className="hidden md:block mt-12">
+            <img
+              src={howItWorksDesktop.url}
+              alt="How Viasetu works: enter shipment details, compare courier prices, book and pay securely, track every shipment live"
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+          {/* Mobile: step cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-12 md:hidden">
             {[
               { n: "01", icon: <Package className="h-7 w-7" />, t: "Enter Shipment Details", b: "Add your pickup pincode, delivery location, weight and parcel type. Takes 30 seconds." },
               { n: "02", icon: <Search className="h-7 w-7" />, t: "Compare All Courier Prices", b: "See prices, delivery speed and reliability scores from our partners side by side. Instantly." },
