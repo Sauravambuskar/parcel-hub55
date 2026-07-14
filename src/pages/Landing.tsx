@@ -555,7 +555,7 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="relative py-20 px-6" style={{ background: `linear-gradient(rgba(255,255,255,0.88), rgba(244,247,251,0.94)), url(${logisticsBg}) center/cover no-repeat` }}>
+      <section id="how-it-works" className="relative py-20 px-6" style={{ background: C.bg2 }}>
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">How to Send a Parcel with Viasetu</h2>
           <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>4 steps. 2 minutes. Cheaper than walking into a courier shop.</p>
@@ -564,7 +564,7 @@ const Landing = () => {
             <img
               src={howItWorksDesktop.url}
               alt="How Viasetu works: enter shipment details, compare courier prices, book and pay securely, track every shipment live"
-              className="w-full h-auto"
+              className="w-full h-auto rounded-2xl"
               loading="lazy"
             />
           </div>
@@ -573,7 +573,7 @@ const Landing = () => {
             <img
               src={howItWorksMobile.url}
               alt="How Viasetu works: enter shipment details, compare courier prices, book and pay securely, track every shipment live"
-              className="w-full max-w-md mx-auto h-auto"
+              className="w-full max-w-md mx-auto h-auto rounded-2xl"
               loading="lazy"
             />
           </div>
