@@ -37,7 +37,10 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
-import mobileHeroSection from "@/assets/Mobile_Hero_Section.png.asset.json";
+import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
+import personaBaker from "@/assets/persona-baker.png.asset.json";
+import personaStudent from "@/assets/persona-student.png.asset.json";
+import personaSeller from "@/assets/persona-seller.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -45,6 +48,7 @@ import deliveryHero from "@/assets/delivery-hero.jpg";
 import heroDesktopVideo from "@/assets/hero-desktop.mp4.asset.json";
 import appPreview from "@/assets/app-preview.png";
 import appPreview2 from "@/assets/app-preview-2.png";
+
 
 
 const resourceItems = [
@@ -444,15 +448,10 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex items-center"
+        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex flex-col md:flex-row md:items-center"
         style={{
           minHeight: "100vh",
-          maxHeight: "100vh",
-          backgroundColor: "#000",
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          backgroundColor: "#F4F7FB",
         }}
       >
         {/* Desktop-only background video */}
@@ -469,13 +468,20 @@ const Landing = () => {
           aria-hidden="true"
           style={{ zIndex: 0 }}
         />
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
+        <div className="hidden md:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
-        <div className="relative w-full md:pl-8 lg:pl-12" style={{ zIndex: 3 }}>
+        {/* Mobile-only hero illustration at the top of the hero section */}
+        <img
+          src={courierPartnersHub.url}
+          alt="Courier partner network hub illustration with Delhivery, XpressBees, Shadowfax, Shree Maruti and UrbanEBolt"
+          className="md:hidden relative z-10 w-full max-w-xl mx-auto h-auto max-h-[40vh] object-contain"
+          loading="eager"
+        />
+
+        <div className="relative w-full md:pl-8 lg:pl-12 self-start md:self-center" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 backdrop-blur-sm"
-            style={{ background: "rgba(255,255,255,0.85)" }}
+            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
           >
             <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
               India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
@@ -514,16 +520,11 @@ const Landing = () => {
               <span>·</span>
               <span>Avg. saving ₹180 per shipment</span>
             </div>
-
-            <img
-              src={mobileHeroSection.url}
-              alt="Compare Delhivery, XpressBees, Shadowfax, UrbaneBolt and Shree Maruti courier services across India with Viasetu"
-              className="md:hidden w-full h-auto rounded-2xl mt-6"
-              loading="eager"
-            />
           </div>
         </div>
+
       </section>
+
 
 
       {/* PARTNERS */}
@@ -630,14 +631,17 @@ const Landing = () => {
           <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220]">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
-              { t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
-              { t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere" },
-              { t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard" },
+              { t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month", img: personaBaker.url, alt: "Home baker packing cake for shipping" },
+              { t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere", img: personaStudent.url, alt: "Student packing box to send home" },
+              { t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard", img: personaSeller.url, alt: "Small business seller packing orders" },
             ].map((p) => (
-              <div key={p.t} className="rounded-xl p-8" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
-                <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
-                <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
-                <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
+              <div key={p.t} className="rounded-xl overflow-hidden flex flex-col" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
+                <img src={p.img} alt={p.alt} loading="lazy" className="w-full h-48 md:h-56 object-cover" />
+                <div className="p-8 flex-1 flex flex-col">
+                  <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
+                  <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
+                  <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full self-start mt-auto" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
+                </div>
               </div>
             ))}
           </div>
