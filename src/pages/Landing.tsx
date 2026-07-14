@@ -37,7 +37,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
-import mobileHeroSection from "@/assets/Mobile_Hero_Section.png.asset.json";
+import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -45,6 +45,7 @@ import deliveryHero from "@/assets/delivery-hero.jpg";
 import heroDesktopVideo from "@/assets/hero-desktop.mp4.asset.json";
 import appPreview from "@/assets/app-preview.png";
 import appPreview2 from "@/assets/app-preview-2.png";
+
 
 
 const resourceItems = [
