@@ -448,7 +448,7 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative mt-[-20px] pt-4 md:pt-5 lg:pt-24 pb-6 md:pb-10 px-4 md:px-6 overflow-hidden flex flex-col lg:flex-row lg:items-center"
+        className="relative pt-4 md:pt-5 lg:pt-24 pb-6 md:pb-10 px-4 md:px-6 overflow-hidden flex flex-col lg:flex-row lg:items-center"
         style={{
           minHeight: "100vh",
           backgroundColor: "#F4F7FB",
@@ -470,18 +470,8 @@ const Landing = () => {
         />
         <div className="hidden lg:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
-        {/* Hero illustration: mobile + tablet above the text; desktop uses the video background */}
-        <div className="lg:hidden relative z-10 w-full px-4 sm:px-6 md:px-8 pt-0 pb-3 md:pb-5 flex items-center justify-center">
-          <img
-            src={courierPartnersHub.url}
-            alt="Courier partner network hub illustration with Delhivery, XpressBees, Shadowfax, Shree Maruti and UrbanEBolt"
-            className="w-full h-auto max-h-[42vh] sm:max-h-[46vh] md:max-h-[50vh] max-w-2xl object-contain border-0"
-            loading="eager"
-          />
-        </div>
-
-
         <div className="relative w-full lg:pl-12 self-start lg:self-center" style={{ zIndex: 3 }}>
+
 
           <div
             className="max-w-xl mx-auto md:ml-0 md:mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
