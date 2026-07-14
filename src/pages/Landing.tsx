@@ -538,7 +538,7 @@ const Landing = () => {
             .viasetu-marquee-track {
               display: flex;
               width: max-content;
-              animation: viasetu-marquee 30s linear infinite;
+              animation: viasetu-marquee 18s linear infinite;
             }
             .viasetu-marquee-mask {
               mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
@@ -550,17 +550,17 @@ const Landing = () => {
               {[...ACTIVE_PARTNERS, ...ACTIVE_PARTNERS].map((p, i) => (
                 <div
                   key={`${p.name}-${i}`}
-                  className="shrink-0 flex items-center justify-center px-4 sm:px-6 md:px-8"
-                  style={{ width: "calc(100vw / 2)" }}
+                  className="shrink-0 flex items-center justify-center px-3 sm:px-4 md:px-6"
+                  style={{ width: "calc(100vw / 3)" }}
                 >
                   <div
                     className="w-full flex items-center justify-center rounded-xl"
-                    style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, height: 100 }}
+                    style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, height: 88 }}
                   >
                     <img
                       src={p.logo}
                       alt={`${p.name} logo`}
-                      className="max-h-[56px] max-w-[80%] object-contain"
+                      className="max-h-[48px] sm:max-h-[52px] md:max-h-[56px] max-w-[80%] object-contain"
                       loading="lazy"
                       draggable={false}
                     />
@@ -570,9 +570,6 @@ const Landing = () => {
             </div>
           </div>
           <style>{`
-            @media (min-width: 640px) {
-              .viasetu-marquee-track > div { width: calc(100vw / 3) !important; }
-            }
             @media (min-width: 768px) {
               .viasetu-marquee-track > div { width: calc(100vw / 4) !important; }
             }
