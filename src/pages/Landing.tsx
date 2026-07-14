@@ -444,30 +444,12 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex items-center"
+        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex flex-col md:flex-row md:items-center"
         style={{
           minHeight: "100vh",
           backgroundColor: "#F4F7FB",
         }}
       >
-        {/* Mobile-only background illustration — pinned lower so hero content stays readable */}
-        <img
-          src={mobileHeroSection.url}
-          alt=""
-          aria-hidden="true"
-          className="md:hidden absolute inset-x-0 bottom-0 w-full h-[48vh] max-h-[420px] object-cover object-bottom pointer-events-none select-none"
-          style={{ zIndex: 0, opacity: 0.85 }}
-          loading="eager"
-        />
-        {/* Mobile fade overlay for text readability */}
-        <div
-          className="md:hidden absolute inset-0 pointer-events-none"
-          style={{
-            zIndex: 1,
-            background:
-              "linear-gradient(to bottom, rgba(244,247,251,1) 0%, rgba(244,247,251,0.95) 40%, rgba(244,247,251,0.70) 65%, rgba(244,247,251,0) 100%)",
-          }}
-        />
         {/* Desktop-only background video */}
         <video
           className="hidden md:block absolute inset-0 w-full h-full object-cover pointer-events-none"
@@ -528,6 +510,14 @@ const Landing = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile-only hero illustration placed below the content */}
+        <img
+          src={mobileHeroSection.url}
+          alt="Courier partner network illustration"
+          className="md:hidden relative z-10 w-full max-w-xl mx-auto mt-4 mb-2 h-auto max-h-[60vh] object-contain rounded-2xl"
+          loading="eager"
+        />
       </section>
 
 
