@@ -502,13 +502,13 @@ const Landing = () => {
             </div>
 
             <div className="mt-4 text-[12px] md:text-[13px] flex flex-wrap gap-x-3 gap-y-1" style={{ color: C.gray }}>
-              <span>⭐ Trusted by 10,000+ users</span>
+              <span>Trusted by 10,000+ users</span>
               <span>·</span>
-              <span>📦 Pan-India coverage</span>
+              <span>Pan-India coverage</span>
               <span>·</span>
-              <span>🚚 5 active courier partners</span>
+              <span>5 active courier partners</span>
               <span>·</span>
-              <span>💰 Avg. saving ₹180 per shipment</span>
+              <span>Avg. saving ₹180 per shipment</span>
             </div>
           </div>
         </div>
