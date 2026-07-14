@@ -514,9 +514,17 @@ const Landing = () => {
               <span>·</span>
               <span>Avg. saving ₹180 per shipment</span>
             </div>
+
+            <img
+              src={mobileHeroSection.url}
+              alt="Compare Delhivery, XpressBees, Shadowfax, UrbaneBolt and Shree Maruti courier services across India with Viasetu"
+              className="md:hidden w-full h-auto rounded-2xl mt-6"
+              loading="eager"
+            />
           </div>
         </div>
       </section>
+
 
       {/* PARTNERS */}
       <section
