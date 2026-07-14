@@ -473,7 +473,7 @@ const Landing = () => {
             className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 backdrop-blur-sm"
             style={{ background: "rgba(255,255,255,0.85)" }}
           >
-            <h1 className="font-bold leading-[1.15] text-[28px] md:text-[42px] lg:text-[46px] text-[#0B1220]">
+            <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
               India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h1>
             <h2 className="mt-3 text-[14px] md:text-[16px] font-normal" style={{ color: C.gray }}>
