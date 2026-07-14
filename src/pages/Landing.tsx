@@ -36,6 +36,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 // Background imagery (logistics & courier)
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
+import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -567,21 +568,14 @@ const Landing = () => {
               loading="lazy"
             />
           </div>
-          {/* Mobile: step cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-12 md:hidden">
-            {[
-              { n: "01", icon: <Package className="h-7 w-7" />, t: "Enter Shipment Details", b: "Add your pickup pincode, delivery location, weight and parcel type. Takes 30 seconds." },
-              { n: "02", icon: <Search className="h-7 w-7" />, t: "Compare All Courier Prices", b: "See prices, delivery speed and reliability scores from our partners side by side. Instantly." },
-              { n: "03", icon: <CreditCard className="h-7 w-7" />, t: "Book & Pay Securely", b: "Pay via UPI, card or wallet. Your doorstep pickup is scheduled automatically." },
-              { n: "04", icon: <MapPin className="h-7 w-7" />, t: "Track Every Shipment Live", b: "Real-time status updates from pickup to delivery — all couriers in one dashboard." },
-            ].map((s) => (
-              <div key={s.n} className="rounded-xl p-7 text-left" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
-                <div className="h-14 w-14 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{s.icon}</div>
-                <div className="text-[12px] font-bold mb-1" style={{ color: C.teal }}>STEP {s.n}</div>
-                <h3 className="text-[#0B1220] font-bold text-[16px] mb-2">{s.t}</h3>
-                <p className="text-[13px] leading-relaxed" style={{ color: C.gray }}>{s.b}</p>
-              </div>
-            ))}
+          {/* Mobile: step illustration */}
+          <div className="md:hidden mt-10">
+            <img
+              src={howItWorksMobile.url}
+              alt="How Viasetu works: enter shipment details, compare courier prices, book and pay securely, track every shipment live"
+              className="w-full max-w-md mx-auto h-auto"
+              loading="lazy"
+            />
           </div>
           <div className="mt-10">
             <button onClick={goSend} className="h-14 px-8 rounded-lg font-bold text-[16px]" style={{ background: C.teal, color: C.bg }}>
