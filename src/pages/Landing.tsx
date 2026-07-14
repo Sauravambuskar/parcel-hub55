@@ -481,10 +481,10 @@ const Landing = () => {
         </div>
 
 
-        <div className="relative w-full md:pl-8 lg:pl-12 self-start md:self-center" style={{ zIndex: 3 }}>
+        <div className="relative w-full lg:pl-12 self-start lg:self-center" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
+            className="max-w-xl mx-auto md:ml-0 md:mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
           >
             <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
               India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
