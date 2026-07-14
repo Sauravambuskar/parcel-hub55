@@ -615,12 +615,11 @@ const Landing = () => {
           <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220]">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
-              { e: "🧁", t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
-              { e: "🎓", t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere" },
-              { e: "📱", t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard" },
+              { t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
+              { t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere" },
+              { t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard" },
             ].map((p) => (
               <div key={p.t} className="rounded-xl p-8" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
-                <div className="h-14 w-14 rounded-full flex items-center justify-center text-2xl mb-4" style={{ background: "rgba(0,200,200,0.15)" }}>{p.e}</div>
                 <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
                 <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
                 <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
