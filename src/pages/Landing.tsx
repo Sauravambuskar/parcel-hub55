@@ -37,7 +37,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
-import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
+
 import personaBaker from "@/assets/persona-baker.png.asset.json";
 import personaStudent from "@/assets/persona-student.png.asset.json";
 import personaSeller from "@/assets/persona-seller.png.asset.json";
@@ -448,7 +448,7 @@ const Landing = () => {
       <section
         id="hero"
         aria-label="Compare courier services India"
-        className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex flex-col md:flex-row md:items-center"
+        className="relative pt-4 md:pt-5 lg:pt-24 pb-6 md:pb-10 px-4 md:px-6 overflow-hidden flex flex-col lg:flex-row lg:items-center"
         style={{
           minHeight: "100vh",
           backgroundColor: "#F4F7FB",
@@ -456,7 +456,7 @@ const Landing = () => {
       >
         {/* Desktop-only background video */}
         <video
-          className="hidden md:block absolute inset-0 w-full h-full object-cover pointer-events-none"
+          className="hidden lg:block absolute inset-0 w-full h-full object-cover pointer-events-none"
           src={heroDesktopVideo.url}
           poster={deliveryHero}
           autoPlay
@@ -468,20 +468,13 @@ const Landing = () => {
           aria-hidden="true"
           style={{ zIndex: 0 }}
         />
-        <div className="hidden md:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
+        <div className="hidden lg:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
-        {/* Mobile-only hero illustration at the top of the hero section */}
-        <img
-          src={courierPartnersHub.url}
-          alt="Courier partner network hub illustration with Delhivery, XpressBees, Shadowfax, Shree Maruti and UrbanEBolt"
-          className="md:hidden relative z-10 w-full max-w-xl mx-auto h-auto max-h-[40vh] object-contain"
-          loading="eager"
-        />
+        <div className="relative w-full lg:pl-12 self-start lg:self-center" style={{ zIndex: 3 }}>
 
-        <div className="relative w-full md:pl-8 lg:pl-12 self-start md:self-center" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
+            className="max-w-xl mx-auto md:ml-0 md:mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
           >
             <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
               India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
