@@ -37,7 +37,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
-import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
+
 import personaBaker from "@/assets/persona-baker.png.asset.json";
 import personaStudent from "@/assets/persona-student.png.asset.json";
 import personaSeller from "@/assets/persona-seller.png.asset.json";
