@@ -447,14 +447,27 @@ const Landing = () => {
         className="relative pt-20 md:pt-24 pb-8 md:pb-10 px-6 overflow-hidden flex items-center"
         style={{
           minHeight: "100vh",
-          maxHeight: "100vh",
-          backgroundColor: "#000",
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(${deliveryHero})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          backgroundColor: "#F4F7FB",
         }}
       >
+        {/* Mobile-only background illustration */}
+        <img
+          src={mobileHeroSection.url}
+          alt=""
+          aria-hidden="true"
+          className="md:hidden absolute inset-x-0 bottom-0 w-full h-auto object-contain object-bottom pointer-events-none select-none"
+          style={{ zIndex: 0, opacity: 0.95 }}
+          loading="eager"
+        />
+        {/* Mobile fade overlay for text readability */}
+        <div
+          className="md:hidden absolute inset-0 pointer-events-none"
+          style={{
+            zIndex: 1,
+            background:
+              "linear-gradient(to bottom, rgba(244,247,251,0.96) 0%, rgba(244,247,251,0.82) 45%, rgba(244,247,251,0.35) 75%, rgba(244,247,251,0) 100%)",
+          }}
+        />
         {/* Desktop-only background video */}
         <video
           className="hidden md:block absolute inset-0 w-full h-full object-cover pointer-events-none"
@@ -469,13 +482,13 @@ const Landing = () => {
           aria-hidden="true"
           style={{ zIndex: 0 }}
         />
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
+        <div className="hidden md:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
-        <div className="relative w-full md:pl-8 lg:pl-12" style={{ zIndex: 3 }}>
+        <div className="relative w-full md:pl-8 lg:pl-12 self-start md:self-center" style={{ zIndex: 3 }}>
 
           <div
-            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 backdrop-blur-sm"
-            style={{ background: "rgba(255,255,255,0.85)" }}
+            className="max-w-xl md:ml-0 mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm"
+            style={{ background: "rgba(255,255,255,0.92)" }}
           >
             <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
               India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
@@ -514,13 +527,6 @@ const Landing = () => {
               <span>·</span>
               <span>Avg. saving ₹180 per shipment</span>
             </div>
-
-            <img
-              src={mobileHeroSection.url}
-              alt="Compare Delhivery, XpressBees, Shadowfax, UrbaneBolt and Shree Maruti courier services across India with Viasetu"
-              className="md:hidden w-full h-auto rounded-2xl mt-6"
-              loading="eager"
-            />
           </div>
         </div>
       </section>
