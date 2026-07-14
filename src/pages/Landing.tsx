@@ -6,7 +6,7 @@ import PublicSiteLayout from "@/components/site/PublicSiteLayout";
 const AuthedHome = lazy(() => import("./Index"));
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Package, Search, CreditCard, MapPin, CheckCircle2, ChevronDown, Menu, X,
+  Package, Search, CheckCircle2, ChevronDown, Menu, X,
   Linkedin, Twitter, Instagram, BookOpen, HelpCircle, Mail,
 } from "lucide-react";
 
