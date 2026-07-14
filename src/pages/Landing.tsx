@@ -475,7 +475,7 @@ const Landing = () => {
           <img
             src={courierPartnersHub.url}
             alt="Courier partner network hub illustration with Delhivery, XpressBees, Shadowfax, Shree Maruti and UrbanEBolt"
-            className="w-full h-auto max-h-[42vh] sm:max-h-[46vh] md:max-h-[50vh] max-w-2xl object-contain"
+            className="w-full h-auto max-h-[42vh] sm:max-h-[46vh] md:max-h-[50vh] max-w-2xl object-contain border-0"
             loading="eager"
           />
         </div>
