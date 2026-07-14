@@ -38,6 +38,9 @@ import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
 import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
+import personaBaker from "@/assets/persona-baker.png.asset.json";
+import personaStudent from "@/assets/persona-student.png.asset.json";
+import personaSeller from "@/assets/persona-seller.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -628,14 +631,17 @@ const Landing = () => {
           <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220]">Who Uses Viasetu? Anyone Who Ships a Parcel in India.</h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
-              { t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month" },
-              { t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere" },
-              { t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard" },
+              { t: "Home Bakers & Micro-Sellers", b: "Ship your products across India without visiting courier shops. Compare rates, book pickup, track deliveries — all from your phone while you run your business.", s: "Avg. saving ₹2,400/month", img: personaBaker.url, alt: "Home baker packing cake for shipping" },
+              { t: "Students Living Away From Home", b: "Send clothes, books and packages home without the hassle. Get doorstep pickup at your hostel or PG. Track until it reaches your family.", s: "Doorstep pickup anywhere", img: personaStudent.url, alt: "Student packing box to send home" },
+              { t: "OLX / Meesho Sellers & SMEs", b: "Ship 10–50 orders a week with full tracking visibility. Professional shipping at consumer prices — no business account needed.", s: "Unified tracking dashboard", img: personaSeller.url, alt: "Small business seller packing orders" },
             ].map((p) => (
-              <div key={p.t} className="rounded-xl p-8" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
-                <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
-                <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
-                <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
+              <div key={p.t} className="rounded-xl overflow-hidden flex flex-col" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.teal}` }}>
+                <img src={p.img} alt={p.alt} loading="lazy" className="w-full h-48 md:h-56 object-cover" />
+                <div className="p-8 flex-1 flex flex-col">
+                  <h3 className="text-[#0B1220] font-bold text-[18px] mb-3">{p.t}</h3>
+                  <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.gray }}>{p.b}</p>
+                  <span className="inline-block text-[12px] font-bold px-3 py-1 rounded-full self-start mt-auto" style={{ background: "rgba(0,200,200,0.15)", color: C.teal }}>{p.s}</span>
+                </div>
               </div>
             ))}
           </div>
