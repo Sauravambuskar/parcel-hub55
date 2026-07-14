@@ -35,6 +35,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 
 // Background imagery (logistics & courier)
 import logisticsBg from "@/assets/logistics-bg.jpg";
+import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
