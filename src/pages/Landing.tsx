@@ -450,13 +450,13 @@ const Landing = () => {
           backgroundColor: "#F4F7FB",
         }}
       >
-        {/* Mobile-only background illustration */}
+        {/* Mobile-only background illustration — pinned lower so hero content stays readable */}
         <img
           src={mobileHeroSection.url}
           alt=""
           aria-hidden="true"
-          className="md:hidden absolute inset-x-0 bottom-0 w-full h-auto object-contain object-bottom pointer-events-none select-none"
-          style={{ zIndex: 0, opacity: 0.95 }}
+          className="md:hidden absolute inset-x-0 bottom-0 w-full h-[48vh] max-h-[420px] object-cover object-bottom pointer-events-none select-none"
+          style={{ zIndex: 0, opacity: 0.85 }}
           loading="eager"
         />
         {/* Mobile fade overlay for text readability */}
@@ -465,7 +465,7 @@ const Landing = () => {
           style={{
             zIndex: 1,
             background:
-              "linear-gradient(to bottom, rgba(244,247,251,0.96) 0%, rgba(244,247,251,0.82) 45%, rgba(244,247,251,0.35) 75%, rgba(244,247,251,0) 100%)",
+              "linear-gradient(to bottom, rgba(244,247,251,1) 0%, rgba(244,247,251,0.95) 40%, rgba(244,247,251,0.70) 65%, rgba(244,247,251,0) 100%)",
           }}
         />
         {/* Desktop-only background video */}
