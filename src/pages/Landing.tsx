@@ -37,7 +37,7 @@ import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
 import logisticsBg from "@/assets/logistics-bg.jpg";
 import howItWorksDesktop from "@/assets/how-it-works-desktop.png.asset.json";
 import howItWorksMobile from "@/assets/how-it-works-mobile.png.asset.json";
-import mobileHeroSection from "@/assets/Mobile_Hero_Section.png.asset.json";
+import courierPartnersHub from "@/assets/courier-partners-hub.png.asset.json";
 import warehouseBg from "@/assets/warehouse-bg.jpg";
 import parcelsBg from "@/assets/parcels-bg.jpg";
 import shippingBg from "@/assets/shipping-bg.jpg";
@@ -45,6 +45,7 @@ import deliveryHero from "@/assets/delivery-hero.jpg";
 import heroDesktopVideo from "@/assets/hero-desktop.mp4.asset.json";
 import appPreview from "@/assets/app-preview.png";
 import appPreview2 from "@/assets/app-preview-2.png";
+
 
 
 const resourceItems = [
@@ -466,6 +467,14 @@ const Landing = () => {
         />
         <div className="hidden md:block absolute top-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,200,200,0.15) 0%, transparent 70%)", zIndex: 2 }} />
 
+        {/* Mobile-only hero illustration at the top of the hero section */}
+        <img
+          src={courierPartnersHub.url}
+          alt="Courier partner network hub illustration with Delhivery, XpressBees, Shadowfax, Shree Maruti and UrbanEBolt"
+          className="md:hidden relative z-10 w-full max-w-xl mx-auto h-auto max-h-[40vh] object-contain rounded-2xl"
+          loading="eager"
+        />
+
         <div className="relative w-full md:pl-8 lg:pl-12 self-start md:self-center" style={{ zIndex: 3 }}>
 
           <div
@@ -511,14 +520,8 @@ const Landing = () => {
           </div>
         </div>
 
-        {/* Mobile-only hero illustration placed below the content */}
-        <img
-          src={mobileHeroSection.url}
-          alt="Courier partner network illustration"
-          className="md:hidden relative z-10 w-full max-w-xl mx-auto mt-4 mb-2 h-auto max-h-[60vh] object-contain rounded-2xl"
-          loading="eager"
-        />
       </section>
+
 
 
       {/* PARTNERS */}
