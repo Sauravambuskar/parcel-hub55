@@ -14,11 +14,11 @@ import {
   Mail,
   CheckCircle2,
 } from "lucide-react";
-import delhiveryLogo from "@/assets/delhivery-logo.jpg";
-import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
-import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
-import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
-import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
+import delhiveryLogo from "@/assets/delhivery.svg";
+import shadowfaxLogo from "@/assets/shadowfax.svg";
+import xpressbeesLogo from "@/assets/xpressbees.svg";
+import shreeMarutiLogo from "@/assets/shree-maruti.svg";
+import urbaneboltLogo from "@/assets/urbanebolt.svg";
 
 const C = {
   bg: "#FFFFFF",

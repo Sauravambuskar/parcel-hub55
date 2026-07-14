@@ -27,11 +27,11 @@ const C = {
 const FONT_STACK = '"Montserrat", "Helvetica Neue", Arial, sans-serif';
 
 // Partner logos
-import delhiveryLogo from "@/assets/delhivery-logo.jpg";
-import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
-import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
-import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
-import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
+import delhiveryLogo from "@/assets/delhivery.svg";
+import shadowfaxLogo from "@/assets/shadowfax.svg";
+import xpressbeesLogo from "@/assets/xpressbees.svg";
+import urbaneboltLogo from "@/assets/urbanebolt.svg";
+import shreeMarutiLogo from "@/assets/shree-maruti.svg";
 
 // Background imagery (logistics & courier)
 import logisticsBg from "@/assets/logistics-bg.jpg";
@@ -530,20 +530,56 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center text-[12px] uppercase tracking-[0.2em] mb-8" style={{ color: C.teal }}>Our Courier Partners</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {ACTIVE_PARTNERS.map((p) => (
-              <div
-                key={p.name}
-                className="rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-transform hover:scale-[1.03]"
-                style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, minHeight: 110 }}
-              >
-                <div className="w-full h-14 flex items-center justify-center">
-                  <img src={p.logo} alt={`${p.name} logo`} className="max-h-full max-w-full object-contain" loading="lazy" />
+          <style>{`
+            @keyframes viasetu-marquee {
+              from { transform: translateX(0); }
+              to { transform: translateX(-50%); }
+            }
+            .viasetu-marquee-track {
+              display: flex;
+              width: max-content;
+              animation: viasetu-marquee 30s linear infinite;
+            }
+            .viasetu-marquee-mask {
+              mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+            }
+          `}</style>
+          <div className="viasetu-marquee-mask overflow-hidden">
+            <div className="viasetu-marquee-track">
+              {[...ACTIVE_PARTNERS, ...ACTIVE_PARTNERS].map((p, i) => (
+                <div
+                  key={`${p.name}-${i}`}
+                  className="shrink-0 flex items-center justify-center px-4 sm:px-6 md:px-8"
+                  style={{ width: "calc(100vw / 2)" }}
+                >
+                  <div
+                    className="w-full flex items-center justify-center rounded-xl"
+                    style={{ background: "#FFFFFF", border: `1px solid ${C.border}`, height: 100 }}
+                  >
+                    <img
+                      src={p.logo}
+                      alt={`${p.name} logo`}
+                      className="max-h-[56px] max-w-[80%] object-contain"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
-                <div className="text-[12px] font-semibold" style={{ color: C.bg }}>{p.name}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+          <style>{`
+            @media (min-width: 640px) {
+              .viasetu-marquee-track > div { width: calc(100vw / 3) !important; }
+            }
+            @media (min-width: 768px) {
+              .viasetu-marquee-track > div { width: calc(100vw / 4) !important; }
+            }
+            @media (min-width: 1024px) {
+              .viasetu-marquee-track > div { width: calc(min(1280px, 100vw) / 5) !important; }
+            }
+          `}</style>
 
           <div className="text-center text-[12px] uppercase tracking-[0.2em] mt-12 mb-4" style={{ color: C.gray }}>More Partners Coming Soon</div>
           <div className="flex flex-wrap justify-center gap-3">

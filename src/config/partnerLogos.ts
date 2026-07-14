@@ -1,11 +1,11 @@
 // Partner logo mapping for courier selection
 // Uses publicly available courier company logos
 
-import shadowfaxLogo from "@/assets/shadowfax-logo.svg";
-import delhiveryLogo from "@/assets/delhivery-logo.jpg";
-import urbaneboltLogo from "@/assets/urbanebolt-logo.png";
-import shreeMarutiLogo from "@/assets/shree-maruti-logo.png";
-import xpressbeesLogo from "@/assets/xpressbees-logo.webp";
+import shadowfaxLogo from "@/assets/shadowfax.svg";
+import delhiveryLogo from "@/assets/delhivery.svg";
+import urbaneboltLogo from "@/assets/urbanebolt.svg";
+import shreeMarutiLogo from "@/assets/shree-maruti.svg";
+import xpressbeesLogo from "@/assets/xpressbees.svg";
 
 export const PARTNER_LOGOS: Record<string, string> = {
   // Prayog sandbox partners
