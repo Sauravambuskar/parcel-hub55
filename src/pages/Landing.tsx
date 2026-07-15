@@ -818,6 +818,208 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* SECTION 2 — Why Compare Courier Prices */}
+      <section id="why-compare" className="py-20 px-6" style={{ background: C.bg }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Why Compare Courier Prices Before Booking?</h2>
+            <p className="mt-4 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              Courier charges can vary depending on the courier company, parcel weight, destination and delivery speed.
+            </p>
+            <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              Instead of checking different courier websites one by one, ViaSetu lets you compare courier prices instantly and choose the best shipping option based on cost, delivery time and service availability.
+            </p>
+            <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              Whether you're shipping within your city or across India, comparing courier rates helps you save money on every shipment.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+            {[
+              { icon: IndianRupee, t: "Compare Courier Charges", b: "Instantly compare courier rates from multiple courier partners before booking." },
+              { icon: Home, t: "Doorstep Pickup Service", b: "Book a parcel pickup from your home or office without visiting a courier branch." },
+              { icon: ShieldCheck, t: "Secure Parcel Delivery", b: "Ship confidently through trusted courier partners with reliable delivery across India." },
+              { icon: MapPin, t: "Live Shipment Tracking", b: "Track every parcel online with real-time shipment updates." },
+              { icon: BadgeCheck, t: "Transparent Courier Pricing", b: "Know the final courier charges before confirming your booking." },
+              { icon: Sparkles, t: "Easy Online Courier Booking", b: "Complete your courier booking in just a few simple steps." },
+            ].map(({ icon: Icon, t, b }) => (
+              <div key={t} className="rounded-2xl p-6" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
+                <Icon className="h-6 w-6 mb-3" style={{ color: C.teal }} />
+                <h3 className="text-[17px] font-bold text-[#0B1220]">{t}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed" style={{ color: C.gray }}>{b}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3 — 4 Simple Steps */}
+      <section id="four-steps" className="py-20 px-6" style={{ background: C.bg2 }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Compare Courier Charges in 4 Simple Steps</h2>
+            <p className="mt-3 text-[14px] md:text-[16px]" style={{ color: C.gray }}>Booking a courier online is quick and hassle-free.</p>
+          </div>
+          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+            {[
+              { t: "Enter Pickup & Delivery Details", b: "Provide the pickup and destination addresses along with parcel details." },
+              { t: "Compare Courier Charges", b: "View courier prices, delivery timelines and available courier partners." },
+              { t: "Book Your Courier", b: "Choose the courier service that fits your budget and delivery needs." },
+              { t: "Track Your Parcel Online", b: "Receive live shipment updates until your parcel reaches its destination." },
+            ].map((s, i) => (
+              <li key={s.t} className="rounded-2xl p-6 relative" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                <div className="text-[12px] font-bold uppercase tracking-wider mb-2" style={{ color: C.teal }}>Step {i + 1}</div>
+                <h3 className="text-[16px] font-bold text-[#0B1220]">{s.t}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed" style={{ color: C.gray }}>{s.b}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* SECTION 4 — Parcel Pickup & Delivery Services */}
+      <section id="parcel-services" className="py-20 px-6" style={{ background: C.bg }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Parcel Pickup & Delivery Services Across India</h2>
+            <p className="mt-4 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              ViaSetu provides reliable parcel pickup and delivery services across India. Whether you're sending personal parcels, important documents or business shipments, compare courier services, schedule doorstep pickup and track your shipment from one platform.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+            {[
+              { icon: FileText, t: "Document Courier Service", b: "Send certificates, legal papers and important documents safely." },
+              { icon: Package, t: "Personal Parcel Delivery", b: "Ship clothes, books, electronics and everyday essentials." },
+              { icon: Gift, t: "Gift Delivery Service", b: "Send gifts to friends and family across India." },
+              { icon: Briefcase, t: "Business Parcel Shipping", b: "Reliable courier solutions for small businesses and regular shipments." },
+              { icon: Home, t: "Household Item Courier", b: "Move household items safely with trusted courier partners." },
+              { icon: Sparkles, t: "Festival Parcel Delivery", b: "Deliver festive gifts and special packages on time." },
+            ].map(({ icon: Icon, t, b }) => (
+              <div key={t} className="rounded-2xl p-6" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
+                <Icon className="h-6 w-6 mb-3" style={{ color: C.teal }} />
+                <h3 className="text-[17px] font-bold text-[#0B1220]">{t}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed" style={{ color: C.gray }}>{b}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5 — Why Thousands Choose ViaSetu */}
+      <section id="why-choose" className="py-20 px-6" style={{ background: C.bg2 }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Why Thousands of Customers Choose ViaSetu</h2>
+            <p className="mt-4 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              Finding the right courier service shouldn't take hours.
+            </p>
+            <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              ViaSetu makes courier booking simple by bringing multiple courier companies onto one platform. Compare courier prices, choose the right delivery partner and book your shipment online in just a few clicks.
+            </p>
+            <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+              Whether you want the cheapest courier service or faster delivery, you stay in control of your shipment.
+            </p>
+          </div>
+          <ul className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 max-w-5xl mx-auto">
+            {[
+              { icon: IndianRupee, t: "Compare Courier Charges" },
+              { icon: Home, t: "Doorstep Pickup" },
+              { icon: BadgeCheck, t: "No Hidden Charges" },
+              { icon: Wallet, t: "Secure Payments" },
+              { icon: MapPin, t: "Live Tracking" },
+              { icon: Truck, t: "Multiple Courier Partners" },
+              { icon: Sparkles, t: "Easy Booking" },
+              { icon: Headphones, t: "Customer Support" },
+            ].map(({ icon: Icon, t }) => (
+              <li key={t} className="flex items-center gap-2 rounded-xl px-3 py-3" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                <Icon className="h-5 w-5 shrink-0" style={{ color: C.teal }} />
+                <span className="text-[13px] font-semibold text-[#0B1220]">{t}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* SECTION 6 — Domestic Courier Services */}
+      <section id="domestic-services" className="py-20 px-6" style={{ background: C.bg }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Domestic Courier Services Across India</h2>
+          <p className="mt-4 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>Need to send a parcel within India?</p>
+          <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            ViaSetu connects you with reliable domestic courier services for personal and business shipments.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            Compare courier rates, schedule pickup, print shipping labels and track deliveries from one easy-to-use platform.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            Whether you're sending a small parcel to Mumbai or a large package to Bengaluru, we help you find the best courier option.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 7 — Compare Courier Companies */}
+      <section id="compare-companies" className="py-20 px-6" style={{ background: C.bg2 }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-[28px] md:text-[40px] font-bold text-[#0B1220]">Compare Courier Companies on One Platform</h2>
+          <p className="mt-4 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            Different courier companies offer different pricing, delivery speeds and service coverage.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            ViaSetu lets you compare courier charges online and choose the best shipping option based on cost, delivery time, pickup availability and tracking support.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[16px] leading-relaxed" style={{ color: C.gray }}>
+            No more switching between multiple courier websites.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 8 — FAQ (SEO-structured) */}
+      <section id="faq-seo" className="py-20 px-6" style={{ background: C.bg }}>
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-center text-[28px] md:text-[40px] font-bold text-[#0B1220] mb-10">Frequently Asked Questions</h2>
+          {[
+            ["How can I compare courier charges online?", "Simply enter your shipment details to compare courier prices from multiple courier partners before booking."],
+            ["How do I book a courier online?", "Enter your shipment details, compare courier services, choose the best option and schedule doorstep pickup."],
+            ["Is doorstep pickup available?", "Yes. Doorstep pickup is available in most serviceable locations across India."],
+            ["Can I track my parcel online?", "Yes. Enter your AWB or tracking number to receive live shipment updates."],
+            ["What types of parcels can I send?", "You can send documents, gifts, household items, personal parcels and business shipments, subject to courier partner guidelines."],
+          ].map(([q, a]) => <FAQItem key={q} q={q} a={a} />)}
+        </div>
+      </section>
+
+      {/* SECTION 9 — Final CTA */}
+      <section id="final-cta" className="py-20 px-6" style={{ background: `linear-gradient(90deg, ${C.teal}, #007A7A)` }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-[26px] md:text-[36px] font-bold text-white leading-tight">
+            India's Smarter Way to Compare Courier Prices & Book Parcels Online
+          </h2>
+          <p className="mt-4 text-[14px] md:text-[16px] text-white/90 leading-relaxed">
+            Compare courier charges from trusted courier partners, schedule doorstep pickup, book your shipment online and track every parcel — all in one place.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[16px] text-white/90">
+            Start shipping smarter with ViaSetu today. Everything you need to send a parcel is available in one place.
+          </p>
+          <div className="mt-8">
+            <button onClick={goSend} className="h-14 px-8 rounded-lg font-bold text-[16px] bg-white text-[#00A8A8] hover:scale-[1.02] transition-transform">
+              Compare Courier Prices Now →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Content Block */}
+      <section id="seo-content" className="py-14 px-6" style={{ background: C.bg }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-[22px] md:text-[28px] font-bold text-[#0B1220]">Online Courier Booking Platform for India</h2>
+          <p className="mt-4 text-[14px] leading-relaxed" style={{ color: C.gray }}>
+            ViaSetu is an online courier booking platform that helps individuals and businesses compare courier charges, book doorstep pickup and track shipments across India. Instead of visiting multiple courier company websites, you can compare courier prices in one place and choose the service that best fits your budget and delivery timeline.
+          </p>
+          <p className="mt-3 text-[14px] leading-relaxed" style={{ color: C.gray }}>
+            Whether you need a domestic courier service for personal parcels, business shipments, documents or gifts, ViaSetu simplifies the entire shipping process with transparent pricing, reliable courier partners and real-time tracking.
+          </p>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section id="faq" className="py-20 px-6" style={{ background: C.bg }}>
         <div className="max-w-3xl mx-auto">
