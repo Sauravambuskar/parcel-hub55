@@ -479,11 +479,17 @@ const Landing = () => {
             className="max-w-xl mx-auto md:ml-0 md:mr-auto rounded-2xl p-5 md:p-7 md:backdrop-blur-sm bg-white md:bg-white/95 shadow-sm"
           >
             <h1 className="font-bold leading-[1.2] text-[24px] md:text-[32px] lg:text-[36px] text-[#0B1220]">
-              India's First Consumer Courier Aggregator Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
+              India's First Consumer Courier Aggregator — Compare top couriers. Doorstep Pickup. Real-Time Tracking. All in One App.
             </h1>
-            <h2 className="mt-3 text-[14px] md:text-[16px] font-normal" style={{ color: C.gray }}>
-              Compare Courier Prices &amp; Book Online <span style={{ color: C.teal }}>Save Up to 40%</span> on Every Parcel
+            <h2 className="mt-3 text-[15px] md:text-[17px] font-semibold" style={{ color: C.teal }}>
+              Save Up to 40% on Every Courier Booking
             </h2>
+            <p className="mt-3 text-[13px] md:text-[14px] leading-relaxed" style={{ color: C.gray }}>
+              Need to send a parcel anywhere in India? ViaSetu helps you compare courier charges from multiple courier partners in one place. Book a doorstep pickup, choose the best delivery option and track your shipment online without visiting a courier office.
+            </p>
+            <p className="mt-2 text-[13px] md:text-[14px] leading-relaxed" style={{ color: C.gray }}>
+              Whether you're sending documents, gifts, luggage or business parcels, booking a courier is now faster, simpler and more affordable.
+            </p>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <button
@@ -502,9 +508,23 @@ const Landing = () => {
               </a>
             </div>
 
-            <div id="track" className="mt-4">
-              <TrackForm onTrack={trackAwb} />
+            <div id="track" className="mt-5">
+              <h2 className="text-[18px] md:text-[20px] font-bold text-[#0B1220]">Track Your Shipment in Real Time</h2>
+              <p className="mt-1 text-[13px]" style={{ color: C.gray }}>
+                Enter your AWB or Tracking Number to get live shipment updates from pickup to delivery.
+              </p>
+              <div className="mt-3">
+                <TrackForm onTrack={trackAwb} />
+              </div>
             </div>
+
+            {/* Trust Strip */}
+            <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[13px]" style={{ color: C.gray }}>
+              <li className="flex items-center gap-2"><Layers className="h-4 w-4" style={{ color: C.teal }} /> Compare Multiple Courier Partners</li>
+              <li className="flex items-center gap-2"><Home className="h-4 w-4" style={{ color: C.teal }} /> Doorstep Pickup Across India</li>
+              <li className="flex items-center gap-2"><MapPin className="h-4 w-4" style={{ color: C.teal }} /> Live Shipment Tracking</li>
+              <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" style={{ color: C.teal }} /> Secure Domestic Parcel Delivery</li>
+            </ul>
 
             <div className="mt-4 text-[12px] md:text-[13px] flex flex-wrap gap-x-3 gap-y-1" style={{ color: C.gray }}>
               <span>Trusted by 10,000+ users</span>
