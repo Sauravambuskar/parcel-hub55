@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Package, Search, CheckCircle2, ChevronDown, Menu, X,
   Linkedin, Twitter, Instagram, BookOpen, HelpCircle, Mail,
+  Truck, Home, MapPin, ShieldCheck, IndianRupee, Clock, FileText, Gift,
+  Briefcase, Sparkles, BadgeCheck, Wallet, Headphones, Users, Layers,
 } from "lucide-react";
 
 
