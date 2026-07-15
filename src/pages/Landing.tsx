@@ -365,7 +365,7 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
   return (
     <div className="rounded-xl mb-3" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-5 text-left">
-        <span className="text-[#0B1220] font-semibold text-[15px] pr-4">{q}</span>
+        <h3 className="text-[#0B1220] font-semibold text-[15px] pr-4 m-0">{q}</h3>
         <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: C.teal }} />
       </button>
       <div className="overflow-hidden transition-all" style={{ maxHeight: open ? 400 : 0 }}>
