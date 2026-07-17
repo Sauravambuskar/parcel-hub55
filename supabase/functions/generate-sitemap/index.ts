@@ -2,6 +2,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SITE = "https://www.viasetu.com";
 
+// Public, indexable static routes. Excludes user-scoped/admin/auth routes
+// (/login, /onboarding, /history, /order/:id, /settings, /admin/*, /ops/*, /cms/*)
+// and redirect-only paths (/home, /terms, /privacy, /about-us).
 const STATIC_URLS = [
   { loc: "/", changefreq: "daily", priority: "1.0" },
   { loc: "/booking", changefreq: "daily", priority: "0.9" },
@@ -9,13 +12,35 @@ const STATIC_URLS = [
   { loc: "/blog", changefreq: "weekly", priority: "0.8" },
   { loc: "/faq", changefreq: "monthly", priority: "0.7" },
   { loc: "/support", changefreq: "monthly", priority: "0.6" },
+  { loc: "/about", changefreq: "monthly", priority: "0.6" },
+  { loc: "/contact", changefreq: "monthly", priority: "0.6" },
+  { loc: "/how-it-works", changefreq: "monthly", priority: "0.7" },
+  { loc: "/careers", changefreq: "monthly", priority: "0.5" },
+  { loc: "/courier-partners", changefreq: "monthly", priority: "0.7" },
+  { loc: "/Termsandconditions", changefreq: "yearly", priority: "0.3" },
+  { loc: "/Privacypolicy", changefreq: "yearly", priority: "0.3" },
+  // Service pages
+  { loc: "/services/parcel-tracking", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/bulk-shipment", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/express-delivery", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/domestic-courier-service", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/individual-business", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/personal-business", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/sme-courier-service", changefreq: "monthly", priority: "0.8" },
+  { loc: "/services/doorstep-pickup", changefreq: "monthly", priority: "0.8" },
+  // City pages
+  { loc: "/courier-service-in-mumbai", changefreq: "monthly", priority: "0.8" },
+  { loc: "/courier-service-in-pune", changefreq: "monthly", priority: "0.8" },
+  { loc: "/courier-service-in-bangalore", changefreq: "monthly", priority: "0.8" },
+  { loc: "/courier-service-in-hyderabad", changefreq: "monthly", priority: "0.8" },
+  { loc: "/courier-service-in-delhi", changefreq: "monthly", priority: "0.8" },
 ];
 
 const TYPE_PREFIX: Record<string, string> = {
   post: "/blog/",
   page: "/p/",
   partner: "/courier/",
-  faq: "", // FAQs are aggregated on /faq, not individually indexable
+  faq: "",
 };
 
 function fmtDate(d: string | null | undefined): string {
@@ -36,7 +61,6 @@ Deno.serve(async () => {
     priority: u.priority,
   }));
 
-  // Pull dynamic CMS entries (blog posts, service pages, city/location pages via partner/page types)
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -79,7 +103,6 @@ Deno.serve(async () => {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      // Short cache so newly published CMS content shows up quickly
       "Cache-Control": "public, max-age=300",
     },
   });
